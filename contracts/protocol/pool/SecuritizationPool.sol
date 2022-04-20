@@ -20,7 +20,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     address public sotToken;
     address public jotToken;
     address public underlyingCurrency;
-    uint8 public secondaryMarket;
 
     //CycleState
     CycleState public state;
