@@ -110,12 +110,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32[] calldata _periodsAndWriteOffs
     ) external virtual;
 
-    function collectAssets(
-        address tokenAddress,
-        address from,
-        uint256[] calldata tokenIds
-    ) external virtual;
-
     function exportAssets(
         address tokenAddress,
         address toPoolAddress,
@@ -127,8 +121,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external virtual;
-
-    function updateExistedAsset() external virtual;
 
     function collectERC20Assets(
         address[] calldata tokenAddresses,
