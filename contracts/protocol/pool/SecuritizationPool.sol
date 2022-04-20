@@ -11,55 +11,6 @@ import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol';
 
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
-    Registry public registry;
-
-    bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
-
-    address public tgeAddress;
-    address public secondTGEAddress;
-    address public sotToken;
-    address public jotToken;
-    address public underlyingCurrency;
-
-    //CycleState
-    CycleState public state;
-
-    uint64 public openingBlockTimestamp;
-    uint64 public termLengthInSeconds;
-
-    // for lending operation
-    uint256 public totalLockedDistributeBalance;
-    // token address -> total locked
-    mapping(address => uint256) public totalLockedRedeemBalances;
-    // token address -> user -> locked
-    mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
-    mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
-
-    // user -> amount
-    mapping(address => uint256) public paidInterestAmountSOT;
-    mapping(address => uint256) public lastRepayTimestampSOT;
-
-    // for base (sell-loan) operation
-    uint256 public principalAmountSOT;
-    uint256 public paidPrincipalAmountSOT;
-    uint32 public interestRateSOT; // Annually, support 4 decimals num
-
-    uint32 public minFirstLossCushion;
-
-    //RiskScores
-    RiskScore[] public riskScores;
-
-    //ERC721 Assets
-    NFTAsset[] public nftAssets;
-
-    address[] public tokenAssetAddresses;
-    mapping(address => bool) public existsTokenAssetAddress;
-
-    mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
-
-    // by default it is address(this)
-    address public pot;
-
     using ConfigHelper for Registry;
 
     /** CONSTRUCTOR */
@@ -275,13 +226,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             tokenAddresses.length == senders.length && senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
-        ISecuritizationManager securitizationManager = registry.getSecuritizationManager();
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(
-                securitizationManager.isExistingNoteToken(
-                    INoteToken(tokenAddresses[i]).poolAddress(),
-                    tokenAddresses[i]
-                ),
+                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
             IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]);
@@ -301,13 +248,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-        ISecuritizationManager securitizationManager = registry.getSecuritizationManager();
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(
-                securitizationManager.isExistingNoteToken(
-                    INoteToken(tokenAddresses[i]).poolAddress(),
-                    tokenAddresses[i]
-                ),
+                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
             require(

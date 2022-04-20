@@ -3,16 +3,10 @@ pragma solidity ^0.8.0;
 
 import '../../base/UntangledBase.sol';
 import '../../interfaces/INoteTokenFactory.sol';
-import '../../tokens/ERC20/NoteToken.sol';
 import '../../libraries/ConfigHelper.sol';
 
 contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
     using ConfigHelper for Registry;
-
-    Registry public registry;
-
-    NoteToken[] public tokens;
-    mapping(address => bool) public isExistingTokens;
 
     modifier onlySecuritizationManager() {
         require(
@@ -28,7 +22,11 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
         registry = _registry;
     }
 
-    function changeTokenController(address tokenAddress, address newController) external onlySecuritizationManager {
+    function changeTokenController(address tokenAddress, address newController)
+        external
+        override
+        onlySecuritizationManager
+    {
         NoteToken token = NoteToken(tokenAddress);
         token.grantRole(token.MINTER_ROLE(), newController);
     }
@@ -37,7 +35,7 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
         address _poolAddress,
         Configuration.NOTE_TOKEN_TYPE _noteTokenType,
         uint8 _nDecimals
-    ) external whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
         string memory name;
         string memory symbol;
         if (_noteTokenType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {

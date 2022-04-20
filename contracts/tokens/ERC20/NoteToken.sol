@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import '../../interfaces/INoteToken.sol';
 
 contract NoteToken is INoteToken {
-    uint8 private _d;
-
     constructor(
         string memory name,
         string memory symbol,

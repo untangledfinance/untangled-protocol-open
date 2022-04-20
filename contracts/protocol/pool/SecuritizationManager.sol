@@ -4,13 +4,10 @@ pragma solidity ^0.8.0;
 import '../../interfaces/IMintedTokenGenerationEvent.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
-import '../../storage/Registry.sol';
 import '../../libraries/ConfigHelper.sol';
 
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager {
     using ConfigHelper for Registry;
-
-    Registry public registry;
 
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init(address(this));
@@ -57,10 +54,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function getPoolsLength() public view returns (uint256) {
         return pools.length;
-    }
-
-    function isExistingNoteToken(address pool, address noteToken) external view returns (bool) {
-        return isExistingPools[pool] && (poolToSOT[pool] == noteToken || poolToJOT[pool] == noteToken);
     }
 
     function newPoolInstance(address currency, uint32 minFirstLossCushion)

@@ -6,4 +6,6 @@ import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol'
 abstract contract INoteToken is ERC20PresetMinterPauser {
     address public poolAddress;
     uint8 public noteTokenType;
+
+    uint8 internal _d;
 }

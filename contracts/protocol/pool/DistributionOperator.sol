@@ -33,7 +33,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) external whenNotPaused nonReentrant {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
-            registry.getSecuritizationManager().isExistingNoteToken(address(securitizationPool), address(noteToken)),
+            registry.getNoteTokenFactory().isExistingTokens(address(noteToken)),
             'DistributionOperator: Invalid NoteToken'
         );
 
