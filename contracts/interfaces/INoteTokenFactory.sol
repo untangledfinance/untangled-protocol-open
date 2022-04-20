@@ -11,7 +11,7 @@ abstract contract INoteTokenFactory {
 
     mapping(address => bool) public isExistingTokens;
 
-    function changeTokenController(address token, address newController) external virtual;
+    function changeMinterRole(address token, address newController) external virtual;
 
     function createToken(
         address poolAddress,

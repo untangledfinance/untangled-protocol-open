@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import '../../interfaces/IUntangledERC721.sol';
 import '../../interfaces/INoteToken.sol';
-import '../../interfaces/IMintedTokenGenerationEvent.sol';
+import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/TransferHelper.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -278,9 +278,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint64 _timeStartEarningInterest
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
         if (tgeAddress != address(0)) {
-            IMintedTokenGenerationEvent mintedTokenGenrationEvent = IMintedTokenGenerationEvent(tgeAddress);
+            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
             require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
-            IMintedTokenGenerationEvent(tgeAddress).setupLongSale(
+            MintedIncreasingInterestTGE(tgeAddress).setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
@@ -288,7 +288,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
         if (secondTGEAddress != address(0)) {
             require(
-                IMintedTokenGenerationEvent(secondTGEAddress).finalized(),
+                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
             );
         }
@@ -361,7 +361,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             _paidPrincipalAmountSOT;
         paidPrincipalAmountSOT = paidPrincipalAmountSOT + _paidPrincipalAmountSOT;
         require(
-            IMintedTokenGenerationEvent(tgeAddress).currencyRaised() >= paidPrincipalAmountSOT,
+            MintedIncreasingInterestTGE(tgeAddress).currencyRaised() >= paidPrincipalAmountSOT,
             'SecuritizationPool: exceed amount paid for SOT'
         );
     }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../../interfaces/IMintedTokenGenerationEvent.sol';
+import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
@@ -99,7 +99,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
             saleType,
             longSale
         );
-        noteTokenFactory.changeTokenController(sotToken, tgeAddress);
+        noteTokenFactory.changeMinterRole(sotToken, tgeAddress);
 
         pool.injectTGEAddress(tgeAddress, sotToken, Configuration.NOTE_TOKEN_TYPE.SENIOR);
 
@@ -131,7 +131,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
             saleType,
             longSale
         );
-        noteTokenFactory.changeTokenController(jotToken, tgeAddress);
+        noteTokenFactory.changeMinterRole(jotToken, tgeAddress);
 
         pool.injectTGEAddress(tgeAddress, jotToken, Configuration.NOTE_TOKEN_TYPE.JUNIOR);
 
@@ -145,7 +145,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
 
-        uint256 tokenAmount = IMintedTokenGenerationEvent(tgeAddress).buyTokens(
+        uint256 tokenAmount = MintedIncreasingInterestTGE(tgeAddress).buyTokens(
             _msgSender(),
             _msgSender(),
             currencyAmount

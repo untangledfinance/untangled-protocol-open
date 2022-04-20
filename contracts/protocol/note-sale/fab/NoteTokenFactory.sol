@@ -16,16 +16,12 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
     }
 
     function initialize(Registry _registry) public initializer {
-        __UntangledBase__init(address(this));
+        __UntangledBase__init(_msgSender());
 
         registry = _registry;
     }
 
-    function changeTokenController(address tokenAddress, address newController)
-        external
-        override
-        onlySecuritizationManager
-    {
+    function changeMinterRole(address tokenAddress, address newController) external override onlySecuritizationManager {
         NoteToken token = NoteToken(tokenAddress);
         token.grantRole(token.MINTER_ROLE(), newController);
     }

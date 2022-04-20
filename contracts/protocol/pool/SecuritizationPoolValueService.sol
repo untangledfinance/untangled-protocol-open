@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../../interfaces/INoteToken.sol';
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/ICrowdSale.sol';
+import '../../interfaces/ICrowdsale.sol';
 
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
@@ -304,7 +304,7 @@ contract SecuritizationPoolValueService is
 
     function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
+        ICrowdsale crowdsale = ICrowdsale(securitizationPool.tgeAddress());
 
         return
             crowdsale.currencyRaisedByInvestor(investor) -
@@ -325,7 +325,7 @@ contract SecuritizationPoolValueService is
 
     function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
+        ICrowdsale crowdsale = ICrowdsale(securitizationPool.tgeAddress());
 
         return crowdsale.currencyRaised() - securitizationPool.paidPrincipalAmountSOT();
     }

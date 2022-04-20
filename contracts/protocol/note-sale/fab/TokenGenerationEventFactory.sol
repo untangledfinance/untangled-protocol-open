@@ -14,7 +14,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
     }
 
     function initialize(Registry _registry) public initializer {
-        __UntangledBase__init(address(this));
+        __UntangledBase__init(_msgSender());
 
         registry = _registry;
     }
@@ -53,7 +53,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         bool longSale
     ) private returns (address) {
-        IMintedIncreasingInterestTGE tge = registry.getMintedIncreasingInterestTGE();
+        MintedIncreasingInterestTGE tge = registry.getMintedIncreasingInterestTGE();
         address mintedIncreasingInterestTGEAddress = address(tge);
         address tgeAddress = deployMinimal(mintedIncreasingInterestTGEAddress);
 
@@ -69,14 +69,14 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     function pauseUnpauseTge(address tgeAdress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist');
-        IMintedIncreasingInterestTGE tge = IMintedIncreasingInterestTGE(tgeAdress);
+        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAdress);
         if (tge.paused()) tge.unpause();
         tge.pause();
     }
 
     function pauseUnpauseAllTges() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < tgeAddresses.length; i++) {
-            IMintedIncreasingInterestTGE tge = IMintedIncreasingInterestTGE(tgeAddresses[i]);
+            MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddresses[i]);
             if (tge.paused()) tge.unpause();
             else tge.pause();
         }

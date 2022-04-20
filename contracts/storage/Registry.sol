@@ -9,7 +9,7 @@ contract Registry is UntangledBase {
     event AddressUpdated(address owner, uint8 index, address oldValue, address newValue);
 
     function initialize() public initializer {
-        __UntangledBase__init(address(this));
+        __UntangledBase__init(_msgSender());
     }
 
     function setAddress(uint8 addressIndex, address newAddress) private {
