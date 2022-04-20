@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import '../base/UntangledBase.sol';
 
 contract Registry is UntangledBase {
-    mapping(uint256 => address) public contractAddresses;
+    mapping(uint8 => address) public contractAddresses;
 
-    event AddressUpdated(address owner, uint256 index, address oldValue, address newValue);
+    event AddressUpdated(address owner, uint8 index, address oldValue, address newValue);
 
     function initialize() public initializer {
         __UntangledBase__init(address(this));
