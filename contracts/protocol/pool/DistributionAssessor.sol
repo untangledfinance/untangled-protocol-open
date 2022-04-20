@@ -40,7 +40,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         address sotToken = securitizationPool.sotToken();
         address jotToken = securitizationPool.jotToken();
 
-        require(tokenAddress == sotToken || tokenAddress == jotToken, 'unknown-tranche-address');
+        require(tokenAddress == sotToken || tokenAddress == jotToken, 'DistributionAssessor: unknown-tranche-address');
 
         uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
 
@@ -114,7 +114,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
         address sotToken = securitizationPool.sotToken();
         address jotToken = securitizationPool.jotToken();
-        require(tokenAddress == sotToken || tokenAddress == jotToken, 'unknown-tranche-address');
+        require(tokenAddress == sotToken || tokenAddress == jotToken, 'DistributionAssessor: unknown-tranche-address');
 
         uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
 

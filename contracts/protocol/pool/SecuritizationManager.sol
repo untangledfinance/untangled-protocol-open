@@ -34,21 +34,24 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
 
     modifier onlyPoolExisted(ISecuritizationPool pool) {
-        require(isExistingPools[address(pool)], 'Pool does not exist');
+        require(isExistingPools[address(pool)], 'SecuritizationManager: Pool does not exist');
         _;
     }
 
     modifier onlyManager(ISecuritizationPool pool) {
-        require(pool.hasRole(pool.OWNER_ROLE(), _msgSender()), 'Not the controller of the project');
+        require(
+            pool.hasRole(pool.OWNER_ROLE(), _msgSender()),
+            'SecuritizationManager: Not the controller of the project'
+        );
         _;
     }
 
     modifier doesSOTExist(ISecuritizationPool pool) {
-        require(poolToSOT[address(pool)] == address(0), 'Already exists SOT token');
+        require(poolToSOT[address(pool)] == address(0), 'SecuritizationManager: Already exists SOT token');
         _;
     }
     modifier doesJOTExist(ISecuritizationPool pool) {
-        require(poolToJOT[address(pool)] == address(0), 'Already exists JOT token');
+        require(poolToJOT[address(pool)] == address(0), 'SecuritizationManager: Already exists JOT token');
         _;
     }
 
@@ -70,7 +73,9 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address poolAddress = deployMinimal(poolImplAddress);
 
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-        poolInstance.initialize(_msgSender(), registry, currency, minFirstLossCushion);
+        poolInstance.initialize(address(this), registry, currency, minFirstLossCushion);
+        poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
+        poolInstance.revokeRole(poolInstance.OWNER_ROLE(), address(this));
 
         isExistingPools[poolAddress] = true;
         pools.push(poolInstance);
@@ -88,7 +93,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         bool longSale
     ) external whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
-        address sotToken = noteTokenFactory.createSOTToken(
+        address sotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
             decimalToken
@@ -120,7 +125,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         bool longSale
     ) external whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
-        address jotToken = noteTokenFactory.createJOTToken(
+        address jotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.JUNIOR,
             decimalToken
@@ -154,5 +159,29 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         );
 
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
+    }
+
+    function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+        ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+        pool.pause();
+    }
+
+    function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+        ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+        pool.unpause();
+    }
+
+    function pauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < pools.length; i++) {
+            pools[i].pause();
+        }
+    }
+
+    function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i = 0; i < pools.length; i++) {
+            pools[i].unpause();
+        }
     }
 }

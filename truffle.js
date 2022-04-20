@@ -1,18 +1,24 @@
-require("dotenv").config();
-const TestRPC = require("ganache");
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+require('dotenv').config();
+const TestRPC = require('ganache');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 module.exports = {
   compilers: {
     solc: {
-      version: "0.8.13",
+      version: '0.8.13',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 1,
+        },
+      },
     },
   },
   networks: {
     development: {
       provider: TestRPC.provider(),
       port: process.env.RPC_PORT,
-      network_id: "*", // Match any network id
+      network_id: '*', // Match any network id
     },
     alfajores: {
       provider: () => {

@@ -6,13 +6,7 @@ import '../libraries/ConfigHelper.sol';
 interface INoteTokenFactory {
     function changeTokenController(address token, address newController) external;
 
-    function createSOTToken(
-        address poolAddress,
-        Configuration.NOTE_TOKEN_TYPE noteTokenType,
-        uint8 _nDecimals
-    ) external returns (address);
-
-    function createJOTToken(
+    function createToken(
         address poolAddress,
         Configuration.NOTE_TOKEN_TYPE noteTokenType,
         uint8 _nDecimals
