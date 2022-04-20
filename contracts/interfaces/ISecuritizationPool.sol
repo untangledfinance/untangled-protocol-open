@@ -15,7 +15,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     address public sotToken;
     address public jotToken;
     address public underlyingCurrency;
-    uint8 public secondaryMarket;
 
     //CycleState
     CycleState public state;

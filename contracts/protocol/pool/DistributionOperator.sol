@@ -30,17 +30,20 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     );
 
-    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) external {
+    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) external whenNotPaused nonReentrant {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
             registry.getSecuritizationManager().isExistingNoteToken(address(securitizationPool), address(noteToken)),
-            'Invalid NoteToken'
+            'DistributionOperator: Invalid NoteToken'
         );
 
-        require(noteToken.balanceOf(_msgSender()) >= tokenAmount, 'Invalid token amount');
+        require(noteToken.balanceOf(_msgSender()) >= tokenAmount, 'DistributionOperator: Invalid token amount');
 
         IDistributionTranche tranche = registry.getDistributionTranche();
-        require(noteToken.allowance(_msgSender(), address(tranche)) >= tokenAmount, 'Invalid token allowance');
+        require(
+            noteToken.allowance(_msgSender(), address(tranche)) >= tokenAmount,
+            'DistributionOperator: Invalid token allowance'
+        );
 
         uint256 tokenPrice;
         uint256 tokenToBeRedeemed;
@@ -93,7 +96,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 currencyDistribute,
         uint256 totalSupply
     ) internal {
-        require(tokenPrice > 0, 'tranche is bankrupt');
+        require(tokenPrice > 0, 'DistributionOperator: tranche is bankrupt');
         uint256 distributeAmount = _calculateAmountDistribute(
             investor,
             tokenAddress,
@@ -114,7 +117,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address[] calldata redeemers,
         address pool,
         address tokenAddress
-    ) external {
+    ) external whenNotPaused nonReentrant {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         for (uint256 i = 0; i < redeemers.length; ++i) {
@@ -138,7 +141,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address redeemer,
         address pool,
         address tokenAddress
-    ) external returns (uint256) {
+    ) external whenNotPaused nonReentrant returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);

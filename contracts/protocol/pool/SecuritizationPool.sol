@@ -113,7 +113,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function pushTokenAssetAddress(address tokenAddress) private {
-        tokenAssetAddresses.push(tokenAddress);
+        if (!existsTokenAssetAddress[tokenAddress]) tokenAssetAddresses.push(tokenAddress);
         existsTokenAssetAddress[tokenAddress] = true;
     }
 
@@ -210,7 +210,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function updateExistedAsset() external override whenNotPaused nonReentrant {
         uint256 i = 0;
         while (i < getNFTAssetsLength()) {
-            if (!IUntangledERC721(nftAssets[i].tokenAddress).exists(nftAssets[i].tokenId)) {
+            if (IUntangledERC721(nftAssets[i].tokenAddress).ownerOf(nftAssets[i].tokenId) != address(this)) {
                 removeNFTAssetIndex(i);
             } else i++;
         }

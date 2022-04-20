@@ -3,17 +3,16 @@ pragma solidity ^0.8.0;
 
 import '../../interfaces/INoteToken.sol';
 
-contract NotesToken is INoteToken {
+contract NoteToken is INoteToken {
     uint8 private _d;
 
-    function initialize(
+    constructor(
         string memory name,
         string memory symbol,
         uint8 _decimals,
         address _poolAddress,
         uint8 _noteTokenType
-    ) public initializer {
-        __ERC20_init_unchained(name, symbol);
+    ) ERC20PresetMinterPauser(name, symbol) {
         _d = _decimals;
         poolAddress = _poolAddress;
         noteTokenType = _noteTokenType;
