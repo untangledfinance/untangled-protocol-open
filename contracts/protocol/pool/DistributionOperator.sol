@@ -169,9 +169,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         IDistributionTranche tranche,
         ISecuritizationPool securitizationPool
     ) internal {
-        tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
-
         securitizationPool.decreaseLockedDistributeBalance(tokenAddress, redeemer, currencyAmount, tokenAmount);
+
+        tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
     }
 
     function _calculateAmountDistribute(

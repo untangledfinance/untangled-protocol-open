@@ -6,56 +6,6 @@ import '../base/UntangledBase.sol';
 import '../libraries/ConfigHelper.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
-    Registry public registry;
-
-    bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
-
-    address public tgeAddress;
-    address public secondTGEAddress;
-    address public sotToken;
-    address public jotToken;
-    address public underlyingCurrency;
-    uint8 public secondaryMarket;
-
-    //CycleState
-    CycleState public state;
-
-    uint64 public openingBlockTimestamp;
-    uint64 public termLengthInSeconds;
-
-    // for lending operation
-    uint256 public totalLockedDistributeBalance;
-    // token address -> total locked
-    mapping(address => uint256) public totalLockedRedeemBalances;
-    // token address -> user -> locked
-    mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
-    mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
-
-    // user -> amount
-    mapping(address => uint256) public paidInterestAmountSOT;
-    mapping(address => uint256) public lastRepayTimestampSOT;
-
-    // for base (sell-loan) operation
-    uint256 public principalAmountSOT;
-    uint256 public paidPrincipalAmountSOT;
-    uint32 public interestRateSOT; // Annually, support 4 decimals num
-
-    uint32 public minFirstLossCushion;
-
-    //RiskScores
-    RiskScore[] public riskScores;
-
-    //ERC721 Assets
-    NFTAsset[] public nftAssets;
-
-    address[] public tokenAssetAddresses;
-    mapping(address => bool) public existsTokenAssetAddress;
-
-    mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
-
-    // by default it is address(this)
-    address public pot;
-
     /** ENUM & STRUCT */
     enum CycleState {
         INITIATED,
