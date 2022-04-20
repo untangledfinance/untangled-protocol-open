@@ -9,7 +9,7 @@ contract NotesToken is INoteToken {
         string memory symbol,
         address _poolAddress
     ) public initializer {
-        __ERC20_init(name, symbol);
+        __ERC20_init_unchained(name, symbol);
         poolAddress = _poolAddress;
     }
 }

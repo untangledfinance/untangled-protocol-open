@@ -13,7 +13,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     Registry public registry;
 
     function initialize(Registry _registry) public initializer {
-        __UntangledBase__init(address(0));
+        __UntangledBase__init(address(this));
 
         registry = _registry;
     }
