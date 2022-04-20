@@ -11,6 +11,8 @@ import '../interfaces/ITokenGenerationEventFactory.sol';
 import '../interfaces/IUntangledERC721.sol';
 import '../interfaces/IDistributionOperator.sol';
 import '../interfaces/IDistributionTranche.sol';
+import '../interfaces/IDistributionAssessor.sol';
+import '../interfaces/ISecuritizationPoolValueService.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -50,5 +52,20 @@ library ConfigHelper {
 
     function getDistributionTranche(Registry registry) internal view returns (IDistributionTranche) {
         return IDistributionTranche(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE));
+    }
+
+    function getSecuritizationPoolValueService(Registry registry)
+        internal
+        view
+        returns (ISecuritizationPoolValueService)
+    {
+        return
+            ISecuritizationPoolValueService(
+                getAddress(registry, Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE)
+            );
+    }
+
+    function getDistributionAssessor(Registry registry) internal view returns (IDistributionAssessor) {
+        return IDistributionAssessor(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR));
     }
 }

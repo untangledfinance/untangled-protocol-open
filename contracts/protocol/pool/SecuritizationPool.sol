@@ -5,7 +5,7 @@ import '../../interfaces/IUntangledERC721.sol';
 import '../../interfaces/INoteToken.sol';
 import '../../interfaces/IMintedTokenGenerationEvent.sol';
 import '../../libraries/ConfigHelper.sol';
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol';
 
