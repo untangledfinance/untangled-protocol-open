@@ -15,12 +15,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** CONSTRUCTOR */
     function initialize(
-        address owner,
         Registry _registry,
         address _currency,
         uint32 _minFirstLossCushion
     ) public override initializer {
-        __UntangledBase__init(owner);
+        __UntangledBase__init(_msgSender());
 
         registry = _registry;
 

@@ -13,6 +13,7 @@ import '../interfaces/IDistributionOperator.sol';
 import '../interfaces/IDistributionTranche.sol';
 import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
+import '../interfaces/IMintedIncreasingInterestTGE.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -67,5 +68,12 @@ library ConfigHelper {
 
     function getDistributionAssessor(Registry registry) internal view returns (IDistributionAssessor) {
         return IDistributionAssessor(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR));
+    }
+
+    function getMintedIncreasingInterestTGE(Registry registry) internal view returns (IMintedIncreasingInterestTGE) {
+        return
+            IMintedIncreasingInterestTGE(
+                getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
+            );
     }
 }

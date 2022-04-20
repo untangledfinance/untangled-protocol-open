@@ -10,7 +10,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     using ConfigHelper for Registry;
 
     function initialize(Registry _registry) public initializer {
-        __UntangledBase__init(address(this));
+        __UntangledBase__init(_msgSender());
 
         registry = _registry;
     }
@@ -66,7 +66,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address poolAddress = deployMinimal(poolImplAddress);
 
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-        poolInstance.initialize(address(this), registry, currency, minFirstLossCushion);
+        poolInstance.initialize(registry, currency, minFirstLossCushion);
         poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
         poolInstance.revokeRole(poolInstance.OWNER_ROLE(), address(this));
 

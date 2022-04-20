@@ -82,7 +82,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     }
 
     function initialize(
-        address owner,
         Registry _registry,
         address _currency,
         uint32 _minFirstLossCushion

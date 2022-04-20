@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../../base/UntangledBase.sol';
-import '../../interfaces/INoteTokenFactory.sol';
-import '../../libraries/ConfigHelper.sol';
+import '../../../base/UntangledBase.sol';
+import '../../../interfaces/INoteTokenFactory.sol';
 
 contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
     using ConfigHelper for Registry;
