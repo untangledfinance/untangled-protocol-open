@@ -60,7 +60,10 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
                 return (RATE_SCALING_FACTOR**2) / rate;
             return registry.getDistributionAssessor().calcTokenPrice(pool, token);
         } else {
-            require(getTimeStartEarningInterest() != 0, 'Crowdsale: timeStartEarningInterest need to be setup');
+            require(
+                getTimeStartEarningInterest() != 0,
+                'MintedIncreasingInterestTGE: timeStartEarningInterest need to be setup'
+            );
             return getPurchasePrice(interestRate, yield, timestamp - timeStartEarningInterest, termLengthInSeconds);
         }
     }
@@ -85,7 +88,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     }
 
     function _preValidateNewSaleRound() internal view {
-        require(hasClosed() || totalCapReached(), 'Previous round not closed');
-        require(timeInterval > 0, 'Time interval increasing interest is 0');
+        require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
+        require(timeInterval > 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');
     }
 }

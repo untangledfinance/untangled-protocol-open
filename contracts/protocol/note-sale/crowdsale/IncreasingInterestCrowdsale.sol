@@ -61,6 +61,6 @@ contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         uint256 tokenAmount
     ) internal view override {
         super._preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
-        require(timeInterval > 0, 'time interval not set');
+        require(timeInterval > 0, 'IncreasingInterestCrowdsale: time interval not set');
     }
 }

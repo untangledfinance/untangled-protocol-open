@@ -118,10 +118,10 @@ contract Crowdsale is UntangledBase {
         uint256 currencyAmount,
         uint256 tokenAmount
     ) internal view {
-        require(beneficiary != address(0), 'beneficiary is zero address');
+        require(beneficiary != address(0), 'Crowdsale: beneficiary is zero address');
         //        require(currencyAmount != 0, "currency amount is 0");
-        require(tokenAmount != 0, 'token amount is 0');
-        require(isUnderTotalCap(currencyAmount), 'TotalCappedCrowdsale: cap exceeded');
+        require(tokenAmount != 0, 'Crowdsale: token amount is 0');
+        require(isUnderTotalCap(currencyAmount), 'Crowdsale: cap exceeded');
     }
 
     function _preValidatePurchase(
@@ -149,7 +149,7 @@ contract Crowdsale is UntangledBase {
     }
 
     function _getTokenAmount(uint256 currencyAmount) public view returns (uint256) {
-        require(rate > 0, 'rate is 0');
+        require(rate > 0, 'Crowdsale: rate is 0');
         uint256 TEN = 10;
         return
             (currencyAmount * rate * TEN**ERC20(token).decimals()) /
@@ -169,8 +169,8 @@ contract Crowdsale is UntangledBase {
     }
 
     function setTotalCap(uint256 cap) internal {
-        require(cap > 0, 'CappedCrowdsale: cap is 0');
-        require(cap >= tokenRaised, 'CappedCrowdsale: cap is bellow token raised');
+        require(cap > 0, 'Crowdsale: cap is 0');
+        require(cap >= tokenRaised, 'Crowdsale: cap is bellow token raised');
 
         totalCap = cap;
     }
