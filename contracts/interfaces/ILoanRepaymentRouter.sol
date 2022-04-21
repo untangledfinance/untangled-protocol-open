@@ -5,6 +5,8 @@ import '../base/UntangledBase.sol';
 import '../storage/Registry.sol';
 
 abstract contract ILoanRepaymentRouter is UntangledBase {
+    Registry public registry;
+
     enum Errors {
         DEBT_AGREEMENT_NONEXISTENT,
         PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT,
@@ -27,34 +29,12 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
 
     event LogError(uint8 indexed _errorId, bytes32 indexed _agreementId);
 
-    function _assertRepaymentRequest(
-        bytes32 _agreementId,
-        address _payer,
-        uint256 _amount,
-        address _tokenAddress
-    ) internal virtual returns (bool);
-
-    function _doRepay(
-        bytes32 _agreementId,
-        address _payer,
-        uint256 _amount,
-        address _tokenAddress
-    ) internal virtual returns (bool);
-
-    // Manual repay by using Fiat tokens
     function repay(
         bytes32 agreementId,
         uint256 amount,
         address tokenAddress
     ) public virtual returns (uint256);
 
-    // Manual repay by using Fiat tokens
-    function updateRepaymentByLender(bytes32[] calldata _agreementIds, uint256[] calldata amounts)
-        external
-        virtual
-        returns (bool);
-
-    // Manual repay by using Fiat tokens
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,

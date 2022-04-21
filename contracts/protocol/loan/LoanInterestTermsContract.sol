@@ -93,7 +93,14 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     //************************ */
 
     // Register to start Loan term for batch of agreement Ids
-    function registerTermStart(bytes32 agreementId) public override onlyHaventStartedLoan(agreementId) returns (bool) {
+    function registerTermStart(bytes32 agreementId)
+        public
+        override
+        whenNotPaused
+        nonReentrant
+        onlyHaventStartedLoan(agreementId)
+        returns (bool)
+    {
         startedLoan[agreementId] = true;
         return true;
     }

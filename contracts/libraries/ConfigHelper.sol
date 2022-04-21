@@ -15,10 +15,6 @@ import '../interfaces/ILoanRegistry.sol';
 import '../interfaces/ILoanInterestTermsContract.sol';
 import '../interfaces/ILoanRepaymentRouter.sol';
 import '../interfaces/ILoanKernel.sol';
-
-contract PoolManagementLike {
-    mapping(address => bool) public isExistingPools;
-}
 import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';

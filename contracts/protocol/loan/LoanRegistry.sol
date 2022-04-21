@@ -39,7 +39,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
-    ) external override onlyLoanKernel returns (bool) {
+    ) external override whenNotPaused nonReentrant onlyLoanKernel returns (bool) {
         require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
         LoanEntry memory newEntry = LoanEntry({
             loanTermContract: termContract,
@@ -130,7 +130,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         pAmount = 0; // @TODO
     }
 
-    function setCompletedLoan(bytes32 agreementId) public override onlyLoanKernel {
+    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanKernel {
         completedLoans[agreementId] = true;
     }
 }
