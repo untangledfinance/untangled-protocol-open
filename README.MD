@@ -24,9 +24,7 @@ All contracts are located under `packages/protocol/contracts`
 - See the [`CODE_OF_CONDUCT.MD`](./CODE_OF_CONDUCT.MD)
 
 ### Testing
-- Run `npm test` to run tests for all packages.
-- Note if you want to only run tests for a particular test, then use `it.only` or `describe.only` inside the test file itself, which will focus to only those tests.
-- If you want to run tests for a specific package, say just the protocol contracts, you can use lerna's `--scope` flag e.g. `npm run test -- --scope @goldfinch-eng/protocol`.
+[to update]
 
 ### Compiling Smart Contracts
 Generally speaking, you shouldn't need to do this, since the test command automatically compiles. But if you need to independently compile, you can run:
