@@ -37,7 +37,7 @@ All contracts are located under `contracts`
 
 ### Testing
 
-[to update]
+Run `npm test` to run tests for all contracts.
 
 ### Compiling Smart Contracts
 
