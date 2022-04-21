@@ -217,7 +217,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return assetPurposeAndRiskScore;
     }
 
-    function _burnLoanAssetToken(address creditor, bytes32 agreementId) internal {
+    function _burnLoanAssetToken(bytes32 agreementId) internal {
         registry.getLoanAssetToken().burn(uint256(agreementId));
     }
 
@@ -232,7 +232,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     //Conclude a loan, stop lending/loan terms or allow the loan loss
     function _concludeLoan(
         address creditor,
-        address debtor,
         bytes32 agreementId,
         address termContract
     ) internal {
@@ -247,7 +246,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bool isTermCompleted = ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
 
         if (isTermCompleted) {
-            _burnLoanAssetToken(creditor, agreementId);
+            _burnLoanAssetToken(agreementId);
         } else {
             revert('Unable to conclude terms contract.');
         }
@@ -262,21 +261,19 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      */
     function concludeLoan(
         address creditor,
-        address debtor,
         bytes32 agreementId,
         address termContract
     ) external whenNotPaused nonReentrant {
-        _concludeLoan(creditor, debtor, agreementId, termContract);
+        _concludeLoan(creditor, agreementId, termContract);
     }
 
     function concludeLoans(
         address[] calldata creditors,
-        address[] calldata debtors,
         bytes32[] calldata agreementIds,
         address termContract
     ) external whenNotPaused nonReentrant {
         for (uint256 i = 0; i < creditors.length; i++) {
-            _concludeLoan(creditors[i], debtors[i], agreementIds[i], termContract);
+            _concludeLoan(creditors[i], agreementIds[i], termContract);
         }
     }
 
