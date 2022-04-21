@@ -1,8 +1,9 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../protocol/loan/base/LoanTermsContractBase.sol";
+import '../protocol/loan/base/LoanTermsContractBase.sol';
 
-contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
+contract ILoanInterestTermsContract is LoanTermsContractBase {
     using SafeMath for uint256;
 
     mapping(bytes32 => bool) startedLoan;
@@ -19,7 +20,7 @@ contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
     // Register to start Loan term for batch of agreement Ids
     function registerTermStart(bytes32 agreementId) public virtual returns (bool);
 
-    function getRepaidPrincipalAmount(bytes32 agreementId) public virtual view returns (uint256);
+    function getRepaidPrincipalAmount(bytes32 agreementId) public view virtual returns (uint256);
 
     function addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
 
@@ -29,13 +30,13 @@ contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
 
     function setRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
 
-    function getRepaidInterestAmount(bytes32 agreementId) public  virtual view returns (uint256);
+    function getRepaidInterestAmount(bytes32 agreementId) public view virtual returns (uint256);
 
-    function getValueRepaidToDate(bytes32 agreementId) public virtual view returns (uint256, uint256);
+    function getValueRepaidToDate(bytes32 agreementId) public view virtual returns (uint256, uint256);
 
-    function isCompletedRepayments(bytes32[] memory agreementIds) public virtual view returns (bool[] memory);
+    function isCompletedRepayments(bytes32[] memory agreementIds) public view virtual returns (bool[] memory);
 
-    function isCompletedRepayment(bytes32 agreementId) public virtual view returns (bool);
+    function isCompletedRepayment(bytes32 agreementId) public view virtual returns (bool);
 
     function setCompletedRepayment(bytes32 agreementId) public virtual;
 
@@ -45,17 +46,17 @@ contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
      */
     function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
         public
-        virtual
         view
-        returns (uint256 expectedPrincipal, uint256 expectedInterest)
-;
+        virtual
+        returns (uint256 expectedPrincipal, uint256 expectedInterest);
+
     function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
         public
-        virtual
         view
-        returns (uint256[] memory, uint256[] memory)
-;
-    function isTermsContractExpired(bytes32 agreementId) public virtual view returns (bool);
+        virtual
+        returns (uint256[] memory, uint256[] memory);
+
+    function isTermsContractExpired(bytes32 agreementId) public view virtual returns (bool);
 
     function registerConcludeLoan(bytes32 agreementId) external virtual returns (bool);
 
@@ -65,10 +66,10 @@ contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
      */
     function getTotalExpectedRepaymentValue(bytes32 agreementId, uint256 timestamp)
         public
-        virtual
         view
-        returns (uint256 expectedRepaymentValue)
-;
+        virtual
+        returns (uint256 expectedRepaymentValue);
+
     /// When called, the registerRepayment function records the debtor's
     ///  repayment, as well as any auxiliary metadata needed by the contract
     ///  to determine ex post facto the value repaid (e.g. current USD
@@ -86,5 +87,5 @@ contract IExternalLoanInterestTermsContract is LoanTermsContractBase {
         address tokenAddress
     ) public virtual returns (uint256 remains);
 
-    function getInterestRate(bytes32 agreementId) public virtual view returns (uint256);
+    function getInterestRate(bytes32 agreementId) public view virtual returns (uint256);
 }

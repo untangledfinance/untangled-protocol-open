@@ -1,17 +1,18 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import './ExternalLoanDebtRegistry.sol';
+import './LoanDebtRegistry.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
-import './ExternalLoanInterestTermsContract.sol';
+import './LoanInterestTermsContract.sol';
 import '../../storage/ERC20TokenRegistry.sol';
 import '../../interfaces/ISecuritizationPool.sol';
 import '../../interfaces/ITokenTransferProxy.sol';
 
 /**
- * Repayment Router smart contract for External Loan
+ * Repayment Router smart contract for Loan
  */
-contract ExternalLoanRepaymentRouter is IExternalLoanRepaymentRouter {
+contract LoanRepaymentRouter is ILoanRepaymentRouter {
     using ConfigHelper for Registry;
 
     Registry public registry;
@@ -50,9 +51,7 @@ contract ExternalLoanRepaymentRouter is IExternalLoanRepaymentRouter {
         require(_amount > 0, 'Amount must greater than 0.');
 
         // Ensure agreement exists.
-        if (
-            !registry.getExternalLoanDebtRegistry().doesEntryExist(_agreementId)
-        ) {
+        if (!registry.getExternalLoanDebtRegistry().doesEntryExist(_agreementId)) {
             emit LogError(uint8(Errors.DEBT_AGREEMENT_NONEXISTENT), _agreementId);
             return false;
         }
@@ -90,11 +89,8 @@ contract ExternalLoanRepaymentRouter is IExternalLoanRepaymentRouter {
 
         // Transfer amount to creditor
         if (_payer != address(0x0)) {
-            if (
-                registry.getPoolManagementLike().isExistingPools(
-                    beneficiary
-                )
-            ) beneficiary = ISecuritizationPool(beneficiary).pot();
+            if (registry.getPoolManagementLike().isExistingPools(beneficiary))
+                beneficiary = ISecuritizationPool(beneficiary).pot();
             require(
                 registry.getERC20TokenTransferProxy().transferFrom(
                     _tokenAddress,
@@ -146,8 +142,7 @@ contract ExternalLoanRepaymentRouter is IExternalLoanRepaymentRouter {
             //TODO: Add validation
             // require(lender == msg.sender, "ExternalLoanRepaymentRouter: Invalid caller");
 
-            address tokenAddress = registry.getERC20TokenRegistry()
-                .getTokenAddressByIndex(tokenIndex);
+            address tokenAddress = registry.getERC20TokenRegistry().getTokenAddressByIndex(tokenIndex);
 
             require(
                 _doRepay(_agreementIds[i], address(0x0), amounts[i], tokenAddress),

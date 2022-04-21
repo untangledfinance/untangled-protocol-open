@@ -1,12 +1,10 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import './base/LoanTermsContractBase.sol';
-import './ExternalLoanDebtRegistry.sol';
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import './LoanDebtRegistry.sol';
 
-contract ExternalLoanInterestTermsContract is LoanTermsContractBase {
-    using SafeMath for uint256;
-
+contract LoanInterestTermsContract is LoanTermsContractBase {
     mapping(bytes32 => bool) startedLoan;
 
     mapping(bytes32 => uint256) public repaidPrincipalAmounts;
@@ -24,9 +22,7 @@ contract ExternalLoanInterestTermsContract is LoanTermsContractBase {
         _;
     }
 
-    function initialize(
-        Registry _registry
-    ) public override initializer {
+    function initialize(Registry _registry) public override initializer {
         __LoanTermsContractBase_init(_registry);
     }
 
@@ -138,8 +134,7 @@ contract ExternalLoanInterestTermsContract is LoanTermsContractBase {
     }
 
     function isTermsContractExpired(bytes32 agreementId) public view returns (bool) {
-        uint256 expTimestamp = registry.getExternalLoanDebtRegistry()
-            .getExpirationTimestamp(agreementId);
+        uint256 expTimestamp = registry.getExternalLoanDebtRegistry().getExpirationTimestamp(agreementId);
         // solium-disable-next-line
         if (expTimestamp <= block.timestamp) {
             return true;

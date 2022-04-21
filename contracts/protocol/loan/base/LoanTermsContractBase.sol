@@ -1,17 +1,17 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import '../../../libraries/UnpackLoanParamtersLib.sol';
 import '../../../constants/LoanTyping.sol';
 import '../../../storage/Registry.sol';
 import '../../../libraries/ConfigHelper.sol';
-import '../ExternalLoanDebtRegistry.sol';
+import '../LoanDebtRegistry.sol';
 
 contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     using ConfigHelper for Registry;
 
     Registry public registry;
 
-    uint256 public constant ONE = 10**27;
     uint256 public constant NUM_AMORTIZATION_UNIT_TYPES = 6;
 
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
@@ -60,10 +60,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     ////////////////////////////
     modifier onlyRouter(LoanTypes loanType) {
         if (loanType == LoanTypes.EXTERNAL) {
-            require(
-                msg.sender == address(registry.getExternalLoanRepaymentRouter()),
-                'Only for Repayment Router.'
-            );
+            require(msg.sender == address(registry.getExternalLoanRepaymentRouter()), 'Only for Repayment Router.');
         }
         _;
     }
@@ -72,9 +69,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
         if (loanType == LoanTypes.EXTERNAL) {
             require(
                 address(this) ==
-                    ExternalLoanDebtRegistry(registry.getExternalLoanDebtRegistry()).getTermContract(
-                        agreementId
-                    ),
+                    ExternalLoanDebtRegistry(registry.getExternalLoanDebtRegistry()).getTermContract(agreementId),
                 'Agreement Id is not belong to this Terms Contract.'
             );
         }
@@ -85,10 +80,10 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     function __LoanTermsContractBase_init(Registry _registry) public initializer {
         registry = _registry;
     }
+
     /////////////////////////
     // INTERNAL FUNCTIONS //
     ///////////////////////
-
 
     function _getAmortizationUnitLengthInSeconds(AmortizationUnitType amortizationUnitType)
         internal
@@ -146,8 +141,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
             gracePeriodInDays
         ) = _unpackLoanTermsParametersFromBytes(parameters);
 
-        address principalTokenAddress = registry.getERC20TokenRegistry()
-            .getTokenAddressByIndex(principalTokenIndex);
+        address principalTokenAddress = registry.getERC20TokenRegistry().getTokenAddressByIndex(principalTokenIndex);
 
         // Ensure that the encoded principal token address is valid
         require(principalTokenAddress != address(0), 'Invalid principal token address.');
@@ -184,12 +178,14 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
         return
             _principalAmount
                 .mul(
-                ONE
-                    .add(
-                    _interestRate.mul(ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100).div(YEAR_LENGTH_IN_SECONDS)
+                    ONE
+                        .add(
+                            _interestRate.mul(ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100).div(
+                                YEAR_LENGTH_IN_SECONDS
+                            )
+                        )
+                        .rpow(_durationLengthInSec, ONE)
                 )
-                    .rpow(_durationLengthInSec, ONE)
-            )
                 .div(ONE)
                 .sub(_principalAmount);
     }

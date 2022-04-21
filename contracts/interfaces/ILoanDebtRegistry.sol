@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import '../base/UntangledBase.sol';
 import '../storage/Registry.sol';
 
-abstract contract IExternalLoanDebtRegistry is UntangledBase {
+abstract contract ILoanDebtRegistry is UntangledBase {
     Registry public registry;
 
     // loan -> debtors
-    struct ExternalLoanEntry {
+    struct LoanEntry {
         address lender;
         address loanTermContract;
         address debtor;
@@ -19,19 +21,19 @@ abstract contract IExternalLoanDebtRegistry is UntangledBase {
         uint8 riskScore;
         AssetPurpose assetPurpose;
     }
-    enum AssetPurpose {SALE, PLEDGE}
+    enum AssetPurpose {
+        SALE,
+        PLEDGE
+    }
 
-    mapping(bytes32 => ExternalLoanEntry) entries;
+    mapping(bytes32 => LoanEntry) entries;
 
     mapping(bytes32 => bool) internal manualInterestLoan;
     mapping(bytes32 => uint256) internal manualInterestAmountLoan;
 
     mapping(bytes32 => bool) public completedLoans;
 
-    function initialize(
-        address owner,
-        Registry _registry
-    ) public virtual;
+    function initialize(address owner, Registry _registry) public virtual;
 
     // Validate the availabiliy of Debtor
     function _isDebtorOfLoan(bytes32 tokenId, address debtor) internal view virtual returns (bool);
@@ -56,8 +58,7 @@ abstract contract IExternalLoanDebtRegistry is UntangledBase {
      * is authorized to make 'modifyBeneficiary' mutations to
      * the registry.
      */
-    function modifyBeneficiary(bytes32 agreementId, address newBeneficiary)
-    public virtual;
+    function modifyBeneficiary(bytes32 agreementId, address newBeneficiary) public virtual;
 
     function getLoanDebtor(bytes32 tokenId) public view returns (address) {
         return entries[tokenId].debtor;
@@ -82,15 +83,9 @@ abstract contract IExternalLoanDebtRegistry is UntangledBase {
     /**
      * Returns the timestamp of the block at which a debt agreement was issued.
      */
-    function getIssuanceBlockTimestamp(bytes32 agreementId)
-        public
-        view virtual
-        returns (uint256 timestamp);
+    function getIssuanceBlockTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
 
-    function getLastRepaymentTimestamp(bytes32 agreementId)
-        public
-        view virtual
-        returns (uint256 timestamp);
+    function getLastRepaymentTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
 
     function isManualInterestLoan(bytes32 agreementId) public view virtual returns (bool);
 
@@ -99,10 +94,7 @@ abstract contract IExternalLoanDebtRegistry is UntangledBase {
     /**
      * Returns the terms contract parameters of a given issuance
      */
-    function getTermsContractParameters(bytes32 agreementId)
-    public
-    view virtual
-    returns (bytes32);
+    function getTermsContractParameters(bytes32 agreementId) public view virtual returns (bytes32);
 
     function getExpirationTimestamp(bytes32 agreementId) public view virtual returns (uint256);
 
@@ -111,13 +103,14 @@ abstract contract IExternalLoanDebtRegistry is UntangledBase {
 
     /// @dev Get principal payment info before start doing repayment
     function principalPaymentInfo(bytes32 agreementId)
-    public
-    view virtual
-    returns (
-        uint256 pTokenIndex,
-        uint256 pAmount,
-        address receiver
-    );
+        public
+        view
+        virtual
+        returns (
+            uint256 pTokenIndex,
+            uint256 pAmount,
+            address receiver
+        );
 
     function setCompletedLoan(bytes32 agreementId) public virtual;
 

@@ -1,14 +1,12 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import '../storage/ERC20TokenRegistry.sol';
 import '../interfaces/ISecuritizationPool.sol';
-import "../base/UntangledBase.sol";
-import "../storage/Registry.sol";
+import '../base/UntangledBase.sol';
+import '../storage/Registry.sol';
 
-/**
- * Repayment Router smart contract for External Loan
- */
-abstract contract IExternalLoanRepaymentRouter is UntangledBase {
+abstract contract ILoanRepaymentRouter is UntangledBase {
     enum Errors {
         DEBT_AGREEMENT_NONEXISTENT,
         PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT,
@@ -17,9 +15,7 @@ abstract contract IExternalLoanRepaymentRouter is UntangledBase {
 
     event LogOutputSubmit(bytes32 indexed _agreementId, uint256 indexed _tokenIndex, uint256 _totalAmount);
 
-    function initialize(
-        Registry _registry
-    ) public virtual;
+    function initialize(Registry _registry) public virtual;
 
     event LogRepayment(
         bytes32 indexed _agreementId,

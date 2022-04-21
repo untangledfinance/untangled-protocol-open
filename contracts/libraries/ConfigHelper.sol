@@ -11,9 +11,9 @@ import '../interfaces/ITokenGenerationEventFactory.sol';
 import '../interfaces/IUntangledERC721.sol';
 import '../interfaces/IDistributionOperator.sol';
 import '../interfaces/IDistributionTranche.sol';
-import '../interfaces/IExternalLoanDebtRegistry.sol';
-import '../interfaces/IExternalLoanInterestTermsContract.sol';
-import '../interfaces/IExternalLoanRepaymentRouter.sol';
+import '../interfaces/ILoanDebtRegistry.sol';
+import '../interfaces/ILoanInterestTermsContract.sol';
+import '../interfaces/ILoanRepaymentRouter.sol';
 import '../interfaces/IERC20TokenRegistry.sol';
 import '../interfaces/ITokenTransferProxy.sol';
 
@@ -60,16 +60,17 @@ library ConfigHelper {
         return IUntangledERC721(getAddress(registry, Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN));
     }
 
-    function getExternalLoanDebtRegistry(Registry registry) internal view returns (IExternalLoanDebtRegistry) {
-        return IExternalLoanDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.EXTERNAL_LOAN_DEBT_REGISTRY));
+    function getLoanDebtRegistry(Registry registry) internal view returns (ILoanDebtRegistry) {
+        return ILoanDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_DEBT_REGISTRY));
     }
 
-    function getExternalLoanInterestTermsContract(Registry registry) internal view returns (IExternalLoanInterestTermsContract) {
-        return IExternalLoanInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.EXTERNAL_LOAN_INTEREST_TERMS_CONTRACT));
+    function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
+        return
+            ILoanInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_INTEREST_TERMS_CONTRACT));
     }
 
-    function getExternalLoanRepaymentRouter(Registry registry) internal view returns (IExternalLoanRepaymentRouter) {
-        return IExternalLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.EXTERNAL_LOAN_REPAYMENT_ROUTER));
+    function getLoanRepaymentRouter(Registry registry) internal view returns (ILoanRepaymentRouter) {
+        return ILoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER));
     }
 
     function getERC20TokenRegistry(Registry registry) internal view returns (IERC20TokenRegistry) {

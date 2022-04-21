@@ -1,17 +1,19 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../../storage/Registry.sol';
+import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 
-contract ExternalLoanDebtRegistry is UntangledBase {
+contract LoanDebtRegistry is UntangledBase {
     using ConfigHelper for Registry;
+
     // loan -> debtors
-    struct ExternalLoanEntry {
+    struct LoanEntry {
         address lender;
         address loanTermContract;
         address debtor;
         bytes32 termsParam; // actually inside this param was already included P token index
-        uint256 principalTokenIndex;
+        address principalTokenAddress;
         uint256 salt;
         uint256 issuanceBlockTimestamp;
         uint256 lastRepayTimestamp;
@@ -19,9 +21,12 @@ contract ExternalLoanDebtRegistry is UntangledBase {
         uint8 riskScore;
         AssetPurpose assetPurpose;
     }
-    enum AssetPurpose {SALE, PLEDGE}
+    enum AssetPurpose {
+        SALE,
+        PLEDGE
+    }
 
-    mapping(bytes32 => ExternalLoanEntry) entries;
+    mapping(bytes32 => LoanEntry) entries;
 
     mapping(bytes32 => bool) internal manualInterestLoan;
     mapping(bytes32 => uint256) internal manualInterestAmountLoan;
@@ -39,10 +44,7 @@ contract ExternalLoanDebtRegistry is UntangledBase {
     }
 
     /** CONSTRUCTOR */
-    function initialize(
-        address owner,
-        Registry _registry
-    ) public override initializer {
+    function initialize(address owner, Registry _registry) public override initializer {
         __UntangledBase__init(owner);
         registry = _registry;
     }
@@ -72,7 +74,7 @@ contract ExternalLoanDebtRegistry is UntangledBase {
         address termContract,
         address debtor,
         bytes32 termsContractParameter,
-        uint256 pTokenIndex,
+        address pTokenAddress,
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
@@ -82,7 +84,7 @@ contract ExternalLoanDebtRegistry is UntangledBase {
             lender: beneficiary,
             loanTermContract: termContract,
             debtor: debtor,
-            principalTokenIndex: pTokenIndex,
+            principalTokenAddress: pTokenAddress,
             termsParam: termsContractParameter,
             salt: _salt, //solium-disable-next-line security
             issuanceBlockTimestamp: block.timestamp,
@@ -120,8 +122,8 @@ contract ExternalLoanDebtRegistry is UntangledBase {
         return entry.termsParam;
     }
 
-    function getPrincipalTokenIndex(bytes32 agreementId) public view returns (uint256) {
-        return entries[agreementId].principalTokenIndex;
+    function getPrincipalTokenAddress(bytes32 agreementId) public view returns (address) {
+        return entries[agreementId].principalTokenAddress;
     }
 
     function getBeneficiary(bytes32 agreementId) public view returns (address) {
@@ -195,7 +197,10 @@ contract ExternalLoanDebtRegistry is UntangledBase {
     }
 
     // Update timestamp of the last repayment from Debtor
-    function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp) public onlyExternalLoanInterestTermsContract {
+    function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp)
+        public
+        onlyExternalLoanInterestTermsContract
+    {
         entries[agreementId].lastRepayTimestamp = newTimestamp;
     }
 
@@ -204,13 +209,13 @@ contract ExternalLoanDebtRegistry is UntangledBase {
         public
         view
         returns (
-            uint256 pTokenIndex,
+            address pTokenAddress,
             uint256 pAmount,
             address receiver
         )
     {
         ExternalLoanEntry memory entry = entries[agreementId];
-        pTokenIndex = entry.principalTokenIndex;
+        pTokenAddress = entry.principalTokenAddress;
         pAmount = 0; // @TODO
         receiver = entry.lender;
     }
