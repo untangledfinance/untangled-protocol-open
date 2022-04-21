@@ -17,9 +17,6 @@ All contracts are located under `packages/protocol/contracts`
     - There are two kinds of tests. "Regular" (all local state) and "mainnet forking" (uses state from mainnet). They are located in different folders. Sometimes you write both for the same feature. Use your judgement depending on the change.
 3. Write great commit messages, and put up your PR!
 
-#### Other ways to run
-* `npm run start:no-gasless` is available if gasless transactions are giving you trouble, or if you're having trouble finding the borrower contract address.
-
 ### Contributing
 - See the [`CONTRIBUTING.MD`](./CONTRIBUTING.MD)
 
