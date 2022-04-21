@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/interfaces/IERC721.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
+import '../libraries/ConfigHelper.sol';
 
-abstract contract IUntangledERC721 is IERC721 {
-    function approve(address _to, uint256 _tokenId) public virtual;
+abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
+    Registry public registry;
 
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         external
