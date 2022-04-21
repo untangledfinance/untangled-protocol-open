@@ -1,39 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../base/UntangledBase.sol';
 import '../storage/Registry.sol';
 
-abstract contract ILoanDebtRegistry is UntangledBase {
+abstract contract ILoanRegistry {
     Registry public registry;
 
     // loan -> debtors
     struct LoanEntry {
-        address lender;
         address loanTermContract;
         address debtor;
-        bytes32 termsParam; // actually inside this param was already included P token index
+        bytes32 termsParam; // actually inside this param was already included P token address
         uint256 principalTokenIndex;
         uint256 salt;
         uint256 issuanceBlockTimestamp;
         uint256 lastRepayTimestamp;
         uint256 expirationTimestamp;
         uint8 riskScore;
-        AssetPurpose assetPurpose;
-    }
-    enum AssetPurpose {
-        SALE,
-        PLEDGE
+        Configuration.AssetPurpose assetPurpose;
     }
 
-    mapping(bytes32 => LoanEntry) entries;
+    mapping(bytes32 => LoanEntry) public entries;
 
-    mapping(bytes32 => bool) internal manualInterestLoan;
-    mapping(bytes32 => uint256) internal manualInterestAmountLoan;
+    mapping(bytes32 => bool) public manualInterestLoan;
+    mapping(bytes32 => uint256) public manualInterestAmountLoan;
 
     mapping(bytes32 => bool) public completedLoans;
 
-    function initialize(address owner, Registry _registry) public virtual;
+    function initialize(Registry _registry, address owner) public virtual;
 
     // Validate the availabiliy of Debtor
     function _isDebtorOfLoan(bytes32 tokenId, address debtor) internal view virtual returns (bool);
@@ -43,7 +37,6 @@ abstract contract ILoanDebtRegistry is UntangledBase {
      */
     function insert(
         bytes32 tokenId,
-        address beneficiary,
         address termContract,
         address debtor,
         bytes32 termsContractParameter,
@@ -52,13 +45,6 @@ abstract contract ILoanDebtRegistry is UntangledBase {
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
     ) external virtual returns (bool);
-
-    /**
-     * Modifies the beneficiary of a debt issuance, if the sender
-     * is authorized to make 'modifyBeneficiary' mutations to
-     * the registry.
-     */
-    function modifyBeneficiary(bytes32 agreementId, address newBeneficiary) public virtual;
 
     function getLoanDebtor(bytes32 tokenId) public view returns (address) {
         return entries[tokenId].debtor;
@@ -87,10 +73,6 @@ abstract contract ILoanDebtRegistry is UntangledBase {
 
     function getLastRepaymentTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
 
-    function isManualInterestLoan(bytes32 agreementId) public view virtual returns (bool);
-
-    function getManualInterestAmountLoan(bytes32 agreementId) public view virtual returns (uint256);
-
     /**
      * Returns the terms contract parameters of a given issuance
      */
@@ -113,6 +95,4 @@ abstract contract ILoanDebtRegistry is UntangledBase {
         );
 
     function setCompletedLoan(bytes32 agreementId) public virtual;
-
-    function isCompletedLoan(bytes32 agreementId) public view virtual returns (bool);
 }

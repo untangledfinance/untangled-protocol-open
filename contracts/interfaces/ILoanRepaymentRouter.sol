@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../storage/ERC20TokenRegistry.sol';
 import '../interfaces/ISecuritizationPool.sol';
 import '../base/UntangledBase.sol';
 import '../storage/Registry.sol';

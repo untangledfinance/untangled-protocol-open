@@ -11,11 +11,10 @@ import '../interfaces/ITokenGenerationEventFactory.sol';
 import '../interfaces/IUntangledERC721.sol';
 import '../interfaces/IDistributionOperator.sol';
 import '../interfaces/IDistributionTranche.sol';
-import '../interfaces/ILoanDebtRegistry.sol';
+import '../interfaces/ILoanRegistry.sol';
 import '../interfaces/ILoanInterestTermsContract.sol';
 import '../interfaces/ILoanRepaymentRouter.sol';
-import '../interfaces/IERC20TokenRegistry.sol';
-import '../interfaces/ITokenTransferProxy.sol';
+import '../interfaces/ILoanKernel.sol';
 
 contract PoolManagementLike {
     mapping(address => bool) public isExistingPools;
@@ -60,8 +59,8 @@ library ConfigHelper {
         return IUntangledERC721(getAddress(registry, Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN));
     }
 
-    function getLoanDebtRegistry(Registry registry) internal view returns (ILoanDebtRegistry) {
-        return ILoanDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_DEBT_REGISTRY));
+    function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {
+        return ILoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_DEBT_REGISTRY));
     }
 
     function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
@@ -73,16 +72,8 @@ library ConfigHelper {
         return ILoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER));
     }
 
-    function getERC20TokenRegistry(Registry registry) internal view returns (IERC20TokenRegistry) {
-        return IERC20TokenRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.ERC20_TOKEN_REGISTRY));
-    }
-
-    function getERC20TokenTransferProxy(Registry registry) internal view returns (ITokenTransferProxy) {
-        return ITokenTransferProxy(getAddress(registry, Configuration.CONTRACT_TYPE.ERC20_TOKEN_TRANSFER_PROXY));
-    }
-
-    function getPoolManagementLike(Registry registry) internal view returns (PoolManagementLike) {
-        return PoolManagementLike(getAddress(registry, Configuration.CONTRACT_TYPE.SECURITIZATION_MANAGEMENT_PROJECT));
+    function getLoanKernel(Registry registry) internal view returns (ILoanInterestTermsContract) {
+        return ILoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_KERNEL));
     }
 
     function getDistributionTranche(Registry registry) internal view returns (IDistributionTranche) {

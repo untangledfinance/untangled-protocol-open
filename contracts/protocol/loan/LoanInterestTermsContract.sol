@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import './base/LoanTermsContractBase.sol';
-import './LoanDebtRegistry.sol';
+import '../../interfaces/ILoanRegistry.sol';
 
 contract LoanInterestTermsContract is LoanTermsContractBase {
     mapping(bytes32 => bool) startedLoan;
@@ -92,16 +92,16 @@ contract LoanInterestTermsContract is LoanTermsContractBase {
     {
         InterestParams memory params = _unpackParamsForAgreementID(LoanTypes.EXTERNAL, agreementId);
 
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
 
         uint256 repaidPrincipalAmount = getRepaidPrincipalAmount(agreementId);
         uint256 repaidInterestAmount = getRepaidInterestAmount(agreementId);
-        uint256 lastRepaymentTimestamp = externalDebtRegistry.getLastRepaymentTimestamp(agreementId);
+        uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
 
-        bool isManualInterestLoan = externalDebtRegistry.isManualInterestLoan(agreementId);
+        bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
         uint256 manualInterestAmountLoan;
         if (isManualInterestLoan) {
-            manualInterestAmountLoan = externalDebtRegistry.getManualInterestAmountLoan(agreementId);
+            manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
         }
 
         (expectedPrincipal, expectedInterest) = _getExpectedRepaymentValuesToTimestamp(
@@ -134,7 +134,7 @@ contract LoanInterestTermsContract is LoanTermsContractBase {
     }
 
     function isTermsContractExpired(bytes32 agreementId) public view returns (bool) {
-        uint256 expTimestamp = registry.getExternalLoanDebtRegistry().getExpirationTimestamp(agreementId);
+        uint256 expTimestamp = registry.getLoanRegistry().getExpirationTimestamp(agreementId);
         // solium-disable-next-line
         if (expTimestamp <= block.timestamp) {
             return true;
@@ -143,10 +143,9 @@ contract LoanInterestTermsContract is LoanTermsContractBase {
     }
 
     function registerConcludeLoan(bytes32 agreementId) external returns (bool) {
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
         require(isCompletedRepayment(agreementId), 'Debtor has not completed repayment yet.');
 
-        externalDebtRegistry.setCompletedLoan(agreementId);
+        registry.getLoanRegistry().completedLoans(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);
         return true;
@@ -187,7 +186,7 @@ contract LoanInterestTermsContract is LoanTermsContractBase {
         InterestParams memory params = _unpackParamsForAgreementID(LoanTypes.EXTERNAL, agreementId);
         require(tokenAddress == params.principalTokenAddress, 'LoanTermsContract: Invalid token for repayment.');
 
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
+        LoanRegistry loanRegistry = registry.getLoanRegistry();
         // solium-disable-next-line
         uint256 currentTimestamp = block.timestamp;
 
@@ -229,8 +228,8 @@ contract LoanInterestTermsContract is LoanTermsContractBase {
         }
 
         // Update Debt registry record
-        externalDebtRegistry.updateLastRepaymentTimestamp(agreementId, currentTimestamp);
-        // externalDebtRegistry.selfEvaluateCollateralRatio(agreementId);
+        loanRegistry.updateLastRepaymentTimestamp(agreementId, currentTimestamp);
+        // loanRegistry.selfEvaluateCollateralRatio(agreementId);
 
         // Emit new event
         emit LogRegisterRepayment(agreementId, payer, beneficiary, unitsOfRepayment, tokenAddress);

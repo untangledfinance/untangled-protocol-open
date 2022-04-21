@@ -5,7 +5,7 @@ import '../../../libraries/UnpackLoanParamtersLib.sol';
 import '../../../constants/LoanTyping.sol';
 import '../../../storage/Registry.sol';
 import '../../../libraries/ConfigHelper.sol';
-import '../LoanDebtRegistry.sol';
+import '../LoanRegistry.sol';
 
 contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     using ConfigHelper for Registry;
@@ -60,7 +60,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     ////////////////////////////
     modifier onlyRouter(LoanTypes loanType) {
         if (loanType == LoanTypes.EXTERNAL) {
-            require(msg.sender == address(registry.getExternalLoanRepaymentRouter()), 'Only for Repayment Router.');
+            require(msg.sender == address(registry.getLoanRepaymentRouter()), 'Only for Repayment Router.');
         }
         _;
     }
@@ -68,8 +68,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     modifier onlyMappedToThisContract(LoanTypes loanType, bytes32 agreementId) {
         if (loanType == LoanTypes.EXTERNAL) {
             require(
-                address(this) ==
-                    ExternalLoanDebtRegistry(registry.getExternalLoanDebtRegistry()).getTermContract(agreementId),
+                address(this) == LoanRegistry(registry.LoanRegistry()).getTermContract(agreementId),
                 'Agreement Id is not belong to this Terms Contract.'
             );
         }
@@ -117,9 +116,9 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     {
         bytes32 parameters;
         uint256 issuanceBlockTimestamp = 0;
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
-        issuanceBlockTimestamp = externalDebtRegistry.getIssuanceBlockTimestamp(agreementId);
-        parameters = externalDebtRegistry.getTermsContractParameters(agreementId);
+        LoanRegistry loanRegistry = registry.getLoanRegistry();
+        issuanceBlockTimestamp = loanRegistry.getIssuanceBlockTimestamp(agreementId);
+        parameters = loanRegistry.getTermsContractParameters(agreementId);
         // Index of the token used for principal payments in the Token Registry
         uint256 principalTokenIndex;
         // The principal amount denominated in the aforementioned token.

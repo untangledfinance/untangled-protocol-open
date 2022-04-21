@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../../../interfaces/ILoanDebtRegistry.sol';
+import '../../../interfaces/ILoanRegistry.sol';
 import '../../../interfaces/ILoanInterestTermsContract.sol';
 import '../../../interfaces/IUntangledERC721.sol';
 
@@ -27,21 +27,22 @@ contract LoanAssetToken is IUntangledERC721 {
         returns (uint256 expectedPrincipal, uint256 expectedInterest)
     {
         bytes32 agreementId = bytes32(tokenId);
-        (expectedPrincipal, expectedInterest) = registry
-            .getExternalLoanInterestTermsContract()
-            .getExpectedRepaymentValues(agreementId, timestamp);
+        (expectedPrincipal, expectedInterest) = registry.getLoanInterestTermsContract().getExpectedRepaymentValues(
+            agreementId,
+            timestamp
+        );
     }
 
     function getExpirationTimestamp(uint256 _tokenId) public view returns (uint256) {
-        return registry.getLoanDebtRegistry().getExpirationTimestamp(bytes32(_tokenId));
+        return registry.getLoanRegistry().getExpirationTimestamp(bytes32(_tokenId));
     }
 
     function getRiskScore(uint256 _tokenId) public view returns (uint8) {
-        return registry.getLoanDebtRegistry().getRiskScore(bytes32(_tokenId));
+        return registry.getLoanRegistry().getRiskScore(bytes32(_tokenId));
     }
 
     function getAssetPurpose(uint256 _tokenId) public view returns (uint8) {
-        return registry.getLoanDebtRegistry().getAssetPurpose(bytes32(_tokenId));
+        return registry.getLoanRegistry().getAssetPurpose(bytes32(_tokenId));
     }
 
     function getInterestRate(uint256 _tokenId) public view returns (uint256 beneficiary) {

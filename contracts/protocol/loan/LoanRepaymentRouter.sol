@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import './LoanDebtRegistry.sol';
+import './LoanRegistry.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
 import './LoanInterestTermsContract.sol';
-import '../../storage/ERC20TokenRegistry.sol';
 import '../../interfaces/ISecuritizationPool.sol';
-import '../../interfaces/ITokenTransferProxy.sol';
 
 /**
  * Repayment Router smart contract for Loan
@@ -51,7 +49,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         require(_amount > 0, 'Amount must greater than 0.');
 
         // Ensure agreement exists.
-        if (!registry.getExternalLoanDebtRegistry().doesEntryExist(_agreementId)) {
+        if (!registry.getLoanRegistry().doesEntryExist(_agreementId)) {
             emit LogError(uint8(Errors.DEBT_AGREEMENT_NONEXISTENT), _agreementId);
             return false;
         }
@@ -75,11 +73,11 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     ) internal returns (bool) {
         // Notify terms contract
 
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
-        address termsContract = externalDebtRegistry.getTermContract(_agreementId);
-        address beneficiary = externalDebtRegistry.getBeneficiary(_agreementId);
+        LoanRegistry loanRegistry = registry.getLoanRegistry();
+        address termsContract = loanRegistry.getTermContract(_agreementId);
+        address beneficiary = loanRegistry.getBeneficiary(_agreementId);
 
-        uint256 remains = ExternalLoanInterestTermsContract(termsContract).registerRepayment(
+        uint256 remains = LoanInterestTermsContract(termsContract).registerRepayment(
             _agreementId,
             _payer,
             beneficiary,
@@ -115,12 +113,9 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     ) public whenNotPaused returns (uint256) {
         require(
             _assertRepaymentRequest(agreementId, msg.sender, amount, tokenAddress),
-            'ExternalLoanRepaymentRouter: Invalid repayment request'
+            'LoanRepaymentRouter: Invalid repayment request'
         );
-        require(
-            _doRepay(agreementId, msg.sender, amount, tokenAddress),
-            'ExternalLoanRepaymentRouter: Repayment has failed'
-        );
+        require(_doRepay(agreementId, msg.sender, amount, tokenAddress), 'LoanRepaymentRouter: Repayment has failed');
         return amount;
     }
 
@@ -134,19 +129,19 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         uint256 pAmount;
         address lender;
 
-        ExternalLoanDebtRegistry externalDebtRegistry = registry.getExternalLoanDebtRegistry();
+        LoanRegistry loanRegistry = registry.getlLoanRegistry();
 
         for (uint256 i = 0; i < _agreementIds.length; i++) {
-            (tokenIndex, pAmount, lender) = externalDebtRegistry.principalPaymentInfo(_agreementIds[i]);
+            (tokenIndex, pAmount, lender) = loanRegistry.principalPaymentInfo(_agreementIds[i]);
 
             //TODO: Add validation
-            // require(lender == msg.sender, "ExternalLoanRepaymentRouter: Invalid caller");
+            // require(lender == msg.sender, "LoanRepaymentRouter: Invalid caller");
 
             address tokenAddress = registry.getERC20TokenRegistry().getTokenAddressByIndex(tokenIndex);
 
             require(
                 _doRepay(_agreementIds[i], address(0x0), amounts[i], tokenAddress),
-                'ExternalLoanRepaymentRouter: Repayment has failed'
+                'LoanRepaymentRouter: Repayment has failed'
             );
 
             ERC20PresetMinterPauser(tokenAddress).mint(lender, amounts[i]);
@@ -173,11 +168,11 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         for (uint256 i = 0; i < agreementIds.length; i++) {
             require(
                 _assertRepaymentRequest(agreementIds[i], msg.sender, amounts[i], tokenAddress),
-                'ExternalLoanRepaymentRouter: Invalid repayment request'
+                'LoanRepaymentRouter: Invalid repayment request'
             );
             require(
                 _doRepay(agreementIds[i], msg.sender, amounts[i], tokenAddress),
-                'ExternalLoanRepaymentRouter: Repayment has failed'
+                'LoanRepaymentRouter: Repayment has failed'
             );
         }
         emit LogRepayments(agreementIds, msg.sender, amounts);

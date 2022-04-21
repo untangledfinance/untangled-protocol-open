@@ -16,9 +16,10 @@ library Configuration {
         DISTRIBUTION_TRANCHE,
         LOAN_ASSET_TOKEN,
         ACCEPTED_INVOICE_TOKEN,
-        LOAN_DEBT_REGISTRY,
+        LOAN_REGISTRY,
         LOAN_INTEREST_TERMS_CONTRACT,
         LOAN_REPAYMENT_ROUTER,
+        LOAN_KERNEL,
         ERC20_TOKEN_REGISTRY,
         ERC20_TOKEN_TRANSFER_PROXY,
         SECURITIZATION_MANAGEMENT_PROJECT,
@@ -29,5 +30,10 @@ library Configuration {
     enum NOTE_TOKEN_TYPE {
         SENIOR,
         JUNIOR
+    }
+
+    enum AssetPurpose {
+        SALE,
+        PLEDGE
     }
 }
