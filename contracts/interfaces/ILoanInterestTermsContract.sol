@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import '../storage/Registry.sol';
+
 abstract contract ILoanInterestTermsContract {
-    mapping(bytes32 => bool) startedLoan;
+    Registry public registry;
+
+    mapping(bytes32 => bool) public startedLoan;
 
     mapping(bytes32 => uint256) public repaidPrincipalAmounts;
     mapping(bytes32 => uint256) public repaidInterestAmounts;

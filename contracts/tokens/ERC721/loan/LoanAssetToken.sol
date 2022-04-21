@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import '../../../interfaces/ILoanRegistry.sol';
 import '../../../interfaces/ILoanInterestTermsContract.sol';
 import '../../../interfaces/IUntangledERC721.sol';
+import '../../../libraries/ConfigHelper.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan

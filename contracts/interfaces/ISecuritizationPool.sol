@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import '../storage/Registry.sol';
 import '../base/UntangledBase.sol';
-import '../libraries/ConfigHelper.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
     Registry public registry;
