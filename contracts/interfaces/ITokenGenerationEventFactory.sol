@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ITokenGenerationEventFactory {
+import '../storage/Registry.sol';
+
+abstract contract ITokenGenerationEventFactory {
+    Registry public registry;
+
+    address[] public tgeAddresses;
+
+    mapping(address => bool) public isExistingTge;
+
     function createNewSaleInstance(
         address issuerTokenController,
         address pool,
@@ -9,5 +17,5 @@ interface ITokenGenerationEventFactory {
         address currency,
         uint8 saleType,
         bool longSale
-    ) external returns (address);
+    ) external virtual returns (address);
 }

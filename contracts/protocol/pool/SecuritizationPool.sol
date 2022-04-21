@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import '../../interfaces/IUntangledERC721.sol';
 import '../../interfaces/INoteToken.sol';
-import '../../interfaces/IMintedTokenGenerationEvent.sol';
+import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../libraries/ConfigHelper.sol';
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
+import '../../libraries/TransferHelper.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol';
 
@@ -14,12 +15,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** CONSTRUCTOR */
     function initialize(
-        address owner,
         Registry _registry,
         address _currency,
         uint32 _minFirstLossCushion
     ) public override initializer {
-        __UntangledBase__init(owner);
+        __UntangledBase__init(_msgSender());
 
         registry = _registry;
 
@@ -113,7 +113,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function pushTokenAssetAddress(address tokenAddress) private {
-        tokenAssetAddresses.push(tokenAddress);
+        if (!existsTokenAssetAddress[tokenAddress]) tokenAssetAddresses.push(tokenAddress);
         existsTokenAssetAddress[tokenAddress] = true;
     }
 
@@ -123,6 +123,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256 tokenId,
         bytes memory data
     ) external returns (bytes4) {
+        require(
+            _msgSender() == address(registry.getAcceptedInvoiceToken()) ||
+                _msgSender() == address(registry.getLoanAssetToken()),
+            'SecuritizationPool: Must be token issued by Untangled'
+        );
+        nftAssets.push(NFTAsset({tokenAddress: _msgSender(), tokenId: tokenId}));
         return this.onERC721Received.selector;
     }
 
@@ -168,22 +174,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
-    function collectAssets(
-        address tokenAddress,
-        address from,
-        uint256[] calldata tokenIds
-    ) external override whenNotPaused nonReentrant notClosingStage onlyRole(ORIGINATOR_ROLE) {
-        require(
-            tokenAddress == address(registry.getAcceptedInvoiceToken()) ||
-                tokenAddress == address(registry.getLoanAssetToken()),
-            'SecuritizationPool: Must be token issued by Untangled'
-        );
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
-            nftAssets.push(NFTAsset({tokenAddress: tokenAddress, tokenId: tokenIds[i]}));
-        }
-        IUntangledERC721(tokenAddress).safeBatchTransferFrom(from, address(this), tokenIds);
-    }
-
     function exportAssets(
         address tokenAddress,
         address toPoolAddress,
@@ -192,8 +182,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIds.length; ++i) {
             require(removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddress).approve(toPoolAddress, tokenIds[i]);
+            IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
-        ISecuritizationPool(toPoolAddress).collectAssets(tokenAddress, address(this), tokenIds);
     }
 
     function withdrawAssets(
@@ -207,15 +197,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
-    function updateExistedAsset() external override whenNotPaused nonReentrant {
-        uint256 i = 0;
-        while (i < getNFTAssetsLength()) {
-            if (!IUntangledERC721(nftAssets[i].tokenAddress).exists(nftAssets[i].tokenId)) {
-                removeNFTAssetIndex(i);
-            } else i++;
-        }
-    }
-
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,
@@ -225,13 +206,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             tokenAddresses.length == senders.length && senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
-        ISecuritizationManager securitizationManager = registry.getSecuritizationManager();
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(
-                securitizationManager.isExistingNoteToken(
-                    INoteToken(tokenAddresses[i]).poolAddress(),
-                    tokenAddresses[i]
-                ),
+                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
             IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]);
@@ -251,13 +228,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-        ISecuritizationManager securitizationManager = registry.getSecuritizationManager();
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(
-                securitizationManager.isExistingNoteToken(
-                    INoteToken(tokenAddresses[i]).poolAddress(),
-                    tokenAddresses[i]
-                ),
+                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
             require(
@@ -305,9 +278,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint64 _timeStartEarningInterest
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
         if (tgeAddress != address(0)) {
-            IMintedTokenGenerationEvent mintedTokenGenrationEvent = IMintedTokenGenerationEvent(tgeAddress);
+            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
             require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
-            IMintedTokenGenerationEvent(tgeAddress).setupLongSale(
+            MintedIncreasingInterestTGE(tgeAddress).setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
@@ -315,7 +288,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
         if (secondTGEAddress != address(0)) {
             require(
-                IMintedTokenGenerationEvent(secondTGEAddress).finalized(),
+                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
             );
         }
@@ -388,7 +361,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             _paidPrincipalAmountSOT;
         paidPrincipalAmountSOT = paidPrincipalAmountSOT + _paidPrincipalAmountSOT;
         require(
-            IMintedTokenGenerationEvent(tgeAddress).currencyRaised() >= paidPrincipalAmountSOT,
+            MintedIncreasingInterestTGE(tgeAddress).currencyRaised() >= paidPrincipalAmountSOT,
             'SecuritizationPool: exceed amount paid for SOT'
         );
     }

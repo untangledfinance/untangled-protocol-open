@@ -17,7 +17,11 @@ abstract contract UntangledBase is
 {
     bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
-    function __UntangledBase__init(address owner) public initializer {
+    function __UntangledBase__init(address owner) internal onlyInitializing {
+        __UntangledBase__init_unchained(owner);
+    }
+
+    function __UntangledBase__init_unchained(address owner) internal onlyInitializing {
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
         __AccessControlEnumerable_init_unchained();

@@ -9,7 +9,7 @@ contract Registry is UntangledBase {
     event AddressUpdated(address owner, uint8 index, address oldValue, address newValue);
 
     function initialize() public initializer {
-        __UntangledBase__init(address(this));
+        __UntangledBase__init(_msgSender());
     }
 
     function setAddress(uint8 addressIndex, address newAddress) private {
@@ -56,6 +56,15 @@ contract Registry is UntangledBase {
         setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR), newAddress);
     }
 
+    function setDistributionAssessor(address newAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR), newAddress);
+    }
+
     function setLoanAssetToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
         setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN), newAddress);
     }
@@ -71,5 +80,14 @@ contract Registry is UntangledBase {
 
     function setDistributionTranche(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
         setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE), newAddress);
+    }
+
+    function setSecuritizationPoolValueService(address newAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE), newAddress);
     }
 }

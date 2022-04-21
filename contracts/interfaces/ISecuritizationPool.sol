@@ -15,7 +15,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     address public sotToken;
     address public jotToken;
     address public underlyingCurrency;
-    uint8 public secondaryMarket;
 
     //CycleState
     CycleState public state;
@@ -83,7 +82,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     }
 
     function initialize(
-        address owner,
         Registry _registry,
         address _currency,
         uint32 _minFirstLossCushion
@@ -111,12 +109,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32[] calldata _periodsAndWriteOffs
     ) external virtual;
 
-    function collectAssets(
-        address tokenAddress,
-        address from,
-        uint256[] calldata tokenIds
-    ) external virtual;
-
     function exportAssets(
         address tokenAddress,
         address toPoolAddress,
@@ -128,8 +120,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external virtual;
-
-    function updateExistedAsset() external virtual;
 
     function collectERC20Assets(
         address[] calldata tokenAddresses,

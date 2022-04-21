@@ -2,19 +2,20 @@
 pragma solidity ^0.8.0;
 
 import '../libraries/ConfigHelper.sol';
+import '../tokens/ERC20/NoteToken.sol';
 
-interface INoteTokenFactory {
-    function changeTokenController(address token, address newController) external;
+abstract contract INoteTokenFactory {
+    Registry public registry;
 
-    function createSOTToken(
+    NoteToken[] public tokens;
+
+    mapping(address => bool) public isExistingTokens;
+
+    function changeMinterRole(address token, address newController) external virtual;
+
+    function createToken(
         address poolAddress,
         Configuration.NOTE_TOKEN_TYPE noteTokenType,
         uint8 _nDecimals
-    ) external returns (address);
-
-    function createJOTToken(
-        address poolAddress,
-        Configuration.NOTE_TOKEN_TYPE noteTokenType,
-        uint8 _nDecimals
-    ) external returns (address);
+    ) external virtual returns (address);
 }

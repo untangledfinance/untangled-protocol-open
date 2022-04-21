@@ -20,6 +20,9 @@ import '../interfaces/ITokenTransferProxy.sol';
 contract PoolManagementLike {
     mapping(address => bool) public isExistingPools;
 }
+import '../interfaces/IDistributionAssessor.sol';
+import '../interfaces/ISecuritizationPoolValueService.sol';
+import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -83,5 +86,27 @@ library ConfigHelper {
 
     function getDistributionTranche(Registry registry) internal view returns (IDistributionTranche) {
         return IDistributionTranche(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE));
+    }
+
+    function getSecuritizationPoolValueService(Registry registry)
+        internal
+        view
+        returns (ISecuritizationPoolValueService)
+    {
+        return
+            ISecuritizationPoolValueService(
+                getAddress(registry, Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE)
+            );
+    }
+
+    function getDistributionAssessor(Registry registry) internal view returns (IDistributionAssessor) {
+        return IDistributionAssessor(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR));
+    }
+
+    function getMintedIncreasingInterestTGE(Registry registry) internal view returns (MintedIncreasingInterestTGE) {
+        return
+            MintedIncreasingInterestTGE(
+                getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
+            );
     }
 }
