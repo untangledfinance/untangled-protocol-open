@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import './LoanRegistry.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
-import './LoanInterestTermsContract.sol';
+import '../../intefaces/ILoanInterestTermsContract.sol';
 import '../../interfaces/ISecuritizationPool.sol';
+import '../../interfaces/ILoanRegistry.sol';
 
 /**
  * Repayment Router smart contract for Loan
