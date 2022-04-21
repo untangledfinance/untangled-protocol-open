@@ -36,8 +36,6 @@ abstract contract ILoanInterestTermsContract {
 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view virtual returns (bool[] memory);
 
-    function isCompletedRepayment(bytes32 agreementId) public view virtual returns (bool);
-
     function setCompletedRepayment(bytes32 agreementId) public virtual;
 
     /**

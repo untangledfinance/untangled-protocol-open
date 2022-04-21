@@ -7,6 +7,10 @@ import '../storage/Registry.sol';
 abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
     Registry public registry;
 
+    function mint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
+        _mint(to, tokenId);
+    }
+
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         external
         view

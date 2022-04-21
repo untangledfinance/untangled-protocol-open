@@ -141,10 +141,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return result;
     }
 
-    function isCompletedRepayment(bytes32 agreementId) public view override returns (bool) {
-        return completedRepayment[agreementId];
-    }
-
     function setCompletedRepayment(bytes32 agreementId) public override {
         completedRepayment[agreementId] = true;
     }
@@ -214,7 +210,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     function registerConcludeLoan(bytes32 agreementId) external override returns (bool) {
-        require(isCompletedRepayment(agreementId), 'Debtor has not completed repayment yet.');
+        require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
 
         registry.getLoanRegistry().completedLoans(agreementId);
 
