@@ -20,7 +20,7 @@ contract SecuritizationPoolValueService is
         uint256 interestRate,
         uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
         uint256 overdue,
-        AssetPurpose assetPurpose
+        Configuration.ASSET_PURPOSE assetPurpose
     ) private view returns (uint256) {
         uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
         bool hasValidRiskScore = riskScoresLength > 0;
@@ -51,7 +51,7 @@ contract SecuritizationPoolValueService is
             loanAssetToken.getInterestRate(tokenId),
             loanAssetToken.getRiskScore(tokenId),
             overdue,
-            AssetPurpose(loanAssetToken.getAssetPurpose(tokenId))
+            loanAssetToken.getAssetPurpose(tokenId)
         );
 
         if (timestamp < expirationTimestamp) {
@@ -83,7 +83,7 @@ contract SecuritizationPoolValueService is
         IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
         uint256 interestRate = loanAssetToken.getInterestRate(tokenId);
 
-        if (AssetPurpose(loanAssetToken.getAssetPurpose(tokenId)) == AssetPurpose.PLEDGE) {
+        if (loanAssetToken.getAssetPurpose(tokenId) == Configuration.ASSET_PURPOSE.PLEDGE) {
             uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
 
             bool hasValidRiskScore = riskScoresLength > 0;
@@ -143,7 +143,7 @@ contract SecuritizationPoolValueService is
             interestRate,
             0,
             overdue,
-            AssetPurpose.SALE
+            Configuration.ASSET_PURPOSE.SALE
         );
 
         if (timestamp < expirationTimestamp) {

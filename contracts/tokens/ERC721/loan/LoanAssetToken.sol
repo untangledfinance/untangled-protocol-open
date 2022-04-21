@@ -17,8 +17,10 @@ contract LoanAssetToken is IUntangledERC721 {
         string memory name,
         string memory symbol,
         string memory baseTokenURI
-    ) public override initializer {
+    ) public initializer {
         __ERC721PresetMinterPauserAutoId_init(name, symbol, baseTokenURI);
+
+        registry = _registry;
     }
 
     function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
@@ -33,30 +35,31 @@ contract LoanAssetToken is IUntangledERC721 {
         );
     }
 
-    function getExpirationTimestamp(uint256 _tokenId) public view returns (uint256) {
+    function getExpirationTimestamp(uint256 _tokenId) public view override returns (uint256) {
         return registry.getLoanRegistry().getExpirationTimestamp(bytes32(_tokenId));
     }
 
-    function getRiskScore(uint256 _tokenId) public view returns (uint8) {
+    function getRiskScore(uint256 _tokenId) public view override returns (uint8) {
         return registry.getLoanRegistry().getRiskScore(bytes32(_tokenId));
     }
 
-    function getAssetPurpose(uint256 _tokenId) public view returns (uint8) {
+    function getAssetPurpose(uint256 _tokenId) public view override returns (Configuration.ASSET_PURPOSE) {
         return registry.getLoanRegistry().getAssetPurpose(bytes32(_tokenId));
     }
 
-    function getInterestRate(uint256 _tokenId) public view returns (uint256 beneficiary) {
+    function getInterestRate(uint256 _tokenId) public view override returns (uint256 beneficiary) {
         return registry.getLoanInterestTermsContract().getInterestRate(bytes32(_tokenId));
     }
 
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         public
         view
+        override
         returns (uint256 expectedRepaymentValue)
     {
         uint256 principalAmount;
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
-        expectedRepaymentValue = principalAmount.add(interestAmount);
+        expectedRepaymentValue = principalAmount + interestAmount;
     }
 }

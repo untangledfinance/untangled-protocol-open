@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import '../../../libraries/UnpackLoanParamtersLib.sol';
-import '../../../constants/LoanTyping.sol';
-import '../../../storage/Registry.sol';
 import '../../../libraries/ConfigHelper.sol';
-import '../LoanRegistry.sol';
+import '../../../libraries/UntangledMath.sol';
+import '../../../interfaces/ILoanRegistry.sol';
+import '../../../base/UntangledBase.sol';
 
-contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
+contract LoanTermsContractBase is UntangledBase {
     using ConfigHelper for Registry;
 
     Registry public registry;
@@ -58,25 +58,26 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     //////////////////////////////
     // MODIFIERS              ///
     ////////////////////////////
-    modifier onlyRouter(LoanTypes loanType) {
-        if (loanType == LoanTypes.EXTERNAL) {
-            require(msg.sender == address(registry.getLoanRepaymentRouter()), 'Only for Repayment Router.');
-        }
+    modifier onlyRouter() {
+        require(
+            msg.sender == address(registry.getLoanRepaymentRouter()),
+            'LoanTermsContractBase: Only for Repayment Router.'
+        );
         _;
     }
 
-    modifier onlyMappedToThisContract(LoanTypes loanType, bytes32 agreementId) {
-        if (loanType == LoanTypes.EXTERNAL) {
-            require(
-                address(this) == LoanRegistry(registry.LoanRegistry()).getTermContract(agreementId),
-                'Agreement Id is not belong to this Terms Contract.'
-            );
-        }
+    modifier onlyMappedToThisContract(bytes32 agreementId) {
+        require(
+            address(this) == registry.getLoanRegistry().getTermContract(agreementId),
+            'LoanTermsContractBase: Agreement Id is not belong to this Terms Contract.'
+        );
         _;
     }
 
     /** CONSTRUCTOR */
-    function __LoanTermsContractBase_init(Registry _registry) public initializer {
+    function __LoanTermsContractBase_init(Registry _registry) public onlyInitializing {
+        __UntangledBase__init_unchained(_msgSender());
+
         registry = _registry;
     }
 
@@ -84,22 +85,22 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     // INTERNAL FUNCTIONS //
     ///////////////////////
 
-    function _getAmortizationUnitLengthInSeconds(AmortizationUnitType amortizationUnitType)
+    function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
         internal
         pure
         returns (uint256)
     {
-        if (amortizationUnitType == AmortizationUnitType.MINUTES) {
+        if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
             return MINUTE_LENGTH_IN_SECONDS;
-        } else if (amortizationUnitType == AmortizationUnitType.HOURS) {
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {
             return HOUR_LENGTH_IN_SECONDS;
-        } else if (amortizationUnitType == AmortizationUnitType.DAYS) {
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.DAYS) {
             return DAY_LENGTH_IN_SECONDS;
-        } else if (amortizationUnitType == AmortizationUnitType.WEEKS) {
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.WEEKS) {
             return WEEK_LENGTH_IN_SECONDS;
-        } else if (amortizationUnitType == AmortizationUnitType.MONTHS) {
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MONTHS) {
             return MONTH_LENGTH_IN_SECONDS;
-        } else if (amortizationUnitType == AmortizationUnitType.YEARS) {
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.YEARS) {
             return YEAR_LENGTH_IN_SECONDS;
         } else {
             revert('Unknown amortization unit type.');
@@ -109,18 +110,16 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
-    function _unpackParamsForAgreementID(LoanTypes loanType, bytes32 agreementId)
+    function _unpackParamsForAgreementID(bytes32 agreementId)
         internal
         view
-        returns (InterestParams memory params)
+        returns (UnpackLoanParamtersLib.InterestParams memory params)
     {
         bytes32 parameters;
         uint256 issuanceBlockTimestamp = 0;
-        LoanRegistry loanRegistry = registry.getLoanRegistry();
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
         issuanceBlockTimestamp = loanRegistry.getIssuanceBlockTimestamp(agreementId);
         parameters = loanRegistry.getTermsContractParameters(agreementId);
-        // Index of the token used for principal payments in the Token Registry
-        uint256 principalTokenIndex;
         // The principal amount denominated in the aforementioned token.
         uint256 principalAmount;
         // The interest rate accrued per amortization unit.
@@ -132,37 +131,27 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
         uint256 gracePeriodInDays;
 
         (
-            principalTokenIndex,
             principalAmount,
             interestRate,
             rawAmortizationUnitType,
             termLengthInAmortizationUnits,
             gracePeriodInDays
-        ) = _unpackLoanTermsParametersFromBytes(parameters);
+        ) = UnpackLoanParamtersLib.unpackParametersFromBytes(parameters);
 
-        address principalTokenAddress = registry.getERC20TokenRegistry().getTokenAddressByIndex(principalTokenIndex);
-
-        // Ensure that the encoded principal token address is valid
-        require(principalTokenAddress != address(0), 'Invalid principal token address.');
-
-        // Before we cast to `AmortizationUnitType`, ensure that the raw value being stored is valid.
-        require(rawAmortizationUnitType <= uint256(AmortizationUnitType.YEARS), 'Amortization Unit Type is invalid.');
-
-        AmortizationUnitType amortizationUnitType = AmortizationUnitType(rawAmortizationUnitType);
-
-        // Calculate term length base on Amortization Unit and number
-        uint256 termLengthInSeconds = termLengthInAmortizationUnits.mul(
-            _getAmortizationUnitLengthInSeconds(amortizationUnitType)
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType = UnpackLoanParamtersLib.AmortizationUnitType(
+            rawAmortizationUnitType
         );
 
+        // Calculate term length base on Amortization Unit and number
+        uint256 termLengthInSeconds = termLengthInAmortizationUnits *
+            _getAmortizationUnitLengthInSeconds(amortizationUnitType);
+
         return
-            InterestParams({
-                principalTokenIndex: principalTokenIndex,
-                principalTokenAddress: principalTokenAddress,
+            UnpackLoanParamtersLib.InterestParams({
                 principalAmount: principalAmount,
                 interestRate: interestRate,
                 termStartUnixTimestamp: issuanceBlockTimestamp,
-                termEndUnixTimestamp: termLengthInSeconds.add(issuanceBlockTimestamp),
+                termEndUnixTimestamp: termLengthInSeconds + issuanceBlockTimestamp,
                 amortizationUnitType: amortizationUnitType,
                 termLengthInAmortizationUnits: termLengthInAmortizationUnits
             });
@@ -175,25 +164,23 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
         uint256 _durationLengthInSec
     ) internal pure returns (uint256) {
         return
-            _principalAmount
-                .mul(
-                    ONE
-                        .add(
-                            _interestRate.mul(ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100).div(
-                                YEAR_LENGTH_IN_SECONDS
-                            )
-                        )
-                        .rpow(_durationLengthInSec, ONE)
-                )
-                .div(ONE)
-                .sub(_principalAmount);
+            (_principalAmount *
+                UntangledMath.rpow(
+                    UntangledMath.ONE +
+                        (_interestRate * (UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) /
+                        YEAR_LENGTH_IN_SECONDS,
+                    _durationLengthInSec,
+                    UntangledMath.ONE
+                )) /
+            UntangledMath.ONE -
+            _principalAmount;
     }
 
     /**
      * Calculate values which Debtor need to pay to conclude current Loan
      */
     function _getExpectedRepaymentValuesToTimestamp(
-        InterestParams memory _params,
+        UnpackLoanParamtersLib.InterestParams memory _params,
         uint256 _lastRepaymentTimestamp, // timestamp of last repayment from debtor
         uint256 _timestamp,
         uint256 repaidPrincipalAmount,
@@ -201,7 +188,7 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
         bool isManualInterestLoan,
         uint256 manualInterestAmountLoan
     ) internal pure returns (uint256 expectedPrinciapal, uint256 expectedInterest) {
-        uint256 outstandingPrincipal = _params.principalAmount.sub(repaidPrincipalAmount);
+        uint256 outstandingPrincipal = _params.principalAmount - repaidPrincipalAmount;
 
         expectedPrinciapal = outstandingPrincipal;
 
@@ -236,8 +223,8 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
             return 0;
         }
         uint256 interest = 0;
-        uint256 elapseTimeFromLastRepay = _timestamp.sub(_lastRepayTimestamp);
-        uint256 elapseTimeFromStart = _timestamp.sub(_startTermTimestamp);
+        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
+        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
@@ -276,10 +263,5 @@ contract LoanTermsContractBase is LoanTyping, UnpackLoanParamtersLib {
             interest = 0;
         }
         return interest;
-    }
-
-    function getStartDateInTimestamp(uint256 _timestamp) private pure returns (uint256) {
-        uint256 secondInDay = _timestamp.mod(DAY_LENGTH_IN_SECONDS);
-        return _timestamp.sub(secondInDay);
     }
 }

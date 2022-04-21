@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
 import '../libraries/ConfigHelper.sol';
+import '../storage/Registry.sol';
 
 abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
     Registry public registry;
@@ -19,5 +20,5 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
 
     function getRiskScore(uint256 agreementId) external view virtual returns (uint8);
 
-    function getAssetPurpose(uint256 agreementId) external view virtual returns (uint8);
+    function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
 }

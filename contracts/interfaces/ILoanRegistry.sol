@@ -10,14 +10,14 @@ abstract contract ILoanRegistry {
     struct LoanEntry {
         address loanTermContract;
         address debtor;
+        address principalTokenAddress;
         bytes32 termsParam; // actually inside this param was already included P token address
-        uint256 principalTokenIndex;
         uint256 salt;
         uint256 issuanceBlockTimestamp;
         uint256 lastRepayTimestamp;
         uint256 expirationTimestamp;
         uint8 riskScore;
-        Configuration.AssetPurpose assetPurpose;
+        Configuration.ASSET_PURPOSE assetPurpose;
     }
 
     mapping(bytes32 => LoanEntry) public entries;
@@ -27,10 +27,7 @@ abstract contract ILoanRegistry {
 
     mapping(bytes32 => bool) public completedLoans;
 
-    function initialize(Registry _registry, address owner) public virtual;
-
-    // Validate the availabiliy of Debtor
-    function _isDebtorOfLoan(bytes32 tokenId, address debtor) internal view virtual returns (bool);
+    function initialize(Registry _registry) public virtual;
 
     /**
      * Record new External Loan to blockchain
@@ -40,21 +37,17 @@ abstract contract ILoanRegistry {
         address termContract,
         address debtor,
         bytes32 termsContractParameter,
-        uint256 pTokenIndex,
+        address pTokenAddress,
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
     ) external virtual returns (bool);
 
-    function getLoanDebtor(bytes32 tokenId) public view returns (address) {
-        return entries[tokenId].debtor;
-    }
+    function getLoanDebtor(bytes32 tokenId) public view virtual returns (address);
 
-    function getLoanTermParams(bytes32 tokenId, address debtor) public view virtual returns (bytes32);
+    function getLoanTermParams(bytes32 tokenId) public view virtual returns (bytes32);
 
-    function getPrincipalTokenIndex(bytes32 agreementId) public view virtual returns (uint256);
-
-    function getBeneficiary(bytes32 agreementId) public view virtual returns (address);
+    function getPrincipalTokenAddress(bytes32 agreementId) public view virtual returns (address);
 
     function getDebtor(bytes32 agreementId) public view virtual returns (address);
 
@@ -62,9 +55,7 @@ abstract contract ILoanRegistry {
 
     function getRiskScore(bytes32 agreementId) public view virtual returns (uint8);
 
-    function getAssetPurpose(bytes32 agreementId) public view virtual returns (uint8);
-
-    function doesEntryExist(bytes32 agreementId) public view virtual returns (bool);
+    function getAssetPurpose(bytes32 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
 
     /**
      * Returns the timestamp of the block at which a debt agreement was issued.
@@ -88,11 +79,7 @@ abstract contract ILoanRegistry {
         public
         view
         virtual
-        returns (
-            uint256 pTokenIndex,
-            uint256 pAmount,
-            address receiver
-        );
+        returns (address pTokenAddress, uint256 pAmount);
 
     function setCompletedLoan(bytes32 agreementId) public virtual;
 }

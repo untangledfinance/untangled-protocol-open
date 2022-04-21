@@ -32,7 +32,7 @@ library Configuration {
         JUNIOR
     }
 
-    enum AssetPurpose {
+    enum ASSET_PURPOSE {
         SALE,
         PLEDGE
     }

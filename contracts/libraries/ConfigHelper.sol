@@ -60,7 +60,7 @@ library ConfigHelper {
     }
 
     function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {
-        return ILoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_DEBT_REGISTRY));
+        return ILoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REGISTRY));
     }
 
     function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
@@ -72,7 +72,7 @@ library ConfigHelper {
         return ILoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER));
     }
 
-    function getLoanKernel(Registry registry) internal view returns (ILoanInterestTermsContract) {
+    function getLoanKernel(Registry registry) internal view returns (ILoanKernel) {
         return ILoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_KERNEL));
     }
 

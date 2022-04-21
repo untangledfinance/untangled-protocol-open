@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../protocol/loan/base/LoanTermsContractBase.sol';
-
-contract ILoanInterestTermsContract is LoanTermsContractBase {
+abstract contract ILoanInterestTermsContract {
     mapping(bytes32 => bool) startedLoan;
 
     mapping(bytes32 => uint256) public repaidPrincipalAmounts;

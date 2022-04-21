@@ -10,7 +10,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
 
     /** CONSTRUCTOR */
     function initialize(Registry _registry) public override initializer {
-        __UntangledBase__init(owner);
+        __UntangledBase__init(_msgSender());
         registry = _registry;
     }
 
@@ -39,7 +39,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
-    ) external onlyLoanKernel returns (bool) {
+    ) external override onlyLoanKernel returns (bool) {
         require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
         LoanEntry memory newEntry = LoanEntry({
             loanTermContract: termContract,
@@ -50,69 +50,61 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
             issuanceBlockTimestamp: block.timestamp,
             lastRepayTimestamp: 0,
             expirationTimestamp: expirationTimestampInSecs,
-            assetPurpose: AssetPurpose(assetPurposeAndRiskScore[0]),
+            assetPurpose: Configuration.ASSET_PURPOSE(assetPurposeAndRiskScore[0]),
             riskScore: assetPurposeAndRiskScore[1]
         });
         entries[tokenId] = newEntry;
         return true;
     }
 
-    function getLoanDebtor(bytes32 tokenId) public view returns (address) {
+    function getLoanDebtor(bytes32 tokenId) public view override returns (address) {
         return entries[tokenId].debtor;
     }
 
-    function getLoanTermParams(bytes32 tokenId, address debtor) public view returns (bytes32) {
+    function getLoanTermParams(bytes32 tokenId) public view override returns (bytes32) {
         LoanEntry memory entry = entries[tokenId];
         return entry.termsParam;
     }
 
-    function getPrincipalTokenAddress(bytes32 agreementId) public view returns (address) {
+    function getPrincipalTokenAddress(bytes32 agreementId) public view override returns (address) {
         return entries[agreementId].principalTokenAddress;
     }
 
-    function getBeneficiary(bytes32 agreementId) public view returns (address) {
-        return entries[agreementId].lender;
-    }
-
-    function getDebtor(bytes32 agreementId) public view returns (address) {
+    function getDebtor(bytes32 agreementId) public view override returns (address) {
         return entries[agreementId].debtor;
     }
 
-    function getTermContract(bytes32 agreementId) public view returns (address) {
+    function getTermContract(bytes32 agreementId) public view override returns (address) {
         return entries[agreementId].loanTermContract;
     }
 
-    function getRiskScore(bytes32 agreementId) public view returns (uint8) {
+    function getRiskScore(bytes32 agreementId) public view override returns (uint8) {
         return entries[agreementId].riskScore;
     }
 
-    function getAssetPurpose(bytes32 agreementId) public view returns (uint8) {
-        return uint8(entries[agreementId].assetPurpose);
-    }
-
-    function doesEntryExist(bytes32 agreementId) public view returns (bool) {
-        return entries[agreementId].lender != address(0);
+    function getAssetPurpose(bytes32 agreementId) public view override returns (Configuration.ASSET_PURPOSE) {
+        return entries[agreementId].assetPurpose;
     }
 
     /**
      * Returns the timestamp of the block at which a debt agreement was issued.
      */
-    function getIssuanceBlockTimestamp(bytes32 agreementId) public view returns (uint256 timestamp) {
+    function getIssuanceBlockTimestamp(bytes32 agreementId) public view override returns (uint256 timestamp) {
         return entries[agreementId].issuanceBlockTimestamp;
     }
 
-    function getLastRepaymentTimestamp(bytes32 agreementId) public view returns (uint256 timestamp) {
+    function getLastRepaymentTimestamp(bytes32 agreementId) public view override returns (uint256 timestamp) {
         return entries[agreementId].lastRepayTimestamp;
     }
 
     /**
      * Returns the terms contract parameters of a given issuance
      */
-    function getTermsContractParameters(bytes32 agreementId) public view returns (bytes32) {
+    function getTermsContractParameters(bytes32 agreementId) public view override returns (bytes32) {
         return entries[agreementId].termsParam;
     }
 
-    function getExpirationTimestamp(bytes32 agreementId) public view returns (uint256) {
+    function getExpirationTimestamp(bytes32 agreementId) public view override returns (uint256) {
         // solhint-disable-next-line not-rely-on-time
         return entries[agreementId].expirationTimestamp;
     }
@@ -120,6 +112,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     // Update timestamp of the last repayment from Debtor
     function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp)
         public
+        override
         onlyLoanInterestTermsContract
     {
         entries[agreementId].lastRepayTimestamp = newTimestamp;
@@ -129,19 +122,15 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     function principalPaymentInfo(bytes32 agreementId)
         public
         view
-        returns (
-            address pTokenAddress,
-            uint256 pAmount,
-            address receiver
-        )
+        override
+        returns (address pTokenAddress, uint256 pAmount)
     {
         LoanEntry memory entry = entries[agreementId];
         pTokenAddress = entry.principalTokenAddress;
         pAmount = 0; // @TODO
-        receiver = entry.lender;
     }
 
-    function setCompletedLoan(bytes32 agreementId) public {
+    function setCompletedLoan(bytes32 agreementId) public override onlyLoanKernel {
         completedLoans[agreementId] = true;
     }
 }
