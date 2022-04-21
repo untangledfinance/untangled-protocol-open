@@ -8,24 +8,6 @@ You will need the correct version of node/npm on your local machine.
 
 Using nvm, you can do this with `nvm install 12.18.3`. If you don't have `nvm`, see [here](https://github.com/nvm-sh/nvm#installing-and-updating) for installation instructions.
 
-#### Packages
-
-The repository is organized as a monorepo using [lerna](https://lerna.js.org/). Run the following to install lerna and then use it to install all package dependencies:
-
-```shell
-# Just the first time
-npm install
-npm run bootstrap
-```
-
-From here on out, every time you pull the repo and any packages change, you'll need to run
-
-```shell
-npm install
-# Note use lerna bootstrap, and not npm run bootstrap. It's much faster
-npx lerna bootstrap
-```
-
 ## Developing
 
 ### Smart Contract Development
