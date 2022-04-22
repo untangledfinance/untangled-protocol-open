@@ -12,13 +12,12 @@ import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility
  */
-contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
+contract AcceptedInvoiceToken is IUntangledERC721 {
     using ConfigHelper for Registry;
     using SafeMath for uint256;
 
     struct InvoiceMetaData {
         address payer;
-        address beneficiary; // beneficiary address when invoice is financed to loan and repay have additional value
         uint256 fiatAmount;
         uint256 paidAmount;
         address fiatTokenAddress;
@@ -34,7 +33,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
     function initialize(
         Registry _registry
     ) public initializer {
-        __Ownable_init();
         __ERC721PresetMinterPauserAutoId_init('Accepted Invoice Token', 'AIT', '');
         registry = _registry;
     }
@@ -42,18 +40,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
     //////////////////////////////
     // INTERNAL Functions     ///
     /////////////////////////////
-
-    /**
-     * _modifyBeneficiary mutates the debt registry. This function should be
-     * called every time a token is transferred or minted
-     */
-    function _modifyBeneficiary(uint256 _tokenId, address _to) internal {
-        entries[bytes32(_tokenId)].beneficiary = _to;
-    }
-
-    function _modifyPayer(uint256 _tokenId, address _payer) internal {
-        entries[bytes32(_tokenId)].payer = _payer;
-    }
 
     //** */
     function _generateEntryHash(
@@ -139,71 +125,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
                 riskScoreIdxsAndAssetPurpose[i],
                 assetPurpose
             );
-        }
-    }
-
-    /**
-     * We override transferFrom methods of the parent ERC721Token
-     * contract to allow its functionality to be frozen in the case of an emergency
-     */
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) public override whenNotPaused {
-        _modifyBeneficiary(_tokenId, _to);
-        super.transferFrom(_from, _to, _tokenId);
-    }
-
-    /**
-     * We override safeTransferFrom methods of the parent ERC721Token
-     * contract to allow its functionality to be frozen in the case of an emergency
-     */
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) public override whenNotPaused {
-        _modifyBeneficiary(_tokenId, _to);
-        super.safeTransferFrom(_from, _to, _tokenId);
-    }
-
-    /**
-     * We override safeTransferFrom methods of the parent ERC721Token
-     * contract to allow its functionality to be frozen in the case of an emergency
-     */
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes memory _data
-    ) public override whenNotPaused {
-        _modifyBeneficiary(_tokenId, _to);
-        super.safeTransferFrom(_from, _to, _tokenId, _data);
-    }
-
-    function safeBatchTransferFrom(
-        address[] calldata senders,
-        address[] calldata recipients,
-        uint256[] calldata tokenIds
-    ) external whenNotPaused {
-        require(senders.length == tokenIds.length, 'senders length mismatch');
-        require(recipients.length == tokenIds.length, 'recipients length mismatch');
-
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
-            super.safeTransferFrom(senders[i], recipients[i], tokenIds[i]);
-            _modifyBeneficiary(tokenIds[i], recipients[i]);
-        }
-    }
-
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata tokenIds
-    ) external {
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
-            _modifyBeneficiary(tokenIds[i], to);
-            super.safeTransferFrom(from, to, tokenIds[i]);
         }
     }
 
@@ -298,44 +219,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
         }
     }
 
-    function externalPayment(uint256[] calldata tokenIds, uint256[] calldata payAmounts) external onlyOwner {
-        require(tokenIds.length == payAmounts.length, 'Length miss match');
-
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
-            uint256 tokenId = tokenIds[i];
-            uint256 payAmount = payAmounts[i];
-
-            require(!isPaid(tokenId), 'AIT: Invoice is already paid');
-
-            InvoiceMetaData storage metadata = entries[bytes32(tokenId)];
-            // address fiatTokenAddress = ERC20TokenRegistry(contractRegistry().get(ERC20_TOKEN_REGISTRY)).getTokenAddressByIndex(
-            //     metadata.fiatTokenIndex
-            // );
-            uint256 fiatAmountRemain = 0;
-            if (metadata.fiatAmount > payAmount) {
-                fiatAmountRemain = metadata.fiatAmount - payAmount;
-            }
-
-            // Mint
-            // (bool success, ) = metadata.fiatTokenAddress.call(
-            //     abi.encodePacked(
-            //         ERC20Mintable(metadata.fiatTokenAddress).mint.selector,
-            //         abi.encode(ownerOf(tokenId), payAmount)
-            //     )
-            // );
-            ERC20PresetMinterPauser(metadata.fiatTokenAddress).mint(ownerOf(tokenId), payAmount);
-
-            if (fiatAmountRemain == 0) {
-                metadata.paidAmount = metadata.paidAmount.add(payAmount);
-                super._burn(tokenId);
-            } else {
-                metadata.fiatAmount = fiatAmountRemain;
-            }
-        }
-
-        emit LogRepayments(tokenIds, address(this), payAmounts);
-    }
-
     function payInBatch(uint256[] calldata tokenIds, uint256[] calldata payAmounts) external returns (bool) {
         require(tokenIds.length == payAmounts.length, 'Length miss match');
 
@@ -386,7 +269,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
 
         entries[entryHash] = InvoiceMetaData({
             payer: payer,
-            beneficiary: receiver,
             fiatAmount: _fiatAmount,
             paidAmount: 0,
             fiatTokenAddress: _fiatTokenAddress,
@@ -421,12 +303,12 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
         return entries[bytes32(_tokenId)].dueDate;
     }
 
-    function getInterestRate(uint256 _tokenId) public view override returns (uint256) {
+    function getInterestRate(uint256 _tokenId) public pure override returns (uint256) {
         return 0;
     }
 
     function getAssetPurpose(uint256 _tokenId) public view override returns (Configuration.ASSET_PURPOSE) {
-        return uint8(entries[bytes32(_tokenId)].assetPurpose);
+        return entries[bytes32(_tokenId)].assetPurpose;
     }
 
     function getRiskScore(uint256 _tokenId) public view override returns (uint8) {
@@ -441,22 +323,11 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
         return entries[bytes32(tokenId)].fiatAmount <= entries[bytes32(tokenId)].paidAmount;
     }
 
-    function modifyBeneficiary(uint256 tokenId, address _to) public onlyOwner {
-
-        _modifyBeneficiary(tokenId, _to);
-    }
-
-    function modifyPayer(uint256 tokenId, address newPayer) public onlyOwner {
-
-        _modifyPayer(tokenId, newPayer);
-    }
-
     function details(uint256 tokenId)
         public
         view
         returns (
             address payer,
-            address beneficiary,
             uint256 fiatAmount,
             uint256 paidAmount,
             address fiatTokenAddress,
@@ -466,7 +337,6 @@ contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
     {
         InvoiceMetaData storage metadata = entries[bytes32(tokenId)];
         payer = metadata.payer;
-        beneficiary = metadata.beneficiary;
         fiatAmount = metadata.fiatAmount;
         paidAmount = metadata.paidAmount;
         fiatTokenAddress = metadata.fiatTokenAddress;
