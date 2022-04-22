@@ -29,12 +29,6 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
 
     event LogError(uint8 indexed _errorId, bytes32 indexed _agreementId);
 
-    function repay(
-        bytes32 agreementId,
-        uint256 amount,
-        address tokenAddress
-    ) public virtual returns (uint256);
-
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,
