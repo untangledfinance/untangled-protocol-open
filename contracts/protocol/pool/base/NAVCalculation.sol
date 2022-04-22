@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import '../../../libraries/UntangledMath.sol';
+import '../../../libraries/Configuration.sol';
 
-contract NAVCalculation is UntangledMath {
+contract NAVCalculation {
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
@@ -30,46 +31,41 @@ contract NAVCalculation is UntangledMath {
         uint32 writeOffAfterCollectionPeriod;
     }
 
-    enum AssetPurpose {
-        SALE,
-        PLEDGE
-    }
-
     function calculateAssetValue(
         uint256 totalDebtAmt,
         uint256 interestRate,
         uint256 overdue,
         RiskScore memory riskScore,
-        AssetPurpose assetPurpose
+        Configuration.ASSET_PURPOSE assetPurpose
     ) internal pure returns (uint256) {
-        uint256 morePercentDecimal = ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
+        uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
 
-        if (assetPurpose == AssetPurpose.PLEDGE) interestRate = riskScore.interestRate;
+        if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) interestRate = riskScore.interestRate;
 
         totalDebtAmt = (totalDebtAmt * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
 
         if (overdue > riskScore.gracePeriod) {
             totalDebtAmt =
                 (totalDebtAmt *
-                    (ONE +
-                        rpow(
+                    (UntangledMath.ONE +
+                        UntangledMath.rpow(
                             (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             riskScore.gracePeriod,
-                            ONE
+                            UntangledMath.ONE
                         ))) /
-                ONE;
+                UntangledMath.ONE;
 
             uint256 penaltyRate = (interestRate * riskScore.penaltyRate) / ONE_HUNDRED_PERCENT;
 
             totalDebtAmt =
                 (totalDebtAmt *
-                    (ONE +
-                        rpow(
+                    (UntangledMath.ONE +
+                        UntangledMath.rpow(
                             (penaltyRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             overdue - riskScore.gracePeriod,
-                            ONE
+                            UntangledMath.ONE
                         ))) /
-                ONE;
+                UntangledMath.ONE;
             uint256 writeOff = riskScore.writeOffAfterGracePeriod;
             if (overdue > riskScore.collectionPeriod) writeOff = riskScore.writeOffAfterCollectionPeriod;
 
@@ -77,8 +73,13 @@ contract NAVCalculation is UntangledMath {
         } else if (overdue > 0) {
             totalDebtAmt =
                 (totalDebtAmt *
-                    (ONE + rpow((interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS, overdue, ONE))) /
-                ONE;
+                    (UntangledMath.ONE +
+                        UntangledMath.rpow(
+                            (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                            overdue,
+                            UntangledMath.ONE
+                        ))) /
+                UntangledMath.ONE;
         }
 
         return

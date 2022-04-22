@@ -11,6 +11,10 @@ import '../interfaces/ITokenGenerationEventFactory.sol';
 import '../interfaces/IUntangledERC721.sol';
 import '../interfaces/IDistributionOperator.sol';
 import '../interfaces/IDistributionTranche.sol';
+import '../interfaces/ILoanRegistry.sol';
+import '../interfaces/ILoanInterestTermsContract.sol';
+import '../interfaces/ILoanRepaymentRouter.sol';
+import '../interfaces/ILoanKernel.sol';
 import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
@@ -49,6 +53,23 @@ library ConfigHelper {
 
     function getAcceptedInvoiceToken(Registry registry) internal view returns (IUntangledERC721) {
         return IUntangledERC721(getAddress(registry, Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN));
+    }
+
+    function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {
+        return ILoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REGISTRY));
+    }
+
+    function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
+        return
+            ILoanInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_INTEREST_TERMS_CONTRACT));
+    }
+
+    function getLoanRepaymentRouter(Registry registry) internal view returns (ILoanRepaymentRouter) {
+        return ILoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER));
+    }
+
+    function getLoanKernel(Registry registry) internal view returns (ILoanKernel) {
+        return ILoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_KERNEL));
     }
 
     function getDistributionTranche(Registry registry) internal view returns (IDistributionTranche) {

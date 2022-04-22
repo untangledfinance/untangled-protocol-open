@@ -19,14 +19,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     event NewNotesTokenCreated(address instanceAddress);
     event NewPoolCreated(address instanceAddress);
 
-    mapping(address => bool) public isExistingPools;
-    ISecuritizationPool[] public pools;
-
-    mapping(address => address) public poolToSOT;
-    mapping(address => address) public poolToJOT;
-
-    mapping(address => bool) public isExistingTGEs;
-
     //noteSaleAddress, investor, amount, tokenAmount
     event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
 

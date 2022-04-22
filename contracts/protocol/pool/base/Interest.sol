@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import '../../../libraries/UntangledMath.sol';
 
-contract Interest is UntangledMath {
+contract Interest {
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
@@ -99,18 +99,14 @@ contract Interest is UntangledMath {
     ) internal pure returns (uint256) {
         return
             (_principalAmount *
-                rpow(
-                    ONE +
-                        ((_interestRate * (ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) / YEAR_LENGTH_IN_SECONDS),
+                UntangledMath.rpow(
+                    UntangledMath.ONE +
+                        ((_interestRate * (UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) /
+                            YEAR_LENGTH_IN_SECONDS),
                     _durationLengthInSec,
-                    ONE
+                    UntangledMath.ONE
                 )) /
-            ONE -
+            UntangledMath.ONE -
             _principalAmount;
-    }
-
-    function getStartDateInTimestamp(uint256 _timestamp) private pure returns (uint256) {
-        uint256 secondInDay = _timestamp % DAY_LENGTH_IN_SECONDS;
-        return _timestamp - secondInDay;
     }
 }

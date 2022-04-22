@@ -90,4 +90,25 @@ contract Registry is UntangledBase {
     {
         setAddress(uint8(Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE), newAddress);
     }
+
+    function setLoanRegistry(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_REGISTRY), newAddress);
+    }
+
+    function setLoanInterestTermsContract(address newAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_INTEREST_TERMS_CONTRACT), newAddress);
+    }
+
+    function setLoanRepaymentRouter(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER), newAddress);
+    }
+
+    function setLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_KERNEL), newAddress);
+    }
 }

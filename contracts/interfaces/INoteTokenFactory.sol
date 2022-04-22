@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../libraries/ConfigHelper.sol';
+import '../storage/Registry.sol';
 import '../tokens/ERC20/NoteToken.sol';
 
 abstract contract INoteTokenFactory {

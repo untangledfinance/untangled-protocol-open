@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import '../../../libraries/UntangledMath.sol';
 
-contract LongSaleInterest is UntangledMath {
+contract LongSaleInterest {
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
@@ -23,17 +23,18 @@ contract LongSaleInterest is UntangledMath {
         uint256 _durationLengthInSec,
         uint256 _termLengthInSeconds
     ) public pure returns (uint256) {
-        uint256 moreDecimal = ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
+        uint256 moreDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
         _interestRate = _interestRate * moreDecimal;
         _yield = _yield * moreDecimal;
 
-        uint256 pricipalWithInterestInPercent = ONE + _interestRate / YEAR_LENGTH_IN_SECONDS;
+        uint256 pricipalWithInterestInPercent = UntangledMath.ONE + _interestRate / YEAR_LENGTH_IN_SECONDS;
 
-        uint256 pricipalWithYieldInPercent = ONE + _yield / YEAR_LENGTH_IN_SECONDS;
+        uint256 pricipalWithYieldInPercent = UntangledMath.ONE + _yield / YEAR_LENGTH_IN_SECONDS;
 
         uint256 durationToEndTerm = _termLengthInSeconds - _durationLengthInSec;
         return
-            (rpow(pricipalWithInterestInPercent, _termLengthInSeconds, ONE) * PURCHASE_PRICE_SCALING_FACTOR) /
-            rpow(pricipalWithYieldInPercent, durationToEndTerm, ONE);
+            (UntangledMath.rpow(pricipalWithInterestInPercent, _termLengthInSeconds, UntangledMath.ONE) *
+                PURCHASE_PRICE_SCALING_FACTOR) /
+            UntangledMath.rpow(pricipalWithYieldInPercent, durationToEndTerm, UntangledMath.ONE);
     }
 }

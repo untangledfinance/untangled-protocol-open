@@ -6,9 +6,9 @@ import '../../interfaces/INoteToken.sol';
 import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/TransferHelper.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
-import '@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
