@@ -19,7 +19,7 @@ contract LoanAssetToken is IUntangledERC721 {
         string memory symbol,
         string memory baseTokenURI
     ) public initializer {
-        __ERC721PresetMinterPauserAutoId_init(name, symbol, baseTokenURI);
+        __UntangledERC721__init(name, symbol, baseTokenURI);
 
         registry = _registry;
     }

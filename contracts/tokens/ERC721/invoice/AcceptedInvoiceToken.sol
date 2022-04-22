@@ -5,8 +5,8 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
 import '../../../interfaces/ISecuritizationPool.sol';
-import "../../../interfaces/IUntangledERC721.sol";
-import "../../../libraries/ConfigHelper.sol";
+import '../../../interfaces/IUntangledERC721.sol';
+import '../../../libraries/ConfigHelper.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 /**
@@ -31,9 +31,12 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
 
     /** CONSTRUCTOR */
     function initialize(
-        Registry _registry
+        Registry _registry,
+        string memory name,
+        string memory symbol,
+        string memory baseTokenURI
     ) public initializer {
-        __ERC721PresetMinterPauserAutoId_init('Accepted Invoice Token', 'AIT', '');
+        __UntangledERC721__init(name, symbol, baseTokenURI);
         registry = _registry;
     }
 
@@ -58,14 +61,8 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         address to,
         uint256 amount
     ) internal returns (bool success) {
-        if (registry.getSecuritizationManager().isExistingPools(to))
-            to = ISecuritizationPool(to).pot();
-        return
-            IERC20(token).transferFrom(
-                from,
-                to,
-                amount
-            );
+        if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPool(to).pot();
+        return IERC20(token).transferFrom(from, to, amount);
     }
 
     /**
@@ -80,10 +77,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256 salt,
         uint8 assetPurpose
     ) public whenNotPaused returns (uint256) {
-        require(
-            hasRole(MINTER_ROLE, _msgSender()),
-            'not permission to create token'
-        );
+        require(hasRole(MINTER_ROLE, _msgSender()), 'not permission to create token');
         require(_fiatTokenAddress != address(0x0), 'Invalid fiat token');
 
         return
@@ -108,10 +102,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256[] calldata salt,
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
-        require(
-            hasRole(MINTER_ROLE, _msgSender()),
-            'not permission to create token'
-        );
+        require(hasRole(MINTER_ROLE, _msgSender()), 'not permission to create token');
 
         uint8 assetPurpose = riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1];
         for (uint256 i = 0; i < _fiatAmount.length; ++i) {
@@ -289,8 +280,8 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
 
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         public
-        override
         view
+        override
         returns (uint256 expectedRepaymentValue)
     {
         uint256 principalAmount;
