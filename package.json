@@ -1,16 +1,16 @@
 {
-  "name": "untangled-protocol-beta",
+  "name": "untangled-protocol-open",
   "version": "0.1.0",
-  "description": "",
+  "description": "Decentralized lending and liquidity protocol for real world asset collaterals",
   "scripts": {
     "compile": "rm -rf build/contracts; truffle compile --all",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Teddy Nguyen",
   "license": "MIT",
   "devDependencies": {
     "@openzeppelin/truffle-upgrades": "^1.15.0",
-    "@truffle/hdwallet-provider": "^2.0.6",
+    "@truffle/hdwallet-provider": "^2.0.7",
     "dotenv": "^16.0.0",
     "ganache": "^7.0.4",
     "web3": "^1.7.3"
