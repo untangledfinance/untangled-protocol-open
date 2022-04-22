@@ -59,7 +59,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
         tge.initialize(registry, pool, token, currency, longSale);
         tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
-        tge.revokeRole(tge.OWNER_ROLE(), address(this));
+        tge.renounceRole(tge.OWNER_ROLE(), address(this));
 
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;

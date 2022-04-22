@@ -60,7 +60,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
         poolInstance.initialize(registry, currency, minFirstLossCushion);
         poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
-        poolInstance.revokeRole(poolInstance.OWNER_ROLE(), address(this));
+        poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 
         isExistingPools[poolAddress] = true;
         pools.push(poolInstance);

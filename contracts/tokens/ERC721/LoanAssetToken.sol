@@ -22,6 +22,9 @@ contract LoanAssetToken is IUntangledERC721 {
         __ERC721PresetMinterPauserAutoId_init(name, symbol, baseTokenURI);
 
         registry = _registry;
+
+        _setupRole(MINTER_ROLE, address(registry.getLoanKernel()));
+        renounceRole(MINTER_ROLE, _msgSender());
     }
 
     function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
