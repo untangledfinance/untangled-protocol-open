@@ -13,30 +13,12 @@ abstract contract ILoanInterestTermsContract {
 
     mapping(bytes32 => bool) public completedRepayment;
 
-    //************************ */
-    // INTERNAL
-    //************************ */
-
     // Register to start Loan term for batch of agreement Ids
     function registerTermStart(bytes32 agreementId) public virtual returns (bool);
-
-    function getRepaidPrincipalAmount(bytes32 agreementId) public view virtual returns (uint256);
-
-    function addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
-
-    function setRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
-
-    function addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
-
-    function setRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) public virtual;
-
-    function getRepaidInterestAmount(bytes32 agreementId) public view virtual returns (uint256);
 
     function getValueRepaidToDate(bytes32 agreementId) public view virtual returns (uint256, uint256);
 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view virtual returns (bool[] memory);
-
-    function setCompletedRepayment(bytes32 agreementId) public virtual;
 
     /**
      * Expected repayment value with Amortization of Interest and Principal
@@ -54,19 +36,7 @@ abstract contract ILoanInterestTermsContract {
         virtual
         returns (uint256[] memory, uint256[] memory);
 
-    function isTermsContractExpired(bytes32 agreementId) public view virtual returns (bool);
-
     function registerConcludeLoan(bytes32 agreementId) external virtual returns (bool);
-
-    /**
-     * Get TOTAL expected repayment value at specific timestamp
-     * (NO AMORTIZATION)
-     */
-    function getTotalExpectedRepaymentValue(bytes32 agreementId, uint256 timestamp)
-        public
-        view
-        virtual
-        returns (uint256 expectedRepaymentValue);
 
     /// When called, the registerRepayment function records the debtor's
     ///  repayment, as well as any auxiliary metadata needed by the contract
