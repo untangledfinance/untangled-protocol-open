@@ -12,11 +12,9 @@ import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility
  */
-contract UntangledAcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
+contract AcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  {
     using ConfigHelper for Registry;
     using SafeMath for uint256;
-
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     struct InvoiceMetaData {
         address payer;
@@ -38,7 +36,6 @@ contract UntangledAcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  
     ) public initializer {
         __Ownable_init();
         __ERC721PresetMinterPauserAutoId_init('Accepted Invoice Token', 'AIT', '');
-        _setupRole(BURNER_ROLE, _msgSender());
         registry = _registry;
     }
 
@@ -208,11 +205,6 @@ contract UntangledAcceptedInvoiceToken is IUntangledERC721, OwnableUpgradeable  
             _modifyBeneficiary(tokenIds[i], to);
             super.safeTransferFrom(from, to, tokenIds[i]);
         }
-    }
-
-    function remove(address owner, uint256 tokenId) public whenNotPaused {
-        require(hasRole(BURNER_ROLE, _msgSender()), "ERC721PresetMinterPauserAutoId: must have burner role to burn");
-        super._burn(tokenId);
     }
 
     function updateFiatAmount(
