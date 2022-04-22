@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../interfaces/INoteToken.sol';
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/ICrowdsale.sol';
+import '../../interfaces/ICrowdSale.sol';
 
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
