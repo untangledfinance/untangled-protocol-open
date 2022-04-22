@@ -19,11 +19,12 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         require(_orderAddresses[uint8(FillingAddressesIndex.CREDITOR)] != address(0x0), 'PARAM1');
         require(_orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0), 'PARAM4');
         require(_orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)] != address(0x0), 'PARAM5');
+        require(_orderAddresses[uint8(FillingAddressesIndex.PRINCIPAL_TOKEN_ADDRESS)] != address(0x0), 'PARAM2');
         _;
     }
 
     //******************** */
-    // INTERNAL FUNCTIONS
+    // PRIVATE FUNCTIONS
     //******************** */
 
     /**
@@ -35,7 +36,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address[] memory _debtors,
         bytes32[] memory _termsContractParameters,
         uint256[] memory _salts
-    ) internal pure returns (LoanIssuance memory _issuance) {
+    ) private pure returns (LoanIssuance memory _issuance) {
         LoanIssuance memory issuance = LoanIssuance({
             version: _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)],
             debtors: _debtors,
@@ -63,7 +64,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 principalTokenIndex,
         address relayer,
         uint256 expirationTimestampInSec
-    ) internal view returns (bytes32 _debtorMessageHash) {
+    ) private view returns (bytes32 _debtorMessageHash) {
         return
             keccak256(
                 abi.encodePacked(
@@ -77,7 +78,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             );
     }
 
-    function _getDebtOrderHashes(LoanOrder memory debtOrder) internal view returns (bytes32[] memory) {
+    function _getDebtOrderHashes(LoanOrder memory debtOrder) private view returns (bytes32[] memory) {
         uint256 _length = debtOrder.issuance.debtors.length;
         bytes32[] memory orderHashses = new bytes32[](_length);
         for (uint256 i = 0; i < _length; i++) {
@@ -98,7 +99,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256[] memory _orderValues,
         bytes32[] memory _termContractParameters,
         uint256[] memory _salts
-    ) internal view returns (LoanOrder memory _debtOrder) {
+    ) private view returns (LoanOrder memory _debtOrder) {
         bytes32[] memory emptyDebtOrderHashes = new bytes32[](_debtors.length);
         LoanOrder memory debtOrder = LoanOrder({
             issuance: _getIssuance(_orderAddresses, _debtors, _termContractParameters, _salts),
@@ -129,7 +130,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 salt,
         uint256 expirationTimestampInSecs,
         uint8[] memory assetPurposeAndRiskScore
-    ) internal {
+    ) private {
         // Mint debt tokens and finalize debt agreement
 
         registry.getLoanAssetToken().mint(creditor, uint256(latTokenId));
@@ -150,7 +151,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      * 6 is fixed size of constant addresses list
      */
     function _debtorsFromOrderAddresses(address[] memory _orderAddresses, uint256 _length)
-        internal
+        private
         pure
         returns (address[] memory)
     {
@@ -163,7 +164,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     // Dettach principal amounts from order values
     function _principalAmountsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        internal
+        private
         pure
         returns (uint256[] memory)
     {
@@ -175,7 +176,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     function _expirationTimestampsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        internal
+        private
         pure
         returns (uint256[] memory)
     {
@@ -187,7 +188,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     function _saltFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        internal
+        private
         pure
         returns (uint256[] memory)
     {
@@ -199,7 +200,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     function _riskScoresFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        internal
+        private
         pure
         returns (uint8[] memory)
     {
@@ -210,32 +211,31 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return riskScores;
     }
 
-    function _getAssetPurposeAndRiskScore(uint8 assetPurpose, uint8 riskScore) internal pure returns (uint8[] memory) {
+    function _getAssetPurposeAndRiskScore(uint8 assetPurpose, uint8 riskScore) private pure returns (uint8[] memory) {
         uint8[] memory assetPurposeAndRiskScore = new uint8[](2);
         assetPurposeAndRiskScore[0] = assetPurpose;
         assetPurposeAndRiskScore[1] = riskScore;
         return assetPurposeAndRiskScore;
     }
 
-    function _burnLoanAssetToken(address creditor, bytes32 agreementId) internal {
+    function _burnLoanAssetToken(bytes32 agreementId) private {
         registry.getLoanAssetToken().burn(uint256(agreementId));
     }
 
-    function _assertDebtExisting(bytes32 agreementId) internal view returns (bool) {
+    function _assertDebtExisting(bytes32 agreementId) private view returns (bool) {
         return registry.getLoanAssetToken().ownerOf(uint256(agreementId)) != address(0);
     }
 
-    function _assertCompletedRepayment(bytes32 agreementId) internal view returns (bool) {
+    function _assertCompletedRepayment(bytes32 agreementId) private view returns (bool) {
         return registry.getLoanInterestTermsContract().completedRepayment(agreementId);
     }
 
     //Conclude a loan, stop lending/loan terms or allow the loan loss
     function _concludeLoan(
         address creditor,
-        address debtor,
         bytes32 agreementId,
         address termContract
-    ) internal {
+    ) private {
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
         require(termContract != address(0), 'Invalid terms contract.');
@@ -247,7 +247,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bool isTermCompleted = ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
 
         if (isTermCompleted) {
-            _burnLoanAssetToken(creditor, agreementId);
+            _burnLoanAssetToken(agreementId);
         } else {
             revert('Unable to conclude terms contract.');
         }
@@ -257,26 +257,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     // EXTERNAL FUNCTIONS
     /*********************** */
 
-    /**
-     * Debtor call to complete this Debt whenever he thinks that he completed all repayment
-     */
-    function concludeLoan(
-        address creditor,
-        address debtor,
-        bytes32 agreementId,
-        address termContract
-    ) external whenNotPaused nonReentrant {
-        _concludeLoan(creditor, debtor, agreementId, termContract);
-    }
-
     function concludeLoans(
         address[] calldata creditors,
-        address[] calldata debtors,
         bytes32[] calldata agreementIds,
         address termContract
     ) external whenNotPaused nonReentrant {
         for (uint256 i = 0; i < creditors.length; i++) {
-            _concludeLoan(creditors[i], debtors[i], agreementIds[i], termContract);
+            _concludeLoan(creditors[i], agreementIds[i], termContract);
         }
     }
 
@@ -342,7 +329,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address principalTokenAddress,
         address relayer,
         uint256 expirationTimestampInSec
-    ) internal view returns (bytes32 _debtorMessageHash) {
+    ) private view returns (bytes32 _debtorMessageHash) {
         return
             keccak256(
                 abi.encodePacked(
@@ -365,7 +352,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address termsContract,
         bytes32 termsContractParameters,
         uint256 salt
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(version, debtor, termsContract, termsContractParameters, salt));
     }
 
@@ -375,7 +362,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address _observerWallet,
         address _inputSupplierWallet,
         uint256 _salt
-    ) internal pure returns (bytes32) {
+    ) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(_version, _termsContract, _observerWallet, _inputSupplierWallet, _salt));
     }
 
@@ -385,7 +372,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address _termsContract,
         bytes32[] memory _termsContractParameters,
         uint256[] memory _salts
-    ) internal pure returns (bytes32[] memory) {
+    ) private pure returns (bytes32[] memory) {
         bytes32[] memory agreementIds = new bytes32[](_salts.length);
         for (uint256 i = 0; i < (0 + _salts.length); i++) {
             agreementIds[i] = keccak256(
@@ -405,7 +392,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32 debtOrderHash,
         uint256 expirationTimestampInSec,
         bytes32 agreementId
-    ) internal returns (bool _orderIsValid) {
+    ) private returns (bool _orderIsValid) {
         // Validate fee amount
         // uint totalFees = debtOrder.creditorFee.add(debtOrder.debtorFee);
 
@@ -466,7 +453,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     /**
      * Helper function for querying an address' balance on a given token.
      */
-    function _getBalance(address token, address owner) internal view returns (uint256 _balance) {
+    function _getBalance(address token, address owner) private view returns (uint256 _balance) {
         // Limit gas to prevent reentrancy.
         return ERC20(token).balanceOf(owner);
     }
@@ -474,7 +461,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     /**
      * Helper function for querying an address' allowance to the 0x transfer proxy.
      */
-    function _getAllowance(address token, address owner) internal view returns (uint256 _allowance) {
+    function _getAllowance(address token, address owner) private view returns (uint256 _allowance) {
         // Limit gas to prevent reentrancy.
         return IERC20(token).allowance(owner, address(this));
     }
@@ -488,7 +475,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address from,
         address to,
         uint256 amount
-    ) internal returns (bool success) {
+    ) private returns (bool success) {
         return IERC20(token).transferFrom(from, to, amount);
     }
 
@@ -499,7 +486,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address token,
         address[5] memory beneficiaries,
         uint256[5] memory amounts
-    ) internal {
+    ) private {
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] > 0 && beneficiaries[i] != address(0x0)) {
                 _transferTokensFrom(token, from, beneficiaries[i], amounts[i]);
@@ -518,7 +505,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 principalAmount,
         address principalToken,
         bytes32 debtOrderHash
-    ) internal returns (bool _isBalanceAndAllowanceSufficient) {
+    ) private returns (bool _isBalanceAndAllowanceSufficient) {
         uint256 totalCreditorPayment = principalAmount;
 
         if (

@@ -31,6 +31,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     //     10,000 => 0.01 interest multiplier
     uint256 public constant INTEREST_RATE_SCALING_FACTOR_MULTIPLIER = INTEREST_RATE_SCALING_FACTOR_PERCENT * 100;
 
+    function initialize(Registry _registry) public initializer {
+        __UntangledBase__init_unchained(_msgSender());
+
+        registry = _registry;
+    }
+
     //////////////////////////////
     // EVENTS                 ///
     ////////////////////////////
@@ -56,18 +62,15 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     //////////////////////////////
     // MODIFIERS              ///
     ////////////////////////////
-    modifier onlyRouter() {
-        require(
-            msg.sender == address(registry.getLoanRepaymentRouter()),
-            'LoanTermsContractBase: Only for Repayment Router.'
-        );
+    modifier onlyKernel() {
+        require(_msgSender() == address(registry.getLoanKernel()), 'LoanInterestTermsContract: Only for LoanKernel.');
         _;
     }
 
-    modifier onlyMappedToThisContract(bytes32 agreementId) {
+    modifier onlyRouter() {
         require(
-            address(this) == registry.getLoanRegistry().getTermContract(agreementId),
-            'LoanTermsContractBase: Agreement Id is not belong to this Terms Contract.'
+            _msgSender() == address(registry.getLoanRepaymentRouter()),
+            'LoanInterestTermsContract: Only for Repayment Router.'
         );
         _;
     }
@@ -77,20 +80,17 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         _;
     }
 
-    modifier onlyStartedLoan(bytes32 agreementId) {
-        require(startedLoan[agreementId], 'LOAN2');
-        _;
+    function addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) private {
+        repaidPrincipalAmounts[agreementId] += repaidAmount;
     }
 
-    function initialize(Registry _registry) public initializer {
-        __UntangledBase__init_unchained(_msgSender());
-
-        registry = _registry;
+    function addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) private {
+        repaidInterestAmounts[agreementId] += repaidAmount;
     }
 
-    //************************ */
-    // INTERNAL
-    //************************ */
+    function setCompletedRepayment(bytes32 agreementId) private {
+        completedRepayment[agreementId] = true;
+    }
 
     // Register to start Loan term for batch of agreement Ids
     function registerTermStart(bytes32 agreementId)
@@ -98,6 +98,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         override
         whenNotPaused
         nonReentrant
+        onlyKernel
         onlyHaventStartedLoan(agreementId)
         returns (bool)
     {
@@ -105,134 +106,20 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return true;
     }
 
-    function getRepaidPrincipalAmount(bytes32 agreementId) public view override returns (uint256) {
-        return repaidPrincipalAmounts[agreementId];
-    }
-
-    function addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) public override {
-        repaidPrincipalAmounts[agreementId] = repaidPrincipalAmounts[agreementId] + repaidAmount;
-    }
-
-    function setRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) public override {
-        repaidPrincipalAmounts[agreementId] = repaidAmount;
-    }
-
-    function addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) public override {
-        repaidInterestAmounts[agreementId] = repaidInterestAmounts[agreementId] + repaidAmount;
-    }
-
-    function setRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) public override {
-        repaidInterestAmounts[agreementId] = repaidAmount;
-    }
-
-    function getRepaidInterestAmount(bytes32 agreementId) public view override returns (uint256) {
-        return repaidInterestAmounts[agreementId];
-    }
-
-    function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {
-        return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);
-    }
-
-    function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
-        bool[] memory result = new bool[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
-            result[i] = completedRepayment[agreementIds[i]];
-        }
-        return result;
-    }
-
-    function setCompletedRepayment(bytes32 agreementId) public override {
-        completedRepayment[agreementId] = true;
-    }
-
-    /**
-     * Expected repayment value with Amortization of Interest and Principal
-     * (AMORTIZATION) - will be used for repayment from Debtor
-     */
-    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
-        public
-        view
+    function registerConcludeLoan(bytes32 agreementId)
+        external
         override
-        onlyMappedToThisContract(agreementId)
-        returns (uint256 expectedPrincipal, uint256 expectedInterest)
+        whenNotPaused
+        nonReentrant
+        onlyKernel
+        returns (bool)
     {
-        UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
-
-        ILoanRegistry loanRegistry = registry.getLoanRegistry();
-
-        uint256 repaidPrincipalAmount = getRepaidPrincipalAmount(agreementId);
-        uint256 repaidInterestAmount = getRepaidInterestAmount(agreementId);
-        uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
-
-        bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
-        uint256 manualInterestAmountLoan;
-        if (isManualInterestLoan) {
-            manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
-        }
-
-        (expectedPrincipal, expectedInterest) = _getExpectedRepaymentValuesToTimestamp(
-            params,
-            lastRepaymentTimestamp,
-            timestamp,
-            repaidPrincipalAmount,
-            repaidInterestAmount,
-            isManualInterestLoan,
-            manualInterestAmountLoan
-        );
-    }
-
-    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256[] memory, uint256[] memory)
-    {
-        uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
-        uint256[] memory expectedInterests = new uint256[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
-            (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
-                agreementIds[i],
-                timestamp
-            );
-            expectedPrincipals[i] = expectedPrincipal;
-            expectedInterests[i] = expectedInterest;
-        }
-        return (expectedPrincipals, expectedInterests);
-    }
-
-    function isTermsContractExpired(bytes32 agreementId) public view override returns (bool) {
-        uint256 expTimestamp = registry.getLoanRegistry().getExpirationTimestamp(agreementId);
-        // solium-disable-next-line
-        if (expTimestamp <= block.timestamp) {
-            return true;
-        }
-        return false;
-    }
-
-    function registerConcludeLoan(bytes32 agreementId) external override returns (bool) {
         require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
 
         registry.getLoanRegistry().completedLoans(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);
         return true;
-    }
-
-    /**
-     * Get TOTAL expected repayment value at specific timestamp
-     * (NO AMORTIZATION)
-     */
-    function getTotalExpectedRepaymentValue(bytes32 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        onlyMappedToThisContract(agreementId)
-        returns (uint256 expectedRepaymentValue)
-    {
-        uint256 principalAmount;
-        uint256 interestAmount;
-        (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
-        expectedRepaymentValue = principalAmount + interestAmount;
     }
 
     /// When called, the registerRepayment function records the debtor's
@@ -306,12 +193,78 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return remains;
     }
 
+    function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {
+        return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);
+    }
+
+    function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
+        bool[] memory result = new bool[](agreementIds.length);
+        for (uint256 i = 0; i < agreementIds.length; i++) {
+            result[i] = completedRepayment[agreementIds[i]];
+        }
+        return result;
+    }
+
+    /**
+     * Expected repayment value with Amortization of Interest and Principal
+     * (AMORTIZATION) - will be used for repayment from Debtor
+     */
+    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
+        public
+        view
+        override
+        returns (uint256 expectedPrincipal, uint256 expectedInterest)
+    {
+        UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
+
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
+
+        uint256 repaidPrincipalAmount = repaidPrincipalAmounts[agreementId];
+        uint256 repaidInterestAmount = repaidInterestAmounts[agreementId];
+        uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
+
+        bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
+        uint256 manualInterestAmountLoan;
+        if (isManualInterestLoan) {
+            manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
+        }
+
+        (expectedPrincipal, expectedInterest) = _getExpectedRepaymentValuesToTimestamp(
+            params,
+            lastRepaymentTimestamp,
+            timestamp,
+            repaidPrincipalAmount,
+            repaidInterestAmount,
+            isManualInterestLoan,
+            manualInterestAmountLoan
+        );
+    }
+
+    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
+        public
+        view
+        override
+        returns (uint256[] memory, uint256[] memory)
+    {
+        uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
+        uint256[] memory expectedInterests = new uint256[](agreementIds.length);
+        for (uint256 i = 0; i < agreementIds.length; i++) {
+            (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
+                agreementIds[i],
+                timestamp
+            );
+            expectedPrincipals[i] = expectedPrincipal;
+            expectedInterests[i] = expectedInterest;
+        }
+        return (expectedPrincipals, expectedInterests);
+    }
+
     function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
 
     function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
-        internal
+        private
         pure
         returns (uint256)
     {
@@ -336,7 +289,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      *   Get parameters by Agreement ID (commitment hash)
      */
     function _unpackParamsForAgreementID(bytes32 agreementId)
-        internal
+        private
         view
         returns (UnpackLoanParamtersLib.InterestParams memory params)
     {
@@ -387,7 +340,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _principalAmount,
         uint256 _interestRate,
         uint256 _durationLengthInSec
-    ) internal pure returns (uint256) {
+    ) private pure returns (uint256) {
         return
             (_principalAmount *
                 UntangledMath.rpow(
@@ -412,7 +365,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 repaidInterestAmount,
         bool isManualInterestLoan,
         uint256 manualInterestAmountLoan
-    ) internal pure returns (uint256 expectedPrinciapal, uint256 expectedInterest) {
+    ) private pure returns (uint256 expectedPrinciapal, uint256 expectedInterest) {
         uint256 outstandingPrincipal = _params.principalAmount - repaidPrincipalAmount;
 
         expectedPrinciapal = outstandingPrincipal;
@@ -443,7 +396,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _endTermTimestamp,
         uint256 _lastRepayTimestamp,
         uint256 _timestamp
-    ) internal pure returns (uint256) {
+    ) private pure returns (uint256) {
         if (_timestamp <= _startTermTimestamp) {
             return 0;
         }

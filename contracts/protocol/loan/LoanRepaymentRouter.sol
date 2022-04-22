@@ -24,7 +24,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address _payer,
         uint256 _amount,
         address _tokenAddress
-    ) internal returns (bool) {
+    ) private returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
         require(_amount > 0, 'Amount must greater than 0.');
 
@@ -50,7 +50,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address _payer,
         uint256 _amount,
         address _tokenAddress
-    ) internal returns (bool) {
+    ) private returns (bool) {
         // Notify terms contract
 
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
@@ -80,19 +80,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         return true;
     }
 
-    function repay(
-        bytes32 agreementId,
-        uint256 amount,
-        address tokenAddress
-    ) public override whenNotPaused nonReentrant returns (uint256) {
-        require(
-            _assertRepaymentRequest(agreementId, msg.sender, amount, tokenAddress),
-            'LoanRepaymentRouter: Invalid repayment request'
-        );
-        require(_doRepay(agreementId, msg.sender, amount, tokenAddress), 'LoanRepaymentRouter: Repayment has failed');
-        return amount;
-    }
-
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,
@@ -100,15 +87,15 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     ) external override whenNotPaused nonReentrant returns (bool) {
         for (uint256 i = 0; i < agreementIds.length; i++) {
             require(
-                _assertRepaymentRequest(agreementIds[i], msg.sender, amounts[i], tokenAddress),
+                _assertRepaymentRequest(agreementIds[i], _msgSender(), amounts[i], tokenAddress),
                 'LoanRepaymentRouter: Invalid repayment request'
             );
             require(
-                _doRepay(agreementIds[i], msg.sender, amounts[i], tokenAddress),
+                _doRepay(agreementIds[i], _msgSender(), amounts[i], tokenAddress),
                 'LoanRepaymentRouter: Repayment has failed'
             );
         }
-        emit LogRepayments(agreementIds, msg.sender, amounts);
+        emit LogRepayments(agreementIds, _msgSender(), amounts);
         return true;
     }
 }
