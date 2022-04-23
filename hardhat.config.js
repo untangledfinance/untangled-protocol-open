@@ -2,12 +2,13 @@ require('@nomiclabs/hardhat-truffle5');
 require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-etherscan');
 require('hardhat-contract-sizer');
+require('hardhat-deploy');
 
 require('dotenv').config();
 const MNEMONIC = process.env.MNEMONIC;
 
 const accounts = {
-  mnemonic: MNEMONIC ?? 'test test test test test test test test test test test junk'
+  mnemonic: MNEMONIC ?? 'test test test test test test test test test test test junk',
 };
 
 module.exports = {
@@ -36,12 +37,16 @@ module.exports = {
     },
   },
   defaultNetwork: 'hardhat',
+  namedAccounts: {
+    deployer: 0,
+    invoiceOperator: '0x5380e40aFAd8Cdec0B841c4740985F1735Aa5aCB'
+  },
   networks: {
     hardhat: {
       blockGasLimit: 12500000,
       saveDeployments: false,
       allowUnlimitedContractSize: false,
-      accounts
+      accounts,
     },
     celo: {
       saveDeployments: true,
@@ -54,10 +59,10 @@ module.exports = {
       accounts,
       loggingEnabled: true,
       url: `https://alfajores-forno.celo-testnet.org`,
-    }
+    },
   },
   mocha: {
-    timeout: 200000
+    timeout: 200000,
   },
   paths: {
     sources: './contracts',
@@ -69,5 +74,5 @@ module.exports = {
     alphaSort: true,
     runOnCompile: true,
     disambiguatePaths: false,
-  }
+  },
 };

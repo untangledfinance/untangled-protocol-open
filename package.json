@@ -4,7 +4,8 @@
   "description": "Decentralized lending and liquidity protocol for real world asset collaterals",
   "scripts": {
     "compile": "yarn hardhat compile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "hardhat deploy"
   },
   "author": "Teddy Nguyen",
   "license": "MIT",
@@ -20,6 +21,7 @@
     "ganache": "^7.0.4",
     "hardhat": "^2.9.3",
     "hardhat-contract-sizer": "^2.5.1",
+    "hardhat-deploy": "^0.11.4",
     "web3": "^1.7.3"
   },
   "dependencies": {

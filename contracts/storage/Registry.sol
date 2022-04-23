@@ -47,6 +47,15 @@ contract Registry is UntangledBase {
         setAddress(uint8(Configuration.CONTRACT_TYPE.TOKEN_GENERATION_EVENT_FACTORY), newAddress);
     }
 
+    function setMintedIncreasingInterestTGE(address newAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE), newAddress);
+    }
+
     function setDistributionOperator(address newAddress)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)

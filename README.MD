@@ -47,14 +47,8 @@ npm run compile
 
 ### Deployment
 
-#### Local deployment
+For interactions or contract deployments on public testnets / mainnet, create a .env file specifying your private key and infura api key, with the `.env.example` format.
 
-[to update]
-
-#### Testnet deployments
-
-[to update]
-
-#### Mainnet deployments:
-
-[to update]
+```
+yarn deploy --tags [..] --network [..]
+```
