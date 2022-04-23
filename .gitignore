@@ -68,3 +68,5 @@ typings/
 
 # build
 build
+/artifacts/
+/cache/
