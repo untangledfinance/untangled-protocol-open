@@ -16,6 +16,8 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     using ConfigHelper for Registry;
     using SafeMath for uint256;
 
+    bytes32 public constant INVOICE_CREATOR_ROLE = keccak256("INVOICE_CREATOR_ROLE");
+
     struct InvoiceMetaData {
         address payer;
         uint256 fiatAmount;
@@ -109,7 +111,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
         require(
-            hasRole(MINTER_ROLE, _msgSender()),
+            hasRole(INVOICE_CREATOR_ROLE, _msgSender()),
             'not permission to create token'
         );
 
