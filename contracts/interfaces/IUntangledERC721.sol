@@ -7,6 +7,22 @@ import '../storage/Registry.sol';
 abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
     Registry public registry;
 
+    function __UntangledERC721__init(
+        string memory name,
+        string memory symbol,
+        string memory baseTokenURI
+    ) internal onlyInitializing {
+        __UntangledERC721__init_unchained(name, symbol, baseTokenURI);
+    }
+
+    function __UntangledERC721__init_unchained(
+        string memory name,
+        string memory symbol,
+        string memory baseTokenURI
+    ) internal onlyInitializing {
+        __ERC721PresetMinterPauserAutoId_init_unchained(name, symbol, baseTokenURI);
+    }
+
     function mint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
         _mint(to, tokenId);
     }
