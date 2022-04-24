@@ -40,20 +40,20 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', poolProxy.address);
   }
 
-  // //deploy SecuritizationPoolValueService
-  // const securitizationPoolValueServiceProxy = await deployProxy(
-  //   { getNamedAccounts, deployments },
-  //   'SecuritizationPoolValueService',
-  //   [registry.address]
-  // );
-  // if (securitizationPoolValueServiceProxy.newlyDeployed) {
-  //   await execute(
-  //     'Registry',
-  //     { from: deployer, log: true },
-  //     'setSecuritizationPoolValueService',
-  //     securitizationPoolValueServiceProxy.address
-  //   );
-  // }
+  //deploy SecuritizationPoolValueService
+  const securitizationPoolValueServiceProxy = await deployProxy(
+    { getNamedAccounts, deployments },
+    'SecuritizationPoolValueService',
+    [registry.address]
+  );
+  if (securitizationPoolValueServiceProxy.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setSecuritizationPoolValueService',
+      securitizationPoolValueServiceProxy.address
+    );
+  }
 
   //deploy NoteTokenFactory
   const noteTokenFactoryProxy = await deployProxy({ getNamedAccounts, deployments }, 'NoteTokenFactory', [
@@ -76,18 +76,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
   }
 
-  // //deploy DistributionAssessor
-  // const distributionAssessorProxy = await deployProxy({ getNamedAccounts, deployments }, 'DistributionAssessor', [
-  //   registry.address,
-  // ]);
-  // if (distributionAssessorProxy.newlyDeployed) {
-  //   await execute(
-  //     'Registry',
-  //     { from: deployer, log: true },
-  //     'setDistributionAssessor',
-  //     distributionAssessorProxy.address
-  //   );
-  // }
+  //deploy DistributionAssessor
+  const distributionAssessorProxy = await deployProxy({ getNamedAccounts, deployments }, 'DistributionAssessor', [
+    registry.address,
+  ]);
+  if (distributionAssessorProxy.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setDistributionAssessor',
+      distributionAssessorProxy.address
+    );
+  }
 
   //deploy DistributionOperator
   const distributionOperatorProxy = await deployProxy({ getNamedAccounts, deployments }, 'DistributionOperator', [

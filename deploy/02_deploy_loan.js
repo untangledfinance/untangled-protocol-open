@@ -63,20 +63,20 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
   }
 
-  // //deploy LoanInterestTermsContract
-  // const loanInterestTermsContractProxy = await deployProxy(
-  //   { getNamedAccounts, deployments },
-  //   'LoanInterestTermsContract',
-  //   [registry.address]
-  // );
-  // if (loanInterestTermsContractProxy.newlyDeployed) {
-  //   await execute(
-  //     'Registry',
-  //     { from: deployer, log: true },
-  //     'setLoanInterestTermsContract',
-  //     loanInterestTermsContractProxy.address
-  //   );
-  // }
+  //deploy LoanInterestTermsContract
+  const loanInterestTermsContractProxy = await deployProxy(
+    { getNamedAccounts, deployments },
+    'LoanInterestTermsContract',
+    [registry.address]
+  );
+  if (loanInterestTermsContractProxy.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setLoanInterestTermsContract',
+      loanInterestTermsContractProxy.address
+    );
+  }
 };
 
 module.exports.dependencies = ['registry'];

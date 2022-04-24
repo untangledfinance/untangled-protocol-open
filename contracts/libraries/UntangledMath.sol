@@ -8,7 +8,7 @@ library UntangledMath {
         uint256 x,
         uint256 n,
         uint256 base
-    ) public pure returns (uint256 z) {
+    ) internal pure returns (uint256 z) {
         assembly {
             switch x
             case 0 {

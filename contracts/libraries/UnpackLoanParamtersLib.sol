@@ -72,7 +72,7 @@ library UnpackLoanParamtersLib {
      * Unpack data from hex string which including informations about Loan
      */
     function unpackParametersFromBytes(bytes32 parameters)
-        public
+        internal
         pure
         returns (
             uint256 _principalAmount,
