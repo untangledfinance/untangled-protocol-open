@@ -13,22 +13,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
-  const mintedIncreasingInterestTGEProxy = await deploy(`MintedIncreasingInterestTGEProxy`, {
-    contract: 'UpgradableProxy',
-    skipIfAlreadyDeployed: true,
-    from: deployer,
-    args: [mintedIncreasingInterestTGEImpl.address],
-    log: true,
-  });
-  if (mintedIncreasingInterestTGEProxy.newlyDeployed) {
+  if (mintedIncreasingInterestTGEImpl.newlyDeployed) {
     const mintedIncreasingInterestTGE = mintedIncreasingInterestTGEImpl;
-    mintedIncreasingInterestTGE.address = mintedIncreasingInterestTGEProxy.address;
+    mintedIncreasingInterestTGE.address = mintedIncreasingInterestTGEImpl.address;
     await save('MintedIncreasingInterestTGE', mintedIncreasingInterestTGE);
     await execute(
       'Registry',
       { from: deployer, log: true },
       'setMintedIncreasingInterestTGE',
-      mintedIncreasingInterestTGEProxy.address
+      mintedIncreasingInterestTGEImpl.address
     );
   }
 

@@ -26,18 +26,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
-  const poolProxy = await deploy(`SecuritizationPoolProxy`, {
-    contract: 'UpgradableProxy',
-    skipIfAlreadyDeployed: true,
-    from: deployer,
-    args: [poolImpl.address],
-    log: true,
-  });
-  if (poolProxy.newlyDeployed) {
+  if (poolImpl.newlyDeployed) {
+    const POOL_IMPLEMENTATION_ADDRESS = poolImpl.address
     const pool = poolImpl;
-    pool.address = poolProxy.address;
+    pool.address = poolImpl.address;
     await save('SecuritizationPool', pool);
-    await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', poolProxy.address);
+    await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', POOL_IMPLEMENTATION_ADDRESS);
   }
 
   //deploy SecuritizationPoolValueService
