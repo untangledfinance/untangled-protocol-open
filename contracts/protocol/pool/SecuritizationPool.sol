@@ -20,7 +20,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32 _minFirstLossCushion
     ) public override initializer {
         __UntangledBase__init(_msgSender());
-
+        _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
 
         pot = address(this);
