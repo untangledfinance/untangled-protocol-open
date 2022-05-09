@@ -53,9 +53,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         bool longSale
     ) private returns (address) {
-        MintedIncreasingInterestTGE tge = registry.getMintedIncreasingInterestTGE();
-        address mintedIncreasingInterestTGEAddress = address(tge);
-        address tgeAddress = deployMinimal(mintedIncreasingInterestTGEAddress);
+        address tgeAddress = deployMinimal(address(registry.getMintedIncreasingInterestTGE()));
+        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
 
         tge.initialize(registry, pool, token, currency, longSale);
         tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
