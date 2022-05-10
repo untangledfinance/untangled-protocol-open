@@ -17,7 +17,7 @@ contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         uint32 _timeInterval,
         uint32 _amountChangeEachInterval
     ) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(hasStarted, 'IncreasingInterestCrowdsale: sale already started');
+        require(!hasStarted, 'IncreasingInterestCrowdsale: sale already started');
         require(
             _initialInterest <= _finalInterest,
             'IncreasingInterestCrowdsale: initial interest is not less than final interest'
