@@ -18,6 +18,7 @@ import '../interfaces/ILoanKernel.sol';
 import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
+import '../protocol/note-sale/MintedNormalTGE.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -96,5 +97,12 @@ library ConfigHelper {
             MintedIncreasingInterestTGE(
                 getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
             );
+    }
+
+    function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
+        return
+        MintedNormalTGE(
+            getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
+        );
     }
 }

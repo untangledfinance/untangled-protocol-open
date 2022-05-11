@@ -25,6 +25,26 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
   }
 
+  //deploy MintedNormalTGE
+  const mintedNormalTGEImpl = await deploy(`MintedNormalTGEImpl`, {
+    contract: 'MintedNormalTGE',
+    skipIfAlreadyDeployed: true,
+    from: deployer,
+    args: [],
+    log: true,
+  });
+  if (mintedNormalTGEImpl.newlyDeployed) {
+    const mintedNormalTGE = mintedNormalTGEImpl;
+    mintedNormalTGE.address = mintedNormalTGEImpl.address;
+    await save('MintedNormalTGE', mintedNormalTGE);
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setMintedNormalTGE',
+      mintedNormalTGEImpl.address
+    );
+  }
+
   //deploy TokenGenerationEventFactory
   const tokenGenerationEventFactoryProxy = await deployProxy(
     { getNamedAccounts, deployments },
