@@ -42,7 +42,7 @@ contract TimedCrowdsale is Crowdsale {
         closingTime = newClosingTime;
     }
 
-    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused nonReentrant {
+    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused {
         require(newClosingTime >= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time');
         // not accept opening time in the past
         if (newOpeningTime < block.timestamp) {
