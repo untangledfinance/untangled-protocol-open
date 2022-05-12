@@ -276,7 +276,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      *   + Debtor Fee
      */
     function fillDebtOrder(
-        address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,..., [0..x] debtors
+        address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
         uint256[] calldata orderValues, //  0-creditorFee, 2-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
         bytes32[] calldata tokenIds // [x]-Loan liability token Id, [x]-Loan liability token Id
