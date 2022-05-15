@@ -170,13 +170,13 @@ contract Crowdsale is UntangledBase {
 
     function setTotalCap(uint256 cap) internal {
         require(cap > 0, 'Crowdsale: cap is 0');
-        require(cap >= tokenRaised, 'Crowdsale: cap is bellow token raised');
+        require(cap >= currencyRaised, 'Crowdsale: cap is bellow currency raised');
 
         totalCap = cap;
     }
 
     function totalCapReached() public view returns (bool) {
-        return tokenRaised >= totalCap;
+        return currencyRaised >= totalCap;
     }
 
     function isUnderTotalCap(uint256 currencyAmount) public view returns (bool) {
