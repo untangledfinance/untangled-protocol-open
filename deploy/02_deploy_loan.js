@@ -27,6 +27,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
   }
 
+  //deploy LoanKernel
+  const loanKernelProxy = await deployProxy({ getNamedAccounts, deployments }, 'LoanKernel', [registry.address]);
+  if (loanKernelProxy.newlyDeployed) {
+    await execute('Registry', { from: deployer, log: true }, 'setLoanKernel', loanKernelProxy.address);
+  }
+
+
   //deploy LoanAssetToken
   const loanAssetTokenProxy = await deployProxy(
     { getNamedAccounts, deployments },
@@ -42,12 +49,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const loanRegistryProxy = await deployProxy({ getNamedAccounts, deployments }, 'LoanRegistry', [registry.address]);
   if (loanRegistryProxy.newlyDeployed) {
     await execute('Registry', { from: deployer, log: true }, 'setLoanRegistry', loanRegistryProxy.address);
-  }
-
-  //deploy LoanKernel
-  const loanKernelProxy = await deployProxy({ getNamedAccounts, deployments }, 'LoanKernel', [registry.address]);
-  if (loanKernelProxy.newlyDeployed) {
-    await execute('Registry', { from: deployer, log: true }, 'setLoanKernel', loanKernelProxy.address);
   }
 
   //deploy LoanRepaymentRouter

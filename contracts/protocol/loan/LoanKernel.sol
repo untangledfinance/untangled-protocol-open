@@ -156,8 +156,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (address[] memory)
     {
         address[] memory debtors = new address[](_length);
-        for (uint256 i = 4; i < (4 + _length); i++) {
-            debtors[i - 4] = _orderAddresses[i];
+        for (uint256 i = 5; i < (5 + _length); i++) {
+            debtors[i - 5] = _orderAddresses[i];
         }
         return debtors;
     }
@@ -169,8 +169,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory principalAmounts = new uint256[](_length);
-        for (uint256 i = 3; i < (3 + _length); i++) {
-            principalAmounts[i - 3] = _orderValues[i];
+        for (uint256 i = 2; i < (2 + _length); i++) {
+            principalAmounts[i - 2] = _orderValues[i];
         }
         return principalAmounts;
     }
@@ -181,8 +181,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory expirationTimestamps = new uint256[](_length);
-        for (uint256 i = 3 + _length; i < (3 + _length * 2); i++) {
-            expirationTimestamps[i - 3 - _length] = _orderValues[i];
+        for (uint256 i = 2 + _length; i < (2 + _length * 2); i++) {
+            expirationTimestamps[i - 2 - _length] = _orderValues[i];
         }
         return expirationTimestamps;
     }
@@ -193,8 +193,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory salts = new uint256[](_length);
-        for (uint256 i = 3 + _length * 2; i < (3 + _length * 3); i++) {
-            salts[i - 3 - _length * 2] = _orderValues[i];
+        for (uint256 i = 2 + _length * 2; i < (2 + _length * 3); i++) {
+            salts[i - 2 - _length * 2] = _orderValues[i];
         }
         return salts;
     }
@@ -205,8 +205,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint8[] memory)
     {
         uint8[] memory riskScores = new uint8[](_length);
-        for (uint256 i = 3 + _length * 3; i < (3 + _length * 4); i++) {
-            riskScores[i - 3 - _length * 3] = uint8(_orderValues[i]);
+        for (uint256 i = 2 + _length * 3; i < (2 + _length * 4); i++) {
+            riskScores[i - 2 - _length * 3] = uint8(_orderValues[i]);
         }
         return riskScores;
     }
@@ -277,7 +277,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      */
     function fillDebtOrder(
         address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
-        uint256[] calldata orderValues, //  0-creditorFee, 2-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
+        uint256[] calldata orderValues, //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
         bytes32[] calldata tokenIds // [x]-Loan liability token Id, [x]-Loan liability token Id
     ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
