@@ -197,6 +197,16 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    function collectAssets(
+        address tokenAddress,
+        address from,
+        uint256[] calldata tokenIds
+    ) external override whenNotPaused nonReentrant {
+        for (uint256 i = 0; i < tokenIds.length; ++i) {
+            IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
+        }
+    }
+
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,

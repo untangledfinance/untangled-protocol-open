@@ -120,6 +120,12 @@ abstract contract ISecuritizationPool is UntangledBase {
         address[] calldata recipients
     ) external virtual;
 
+    function collectAssets(
+        address tokenAddress,
+        address from,
+        uint256[] calldata tokenIds
+    ) external virtual;
+
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,
