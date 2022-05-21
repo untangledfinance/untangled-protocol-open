@@ -204,7 +204,7 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
         for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
-            uint32 daysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx + 1);
+            uint32 daysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx);
             if (overdue < daysPastDue) return (false, 0);
             else if (riskScoreIdx == riskScoresLength - 1) {
                 return (true, riskScoreIdx);
