@@ -29,7 +29,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         require(_amount > 0, 'Amount must greater than 0.');
 
         // Ensure agreement exists.
-        if (registry.getLoanAssetToken().ownerOf(uint256(_agreementId)) != address(0)) {
+        if (registry.getLoanAssetToken().ownerOf(uint256(_agreementId)) == address(0)) {
             emit LogError(uint8(Errors.DEBT_AGREEMENT_NONEXISTENT), _agreementId);
             return false;
         }
