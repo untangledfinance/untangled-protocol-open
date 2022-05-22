@@ -25,8 +25,8 @@ contract SecuritizationPoolServiceBase is UntangledBase {
 
         return
             currencyDecimals > tokenDecimals
-                ? tokenValue * (10**currencyDecimals - tokenDecimals)
-                : tokenValue / (10**tokenDecimals - currencyDecimals);
+                ? tokenValue * (10**(currencyDecimals - tokenDecimals))
+                : tokenValue / (10**(tokenDecimals - currencyDecimals));
     }
 
     function convertCurrencyAmountToTokenValue(
