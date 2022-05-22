@@ -61,7 +61,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
             return registry.getDistributionAssessor().calcTokenPrice(pool, token);
         } else {
             require(
-                getTimeStartEarningInterest() != 0,
+                timeStartEarningInterest != 0,
                 'MintedIncreasingInterestTGE: timeStartEarningInterest need to be setup'
             );
             return getPurchasePrice(interestRate, yield, timestamp - timeStartEarningInterest, termLengthInSeconds);

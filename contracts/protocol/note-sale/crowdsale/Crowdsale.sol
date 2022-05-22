@@ -105,10 +105,6 @@ contract Crowdsale is UntangledBase {
         return false;
     }
 
-    function getTimeStartEarningInterest() public view returns (uint256) {
-        return block.timestamp;
-    }
-
     function getLongSaleTokenAmount(uint256 currencyAmount) public view virtual returns (uint256) {
         return rate;
     }
