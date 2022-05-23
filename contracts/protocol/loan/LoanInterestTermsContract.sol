@@ -143,6 +143,14 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             tokenAddress == loanRegistry.getPrincipalTokenAddress(agreementId),
             'LoanTermsContract: Invalid token for repayment.'
         );
+        require(
+            !loanRegistry.completedLoans(agreementId),
+            'LoanTermsContract: Completed Loan.'
+        );
+        require(
+            startedLoan[agreementId],
+            'LoanTermsContract: Loan has not started yet.'
+        );
 
         uint256 currentTimestamp = block.timestamp;
 
