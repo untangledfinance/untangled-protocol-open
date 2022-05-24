@@ -109,8 +109,8 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
             require(token.balanceOf(msg.sender) >= payAmounts[i], 'Not enough balance');
 
             uint256 fiatAmountRemain = 0;
-            if (metadata.fiatAmount > payAmounts[i]) {
-                fiatAmountRemain = metadata.fiatAmount - payAmounts[i];
+            if (metadata.fiatAmount > (payAmounts[i] + metadata.paidAmount)) {
+                fiatAmountRemain = metadata.fiatAmount - metadata.paidAmount - payAmounts[i];
             }
 
             _transferTokensFrom(metadata.fiatTokenAddress, msg.sender, ownerOf(tokenIds[i]), payAmounts[i]);
@@ -119,7 +119,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
                 metadata.paidAmount += payAmounts[i];
                 super._burn(tokenIds[i]);
             } else {
-                metadata.fiatAmount = fiatAmountRemain;
+                metadata.paidAmount += payAmounts[i];
             }
 
             emit LogRepayment(tokenIds[i], msg.sender, ownerOf(tokenIds[i]), payAmounts[i], metadata.fiatTokenAddress);
