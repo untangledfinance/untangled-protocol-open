@@ -171,10 +171,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256 token
     ) external virtual;
 
-    function increasePaidInterestAmountSOT(address investor, uint256 amount) external virtual;
-
-    function increasePaidPrincipalAmountSOT(address _investor, uint256 _paidPrincipalAmountSOT) public virtual;
-
     function redeem(
         address usr,
         address notesToken,

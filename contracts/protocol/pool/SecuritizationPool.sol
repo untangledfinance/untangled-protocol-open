@@ -348,34 +348,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
     }
 
-    function increasePaidInterestAmountSOT(address investor, uint256 amount)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlyDistributionOperator
-    {
-        paidInterestAmountSOT[investor] = paidInterestAmountSOT[investor] + amount;
-        lastRepayTimestampSOT[investor] = block.timestamp;
-    }
-
-    function increasePaidPrincipalAmountSOT(address _investor, uint256 _paidPrincipalAmountSOT)
-        public
-        override
-        whenNotPaused
-        nonReentrant
-        onlyDistributionOperator
-    {
-        paidPrincipalAmountSOTByInvestor[_investor] =
-            paidPrincipalAmountSOTByInvestor[_investor] +
-            _paidPrincipalAmountSOT;
-        paidPrincipalAmountSOT = paidPrincipalAmountSOT + _paidPrincipalAmountSOT;
-        require(
-            MintedIncreasingInterestTGE(tgeAddress).currencyRaised() >= paidPrincipalAmountSOT,
-            'SecuritizationPool: exceed amount paid for SOT'
-        );
-    }
-
     function redeem(
         address usr,
         address notesToken,

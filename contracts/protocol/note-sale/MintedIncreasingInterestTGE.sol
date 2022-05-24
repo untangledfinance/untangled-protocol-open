@@ -20,12 +20,8 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         address _currency,
         bool _longSale
     ) public initializer {
-        __Crowdsale__init();
+        __Crowdsale__init(_registry, _pool, _token, _currency);
 
-        registry = _registry;
-        pool = _pool;
-        token = _token;
-        currency = _currency;
         longSale = _longSale;
     }
 

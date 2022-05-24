@@ -73,46 +73,6 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         }
     }
 
-    function _distributeJOTInBatch(
-        ISecuritizationPool securitizationPool,
-        uint256 distributeAmount,
-        uint256 totalSupply,
-        address[] memory jotInvestors
-    ) internal returns (uint256 _remainingAmt) {
-        _remainingAmt = distributeAmount;
-        address jotToken = securitizationPool.jotToken();
-
-        uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(address(securitizationPool), jotToken);
-        for (uint256 i = 0; i < jotInvestors.length; i++) {
-            _distributeJOT(securitizationPool, jotToken, jotInvestors[i], tokenPrice, distributeAmount, totalSupply);
-        }
-    }
-
-    function _distributeJOT(
-        ISecuritizationPool securitizationPool,
-        address tokenAddress,
-        address investor,
-        uint256 tokenPrice,
-        uint256 currencyDistribute,
-        uint256 totalSupply
-    ) internal {
-        require(tokenPrice > 0, 'DistributionOperator: tranche is bankrupt');
-        uint256 distributeAmount = _calculateAmountDistribute(
-            investor,
-            tokenAddress,
-            currencyDistribute,
-            totalSupply,
-            securitizationPool
-        );
-
-        uint256 tokenAmount = convertCurrencyAmountToTokenValue(
-            address(securitizationPool),
-            tokenAddress,
-            (distributeAmount * Configuration.PRICE_SCALING_FACTOR) / tokenPrice
-        );
-        securitizationPool.increaseLockedDistributeBalance(tokenAddress, investor, distributeAmount, tokenAmount);
-    }
-
     function redeemBatch(
         address[] calldata redeemers,
         address pool,

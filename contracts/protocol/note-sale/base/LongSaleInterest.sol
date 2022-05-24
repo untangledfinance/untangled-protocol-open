@@ -23,6 +23,7 @@ contract LongSaleInterest {
         uint256 _durationLengthInSec,
         uint256 _termLengthInSeconds
     ) public pure returns (uint256) {
+        require(_termLengthInSeconds > _durationLengthInSec, "LongSaleInterest: _termLength must be greater than durationLength");
         uint256 moreDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
         _interestRate = _interestRate * moreDecimal;
         _yield = _yield * moreDecimal;

@@ -116,7 +116,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     {
         require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
 
-        registry.getLoanRegistry().completedLoans(agreementId);
+        registry.getLoanRegistry().setCompletedLoan(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);
         return true;

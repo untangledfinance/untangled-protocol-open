@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import './TimedCrowdsale.sol';
 
-contract FinalizableCrowdsale is TimedCrowdsale {
+abstract contract FinalizableCrowdsale is TimedCrowdsale {
     bool public finalized;
 
     event CrowdsaleFinalized();

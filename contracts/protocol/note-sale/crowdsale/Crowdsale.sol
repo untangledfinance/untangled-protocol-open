@@ -7,7 +7,7 @@ import '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
-contract Crowdsale is UntangledBase {
+abstract contract Crowdsale is UntangledBase {
     using ConfigHelper for Registry;
 
     Registry public registry;
@@ -38,8 +38,17 @@ contract Crowdsale is UntangledBase {
 
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    function __Crowdsale__init() internal onlyInitializing {
+    function __Crowdsale__init(
+        Registry _registry,
+        address _pool,
+        address _token,
+        address _currency
+    ) internal onlyInitializing {
         __UntangledBase__init_unchained(_msgSender());
+        registry = _registry;
+        pool = _pool;
+        token = _token;
+        currency = _currency;
     }
 
     modifier securitizationPoolRestricted() {

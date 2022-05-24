@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import './Crowdsale.sol';
 
-contract TimedCrowdsale is Crowdsale {
+abstract contract TimedCrowdsale is Crowdsale {
     uint256 public openingTime;
     uint256 public closingTime;
 
@@ -11,8 +11,13 @@ contract TimedCrowdsale is Crowdsale {
 
     event TimedCrowdsaleExtended(uint256 prevClosingTime, uint256 newClosingTime);
 
-    function __TimedCrowdsale__init() internal onlyInitializing {
-        __Crowdsale__init();
+    function __TimedCrowdsale__init(
+        Registry _registry,
+        address _pool,
+        address _token,
+        address _currency
+    ) internal onlyInitializing {
+        __Crowdsale__init(_registry, _pool, _token, _currency);
 
         isEnableTimeLimit = true;
     }

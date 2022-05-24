@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import './FinalizableCrowdsale.sol';
 
-contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
+abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
     uint32 public initialInterest;
     uint32 public finalInterest;
     uint32 public timeInterval;

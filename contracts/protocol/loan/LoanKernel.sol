@@ -16,10 +16,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     modifier validFillingOrderAddresses(address[] memory _orderAddresses) {
-        require(_orderAddresses[uint8(FillingAddressesIndex.CREDITOR)] != address(0x0), 'PARAM1');
-        require(_orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0), 'PARAM4');
-        require(_orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)] != address(0x0), 'PARAM5');
-        require(_orderAddresses[uint8(FillingAddressesIndex.PRINCIPAL_TOKEN_ADDRESS)] != address(0x0), 'PARAM2');
+        require(_orderAddresses[uint8(FillingAddressesIndex.CREDITOR)] != address(0x0), 'CREDITOR is zero address.');
+        require(_orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0), 'REPAYMENT_ROUTER is zero address.');
+        require(_orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)] != address(0x0), 'TERM_CONTRACT is zero address.');
+        require(_orderAddresses[uint8(FillingAddressesIndex.PRINCIPAL_TOKEN_ADDRESS)] != address(0x0), 'PRINCIPAL_TOKEN_ADDRESS is zero address.');
         _;
     }
 

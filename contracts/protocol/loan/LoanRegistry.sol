@@ -130,7 +130,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         pAmount = 0; // @TODO
     }
 
-    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanKernel {
+    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
 }
