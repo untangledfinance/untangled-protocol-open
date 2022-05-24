@@ -101,13 +101,9 @@ contract Crowdsale is UntangledBase {
         return totalCap - currencyRaised;
     }
 
-    function isLongSale() public view virtual returns (bool) {
-        return false;
-    }
+    function isLongSale() public view virtual returns (bool);
 
-    function getLongSaleTokenAmount(uint256 currencyAmount) public view virtual returns (uint256) {
-        return rate;
-    }
+    function getLongSaleTokenAmount(uint256 currencyAmount) public view virtual returns (uint256);
 
     function _defaultPreValidatePurchase(
         address beneficiary,
