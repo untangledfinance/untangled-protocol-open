@@ -134,7 +134,7 @@ contract SecuritizationPoolValueService is
         uint256 totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
             tokenAddress,
             poolAddress,
-            timestamp
+            expirationTimestamp
         );
 
         uint256 presentValue = _getPresentValueWithNAVCalculation(
