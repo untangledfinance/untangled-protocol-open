@@ -52,6 +52,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         external
         whenNotPaused
         nonReentrant
+        onlyRole(POOL_CREATOR)
         returns (address)
     {
         address poolImplAddress = address(registry.getSecuritizationPool());

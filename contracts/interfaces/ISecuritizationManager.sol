@@ -14,4 +14,6 @@ abstract contract ISecuritizationManager {
     mapping(address => address) public poolToJOT;
 
     mapping(address => bool) public isExistingTGEs;
+
+    bytes32 public constant POOL_CREATOR = keccak256('POOL_CREATOR');
 }
