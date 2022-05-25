@@ -43,7 +43,7 @@ contract SecuritizationPoolValueService is
         uint256 expirationTimestamp = loanAssetToken.getExpirationTimestamp(tokenId);
 
         uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
-        uint256 totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, expirationTimestamp);
+        uint256 totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
 
         uint256 presentValue = _getPresentValueWithNAVCalculation(
             poolAddress,
@@ -134,7 +134,7 @@ contract SecuritizationPoolValueService is
         uint256 totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
             tokenAddress,
             poolAddress,
-            expirationTimestamp
+            timestamp
         );
 
         uint256 presentValue = _getPresentValueWithNAVCalculation(
