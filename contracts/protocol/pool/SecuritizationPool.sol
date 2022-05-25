@@ -95,11 +95,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /** UTILITY FUNCTION */
-    function removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
+    function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
         for (uint256 i = 0; i < nftAssets.length; i++) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
-                removeNFTAssetIndex(i);
+                _removeNFTAssetIndex(i);
                 return true;
             }
         }
@@ -107,12 +107,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         return false;
     }
 
-    function removeNFTAssetIndex(uint256 indexToRemove) private {
+    function _removeNFTAssetIndex(uint256 indexToRemove) private {
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
         nftAssets.pop();
     }
 
-    function pushTokenAssetAddress(address tokenAddress) private {
+    function _pushTokenAssetAddress(address tokenAddress) private {
         if (!existsTokenAssetAddress[tokenAddress]) tokenAssetAddresses.push(tokenAddress);
         existsTokenAssetAddress[tokenAddress] = true;
     }
@@ -180,7 +180,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
         for (uint256 i = 0; i < tokenIds.length; ++i) {
-            require(removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
+            require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddress).approve(toPoolAddress, tokenIds[i]);
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
@@ -192,7 +192,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
+            require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
         }
     }
@@ -222,7 +222,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 'SecuritizationPool: unknown-token-address'
             );
             IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]);
-            pushTokenAssetAddress(tokenAddresses[i]);
+            _pushTokenAssetAddress(tokenAddresses[i]);
         }
     }
 
@@ -247,7 +247,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 IERC20(tokenAddresses[i]).balanceOf(address(this)) > 0,
                 'SecuritizationPool: Token balance is zero'
             );
-            pushTokenAssetAddress(tokenAddresses[i]);
+            _pushTokenAssetAddress(tokenAddresses[i]);
         }
     }
 

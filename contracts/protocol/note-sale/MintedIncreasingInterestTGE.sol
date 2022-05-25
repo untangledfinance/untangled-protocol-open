@@ -78,9 +78,9 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         _preValidateNewSaleRound();
 
         // call inner function for each extension
-        newSaleRound(rate);
+        _newSaleRound(rate);
         newSaleRoundTime(openingTime, closingTime);
-        setTotalCap(cap);
+        _setTotalCap(cap);
     }
 
     function _preValidateNewSaleRound() internal view {

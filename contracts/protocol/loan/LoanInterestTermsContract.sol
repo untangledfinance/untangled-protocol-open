@@ -80,15 +80,15 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         _;
     }
 
-    function addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) private {
+    function _addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) private {
         repaidPrincipalAmounts[agreementId] += repaidAmount;
     }
 
-    function addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) private {
+    function _addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) private {
         repaidInterestAmounts[agreementId] += repaidAmount;
     }
 
-    function setCompletedRepayment(bytes32 agreementId) private {
+    function _setCompletedRepayment(bytes32 agreementId) private {
         completedRepayment[agreementId] = true;
     }
 
@@ -165,28 +165,28 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
         // exceed expectation, Debtor can pay all at once
         if (unitsOfRepayment >= expectedPrincipal + expectedInterest) {
-            setCompletedRepayment(agreementId);
-            addRepaidInterestAmount(agreementId, expectedInterest);
-            addRepaidPrincipalAmount(agreementId, expectedPrincipal);
+            _setCompletedRepayment(agreementId);
+            _addRepaidInterestAmount(agreementId, expectedInterest);
+            _addRepaidPrincipalAmount(agreementId, expectedPrincipal);
             // put the remain to interest
             remains = unitsOfRepayment - (expectedPrincipal + expectedInterest);
         } else {
             // if currently Debtor no need to repay for interest
             if (expectedInterest == 0) {
                 if (unitsOfRepayment >= expectedPrincipal) {
-                    addRepaidPrincipalAmount(agreementId, expectedPrincipal);
+                    _addRepaidPrincipalAmount(agreementId, expectedPrincipal);
                     // with the remains
                     remains = unitsOfRepayment - expectedPrincipal;
                 } else {
-                    addRepaidPrincipalAmount(agreementId, unitsOfRepayment);
+                    _addRepaidPrincipalAmount(agreementId, unitsOfRepayment);
                 }
             } else {
                 // if expectedInterest > 0 ( & unitsOfRepayment >= expectedInterest)
-                addRepaidInterestAmount(agreementId, expectedInterest);
+                _addRepaidInterestAmount(agreementId, expectedInterest);
                 if (unitsOfRepayment - expectedInterest > 0) {
                     // Debtor is not able to fulfill the expectedPrincipal as we already validated from first IF statement
                     // -> there is no remains for adding to repaidInterestAmount
-                    addRepaidPrincipalAmount(agreementId, unitsOfRepayment - expectedInterest);
+                    _addRepaidPrincipalAmount(agreementId, unitsOfRepayment - expectedInterest);
                 }
             }
         }

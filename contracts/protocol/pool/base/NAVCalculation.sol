@@ -31,7 +31,7 @@ contract NAVCalculation {
         uint32 writeOffAfterCollectionPeriod;
     }
 
-    function calculateAssetValue(
+    function _calculateAssetValue(
         uint256 totalDebtAmt,
         uint256 interestRate,
         uint256 overdue,

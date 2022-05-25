@@ -15,7 +15,7 @@ contract SecuritizationPoolServiceBase is UntangledBase {
         registry = _registry;
     }
 
-    function convertTokenValueToCurrencyAmount(
+    function _convertTokenValueToCurrencyAmount(
         address pool,
         address tokenAddress,
         uint256 tokenValue
@@ -29,7 +29,7 @@ contract SecuritizationPoolServiceBase is UntangledBase {
                 : tokenValue / (10**(tokenDecimals - currencyDecimals));
     }
 
-    function convertCurrencyAmountToTokenValue(
+    function _convertCurrencyAmountToTokenValue(
         address pool,
         address tokenAddress,
         uint256 currencyAmount

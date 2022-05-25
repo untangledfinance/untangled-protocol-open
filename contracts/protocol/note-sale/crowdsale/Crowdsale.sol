@@ -30,8 +30,6 @@ abstract contract Crowdsale is UntangledBase {
     uint256 public currencyRaised;
     uint256 public tokenRaised;
 
-    bool internal initialized;
-
     uint256 public totalCap;
 
     mapping(address => uint256) public currencyRaisedByInvestor;
@@ -67,7 +65,7 @@ abstract contract Crowdsale is UntangledBase {
         totalCap = additionalCap + totalCap;
     }
 
-    function newSaleRound(uint256 newRate) internal {
+    function _newSaleRound(uint256 newRate) internal {
         require(!hasStarted, 'Crowdsale: Sale round overflow');
 
         hasStarted = true;
@@ -169,7 +167,7 @@ abstract contract Crowdsale is UntangledBase {
         IERC20(currency).transfer(beneficiary, currencyAmount);
     }
 
-    function setTotalCap(uint256 cap) internal {
+    function _setTotalCap(uint256 cap) internal {
         require(cap > 0, 'Crowdsale: cap is 0');
         require(cap >= currencyRaised, 'Crowdsale: cap is bellow currency raised');
 

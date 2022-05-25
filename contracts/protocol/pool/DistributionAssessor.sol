@@ -15,7 +15,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        uint256 ONE_SOT_DEFAULT_PRICE = convertTokenValueToCurrencyAmount(
+        uint256 ONE_SOT_DEFAULT_PRICE = _convertTokenValueToCurrencyAmount(
             address(securitizationPool),
             address(noteToken),
             1 * 10**uint256(noteToken.decimals())
@@ -260,7 +260,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         else return ((currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR, 0);
     }
 
-    function getPrincipalLeftOfSOT(ISecuritizationPool securitizationPool, address sotToken)
+    function _getPrincipalLeftOfSOT(ISecuritizationPool securitizationPool, address sotToken)
         internal
         view
         returns (uint256)
