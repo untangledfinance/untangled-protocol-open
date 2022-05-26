@@ -25,6 +25,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         pot = address(this);
         IERC20(_currency).approve(pot, type(uint256).max);
+        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
 
         state = CycleState.INITIATED;
         underlyingCurrency = _currency;
