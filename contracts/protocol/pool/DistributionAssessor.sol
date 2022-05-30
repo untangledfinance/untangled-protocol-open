@@ -26,7 +26,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
         uint32 interestRateSOT = securitizationPool.interestRateSOT();
 
-        return _calculateInterestForDuration(ONE_SOT_DEFAULT_PRICE, interestRateSOT, timestamp - openingBlockTimestamp);
+        return ONE_SOT_DEFAULT_PRICE + _calculateInterestForDuration(ONE_SOT_DEFAULT_PRICE, interestRateSOT, timestamp - openingBlockTimestamp);
     }
 
     // get current individual asset for SOT tranche
