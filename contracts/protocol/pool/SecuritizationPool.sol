@@ -192,6 +192,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+        require(tokenAddresses.length == tokenIds.length, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
@@ -232,6 +234,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+        require(tokenAddresses.length == tokenIds.length, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddresses.length == amounts.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
