@@ -76,7 +76,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     modifier onlyHaventStartedLoan(bytes32 agreementId) {
-        require(!startedLoan[agreementId], 'LOAN1');
+        require(!startedLoan[agreementId], 'LoanInterestTermsContract: Loan has started!');
         _;
     }
 
