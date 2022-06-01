@@ -234,7 +234,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(tokenAddresses.length == tokenIds.length, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddresses.length == recipients.length, "tokenAddresses length and tokenIds length are not equal");
         require(tokenAddresses.length == amounts.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
