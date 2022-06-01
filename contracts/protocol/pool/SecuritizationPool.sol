@@ -119,10 +119,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function onERC721Received(
-        address operator,
-        address from,
+        address,
+        address,
         uint256 tokenId,
-        bytes memory data
+        bytes memory
     ) external returns (bytes4) {
         require(
             _msgSender() == address(registry.getAcceptedInvoiceToken()) ||
