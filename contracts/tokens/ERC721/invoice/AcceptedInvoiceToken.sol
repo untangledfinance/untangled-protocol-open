@@ -160,7 +160,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         return uint256(entryHash);
     }
 
-    function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp) public view returns (uint256, uint256) {
+    function getExpectedRepaymentValues(uint256 tokenId, uint256) public view returns (uint256, uint256) {
         return (entries[bytes32(tokenId)].fiatAmount - entries[bytes32(tokenId)].paidAmount, 0);
     }
 
