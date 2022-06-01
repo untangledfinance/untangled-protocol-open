@@ -146,7 +146,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
-    ) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
+    ) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
         require(
             _daysPastDues.length * 5 == _ratesAndDefaults.length &&
                 _daysPastDues.length * 4 == _periodsAndWriteOffs.length,
@@ -331,7 +331,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address investor,
         uint256 currency,
         uint256 token
-    ) external override whenNotPaused nonReentrant onlyDistributionOperator {
+    ) external override whenNotPaused onlyDistributionOperator {
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
 

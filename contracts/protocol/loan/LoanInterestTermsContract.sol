@@ -97,7 +97,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         public
         override
         whenNotPaused
-        nonReentrant
         onlyKernel
         onlyHaventStartedLoan(agreementId)
         returns (bool)

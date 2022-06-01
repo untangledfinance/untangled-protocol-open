@@ -29,7 +29,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         return longSale;
     }
 
-    function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
     }
 

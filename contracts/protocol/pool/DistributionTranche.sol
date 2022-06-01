@@ -30,7 +30,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         address noteToken,
         address usr,
         uint256 tokenAmount
-    ) external whenNotPaused nonReentrant onlyOperator returns (bool) {
+    ) external whenNotPaused onlyOperator returns (bool) {
         return IERC20(noteToken).transferFrom(usr, address(this), tokenAmount);
     }
 }
