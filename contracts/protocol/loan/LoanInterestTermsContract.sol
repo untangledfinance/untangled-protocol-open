@@ -172,13 +172,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         } else {
             // if currently Debtor no need to repay for interest
             if (expectedInterest == 0) {
-                if (unitsOfRepayment >= expectedPrincipal) {
-                    _addRepaidPrincipalAmount(agreementId, expectedPrincipal);
-                    // with the remains
-                    remains = unitsOfRepayment - expectedPrincipal;
-                } else {
-                    _addRepaidPrincipalAmount(agreementId, unitsOfRepayment);
-                }
+                _addRepaidPrincipalAmount(agreementId, unitsOfRepayment);
             } else {
                 // if expectedInterest > 0 ( & unitsOfRepayment >= expectedInterest)
                 _addRepaidInterestAmount(agreementId, expectedInterest);
