@@ -371,5 +371,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
+        if (sotToken == notesToken) {
+            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+        }
     }
 }
