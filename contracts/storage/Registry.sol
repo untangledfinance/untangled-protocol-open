@@ -129,4 +129,9 @@ contract Registry is UntangledBase {
     function setLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_KERNEL), newAddress);
     }
+
+    function setCollateralManagementToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.COLLATERAL_MANAGEMENT_TOKEN), newAddress);
+    }
+
 }

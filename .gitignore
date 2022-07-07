@@ -70,3 +70,5 @@ typings/
 build
 /artifacts/
 /cache/
+deployments/localhost
+deployments/hardhat

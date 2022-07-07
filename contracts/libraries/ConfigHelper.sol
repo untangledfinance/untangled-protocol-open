@@ -19,6 +19,7 @@ import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
+import '../tokens/ERC1155/CollateralManagementToken.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -104,5 +105,9 @@ library ConfigHelper {
         MintedNormalTGE(
             getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
         );
+    }
+
+    function getCollateralManagementToken(Registry registry) internal view returns (CollateralManagementToken) {
+        return CollateralManagementToken(getAddress(registry, Configuration.CONTRACT_TYPE.COLLATERAL_MANAGEMENT_TOKEN));
     }
 }
