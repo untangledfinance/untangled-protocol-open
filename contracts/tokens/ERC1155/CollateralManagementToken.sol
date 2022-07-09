@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/presets/ERC1155PresetMinterPauserUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 
-contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable {
+contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1155SupplyUpgradeable {
     string private _name;
     string private _symbol;
 
@@ -16,6 +17,7 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable {
         _name = name;
         _symbol = symbol;
         __ERC1155PresetMinterPauser_init(uri);
+        __ERC1155Supply_init();
 
         _setupRole(MINTER_ROLE, minter);
         renounceRole(MINTER_ROLE, _msgSender());
@@ -33,6 +35,46 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable {
      */
     function symbol() public view returns (string memory) {
         return _symbol;
+    }
+
+    /**
+     * @dev See {ERC1155-_beforeTokenTransfer}.
+     */
+    function _beforeTokenTransfer(
+        address operator,
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal override(ERC1155SupplyUpgradeable, ERC1155PresetMinterPauserUpgradeable){
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(ERC1155Upgradeable, ERC1155PresetMinterPauserUpgradeable)
+    returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+    /**
+     * @notice Get total supply of liquidity tokens
+     * @param _ids ID of the Tokens
+     * @return The total supply of each liquidity token id provided in _ids
+   */
+    function totalSupplyOfBatch(uint256[] calldata _ids)
+    external view returns (uint256[] memory)
+    {
+        uint256[] memory batchTotalSupplies = new uint256[](_ids.length);
+        for (uint256 i = 0; i < _ids.length; i++) {
+            batchTotalSupplies[i] = totalSupply(_ids[i]);
+        }
+        return batchTotalSupplies;
     }
 
     function balanceOfProjects(address _owner, uint256[] calldata _projectIds) external view returns (uint256[] memory) {
