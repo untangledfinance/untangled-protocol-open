@@ -72,3 +72,5 @@ build
 /cache/
 deployments/localhost
 deployments/hardhat
+.idea
+deployments/rinkeby
