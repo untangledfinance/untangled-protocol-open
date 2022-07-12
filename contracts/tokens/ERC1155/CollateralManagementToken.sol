@@ -7,15 +7,18 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155Supp
 contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1155SupplyUpgradeable {
     string private _name;
     string private _symbol;
+    uint8 private _decimals;
 
     function initialize(
         address minter,
         string memory name,
         string memory symbol,
+        uint8 decimals,
         string memory uri
     ) public initializer {
         _name = name;
         _symbol = symbol;
+        _decimals = decimals;
         __ERC1155PresetMinterPauser_init(uri);
         __ERC1155Supply_init();
 
@@ -35,6 +38,13 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1
      */
     function symbol() public view returns (string memory) {
         return _symbol;
+    }
+
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     */
+    function decimals() public view returns (uint8) {
+        return _decimals;
     }
 
     /**
