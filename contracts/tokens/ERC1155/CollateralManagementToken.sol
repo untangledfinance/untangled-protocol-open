@@ -11,14 +11,14 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1
 
     function initialize(
         address minter,
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
         string memory uri
     ) public initializer {
-        _name = name;
-        _symbol = symbol;
-        _decimals = decimals;
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals_;
         __ERC1155PresetMinterPauser_init(uri);
         __ERC1155Supply_init();
 
