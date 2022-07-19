@@ -24,6 +24,8 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
     contract.address = contractProxy.address;
     await save(contractName, contract);
     await execute(contractName, { from: deployer, log: true }, initSignature || 'initialize', ...initParams);
+  } else if (contractImpl.newlyDeployed) {
+    await execute(`${contractName}Proxy`, { from: deployer, log: true }, 'updateImplementation', contractImpl.address);
   }
 
   return contractProxy
