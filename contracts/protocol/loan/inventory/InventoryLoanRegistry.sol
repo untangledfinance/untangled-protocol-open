@@ -1,34 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../libraries/openzeppelin/Pausable.sol";
-import "../../libraries/openzeppelin/Ownable.sol";
-import "../../libraries/UnpackLoanParamtersLib.sol";
-import "../CRInventoryEngineTypes.sol";
-import "../CRInventoryDecisionEngine.sol";
-import "../../libraries/PermissionsLib.sol";
-import "../../token/invoice/AcceptedInvoiceToken.sol";
 import "../../loan/inventory/InventoryInterestTermsContract.sol";
-import "../../loan/inventory/InventoryLoanDebtKernel.sol";
+import "../../loan/inventory/InventoryLoanKernel.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../../../tokens/ERC721/invoice/AcceptedInvoiceToken.sol";
+import "./CRInventoryDecisionEngine.sol";
+import "../../../libraries/Unpack.sol";
+import "../../../libraries/Unpack16.sol";
 
-contract InventoryLoanDebtRegistry is
-    Pausable,
-    BinkabiContext,
-    UnpackLoanParamtersLib,
-    CRInventoryEngineTypes,
+contract InventoryLoanRegistry is
+    UntangledBase,
     CRInventoryDecisionEngine
 {
     using SafeMath for uint256;
-    using PermissionsLib for PermissionsLib.Permissions;
+    using ConfigHelper for Registry;
+    using Unpack for bytes32;
+    using Unpack16 for bytes16;
+    Registry public registry;
 
-    PermissionsLib.Permissions internal entryInsertPermissions;
-    PermissionsLib.Permissions internal entryEditPermissions;
+    struct CollateralRatioValues {
+        address priceFeedOperator; // Who responsible to update collateral price
+        uint initCollateralRatio; // Collateral ratio when setup Loan
+        uint lastCollateralRatio;
+        uint minCollateralRatio; // Minimum calculate collateral ratio
+        uint liquidationRatio; // Minimum acceptable collateral ratio
+    }
+
 
     struct Entry {
         address version; // address of current repayment router
         address beneficiary;
         address debtor;
         address termsContract;
+        address principalTokenAddress;
         bytes32 termsContractParameters;
         bytes16 collateralInfoParameters;
         uint256 issuanceBlockTimestamp;
@@ -36,17 +41,17 @@ contract InventoryLoanDebtRegistry is
         uint256 expirationTimestamp;
         CollateralRatioValues collateralRatioValues;
     }
-    // Primary registry mapping agreement IDs to their corresponding entries
-    mapping(bytes32 => Entry) internal registry;
+    // Primary entries mapping agreement IDs to their corresponding entries
+    mapping(bytes32 => Entry) public entries;
     // Helper mapping agreement IDs to their corresponding invoice token id
-    mapping(bytes32 => uint256[]) internal registryToInvoice;
+    mapping(bytes32 => uint256[]) public registryToInvoice;
     // Maps debtor addresses to a list of their debts' agreement IDs
     mapping(address => bytes32[]) internal debtorToDebts;
     // agreement id -> waiting for payment of sell collateral id -> sell info
     mapping (bytes32 => mapping (bytes32 => SellCollateralInfo)) public waitingSellCollateral;
     mapping (bytes32 => mapping (bytes32 => bool)) public waitingSellCollateralExisted;
     // agreement id -> is foreclosure
-    mapping (bytes32 => bool) liquidatedLoan;
+    mapping (bytes32 => bool) public liquidatedLoan;
 
     // List of terms which have completed repayment
     mapping (bytes32 => bool) public completedRepayment;
@@ -56,7 +61,7 @@ contract InventoryLoanDebtRegistry is
     mapping (bytes32 => bool) public completedLoans;
 
     // Setting manual for interest amount
-    mapping (bytes32 => bool) internal manualInterestLoan;
+    mapping (bytes32 => bool) public manualInterestLoan;
     mapping (bytes32 => uint) internal manualInterestAmountLoan;
 
     struct SellCollateralInfo {
@@ -68,8 +73,8 @@ contract InventoryLoanDebtRegistry is
     //////////////////////////////
     // CONSTANTS               //
     ////////////////////////////
-    string public constant INSERT_CONTEXT = "commodity-debt-registry-insert";
-    string public constant EDIT_CONTEXT = "commodity-debt-registry-edit";
+    string public constant INSERT_CONTEXT = "commodity-debt-entries-insert";
+    string public constant EDIT_CONTEXT = "commodity-debt-entries-edit";
 
     //////////////////////////////
     // EVENTS                   //
@@ -94,7 +99,9 @@ contract InventoryLoanDebtRegistry is
         uint256 latestCR
     );
 
-    constructor(address contractRegistryAddress) public BinkabiContext(contractRegistryAddress) {
+    function initialize(Registry _registry) public initializer {
+        __UntangledBase__init_unchained(_msgSender());
+        registry = _registry;
     }
 
     //////////////////////////////
@@ -117,17 +124,9 @@ contract InventoryLoanDebtRegistry is
         _;
     }
 
-    modifier onlyAuthorizedToInsert() {
-        require(
-            entryInsertPermissions.isAuthorized(msg.sender) || _isAuthorizedContract(msg.sender),
-            "Inventory Debt Registry: Sender does not have permission to insert."
-        );
-        _;
-    }
-
     modifier onlyAuthorizedToEdit() {
         require(
-            entryEditPermissions.isAuthorized(msg.sender) || _isAuthorizedContract(msg.sender),
+            _msgSender() == address(registry.getInventoryInterestTermsContract()),
             "Inventory Debt Registry: Sender does not have permission to edit."
         );
         _;
@@ -136,7 +135,7 @@ contract InventoryLoanDebtRegistry is
     modifier onlyPriceFeedOperator(bytes32 agreementId) {
         require(
             msg.sender ==
-            registry[agreementId].collateralRatioValues.priceFeedOperator,
+            entries[agreementId].collateralRatioValues.priceFeedOperator,
             "Inventory Debt Registry: Not authorized to update price."
         );
         _;
@@ -169,25 +168,22 @@ contract InventoryLoanDebtRegistry is
     function _evaluateCollateralRatio(bytes32 agreementId, uint256 price)
     internal
     {
-        uint256 collateralAmount;
-        (, collateralAmount) = _unpackInventoryCollateralParametersFromBytes(
-            registry[agreementId].collateralInfoParameters
-        );
+        uint256 collateralAmount = entries[agreementId].collateralInfoParameters.unpackCollateralAmount();
 
         uint256 invoiceAmount = _getTotalInvoiceAmount(agreementId);
 
         uint256 currentTimestamp = block.timestamp;
-        uint256 totalRemain = InventoryInterestTermsContract(contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)).getTotalExpectedRepaymentValue(
+        uint256 totalRemain = registry.getInventoryInterestTermsContract().getTotalExpectedRepaymentValue(
             agreementId,
             currentTimestamp
         );
 
         uint256 cr = _computeCR(collateralAmount, price, invoiceAmount, totalRemain);
 
-        uint256 previousCR = registry[agreementId].collateralRatioValues.lastCollateralRatio;
+        uint256 previousCR = entries[agreementId].collateralRatioValues.lastCollateralRatio;
 
         if (cr != previousCR) {
-            registry[agreementId]
+            entries[agreementId]
                 .collateralRatioValues
                 .lastCollateralRatio = cr;
             emit CollateralRatioChanged(agreementId, previousCR, cr);
@@ -203,8 +199,8 @@ contract InventoryLoanDebtRegistry is
     //--------------
     /**
      * TODO: Limitation for inserting
-     * Inserts a new entry into the registry, if the entry is valid and sender is
-     * authorized to make 'insert' mutations to the registry.
+     * Inserts a new entry into the entries, if the entry is valid and sender is
+     * authorized to make 'insert' mutations to the entries.
      */
     function insert(
         address _version,
@@ -212,6 +208,7 @@ contract InventoryLoanDebtRegistry is
         address _debtor,
         address _termsContract,
         address _priceFeedOperator,
+        address _principalTokenAddress,
         bytes32 _termsContractParameters,
         bytes16 _collateralInfoParameters,
         uint256[4] memory values
@@ -240,21 +237,22 @@ contract InventoryLoanDebtRegistry is
             issuanceBlockTimestamp: block.timestamp,
             lastRepayTimestamp: 0,
             expirationTimestamp: values[2],
-            collateralRatioValues: crValues
+            collateralRatioValues: crValues,
+            principalTokenAddress: _principalTokenAddress
         });
         bytes32 agreementId = _getAgreementId(entry, _debtor, values[3]);
 
         require(
-            registry[agreementId].beneficiary == address(0),
+            entries[agreementId].beneficiary == address(0),
             "Beneficiary account already exists."
         );
 
-        registry[agreementId] = entry;
+        entries[agreementId] = entry;
 
         selfEvaluateCollateralRatio(agreementId);
-        registry[agreementId]
+        entries[agreementId]
             .collateralRatioValues
-            .initCollateralRatio = registry[agreementId].collateralRatioValues.lastCollateralRatio;
+            .initCollateralRatio = entries[agreementId].collateralRatioValues.lastCollateralRatio;
 
         debtorToDebts[_debtor].push(agreementId);
 
@@ -302,7 +300,7 @@ contract InventoryLoanDebtRegistry is
         bytes32 agreementId,
         bytes32 newLoanTermsParameters
     ) public {
-        registry[agreementId].termsContractParameters = newLoanTermsParameters;
+        entries[agreementId].termsContractParameters = newLoanTermsParameters;
     }
 
     /**
@@ -312,12 +310,9 @@ contract InventoryLoanDebtRegistry is
         bytes32 agreementId,
         bytes16 newCollateralInfoParameters
     ) public {
-        registry[agreementId].collateralInfoParameters = newCollateralInfoParameters;
+        entries[agreementId].collateralInfoParameters = newCollateralInfoParameters;
 
-        uint256 collateralAmount;
-        (, collateralAmount) = _unpackInventoryCollateralParametersFromBytes(
-            newCollateralInfoParameters
-        );
+        uint256 collateralAmount = newCollateralInfoParameters.unpackCollateralAmount();
 
         require(
             collateralAmount >= 0,
@@ -326,17 +321,17 @@ contract InventoryLoanDebtRegistry is
     }
 
     function setMinCollateralRatio(bytes32 agreementId, uint256 minCollateralRatio) public {
-        registry[agreementId].collateralRatioValues.minCollateralRatio = minCollateralRatio;
+        entries[agreementId].collateralRatioValues.minCollateralRatio = minCollateralRatio;
     }
 
     function setLiquidationRatio(bytes32 agreementId, uint256 liquidationRatio) public {
-        registry[agreementId].collateralRatioValues.liquidationRatio = liquidationRatio;
+        entries[agreementId].collateralRatioValues.liquidationRatio = liquidationRatio;
     }
 
     /**
      * Modifies the beneficiary of a debt issuance, if the sender
      * is authorized to make 'modifyBeneficiary' mutations to
-     * the registry.
+     * the entries.
     */
     function modifyBeneficiary(bytes32 agreementId, address newBeneficiary)
     public
@@ -344,8 +339,8 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     nonNullBeneficiary(newBeneficiary)
     {
-        address previousBeneficiary = registry[agreementId].beneficiary;
-        registry[agreementId].beneficiary = newBeneficiary;
+        address previousBeneficiary = entries[agreementId].beneficiary;
+        entries[agreementId].beneficiary = newBeneficiary;
 
         emit LogModifyEntryBeneficiary(
             agreementId,
@@ -354,57 +349,26 @@ contract InventoryLoanDebtRegistry is
         );
     }
 
-    /**
-     * Adds an address to the list of agents authorized
-     * to make 'insert' mutations to the registry.
-     */
-    function addAuthorizedInsertAgent(address agent) public onlyOwner {
-        entryInsertPermissions.authorize(agent, INSERT_CONTEXT);
-    }
-
-    /**
-     * Adds an address to the list of agents authorized
-     * to make 'modifyBeneficiary' mutations to the registry.
-     */
-    function addAuthorizedEditAgent(address agent) public onlyOwner {
-        entryEditPermissions.authorize(agent, EDIT_CONTEXT);
-    }
-
-    /**
-     * Removes an address from the list of agents authorized
-     * to make 'insert' mutations to the registry.
-     */
-    function revokeInsertAgentAuthorization(address agent) public onlyOwner {
-        entryInsertPermissions.revokeAuthorization(agent, INSERT_CONTEXT);
-    }
-
-    /**
-     * Removes an address from the list of agents authorized
-     * to make 'modifyBeneficiary' mutations to the registry.
-     */
-    function revokeEditAgentAuthorization(address agent) public onlyOwner {
-        entryEditPermissions.revokeAuthorization(agent, EDIT_CONTEXT);
-    }
 
     // Update timestamp of the last repayment from Debtor
     function updateLastRepaymentTimestamp(bytes32 agreementId, uint newTimestamp)
     public
     onlyAuthorizedToEdit
     {
-        registry[agreementId].lastRepayTimestamp = newTimestamp;
+        entries[agreementId].lastRepayTimestamp = newTimestamp;
     }
 
     //-----------------
     // CALLs
     //-----------------
 
-    /* Ensures an entry with the specified agreement ID exists within the debt registry. */
+    /* Ensures an entry with the specified agreement ID exists within the debt entries. */
     function doesEntryExist(bytes32 agreementId)
     public
     view
     returns (bool)
     {
-        return registry[agreementId].beneficiary != address(0);
+        return entries[agreementId].beneficiary != address(0);
     }
 
     /**
@@ -417,7 +381,7 @@ contract InventoryLoanDebtRegistry is
     returns (address)
     {
         // Lender
-        return registry[agreementId].beneficiary;
+        return entries[agreementId].beneficiary;
     }
 
     function getDebtor(bytes32 agreementId)
@@ -426,7 +390,7 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     returns (address)
     {
-        return registry[agreementId].debtor;
+        return entries[agreementId].debtor;
     }
 
     /**
@@ -440,9 +404,9 @@ contract InventoryLoanDebtRegistry is
     returns (address, bytes32, bytes16)
     {
         return (
-            registry[agreementId].termsContract,
-            registry[agreementId].termsContractParameters,
-            registry[agreementId].collateralInfoParameters
+            entries[agreementId].termsContract,
+            entries[agreementId].termsContractParameters,
+            entries[agreementId].collateralInfoParameters
         );
     }
 
@@ -455,7 +419,7 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     returns (address)
     {
-        return registry[agreementId].termsContract;
+        return entries[agreementId].termsContract;
     }
 
     /**
@@ -467,7 +431,7 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     returns (bytes32)
     {
-        return registry[agreementId].termsContractParameters;
+        return entries[agreementId].termsContractParameters;
     }
 
     /**
@@ -479,7 +443,7 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     returns (uint256 timestamp)
     {
-        return registry[agreementId].issuanceBlockTimestamp;
+        return entries[agreementId].issuanceBlockTimestamp;
     }
 
     function getLastRepaymentTimestamp(bytes32 agreementId)
@@ -488,7 +452,7 @@ contract InventoryLoanDebtRegistry is
     onlyExtantEntry(agreementId)
     returns (uint256 timestamp)
     {
-        return registry[agreementId].lastRepayTimestamp;
+        return entries[agreementId].lastRepayTimestamp;
     }
 
     function getExpirationTimestamp(bytes32 agreementId)
@@ -498,11 +462,11 @@ contract InventoryLoanDebtRegistry is
     returns (uint256)
     {
         // solhint-disable-next-line not-rely-on-time
-        return registry[agreementId].expirationTimestamp;
+        return entries[agreementId].expirationTimestamp;
     }
 
     /**
-     * Returns the parameters of a debt issuance in the registry.
+     * Returns the parameters of a debt issuance in the entries.
      *
      * TODO: protect this function with our `onlyExtantEntry` modifier once the restriction
      * on the size of the call stack has been addressed.
@@ -513,11 +477,11 @@ contract InventoryLoanDebtRegistry is
     returns (address, address, address, bytes32, uint256)
     {
         return (
-            registry[agreementId].version,
-            registry[agreementId].beneficiary,
-            registry[agreementId].termsContract,
-            registry[agreementId].termsContractParameters,
-            registry[agreementId].issuanceBlockTimestamp
+            entries[agreementId].version,
+            entries[agreementId].beneficiary,
+            entries[agreementId].termsContract,
+            entries[agreementId].termsContractParameters,
+            entries[agreementId].issuanceBlockTimestamp
         );
     }
 
@@ -526,22 +490,19 @@ contract InventoryLoanDebtRegistry is
     view
     returns (uint256)
     {
-        return registry[agreementId].collateralRatioValues.liquidationRatio;
+        return entries[agreementId].collateralRatioValues.liquidationRatio;
     }
 
     function getMinCollateralRatio(bytes32 agreementId)
     public view
     returns (uint256)
     {
-        return registry[agreementId].collateralRatioValues.minCollateralRatio;
+        return entries[agreementId].collateralRatioValues.minCollateralRatio;
     }
 
     function getCollateralLastPrice(bytes32 agreementId) public view returns (uint256) {
-        (uint collateralId,) = _unpackInventoryCollateralParametersFromBytes(
-            registry[agreementId].collateralInfoParameters
-        );
-
-        return SupplyChainManagementProgram(contractRegistry.get(SUPPLY_CHAIN_MANAGEMENT_PROGRAM)).getCommodityPrice(collateralId);
+        uint collateralId = entries[agreementId].collateralInfoParameters.unpackCollateralTokenId();
+        return registry.getSupplyChainManagementProgram().getCommodityPrice(collateralId);
     }
 
     function getInitCollateralRatio(bytes32 agreementId)
@@ -549,7 +510,7 @@ contract InventoryLoanDebtRegistry is
     view
     returns (uint256)
     {
-        return registry[agreementId].collateralRatioValues.initCollateralRatio;
+        return entries[agreementId].collateralRatioValues.initCollateralRatio;
     }
 
     function isReadyForLiquidation(bytes32 agreementId)
@@ -557,7 +518,7 @@ contract InventoryLoanDebtRegistry is
     view
     returns (bool)
     {
-        return registry[agreementId].collateralRatioValues.liquidationRatio >= registry[agreementId].collateralRatioValues.lastCollateralRatio;
+        return entries[agreementId].collateralRatioValues.liquidationRatio >= entries[agreementId].collateralRatioValues.lastCollateralRatio;
     }
 
     function latestCollateralRatio(bytes32 agreementId)
@@ -565,7 +526,7 @@ contract InventoryLoanDebtRegistry is
     view
     returns (uint256)
     {
-        return registry[agreementId].collateralRatioValues.lastCollateralRatio;
+        return entries[agreementId].collateralRatioValues.lastCollateralRatio;
     }
 
     function getCollateralInfoParameters(bytes32 agreementId)
@@ -573,24 +534,8 @@ contract InventoryLoanDebtRegistry is
     view
     returns (uint256 collateralId, uint256 collateralAmount)
     {
-        (collateralId, collateralAmount) = _unpackInventoryCollateralParametersFromBytes(
-            registry[agreementId].collateralInfoParameters
-        );
-    }
-
-    function getTermsContractParametersInfo(bytes32 agreementId)
-    public
-    view
-    returns (
-        uint principalTokenIndex,
-        uint principalAmount,
-        uint interestRate,
-        uint termLengthInAmortizationUnits
-    )
-    {
-        (principalTokenIndex, principalAmount, interestRate,, termLengthInAmortizationUnits,) = _unpackLoanTermsParametersFromBytes(
-            registry[agreementId].termsContractParameters
-        );
+        collateralId = entries[agreementId].collateralInfoParameters.unpackCollateralTokenId();
+        collateralAmount = entries[agreementId].collateralInfoParameters.unpackCollateralAmount();
     }
 
     function getInvoiceIds(bytes32 agreementId) public view returns (uint256[] memory) {
@@ -606,8 +551,7 @@ contract InventoryLoanDebtRegistry is
                     for (uint index = i; index<registryToInvoice[agreementId].length-1; index++){
                         registryToInvoice[agreementId][index] = registryToInvoice[agreementId][index+1];
                     }
-                    delete registryToInvoice[agreementId][registryToInvoice[agreementId].length-1];
-                    registryToInvoice[agreementId].length--;
+                    registryToInvoice[agreementId].pop();
 
                     selfEvaluateCollateralRatio(agreementId);
                     break;
@@ -617,7 +561,7 @@ contract InventoryLoanDebtRegistry is
     }
 
     function _getTotalInvoiceAmount(bytes32 agreementId) public view returns (uint256 amount) {
-        AcceptedInvoiceToken acceptedInvoiceToken = AcceptedInvoiceToken(contractRegistry.get(ACCEPTED_INVOICE_TOKEN));
+        AcceptedInvoiceToken acceptedInvoiceToken = registry.getAcceptedInvoiceToken();
 
         amount = 0;
         if (registryToInvoice[agreementId].length > 0) {
@@ -651,10 +595,6 @@ contract InventoryLoanDebtRegistry is
         return (sellInfo.amountPayment, sellInfo.fiatTokenIndex);
     }
 
-    function isLoanLiquidated(bytes32 agreementId) public view returns (bool) {
-        return liquidatedLoan[agreementId];
-    }
-
     function setLoanLiquidated(bytes32 agreementId) public {
         liquidatedLoan[agreementId] = true;
     }
@@ -664,17 +604,13 @@ contract InventoryLoanDebtRegistry is
     }
 
     function isExpiredOrReadyForLiquidation(bytes32 agreementId) public view returns (bool){
-        uint expTimestamp = registry[agreementId].expirationTimestamp;
+        uint expTimestamp = entries[agreementId].expirationTimestamp;
         // solium-disable-next-line
         if (expTimestamp <= block.timestamp) {
             return true;
         }
 
         return isReadyForLiquidation(agreementId);
-    }
-
-    function isCompletedRepayment(bytes32 agreementId) public view returns (bool) {
-        return completedRepayment[agreementId];
     }
 
     function setCompletedRepayment(bytes32 agreementId) public {
@@ -712,16 +648,8 @@ contract InventoryLoanDebtRegistry is
         );
     }
 
-    function isCompletedLoan(bytes32 agreementId) public view returns (bool) {
-        return completedLoans[agreementId];
-    }
-
     function setCompletedLoan(bytes32 agreementId) public {
         completedLoans[agreementId] = true;
-    }
-
-    function isManualInterestLoan(bytes32 agreementId) public view returns (bool) {
-        return manualInterestLoan[agreementId];
     }
 
     function setManualInterestLoan(bytes32 agreementId, bool isManualInterest) public {
@@ -734,5 +662,9 @@ contract InventoryLoanDebtRegistry is
 
     function setManualInterestAmountLoan(bytes32 agreementId, uint interestAmount) public {
         manualInterestAmountLoan[agreementId] = interestAmount;
+    }
+
+    function getAgreement(bytes32 agreementId) public view returns(Entry memory) {
+        return entries[agreementId];
     }
 }

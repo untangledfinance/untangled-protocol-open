@@ -9,6 +9,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const supplyChainManagementProgram = await deployProxy({ getNamedAccounts, deployments }, 'SupplyChainManagementProgram', [
     registry.address
   ]);
+  if (supplyChainManagementProgram.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setSupplyChainManagementProgram',
+      supplyChainManagementProgram.address
+    );
+  }
   await execute(
     'SupplyChainManagementProgram',
     { from: deployer, log: true },

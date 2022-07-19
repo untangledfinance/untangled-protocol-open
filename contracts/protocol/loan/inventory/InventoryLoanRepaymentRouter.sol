@@ -1,10 +1,13 @@
-pragma solidity ^0.5.10;
-import "../../libraries/openzeppelin/Pausable.sol";
-import "../../token/TokenTransferProxy.sol";
-import "./InventoryLoanDebtRegistry.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+import "./InventoryLoanRegistry.sol";
 import "./InventoryInterestTermsContract.sol";
+import '@openzeppelin/contracts/interfaces/IERC20.sol';
 
-contract InventoryLoanRepaymentRouter is BinkabiContext, Pausable {
+contract InventoryLoanRepaymentRouter is PausableUpgradeable, OwnableUpgradeable {
+    using ConfigHelper for Registry;
+
+    Registry public registry;
 
     enum Errors {
         DEBT_AGREEMENT_NONEXISTENT,
@@ -22,39 +25,32 @@ contract InventoryLoanRepaymentRouter is BinkabiContext, Pausable {
 
     event LogError(uint8 indexed _errorId, bytes32 indexed _agreementId);
 
-    constructor(address contractRegistryAddress) public BinkabiContext(contractRegistryAddress) {
+    function initialize(Registry _registry) public initializer {
+        __Pausable_init_unchained();
+        __Ownable_init_unchained();
+        registry = _registry;
     }
 
     // Validate repayment request parametters
     function _assertRepaymentRequest(bytes32 _agreementId, address _payer, uint256 _amount, address _tokenAddress)
     internal
-    returns (bool)
     {
         require(_tokenAddress != address(0), "Token address must different with NULL.");
         require(_amount > 0, "Amount must greater than 0.");
 
         // Ensure agreement exists.
         require(
-            InventoryLoanDebtRegistry(contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)).doesEntryExist(_agreementId),
+            registry.getInventoryLoanRegistry().doesEntryExist(_agreementId),
             "Inventory Debt Registry: Agreement Id does not exists."
         );
-
-        // Check payer has sufficient balance and has granted router sufficient allowance.
-        if (ERC20(_tokenAddress).balanceOf(_payer) < _amount ||
-        ERC20(_tokenAddress).allowance(_payer, address(contractRegistry.get(ERC20_TOKEN_TRANSFER_PROXY))) < _amount) {
-            emit LogError(uint8(Errors.PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT), _agreementId);
-            return false;
-        }
-        return true;
     }
 
 
     function _doRepay(bytes32 _agreementId, address _payer, uint256 _amount, address _tokenAddress)
     public
-    returns (bool)
     {
         // Notify terms contract
-        InventoryLoanDebtRegistry debtRegistry = InventoryLoanDebtRegistry(contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY));
+        InventoryLoanRegistry debtRegistry = registry.getInventoryLoanRegistry();
 
         address termsContract = debtRegistry.getTermsContract(_agreementId);
         address beneficiary = debtRegistry.getBeneficiary(_agreementId);
@@ -68,21 +64,20 @@ contract InventoryLoanRepaymentRouter is BinkabiContext, Pausable {
 
         // Transfer amount to creditor
         require(
-            TokenTransferProxy(contractRegistry.get(ERC20_TOKEN_TRANSFER_PROXY)).transferFrom(_tokenAddress, _payer, beneficiary, _amount - remains),
+            IERC20(_tokenAddress).transferFrom(_payer, beneficiary, _amount - remains),
             "Unsuccessfully transferred repayment amount to Creditor."
         );
 
         // Transfer remain amount to debtor
         if (debtor != _payer && remains > 0) {
             require(
-                TokenTransferProxy(contractRegistry.get(ERC20_TOKEN_TRANSFER_PROXY)).transferFrom(_tokenAddress, _payer, debtor, remains),
+                IERC20(_tokenAddress).transferFrom(_payer, debtor, remains),
                 "Unsuccessfully transferred repayment amount to Creditor."
             );
         }
 
         // Log event for repayment
         emit LogRepayment(_agreementId, _payer, beneficiary, _amount - remains, _tokenAddress);
-        return true;
     }
 
     // Mannual repay by using Fiat tokens
@@ -91,14 +86,16 @@ contract InventoryLoanRepaymentRouter is BinkabiContext, Pausable {
     whenNotPaused
     returns (uint)
     {
-        require(
-            _assertRepaymentRequest(agreementId, payer, amount, tokenAddress),
-            "InventoryLoanRepaymentRouter: Invalid repayment request"
-        );
-        require(
-            _doRepay(agreementId, payer, amount, tokenAddress),
-            "InventoryLoanRepaymentRouter: Repayment has failed"
-        );
+        _assertRepaymentRequest(agreementId, payer, amount, tokenAddress);
+        _doRepay(agreementId, payer, amount, tokenAddress);
         return amount;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 }

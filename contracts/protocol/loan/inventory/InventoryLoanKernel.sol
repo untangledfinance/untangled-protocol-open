@@ -1,43 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '../../token/loan/LoanAssetToken.sol';
-import '../../standards/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import './InventoryInterestTermsContract.sol';
 import '../../cma/SupplyChainManagementProgram.sol';
-import './InventoryLoanDebtRegistry.sol';
-import '../../trade/e-receipt-inventory/EReceiptInventoryTradeFactory.sol';
+import './InventoryLoanRegistry.sol';
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract InventoryLoanDebtKernel is UntangledBase {
+contract InventoryLoanKernel is PausableUpgradeable, OwnableUpgradeable {
     using SafeMath for uint256;
+    using ConfigHelper for Registry;
 
-    enum Errors {
-        // Debt has been already been issued
-        DEBT_ISSUED, // 0
-        // Order has already expired
-        ORDER_EXPIRED, // 1
-        // Debt issuance associated with order has been cancelled
-        ISSUANCE_CANCELLED, // 2
-        // Order has been cancelled
-        ORDER_CANCELLED, // 3
-        // Order parameters specify amount of creditor / debtor fees
-        // that is not equivalent to the amount of underwriter / relayer fees
-        ORDER_INVALID_INSUFFICIENT_OR_EXCESSIVE_FEES, // 4
-        // Order parameters specify insufficient principal amount for
-        // debtor to at least be able to meet his fees
-        ORDER_INVALID_INSUFFICIENT_PRINCIPAL, // 5
-        // Order parameters specify non zero fee for an unspecified recipient
-        ORDER_INVALID_UNSPECIFIED_FEE_RECIPIENT, // 6
-        // Order signatures are mismatched / malformed
-        ORDER_INVALID_NON_CONSENSUAL, // 7
-        // Insufficient balance or allowance for principal token transfer
-        CREDITOR_BALANCE_OR_ALLOWANCE_INSUFFICIENT, // 8
-        // Debt doesn't exists
-        DEBT_NOT_EXISTS, // 9
-        // Debtor it not completed repayment yet
-        NOT_COMPLETED_REPAYMENT // 10
-    }
+    Registry registry;
 
     bytes32 public constant NULL_ISSUANCE_HASH = bytes32(0);
 
@@ -51,7 +25,6 @@ contract InventoryLoanDebtKernel is UntangledBase {
     mapping(bytes32 => bool) public debtOrderCancelled;
     mapping(bytes32 => bool) public debtOrderCompleted;
 
-    mapping(bytes32 => LoanTypes) public agreementToLoanType;
 
     ///////////////////////////
     // EVENTS
@@ -72,12 +45,6 @@ contract InventoryLoanDebtKernel is UntangledBase {
     event LogDebtOrderCancelled(
         bytes32 indexed _debtOrderHash,
         address indexed _cancelledBy
-    );
-
-    event LogDebtKernelError(
-        uint8 indexed _errorId,
-        bytes32 indexed _orderHash,
-        string desc
     );
 
     event LogFeeTransfer(
@@ -112,7 +79,8 @@ contract InventoryLoanDebtKernel is UntangledBase {
     }
 
     function initialize(Registry _registry) public initializer {
-        __UntangledBase__init_unchained(_msgSender());
+        __Pausable_init_unchained();
+        __Ownable_init_unchained();
         registry = _registry;
     }
 
@@ -247,22 +215,20 @@ contract InventoryLoanDebtKernel is UntangledBase {
             debtOrder.issuance.salt
         ];
         //
-        InventoryLoanDebtRegistry debtRegistry = InventoryLoanDebtRegistry(
-            contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)
-        );
+        InventoryLoanRegistry debtRegistry = registry.getInventoryLoanRegistry();
         bytes32 entryHash = debtRegistry.insert(
             debtOrder.issuance.version,
             beneficiary,
             debtOrder.issuance.debtor,
             debtOrder.issuance.termsContract,
             debtOrder.priceFeedOperator,
-            termsContractParameters,
-            _collateralInfoParameters,
+            debtOrder.principalToken,
+            debtOrder.issuance.termsContractParameters,
+            debtOrder.issuance.collateralInfoParameters,
             valueParams
         );
 
         registry.getLoanAssetToken().mint(beneficiary, uint256(entryHash));
-        agreementToLoanType[entryHash] = LoanTypes.INVENTORY_FINANCE;
 
         //
         require(
@@ -288,7 +254,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
         returns (uint256 _balance)
     {
         // Limit gas to prevent reentrancy.
-        return ERC20(token).balanceOf(owner);
+        return IERC20(token).balanceOf(owner);
     }
 
     /**
@@ -352,56 +318,22 @@ contract InventoryLoanDebtKernel is UntangledBase {
 
         // Invariant: debtor is given enough principal to cover at least debtorFees
         if (debtOrder.principalAmount < debtOrder.debtorFee) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_INVALID_INSUFFICIENT_PRINCIPAL),
-                debtOrder.debtOrderHash,
-                'Principal account must greater than Debtor fee.'
-            );
             return false;
         }
 
         // Invariant: debt order must not be expired
         // solhint-disable-next-line not-rely-on-time
         if (debtOrder.expirationTimestampInSec < block.timestamp) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_EXPIRED),
-                debtOrder.debtOrderHash,
-                'Debt Kernel:  Expiration time lesser than current time.'
-            );
-            return false;
-        }
-
-        // Invariant: debt order's issuance must not already be minted as debt token
-        if (
-            LoanAssetToken(contractRegistry.get(LOAN_ASSET_TOKEN)).exists(
-                uint256(debtOrder.issuance.agreementId)
-            )
-        ) {
-            emit LogDebtKernelError(
-                uint8(Errors.DEBT_ISSUED),
-                debtOrder.debtOrderHash,
-                "Debt Kernel: Debt Order's Issuance was already minted."
-            );
             return false;
         }
 
         // Invariant: debt order's issuance must not have been cancelled
         if (issuanceCancelled[debtOrder.issuance.agreementId]) {
-            emit LogDebtKernelError(
-                uint8(Errors.ISSUANCE_CANCELLED),
-                debtOrder.debtOrderHash,
-                'Debt Kernel: Issuance is cancelled.'
-            );
             return false;
         }
 
         // Invariant: debt order itself must not have been cancelled
         if (debtOrderCancelled[debtOrder.debtOrderHash]) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_CANCELLED),
-                debtOrder.debtOrderHash,
-                'Debt Kernel: Debt Order is cancelled.'
-            );
             return false;
         }
 
@@ -430,11 +362,6 @@ contract InventoryLoanDebtKernel is UntangledBase {
                     signaturesS[0]
                 )
             ) {
-                emit LogDebtKernelError(
-                    uint8(Errors.ORDER_INVALID_NON_CONSENSUAL),
-                    debtOrder.debtOrderHash,
-                    'Invalid signature (Debtor).'
-                );
                 return false;
             }
         }
@@ -450,11 +377,6 @@ contract InventoryLoanDebtKernel is UntangledBase {
                     signaturesS[1]
                 )
             ) {
-                emit LogDebtKernelError(
-                    uint8(Errors.ORDER_INVALID_NON_CONSENSUAL),
-                    debtOrder.debtOrderHash,
-                    'Invalid signature (Creditor).'
-                );
                 return false;
             }
         }
@@ -474,36 +396,6 @@ contract InventoryLoanDebtKernel is UntangledBase {
     }
 
     /**
-     * Assert that the creditor has a sufficient token balance and has
-     * granted the token transfer proxy contract sufficient allowance to suffice for the principal
-     * and creditor fee.
-     */
-    function _assertExternalBalanceAndAllowanceInvariants(
-        address creditor,
-        DebtOrder memory debtOrder
-    ) internal returns (bool _isBalanceAndAllowanceSufficient) {
-        uint256 totalCreditorPayment = debtOrder.principalAmount.add(
-            debtOrder.creditorFee
-        );
-
-        if (
-            _getBalance(debtOrder.principalToken, creditor) <
-            totalCreditorPayment ||
-            _getAllowance(debtOrder.principalToken, creditor) <
-            totalCreditorPayment
-        ) {
-            emit LogDebtKernelError(
-                uint8(Errors.CREDITOR_BALANCE_OR_ALLOWANCE_INSUFFICIENT),
-                debtOrder.debtOrderHash,
-                'Balance of allowance of Creditor is insufficient.'
-            );
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      */
     function _assertCompletedRepayment(bytes32 agreementId)
         internal
@@ -511,8 +403,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
         returns (bool)
     {
         // TODO change to InventoryLoanRegistry
-        return registry.getLoanInterestTermsContract()
-                .isCompletedRepayment(agreementId);
+        return registry.getInventoryLoanRegistry().completedRepayment(agreementId);
     }
 
     //Conclude a loan, stop lending/loan terms or allow the loan loss
@@ -534,23 +425,15 @@ contract InventoryLoanDebtKernel is UntangledBase {
             );
         }
 
-        bool isTermCompleted = InventoryInterestTermsContract(termContract)
+        InventoryInterestTermsContract(termContract)
             .registerConcludeTerm(agreementId);
 
-        if (isTermCompleted) {
-            _burnLoanAssetToken(creditor, agreementId);
+        _burnLoanAssetToken(creditor, agreementId);
 
-            (uint256 collateralId, ) = InventoryLoanDebtRegistry(
-                contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)
-            )
-                .getCollateralInfoParameters(agreementId);
-            SupplyChainManagementProgram(
-                contractRegistry.get(SUPPLY_CHAIN_MANAGEMENT_PROGRAM)
-            )
-                .removeAgreementFromCommodity(collateralId, agreementId);
-        } else {
-            revert('Unable to conclude terms contract.');
-        }
+        (uint256 collateralId, ) = registry.getInventoryLoanRegistry()
+            .getCollateralInfoParameters(agreementId);
+        registry.getSupplyChainManagementProgram()
+            .removeAgreementFromCommodity(collateralId, agreementId);
     }
 
     // Transfer fee to beneficiaries
@@ -639,6 +522,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
         view
         returns (address _assetHolder)
     {
+/*
         bool isEmbeddedFlow = EReceiptInventoryTradeFactory(
             contractRegistry.get(E_RECEIPT_INVENTORY_TRADE_FACTORY)
         )
@@ -646,8 +530,9 @@ contract InventoryLoanDebtKernel is UntangledBase {
         address assetHolder = isEmbeddedFlow
             ? msg.sender
             : debtOrder.issuance.debtor;
+*/
 
-        return assetHolder;
+        return debtOrder.issuance.debtor;
     }
 
     ////////////////////////
@@ -679,10 +564,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
         );
 
         //_assertDebtOrderConsensualityInvariants
-        if (
-            !_assertDebtOrderValidityInvariants(debtOrder) ||
-            !_assertExternalBalanceAndAllowanceInvariants(creditor, debtOrder)
-        ) {
+        if (!_assertDebtOrderValidityInvariants(debtOrder)) {
             revert('InventoryLoanDebtKernel: Invalid Debt Order');
         }
 
@@ -775,13 +657,9 @@ contract InventoryLoanDebtKernel is UntangledBase {
             debtorFeeAmounts
         );
 
-        (uint256 collateralId, ) = InventoryLoanDebtRegistry(
-            contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)
-        )
+        (uint256 collateralId, ) = registry.getInventoryLoanRegistry()
             .getCollateralInfoParameters(debtOrder.issuance.agreementId);
-        SupplyChainManagementProgram(
-            contractRegistry.get(SUPPLY_CHAIN_MANAGEMENT_PROGRAM)
-        )
+        registry.getSupplyChainManagementProgram()
             .insertAgreementToCommodity(
             collateralId,
             debtOrder.issuance.agreementId
@@ -819,16 +697,13 @@ contract InventoryLoanDebtKernel is UntangledBase {
         address collateral,
         bytes16 collateralInfoParameters
     ) public whenNotPaused {
-        require(
-            InventoryInterestTermsContract(termsContract)
-                .registerSecureLoanWithCollateral(
-                agreementId,
-                debtor,
-                amount,
-                collateral,
-                collateralInfoParameters
-            ),
-            'InventoryLoanDebtKernel: Register secure loan with collateral was failed.'
+        InventoryInterestTermsContract(termsContract)
+            .registerSecureLoanWithCollateral(
+            agreementId,
+            debtor,
+            amount,
+            collateral,
+            collateralInfoParameters
         );
     }
 
@@ -890,22 +765,13 @@ contract InventoryLoanDebtKernel is UntangledBase {
         emit LogIssuanceCancelled(issuance.agreementId, msg.sender);
     }
 
-    /**
-     * Get current Loan Asset Token address
-     */
-    function getLoanAssetToken() public view returns (address) {
-        return address(contractRegistry.get(LOAN_ASSET_TOKEN));
-    }
-
     function _isParticipantOfProject(
         uint256 projectId,
         address trader,
         address lender,
         address executor
     ) private view returns (bool) {
-        SupplyChainManagementProgram supplyChainManagementProgram = SupplyChainManagementProgram(
-            contractRegistry.get(SUPPLY_CHAIN_MANAGEMENT_PROGRAM)
-        );
+        SupplyChainManagementProgram supplyChainManagementProgram = registry.getSupplyChainManagementProgram();
         if (
             supplyChainManagementProgram.isTrader(projectId, trader) &&
             supplyChainManagementProgram.isLender(projectId, lender) &&
@@ -940,19 +806,14 @@ contract InventoryLoanDebtKernel is UntangledBase {
 
         //_assertDebtOrderConsensualityInvariants check signature
 
-        require(
-            InventoryInterestTermsContract(
-                contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-            )
-                .registerSellCollateral(
-                agreementId,
-                amountCollateral,
-                price,
-                fiatTokenIndex,
-                collateral,
-                collateralInfoParameters
-            ),
-            'InventoryLoanDebtKernel: Register sell collateral was failed'
+        registry.getInventoryInterestTermsContract()
+            .registerSellCollateral(
+            agreementId,
+            amountCollateral,
+            price,
+            fiatTokenIndex,
+            collateral,
+            collateralInfoParameters
         );
     }
 
@@ -964,16 +825,11 @@ contract InventoryLoanDebtKernel is UntangledBase {
         bytes32 sellCollateralId,
         address payer
     ) public whenNotPaused {
-        require(
-            InventoryInterestTermsContract(
-                contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-            )
-                .registerPayCollateralByFiat(
-                agreementId,
-                sellCollateralId,
-                payer
-            ),
-            'InventoryLoanDebtKernel: Register pay collateral by fiat was failed'
+        registry.getInventoryInterestTermsContract()
+            .registerPayCollateralByFiat(
+            agreementId,
+            sellCollateralId,
+            payer
         );
     }
 
@@ -989,9 +845,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
     ) public whenNotPaused returns (uint256) {
         require(msg.sender == payer, 'InventoryLoanDebtKernel: Invalid payer');
 
-        uint256 aitTokenId = InventoryInterestTermsContract(
-            contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-        )
+        uint256 aitTokenId = registry.getInventoryInterestTermsContract()
             .registerPayCollateralByInvoice(
             agreementId,
             sellCollateralId,
@@ -1017,16 +871,13 @@ contract InventoryLoanDebtKernel is UntangledBase {
         address collateral,
         bytes16 collateralInfoParameters
     ) public whenNotPaused {
-        require(
-            InventoryInterestTermsContract(termsContract)
-                .registerInsecureLoanByWithdrawCollateral(
-                agreementId,
-                msg.sender,
-                amount,
-                collateral,
-                collateralInfoParameters
-            ),
-            'InventoryLoanDebtKernel: Register insecure loan by withdraw collateral was failed.'
+        InventoryInterestTermsContract(termsContract)
+            .registerInsecureLoanByWithdrawCollateral(
+            agreementId,
+            msg.sender,
+            amount,
+            collateral,
+            collateralInfoParameters
         );
     }
 
@@ -1052,34 +903,22 @@ contract InventoryLoanDebtKernel is UntangledBase {
 
         require(
             msg.sender ==
-                InventoryLoanDebtRegistry(
-                    contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)
-                )
+                    registry.getInventoryLoanRegistry()
                     .getBeneficiary(agreementId),
             'InventoryLoanDebtKernel: Invalid creditor'
         );
 
-        require(
-            InventoryInterestTermsContract(
-                contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-            )
-                .registerForeclosureLoan(agreementId),
-            'InventoryLoanDebtKernel: Register foreclosure loan was failed.'
-        );
+        registry.getInventoryInterestTermsContract()
+            .registerForeclosureLoan(agreementId);
 
-        require(
-            InventoryInterestTermsContract(
-                contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-            )
-                .registerSellCollateral(
-                agreementId,
-                amountCollateral,
-                price,
-                fiatTokenIndex,
-                collateral,
-                collateralInfoParameters
-            ),
-            'InventoryLoanDebtKernel: Register sell collateral was failed'
+        registry.getInventoryInterestTermsContract()
+            .registerSellCollateral(
+            agreementId,
+            amountCollateral,
+            price,
+            fiatTokenIndex,
+            collateral,
+            collateralInfoParameters
         );
     }
 
@@ -1093,9 +932,7 @@ contract InventoryLoanDebtKernel is UntangledBase {
     ) public whenNotPaused {
         //_assertDebtOrderConsensualityInvariants check signature
 
-        InventoryLoanDebtRegistry inventoryLoanDebtRegistry = InventoryLoanDebtRegistry(
-            contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY)
-        );
+        InventoryLoanRegistry inventoryLoanDebtRegistry = registry.getInventoryLoanRegistry();
         //        require(
         //            msg.sender == inventoryLoanDebtRegistry.getBeneficiary(agreementId),
         //            "InventoryLoanDebtKernel: Invalid creditor"
@@ -1109,16 +946,10 @@ contract InventoryLoanDebtKernel is UntangledBase {
             'Agreement not existed'
         );
 
-        require(
-            InventoryInterestTermsContract(
-                contractRegistry.get(INVENTORY_INTEREST_TERMS_CONTRACT)
-            )
-                .registerDrawdownLoan(
-                agreementId,
-                drawdownAmount,
-                termsContractParameters
-            ),
-            'InventoryLoanDebtKernel: Register drawdown loan was failed'
+        registry.getInventoryInterestTermsContract().registerDrawdownLoan(
+            agreementId,
+            drawdownAmount,
+            termsContractParameters
         );
 
         // Transfer drawdown amount to debtor
@@ -1126,36 +957,28 @@ contract InventoryLoanDebtKernel is UntangledBase {
             agreementId
         );
         address debtor = inventoryLoanDebtRegistry.getDebtor(agreementId);
-        (uint256 principalTokenIndex, , , ) = inventoryLoanDebtRegistry
-            .getTermsContractParametersInfo(agreementId);
-        address fiatTokenAddress = ERC20TokenRegistry(
-            contractRegistry.get(ERC20_TOKEN_REGISTRY)
-        )
-            .getTokenAddressByIndex(principalTokenIndex);
+        address fiatTokenAddress = inventoryLoanDebtRegistry.getAgreement(agreementId).principalTokenAddress;
         require(
             fiatTokenAddress != address(0),
             'Token address must different with NULL.'
         );
 
         require(
-            ERC20(fiatTokenAddress).balanceOf(creditor) >= drawdownAmount &&
-                ERC20(fiatTokenAddress).allowance(
-                    creditor,
-                    contractRegistry.get(ERC20_TOKEN_TRANSFER_PROXY)
-                ) >=
-                drawdownAmount,
-            'InventoryLoanDebtKernel: creditor fiat amount invalid'
-        );
-
-        require(
-            TokenTransferProxy(contractRegistry.get(ERC20_TOKEN_TRANSFER_PROXY))
+                IERC20(fiatTokenAddress)
                 .transferFrom(
-                fiatTokenAddress,
                 creditor,
                 debtor,
                 drawdownAmount
             ),
             'InventoryLoanDebtKernel: Unsuccessfully transferred drawdown amount to Debtor.'
         );
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 }
