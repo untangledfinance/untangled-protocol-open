@@ -385,6 +385,19 @@
           "type": "address"
         }
       ],
+      "name": "setCollateralManagementToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
       "name": "setDistributionAssessor",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -412,6 +425,71 @@
         }
       ],
       "name": "setDistributionTranche",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setInventoryCollateralizer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setInventoryInterestTermsContract",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setInventoryLoanKernel",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setInventoryLoanRegistry",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setInventoryLoanRepaymentRouter",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -502,6 +580,19 @@
           "type": "address"
         }
       ],
+      "name": "setMintedNormalTGE",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
       "name": "setNoteTokenFactory",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -542,6 +633,19 @@
         }
       ],
       "name": "setSecuritizationPoolValueService",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setSupplyChainManagementProgram",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
