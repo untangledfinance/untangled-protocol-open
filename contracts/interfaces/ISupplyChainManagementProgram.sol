@@ -162,17 +162,20 @@ abstract contract ISupplyChainManagementProgram is UntangledBase {
 
     function getCommodityPrice(uint256 projectCommodityId) public view virtual returns (uint256);
 
-//    function updateCommodityPrice(uint256 projectCommodityId, uint256 price) public;
+    function updateCommodityPrice(uint256 projectCommodityId, uint256 price) public virtual;
 
-//    function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public;
+    function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public virtual;
 
     function removeAgreementFromCommodity(uint256 projectCommodityId, bytes32 agreementId) public virtual;
 
     function getAgreementsOfProjectCommodity(uint256 projectCommodityId) public view virtual returns (bytes32[] memory);
 
+/*
     function getProjectDetail(uint256 projectId) public view virtual
     returns (address managerAddress, address projectWallet, bytes32 companyHash);
+*/
 
+/*
     function getMovementDetail(string memory movementId, uint256 projectId) public view virtual
     returns (
         uint256 projectCommodityId,
@@ -183,12 +186,15 @@ abstract contract ISupplyChainManagementProgram is UntangledBase {
         address approver,
         address executor
     );
+*/
 
+/*
     function getProjectCommodityDetail(uint256 projectCommodityId) public view virtual
     returns (
         uint256 projectId,
         uint256 price,
         bytes32 commoditySymbol
     );
+*/
 
 }

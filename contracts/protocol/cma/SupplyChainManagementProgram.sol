@@ -362,7 +362,7 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         return projectCommodityToPrice[projectCommodityId];
     }
 
-    function updateCommodityPrice(uint256 projectCommodityId, uint256 price) public onlyPriceFeedManager() {
+    function updateCommodityPrice(uint256 projectCommodityId, uint256 price) public override onlyPriceFeedManager() {
         require(price > 0, "SupplyChainManagementProgram: price must greater than 0");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
 
@@ -378,7 +378,7 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         }
     }
 
-    function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public {
+    function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public override {
         require(msg.sender == address(registry.getInventoryLoanKernel()), "SupplyChainManagementProgram: not authorized to add agreement");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
 
