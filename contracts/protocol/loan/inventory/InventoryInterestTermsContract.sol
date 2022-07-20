@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../../../libraries/Unpack.sol";
 import "../../../libraries/Unpack16.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../../../protocol/loan/inventory/CRInventoryDecisionEngine.sol";
 
 contract InventoryInterestTermsContract is
     CRInventoryDecisionEngine, LoanTyping, PausableUpgradeable, OwnableUpgradeable

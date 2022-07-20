@@ -3,6 +3,11 @@ pragma solidity ^0.8.0;
 import "./InventoryLoanRegistry.sol";
 import "./InventoryInterestTermsContract.sol";
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
+import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import "../../../libraries/ConfigHelper.sol";
+import "../../../storage/Registry.sol";
+
 
 contract InventoryLoanRepaymentRouter is PausableUpgradeable, OwnableUpgradeable {
     using ConfigHelper for Registry;

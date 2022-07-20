@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/ISupplyChainManagementProgram.sol";
 import "../../libraries/ConfigHelper.sol";
+import "../loan/inventory/InventoryLoanRegistry.sol";
 
 contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     using ConfigHelper for Registry;
@@ -361,14 +362,13 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         return projectCommodityToPrice[projectCommodityId];
     }
 
-/*
     function updateCommodityPrice(uint256 projectCommodityId, uint256 price) public onlyPriceFeedManager() {
         require(price > 0, "SupplyChainManagementProgram: price must greater than 0");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
 
         if (projectCommodityToPrice[projectCommodityId] != price) {
             projectCommodityToPrice[projectCommodityId] = price;
-            InventoryLoanDebtRegistry debtRegistry = InventoryLoanDebtRegistry(contractRegistry.get(INVENTORY_LOAN_DEBT_REGISTRY));
+            InventoryLoanRegistry debtRegistry = registry.getInventoryLoanRegistry();
 
             if (projectCommodityToAgreements[projectCommodityId].length > 0) {
                 for (uint i = 0; i < projectCommodityToAgreements[projectCommodityId].length; ++i) {
@@ -377,16 +377,13 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
             }
         }
     }
-*/
 
-/*
     function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public {
-        require(msg.sender == contractRegistry.get(INVENTORY_LOAN_DEBT_KERNEL), "SupplyChainManagementProgram: not authorized to add agreement");
+        require(msg.sender == address(registry.getInventoryLoanKernel()), "SupplyChainManagementProgram: not authorized to add agreement");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
 
         projectCommodityToAgreements[projectCommodityId].push(agreementId);
     }
-*/
 
     function removeAgreementFromCommodity(uint256 projectCommodityId, bytes32 agreementId) public override onlyRole(OWNER_ROLE) {
 //        require(isOwner() || _isAuthorizedContract(msg.sender), "SupplyChainManagementProgram: not authorized to remove agreement");
@@ -410,6 +407,7 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     function getAgreementsOfProjectCommodity(uint256 projectCommodityId) public override view returns (bytes32[] memory) {
         return projectCommodityToAgreements[projectCommodityId];
     }
+/*
     function getProjectDetail(uint256 projectId) public override view onlyProjectExisted(projectId)
     returns (address managerAddress, address projectWallet, bytes32 companyHash) {
         return (collateralProjects[projectId].managerAddress, collateralProjects[projectId].projectWallet, collateralProjects[projectId].companyHash);
@@ -447,7 +445,9 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         movement.executor
         );
     }
+*/
 
+/*
     function getProjectCommodityDetail(uint256 projectCommodityId) public override view
     returns (
         uint256 projectId,
@@ -460,5 +460,6 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         projectCommodityToCommodity[projectCommodityId]
         );
     }
+*/
 
 }

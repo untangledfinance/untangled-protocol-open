@@ -3,11 +3,15 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../../loan/inventory/InventoryInterestTermsContract.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC1155ReceiverUpgradeable.sol';
 import '@openzeppelin/contracts/interfaces/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol';
+import "../../../base/UntangledBase.sol";
+import "../../../libraries/ConfigHelper.sol";
+import "../../../storage/Registry.sol";
+import "./InventoryLoanRegistry.sol";
+import "../../../tokens/ERC721/invoice/AcceptedInvoiceToken.sol";
 
 
 /**
