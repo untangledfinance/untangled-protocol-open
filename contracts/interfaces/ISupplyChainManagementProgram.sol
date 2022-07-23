@@ -2,35 +2,38 @@
 pragma solidity ^0.8.0;
 
 import '../storage/Registry.sol';
-import "../base/UntangledBase.sol";
+import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-abstract contract ISupplyChainManagementProgram is UntangledBase {
+abstract contract ISupplyChainManagementProgram is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable {
     Registry public registry;
 
     bytes32 public constant PRICE_FEED_ROLE = keccak256('PRICE_FEED_ROLE');
+    bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
-    mapping(uint256 => CollateralProject) collateralProjects;
-    mapping(uint256 => bool) isExistingProjects;
+    mapping(uint256 => CollateralProject) public collateralProjects;
+    mapping(uint256 => bool) public isExistingProjects;
 
-    mapping(uint256 => mapping(address => bool)) projectToLenders;
-    mapping(uint256 => mapping(address => bool)) projectToTraders;
-    mapping(uint256 => mapping(address => bool)) projectToExecutors;
-    mapping(address => bool) isExistingManager;
+    mapping(uint256 => mapping(address => bool)) public projectToLenders;
+    mapping(uint256 => mapping(address => bool)) public projectToTraders;
+    mapping(uint256 => mapping(address => bool)) public projectToExecutors;
+    mapping(address => bool) public isExistingManager;
 
     //Id of project -> id of project-commodity => existed
-    mapping(uint256 => mapping(uint256 => bool)) projectToExistedProjectCommodity;
+    mapping(uint256 => mapping(uint256 => bool)) public projectToExistedProjectCommodity;
     //Id of project -> bytes32 of movement
-    mapping(uint256 => mapping(bytes32 => Movement)) projectToMovements;
-    mapping(uint256 => mapping(bytes32 => bool)) projectToExistedMovements;
+    mapping(uint256 => mapping(bytes32 => Movement)) public projectToMovements;
+    mapping(uint256 => mapping(bytes32 => bool)) public projectToExistedMovements;
 
     //Id of project-commodity- => price
-    mapping(uint256 => uint256) projectCommodityToPrice;
+    mapping(uint256 => uint256) public projectCommodityToPrice;
     //Id of project-commodity => list agreements id
-    mapping(uint256 => bytes32[]) projectCommodityToAgreements;
+    mapping(uint256 => bytes32[]) public projectCommodityToAgreements;
     //Id of project-commodity -> commodity symbol hash
-    mapping(uint256 => bytes32) projectCommodityToCommodity;
+    mapping(uint256 => bytes32) public projectCommodityToCommodity;
     //Id of project-commodity -> project id
-    mapping(uint256 => uint256) projectCommodityToProject;
+    mapping(uint256 => uint256) public projectCommodityToProject;
 
     struct CollateralProject {
         address managerAddress;

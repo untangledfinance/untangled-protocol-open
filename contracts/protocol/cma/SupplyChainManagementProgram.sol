@@ -12,8 +12,14 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     function initialize(
         Registry _registry
     ) public override initializer {
-        __UntangledBase__init(_msgSender());
-        _setRoleAdmin(PRICE_FEED_ROLE, OWNER_ROLE);
+        __Pausable_init_unchained();
+        __AccessControlEnumerable_init_unchained();
+
+        address owner = _msgSender();
+
+        _setupRole(DEFAULT_ADMIN_ROLE, owner);
+        _setupRole(OWNER_ROLE, owner);
+
         registry = _registry;
     }
 
@@ -461,5 +467,12 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         );
     }
 */
+    function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
 
 }
