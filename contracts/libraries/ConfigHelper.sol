@@ -26,6 +26,11 @@ import '../protocol/loan/inventory/InventoryInterestTermsContract.sol';
 import '../protocol/loan/inventory/InventoryLoanKernel.sol';
 import '../protocol/loan/inventory/InventoryLoanRegistry.sol';
 import '../protocol/loan/inventory/InventoryLoanRepaymentRouter.sol';
+import '../protocol/loan/invoice/InvoiceCollateralizer.sol';
+import '../protocol/loan/invoice/InvoiceDebtRegistry.sol';
+import '../protocol/loan/invoice/InvoiceFinanceInterestTermsContract.sol';
+import '../protocol/loan/invoice/InvoiceLoanKernel.sol';
+import '../protocol/loan/invoice/InvoiceLoanRepaymentRouter.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -139,5 +144,25 @@ library ConfigHelper {
 
     function getInventoryLoanRepaymentRouter(Registry registry) internal view returns (InventoryLoanRepaymentRouter) {
         return InventoryLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_LOAN_REPAYMENT_ROUTER));
+    }
+
+    function getInvoiceDebtRegistry(Registry registry) internal view returns (InvoiceDebtRegistry) {
+        return InvoiceDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_DEBT_REGISTRY));
+    }
+
+    function getInvoiceCollateralizer(Registry registry) internal view returns (InvoiceCollateralizer) {
+        return InvoiceCollateralizer(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_COLLATERALIZER));
+    }
+
+    function getInvoiceFinanceInterestTermsContract(Registry registry) internal view returns (InvoiceFinanceInterestTermsContract) {
+        return InvoiceFinanceInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_FINANCE_INTEREST_TERMS_CONTRACT));
+    }
+
+    function getInvoiceLoanKernel(Registry registry) internal view returns (InvoiceLoanKernel) {
+        return InvoiceLoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_KERNEL));
+    }
+
+    function getInvoiceLoanRepaymentRouter(Registry registry) internal view returns (InvoiceLoanRepaymentRouter) {
+        return InvoiceLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_REPAYMENT_ROUTER));
     }
 }

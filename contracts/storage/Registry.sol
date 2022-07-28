@@ -157,4 +157,24 @@ contract Registry is UntangledBase {
     function setInventoryCollateralizer(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_COLLATERALIZER), newAddress);
     }
+
+    function setInvoiceLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_LOAN_KERNEL), newAddress);
+    }
+
+    function setInvoiceDebtRegistry(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_DEBT_REGISTRY), newAddress);
+    }
+
+    function setInvoiceLoanRepaymentRouter(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_LOAN_REPAYMENT_ROUTER), newAddress);
+    }
+
+    function setInvoiceFinanceInterestTermsContract(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_FINANCE_INTEREST_TERMS_CONTRACT), newAddress);
+    }
+
+    function setInvoiceCollateralizer(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_COLLATERALIZER), newAddress);
+    }
 }
