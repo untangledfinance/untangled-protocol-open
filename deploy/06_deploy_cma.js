@@ -9,7 +9,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const collateralManagementTokenProxy = await deployProxy(
     { getNamedAccounts, deployments },
     'CollateralManagementToken',
-    [supplyChainManagementProgram.address, "CMA Token", "CMA", 2, ''],
+    [supplyChainManagementProgram.address, "CMA Token", "CMA", 3, ''],
     'initialize(address,string,string,uint8,string)',
   );
   if (collateralManagementTokenProxy.newlyDeployed) {
