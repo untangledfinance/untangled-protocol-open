@@ -9,6 +9,13 @@ import '../../libraries/ConfigHelper.sol';
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager {
     using ConfigHelper for Registry;
 
+    struct NewRoundSaleParam {
+        uint256 openingTime;
+        uint256 closingTime;
+        uint256 rate;
+        uint256 cap;
+    }
+
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init(_msgSender());
 
@@ -77,7 +84,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8 saleType,
         uint8 decimalToken,
         bool longSale
-    ) external whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) {
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address sotToken = noteTokenFactory.createToken(
             address(pool),
@@ -101,6 +108,50 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
         emit NewTGECreated(tgeAddress);
         emit NewNotesTokenCreated(sotToken);
+        return tgeAddress;
+    }
+
+    function setUpTGEForSOT(
+        address issuerTokenController,
+        ISecuritizationPool pool,
+        uint8 saleType,
+        uint8 decimalToken,
+        bool longSale,
+
+        uint256 additionalCap,
+
+        uint32 _initialInterest,
+        uint32 _finalInterest,
+        uint32 _timeInterval,
+        uint32 _amountChangeEachInterval,
+        NewRoundSaleParam memory saleParam
+    ) public {
+        address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleType, decimalToken, longSale);
+        MintedIncreasingInterestTGE sotTGE = MintedIncreasingInterestTGE(tgeAddress);
+        sotTGE.addFunding(additionalCap);
+        sotTGE.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        sotTGE.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+    }
+
+    function setUpTGEForJOT(
+        address issuerTokenController,
+        ISecuritizationPool pool,
+        uint8 saleType,
+        uint8 decimalToken,
+        bool longSale,
+
+        uint256 additionalCap,
+
+        uint32 _initialInterest,
+        uint32 _finalInterest,
+        uint32 _timeInterval,
+        uint32 _amountChangeEachInterval,
+        NewRoundSaleParam memory saleParam
+    ) public {
+        address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleType, decimalToken, longSale);
+        MintedNormalTGE sotTGE = MintedNormalTGE(tgeAddress);
+        sotTGE.addFunding(additionalCap);
+        sotTGE.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
     function initialTGEForJOT(
@@ -109,7 +160,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8 saleType,
         uint8 decimalToken,
         bool longSale
-    ) external whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) {
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address jotToken = noteTokenFactory.createToken(
             address(pool),
@@ -133,6 +184,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
         emit NewTGECreated(tgeAddress);
         emit NewNotesTokenCreated(jotToken);
+        return tgeAddress;
     }
 
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
