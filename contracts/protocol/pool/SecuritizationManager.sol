@@ -127,10 +127,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         NewRoundSaleParam memory saleParam
     ) public {
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleType, decimalToken, longSale);
-        MintedIncreasingInterestTGE sotTGE = MintedIncreasingInterestTGE(tgeAddress);
-        sotTGE.addFunding(additionalCap);
-        sotTGE.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
-        sotTGE.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+        tgeAddress.delegatecall(
+            abi.encodeWithSignature("addFunding(uint256)", additionalCap)
+        );
+        tgeAddress.delegatecall(
+            abi.encodeWithSignature("setInterestRange(uint32,uint32,uint32,uint32 )", _initialInterest, _finalInterest,_timeInterval, _amountChangeEachInterval)
+        );
+        tgeAddress.delegatecall(
+            abi.encodeWithSignature("startNewRoundSale(uint256,uint256,uint256,uint256)", saleParam.openingTime, saleParam.closingTime,saleParam.rate, saleParam.cap)
+        );
     }
 
     function setUpTGEForJOT(
@@ -142,16 +147,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
         uint256 additionalCap,
 
-        uint32 _initialInterest,
-        uint32 _finalInterest,
-        uint32 _timeInterval,
-        uint32 _amountChangeEachInterval,
         NewRoundSaleParam memory saleParam
     ) public {
         address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleType, decimalToken, longSale);
-        MintedNormalTGE sotTGE = MintedNormalTGE(tgeAddress);
-        sotTGE.addFunding(additionalCap);
-        sotTGE.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+        tgeAddress.delegatecall(
+            abi.encodeWithSignature("addFunding(uint256)", additionalCap)
+        );
+        tgeAddress.delegatecall(
+            abi.encodeWithSignature("startNewRoundSale(uint256,uint256,uint256,uint256)", saleParam.openingTime, saleParam.closingTime,saleParam.rate, saleParam.cap)
+        );
     }
 
     function initialTGEForJOT(
