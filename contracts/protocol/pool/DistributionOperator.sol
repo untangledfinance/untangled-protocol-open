@@ -30,7 +30,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     );
 
-    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) external whenNotPaused nonReentrant {
+    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
             registry.getNoteTokenFactory().isExistingTokens(address(noteToken)),
@@ -101,7 +101,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address redeemer,
         address pool,
         address tokenAddress
-    ) external whenNotPaused nonReentrant returns (uint256) {
+    ) public whenNotPaused nonReentrant returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
@@ -120,6 +120,12 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         emit TokensRedeemed(redeemer, tokenAddress, currencyLocked, tokenRedeem);
 
+        return currencyLocked;
+    }
+
+    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public returns (uint256) {
+        makeRedeemRequest(noteToken, tokenAmount);
+        uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
     }
 
