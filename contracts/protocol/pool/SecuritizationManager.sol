@@ -127,15 +127,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         NewRoundSaleParam memory saleParam
     ) public {
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleType, decimalToken, longSale);
-        tgeAddress.delegatecall(
-            abi.encodeWithSignature("addFunding(uint256)", additionalCap)
-        );
-        tgeAddress.delegatecall(
-            abi.encodeWithSignature("setInterestRange(uint32,uint32,uint32,uint32 )", _initialInterest, _finalInterest,_timeInterval, _amountChangeEachInterval)
-        );
-        tgeAddress.delegatecall(
-            abi.encodeWithSignature("startNewRoundSale(uint256,uint256,uint256,uint256)", saleParam.openingTime, saleParam.closingTime,saleParam.rate, saleParam.cap)
-        );
+        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
+        tge.addFunding(additionalCap);
+        tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
     function setUpTGEForJOT(
@@ -150,12 +145,9 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         NewRoundSaleParam memory saleParam
     ) public {
         address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleType, decimalToken, longSale);
-        tgeAddress.delegatecall(
-            abi.encodeWithSignature("addFunding(uint256)", additionalCap)
-        );
-        tgeAddress.delegatecall(
-            abi.encodeWithSignature("startNewRoundSale(uint256,uint256,uint256,uint256)", saleParam.openingTime, saleParam.closingTime,saleParam.rate, saleParam.cap)
-        );
+        MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
+        tge.addFunding(additionalCap);
+        tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
     function initialTGEForJOT(

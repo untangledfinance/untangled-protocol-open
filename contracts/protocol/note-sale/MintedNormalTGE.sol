@@ -75,7 +75,8 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 closingTime,
         uint256 rate,
         uint256 cap
-    ) external whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    ) external whenNotPaused nonReentrant {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 
         // call inner function for each extension

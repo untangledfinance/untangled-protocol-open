@@ -59,7 +59,8 @@ abstract contract Crowdsale is UntangledBase {
         _;
     }
 
-    function addFunding(uint256 additionalCap) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function addFunding(uint256 additionalCap) public nonReentrant whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: caller must be owner or pool");
         require(additionalCap > 0, 'Crowdsale: total cap is 0');
 
         totalCap = additionalCap + totalCap;

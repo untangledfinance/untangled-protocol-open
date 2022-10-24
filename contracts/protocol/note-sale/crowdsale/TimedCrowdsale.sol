@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import './Crowdsale.sol';
 
 abstract contract TimedCrowdsale is Crowdsale {
+    using ConfigHelper for Registry;
     uint256 public openingTime;
     uint256 public closingTime;
 
@@ -47,7 +48,8 @@ abstract contract TimedCrowdsale is Crowdsale {
         closingTime = newClosingTime;
     }
 
-    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused onlyRole(OWNER_ROLE) {
+    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: Caller must be owner or pool");
         require(newClosingTime >= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time');
         // not accept opening time in the past
         if (newOpeningTime < block.timestamp) {
