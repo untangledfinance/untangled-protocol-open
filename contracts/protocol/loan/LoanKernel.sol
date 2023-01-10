@@ -231,11 +231,11 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     //Conclude a loan, stop lending/loan terms or allow the loan loss
-    function _concludeLoan(
+    function concludeLoan(
         address creditor,
         bytes32 agreementId,
         address termContract
-    ) private {
+    ) public override whenNotPaused {
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
         require(termContract != address(0), 'Invalid terms contract.');
@@ -263,7 +263,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address termContract
     ) external whenNotPaused nonReentrant {
         for (uint256 i = 0; i < creditors.length; i++) {
-            _concludeLoan(creditors[i], agreementIds[i], termContract);
+            concludeLoan(creditors[i], agreementIds[i], termContract);
         }
     }
 

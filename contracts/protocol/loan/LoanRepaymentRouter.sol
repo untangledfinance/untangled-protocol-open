@@ -75,6 +75,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
             );
         }
 
+        registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);
+
         // Log event for repayment
         emit LogRepayment(_agreementId, _payer, beneficiary, _amount, _tokenAddress);
         return true;

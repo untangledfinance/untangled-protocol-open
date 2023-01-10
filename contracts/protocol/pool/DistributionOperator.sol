@@ -48,7 +48,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenPrice;
         uint256 tokenToBeRedeemed;
         uint256 currencyAmtToBeDistributed;
-        uint256 ONE_TOKEN = 10**uint256(noteToken.decimals());
+        uint256 ONE_TOKEN = 10 ** uint256(noteToken.decimals());
         if (securitizationPool.sotToken() == address(noteToken)) {
             tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(
                 address(securitizationPool),
@@ -57,9 +57,32 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
+                tokenPrice,
+                tokenAmount
+            );
+            currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
+
+            securitizationPool.increaseLockedDistributeBalance(
+                address(noteToken),
+                _msgSender(),
+                currencyAmtToBeDistributed,
+                tokenToBeRedeemed
+            );
+
+            tranche.redeemToken(address(noteToken), _msgSender(), tokenToBeRedeemed);
+        } else if (securitizationPool.jotToken() == address(noteToken)) {
+            uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
+            tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
+                securitizationPool,
+                block.timestamp
+            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR;
+
+            tokenToBeRedeemed = Math.min(
+                (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
                     tokenPrice,
                 tokenAmount
             );
+
             currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
 
             securitizationPool.increaseLockedDistributeBalance(

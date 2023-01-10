@@ -104,4 +104,10 @@ abstract contract ILoanKernel {
     mapping(bytes32 => bool) public issuanceCancelled;
     mapping(bytes32 => bool) public debtOrderCancelled;
     mapping(bytes32 => bool) public debtOrderCompleted;
+
+    function concludeLoan(
+        address creditor,
+        bytes32 agreementId,
+        address termContract
+    ) public virtual;
 }

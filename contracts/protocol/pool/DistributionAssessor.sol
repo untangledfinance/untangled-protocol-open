@@ -171,7 +171,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return 0;
     }
 
-    function getJOTTokenPrice(ISecuritizationPool securitizationPool, uint256 endTime) public view returns (uint256) {
+    function getJOTTokenPrice(ISecuritizationPool securitizationPool, uint256 endTime) public view override returns (uint256) {
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         if (tokenAddress == address(0) || tokenSupply == 0) {
