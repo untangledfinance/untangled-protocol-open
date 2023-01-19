@@ -69,10 +69,12 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         if (_payer != address(0x0)) {
             if (registry.getSecuritizationManager().isExistingPools(beneficiary))
                 beneficiary = ISecuritizationPool(beneficiary).pot();
+            uint256 repayAmount = _amount - remains;
             require(
-                IERC20(_tokenAddress).transferFrom(_payer, beneficiary, _amount - remains),
+                IERC20(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
                 'Unsuccessfully transferred repayment amount to Creditor.'
             );
+            ISecuritizationPool(beneficiary).increaseTotalAssetRepaidCurrency(repayAmount);
         }
 
         registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);

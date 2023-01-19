@@ -21,6 +21,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
+    uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
     uint256 public totalLockedDistributeBalance;
     // token address -> total locked
@@ -28,6 +29,8 @@ abstract contract ISecuritizationPool is UntangledBase {
     // token address -> user -> locked
     mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
     mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
+
+    uint256 public totalAssetRepaidCurrency; // Total $ (cUSD) paid for Asset repayment - repayInBatch
 
     // user -> amount
     mapping(address => uint256) public paidInterestAmountSOT;
@@ -162,6 +165,10 @@ abstract contract ISecuritizationPool is UntangledBase {
         address investor,
         uint256 currency,
         uint256 token
+    ) external virtual;
+
+    function increaseTotalAssetRepaidCurrency(
+        uint256 amount
     ) external virtual;
 
     function decreaseLockedDistributeBalance(

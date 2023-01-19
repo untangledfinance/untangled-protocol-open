@@ -58,7 +58,15 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     modifier onlyDistributionOperator() {
         require(
             _msgSender() == address(registry.getDistributionOperator()),
-            'ecuritizationPool: Only DistributionOperator'
+            'SecuritizationPool: Only DistributionOperator'
+        );
+        _;
+    }
+
+    modifier onlyLoanRepaymentRouter() {
+        require(
+            _msgSender() == address(registry.getLoanRepaymentRouter()),
+            'SecuritizationPool: Only LoanRepaymentRouter'
         );
         _;
     }
@@ -351,7 +359,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
 
         totalLockedDistributeBalance = totalLockedDistributeBalance - currency;
+        totalRedeemedCurrency = totalRedeemedCurrency + currency;
         totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
+    }
+
+    // Increase by value
+    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
+        totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
 
     function redeem(
