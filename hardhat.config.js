@@ -3,6 +3,8 @@ require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-etherscan');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
+require('@openzeppelin/hardhat-upgrades');
+require("@nomiclabs/hardhat-waffle");
 
 require('dotenv').config();
 const MNEMONIC = process.env.MNEMONIC;
@@ -44,7 +46,7 @@ module.exports = {
   networks: {
     hardhat: {
       blockGasLimit: 12500000,
-      saveDeployments: false,
+      saveDeployments: true,
       allowUnlimitedContractSize: false,
       accounts,
     },
@@ -59,6 +61,12 @@ module.exports = {
       accounts,
       loggingEnabled: true,
       url: `https://alfajores-forno.celo-testnet.org`,
+    },
+    rinkeby: {
+      saveDeployments: true,
+      accounts,
+      loggingEnabled: true,
+      url: `https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161`,
     },
   },
   mocha: {
