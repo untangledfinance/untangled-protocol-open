@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
-import "hardhat/console.sol";
 import '../../libraries/ConfigHelper.sol';
 
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager {
