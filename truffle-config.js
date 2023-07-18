@@ -23,7 +23,15 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 require('dotenv').config();
- 
+// const ContractKit = require('@celo/contractkit');
+// const Web3 = require('web3');
+// // Create connection to DataHub Celo Network node
+// const web3 = new Web3(process.env.REST_URL);
+// const client = ContractKit.newKitFromWeb3(web3);
+// const account = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
+// client.addAccount(account.privateKey);
+// Initialize account from our private key
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -43,9 +51,9 @@ module.exports = {
     // options below to some value.
     //
     development: {
-     host: "127.0.0.1",     // Localhost (default: none)
-     port: 8545,            // Standard Ethereum port (default: none)
-     network_id: "1337",       // Any network (default: none)
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 8545,            // Standard Ethereum port (default: none)
+      network_id: "1337",       // Any network (default: none)
     },
     // Another network with more advanced options...
     // advanced: {
@@ -58,13 +66,11 @@ module.exports = {
     // },
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
-    // ropsten: {
-    // provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/YOUR-PROJECT-ID`),
-    // network_id: 3,       // Ropsten's id
-    // gas: 5500000,        // Ropsten has a lower block limit than mainnet
-    // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-    // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-    // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+
+    // alfajores: {
+    //     provider: client.connection.web3.currentProvider, // CeloProvider
+    //     network_id: 44787  // latest Alfajores network id
+
     // },
     // Useful for private networks
     // private: {
@@ -74,7 +80,7 @@ module.exports = {
     // }
   },
 
-  plugins: ["solidity-coverage",  "truffle-plugin-verify"],
+  plugins: ["solidity-coverage", "truffle-plugin-verify"],
   // Set default mocha options here, use special reporters etc.
   mocha: {
     reporter: 'eth-gas-reporter',
@@ -91,11 +97,11 @@ module.exports = {
       version: "0.8.13",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
       settings: {          // See the solidity docs for advice about optimization and evmVersion
-       optimizer: {
-         enabled: true,
-         runs: 200
-       },
-       evmVersion: "byzantium"
+        optimizer: {
+          enabled: true,
+          runs: 200
+        },
+        evmVersion: "byzantium"
       }
     }
   },
@@ -111,13 +117,13 @@ module.exports = {
   // $ truffle migrate --reset --compile-all
   //
   // db: {
-    // enabled: false,
-    // host: "127.0.0.1",
-    // adapter: {
-    //   name: "sqlite",
-    //   settings: {
-    //     directory: ".db"
-    //   }
-    // }
+  // enabled: false,
+  // host: "127.0.0.1",
+  // adapter: {
+  //   name: "sqlite",
+  //   settings: {
+  //     directory: ".db"
+  //   }
+  // }
   // }
 };
