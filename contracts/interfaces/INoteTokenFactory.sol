@@ -16,6 +16,7 @@ abstract contract INoteTokenFactory {
     function createToken(
         address poolAddress,
         Configuration.NOTE_TOKEN_TYPE noteTokenType,
-        uint8 _nDecimals
+        uint8 _nDecimals,
+        string calldata ticker
     ) external virtual returns (address);
 }
