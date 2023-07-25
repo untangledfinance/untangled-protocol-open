@@ -12,7 +12,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const accounts = {
   mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
 };
-
+console.log(15, accounts[0])
 module.exports = {
   solidity: {
     compilers: [
@@ -58,7 +58,7 @@ module.exports = {
     },
     alfajores: {
       saveDeployments: true,
-      accounts,
+      accounts: ['59b1b5223986af26d3b6830f7c273e95d2036d46c6451091efcbf9b5e184c174'],
       loggingEnabled: true,
       url: `https://alfajores-forno.celo-testnet.org`,
     },
@@ -68,6 +68,21 @@ module.exports = {
       loggingEnabled: true,
       url: `https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161`,
     },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: "QHKKRV5QTID4QH9MMIKU6ADXNIIHE1V4Z4",
+    customChains: [{
+      network: "alfajores",
+      chainId: 44787,
+      urls: {
+        apiURL: "https://api-alfajores.celoscan.io/api",
+        browserURL: "https://api-alfajores.celoscan.io"
+      }
+    }
+
+    ]
   },
   mocha: {
     timeout: 200000,
