@@ -10,7 +10,7 @@ require('dotenv').config();
 const MNEMONIC = process.env.MNEMONIC;
 
 const accounts = {
-  mnemonic: MNEMONIC ?? 'test test test test test test test test test test test junk',
+  mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
 };
 
 module.exports = {
