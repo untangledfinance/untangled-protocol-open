@@ -33,7 +33,7 @@ contract SecuritizationPoolValueService is
         }
         if (!hasValidRiskScore) return totalDebt;
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        return calculateAssetValue(totalDebt, interestRate, overdue, riskscore, assetPurpose);
+        return _calculateAssetValue(totalDebt, interestRate, overdue, riskscore, assetPurpose);
     }
 
     function getExpectedAssetValue(
@@ -158,7 +158,7 @@ contract SecuritizationPoolValueService is
         }
 
         return
-            convertTokenValueToCurrencyAmount(
+            _convertTokenValueToCurrencyAmount(
                 poolAddress,
                 tokenAddress,
                 presentValue < totalDebt ? presentValue : totalDebt
@@ -300,7 +300,7 @@ contract SecuritizationPoolValueService is
 
     function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        ICrowdsale crowdsale = ICrowdsale(securitizationPool.tgeAddress());
+        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
         return
             crowdsale.currencyRaisedByInvestor(investor) -
@@ -320,24 +320,22 @@ contract SecuritizationPoolValueService is
 
     function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        ICrowdsale crowdsale = ICrowdsale(securitizationPool.tgeAddress());
+        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
         return crowdsale.currencyRaised() - securitizationPool.paidPrincipalAmountSOT();
     }
 
-    function getPoolValue(address poolAddress)  view public returns (uint256) {
-        // ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        // ICrowdsale crowdsale = ICrowdsale(securitizationPool.tgeAddress());
-
-        // return crowdsale.currencyRaised();
+    function getPoolValue(address poolAddress) public view returns (uint256) {
+        uint256 nAVpoolValue;
+        nAVpoolValue = this.getNAV(poolAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
-        // reserve = currencyRaised - nAVPoolValue;
-        // poolValue = reserve + nAVPoolValue;
 
-        return balancePool;
+        uint256 poolValue = balancePool + nAVpoolValue;
+
+        return poolValue;
     }
 
     function getExpectedSeniorAsset(address poolAddress) external view returns (uint256) {
@@ -348,42 +346,42 @@ contract SecuritizationPoolValueService is
 
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        
-        uint256 seniorInterestRate =  securitizationPool.interestRateSOT();
-        
+
+        uint256 seniorInterestRate = securitizationPool.interestRateSOT();
+
         uint256 seniorDebt;
-        seniorDebt = (100 + seniorInterestRate)* seniorDebt;
+        seniorDebt = (100 + seniorInterestRate) * seniorDebt;
 
         return seniorDebt;
     }
 
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
         uint256 seniorBalance;
-        seniorBalance = this.getSeniorAsset(poolAddress) -  this.getSeniorDebt(poolAddress);
+        seniorBalance = this.getSeniorAsset(poolAddress) - this.getSeniorDebt(poolAddress);
         return seniorBalance;
     }
 
     function getSeniorAsset(address poolAddress) external view returns (uint256) {
         uint256 seniorAsset;
-        
+
         return seniorAsset;
     }
-    function getJuniorAsset(address poolAddress)  public returns (uint256) {
+
+    function getJuniorAsset(address poolAddress) public returns (uint256) {
         uint256 seniorAsset;
         uint256 poolValue;
         poolValue = this.getPoolValue(poolAddress);
         // uint256 value = poolValue − seniorAsset;
-        uint256 juniorAsset = UntangledMath.getMax(1,0);
+        uint256 juniorAsset = UntangledMath.getMax(1, 0);
 
         return juniorAsset;
     }
 
     function getNAV(address poolAddress) external view returns (uint256) {
-        uint256 currentTimestamp = block.time;
+        uint256 currentTimestamp = block.timestamp;
         uint256 nAVPoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
         return nAVPoolValue;
     }
-
 
     // function getMax(uint a, uint b) public pure returns (uint256) {
     //     return a > b ? a : b;
