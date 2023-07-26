@@ -328,7 +328,7 @@ contract SecuritizationPoolValueService is
 
     function getPoolValue(address poolAddress) external view returns (uint256) {
         uint256 nAVpoolValue;
-        nAVpoolValue = this.getNAV(poolAddress);
+        nAVpoolValue = this.getNetAssetsValue(poolAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
@@ -344,20 +344,17 @@ contract SecuritizationPoolValueService is
         return expectedSeniorAsset;
     }
 
-    function getBeginingSeniorDebt(address poolAddress) external view returns (uint256) {
+    function getBeginningSeniorDebt(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
         require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
-        uint256 seniorAsset = this.getSeniorAsset(poolAddress);
-        uint256 nAVpoolValue;
-        nAVpoolValue = this.getNAV(poolAddress);
+        uint256 seniorAsset = this.getBeginningSeniorAsset(poolAddress);
+        uint256 nAVpoolValue = this.getNetAssetsValue(poolAddress);
+        uint256 poolValue = this.getPoolValue(poolAddress);
+        require(poolValue > 0, 'no pool value ');
 
-        address currencyAddress = securitizationPool.underlyingCurrency();
-        // currency balance of pool Address
-        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
-        require(balancePool > 0, 'pool does not have balance');
-        uint256 ratioForLoan = nAVpoolValue / (balancePool + nAVpoolValue);
+        uint256 ratioForLoan = nAVpoolValue / (poolValue);
         uint256 seniorDebt = ratioForLoan * seniorAsset;
         // solhint-disable-next-line not-rely-on-time
 
@@ -367,73 +364,99 @@ contract SecuritizationPoolValueService is
     // @notice calculate the interest of SOT until current time, with unix time dividate year length in second
     function getInterestSOT(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        uint256 beginingSeniorDebt = this.getBeginingSeniorDebt(poolAddress);
+        require (securitizationPool.address != address(0), "Pool was not deployed");
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
         require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 elapsedTime = block.timestamp - openingTime;
         uint256 timeInterval = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
-        uint256 numberInterval = elapsedTime / timeInterval;
-        uint256 interestOfSOT = (seniorInterestRate * numberInterval) / RATE_SCALING_FACTOR;
+        uint256 numberInterval = (elapsedTime * RATE_SCALING_FACTOR) / timeInterval;
+        uint256 interestOfSOT = (seniorInterestRate * numberInterval);
         return interestOfSOT;
     }
 
-    // @notice get begining of senior debt, get interest of this debt over number of interval
+    // @notice get beginning of senior debt, get interest of this debt over number of interval
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
-        uint256 beginingSeniorDebt = this.getBeginingSeniorAsset(poolAddress);
+        uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
         uint256 interestOfSOT = this.getInterestSOT(poolAddress);
-        uint256 seniorDebt = beginingSeniorDebt * (1 + interestOfSOT);
+        uint256 seniorDebt = (beginningSeniorDebt * (RATE_SCALING_FACTOR + interestOfSOT)) / RATE_SCALING_FACTOR;
         return seniorDebt;
     }
 
-    // @notice get begining senior asset, then calculate ratio reserve on pools.Finaly multiple them
+    // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
-        uint256 beginingSeniorAsset;
-        beginingSeniorAsset = this.getBeginingSeniorAsset(poolAddress);
+        uint256 beginningSeniorAsset;
+        beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
 
         uint256 seniorBalance;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-
-        uint256 nAVpoolValue;
-        nAVpoolValue = this.getNAV(poolAddress);
+        require (securitizationPool.address != address(0), "Pool was not deployed");
+        uint256 poolValue;
+        poolValue = this.getPoolValue(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
         require(balancePool > 0, 'pool does not have balance');
-        uint256 ratioForReserve = balancePool / (balancePool + nAVpoolValue);
+        uint256 ratioForReserve = balancePool / (poolValue);
 
-        seniorBalance = ratioForReserve * beginingSeniorAsset;
+        seniorBalance = ratioForReserve * beginningSeniorAsset;
 
         return seniorBalance;
     }
 
-    function getBeginingSeniorAsset(address poolAddress) external view returns (uint256) {
+    function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        uint256 beginingSeniorAsset;
+        uint256 beginningSeniorAsset;
         uint256 rateJunior = securitizationPool.minFirstLossCushion();
         require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
-        beginingSeniorAsset = this.getPoolValue(poolAddress) * (1 - (rateJunior / RATE_SCALING_FACTOR));
+        beginningSeniorAsset = this.getPoolValue(poolAddress) * (1 - (rateJunior / RATE_SCALING_FACTOR));
 
-        return beginingSeniorAsset;
+        return beginningSeniorAsset;
     }
 
     function getSeniorAsset(address poolAddress) external view returns (uint256) {
         // we need to change this value with interest rate by time
         uint256 interestOfSOT = this.getInterestSOT(poolAddress);
-        uint256 seniorAsset = this.getBeginingSeniorAsset(poolAddress) * (1 + interestOfSOT);
+        uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
+        uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
+        uint256 poolValue = this.getPoolValue(poolAddress);
+        uint256 seniorAsset;
+        uint256 interestSeniorAsset =  beginningSeniorAsset+ (beginningSeniorDebt * (interestOfSOT/RATE_SCALING_FACTOR));
+        if (poolValue >= interestSeniorAsset) {
+            seniorAsset = interestSeniorAsset
+        }else {
+            // case of default 
+            seniorAsset = poolValue;
+        }
+
         return seniorAsset;
     }
 
     function getJuniorAsset(address poolAddress) external view returns (uint256) {
         uint256 poolValue = this.getPoolValue(poolAddress);
-        uint256 seniorAsset = this.getSeniorAsset(poolAddress);
-        uint256 value = poolValue - seniorAsset;
-        uint256 juniorAsset = UntangledMath.getMax(value, 0);
+        uint256 seniorAsset = this.getBeginningSeniorAsset(poolAddress);
+        uint256 juniorAsset = 0;
+        if (poolValue >= seniorAsset) {
+            juniorAsset = poolValue - seniorAsset;
+        }
 
         return juniorAsset;
     }
 
-    function getNAV(address poolAddress) external view returns (uint256) {
+    function getJuniorRatio(address poolAddress) external view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require (securitizationPool.address != address(0), "Pool was not deployed");
+        uint256 rateJunior = securitizationPool.minFirstLossCushion();
+        return rateJunior;
+    }
+
+    function getSeniorRatio(address poolAddress) external view returns (uint256) {
+        uint256 rateJunior = this.getJuniorRatio(poolAddress);
+          require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
+        return RATE_SCALING_FACTOR - rateJunior
+    }
+    
+    function getNetAssetsValue(address poolAddress) external view returns (uint256) {
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVPoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
         return nAVPoolValue;

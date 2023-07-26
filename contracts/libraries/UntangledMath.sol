@@ -4,15 +4,15 @@ pragma solidity ^0.8.0;
 library UntangledMath {
     uint256 public constant ONE = 10 ** 27;
 
-    function getMax(uint a, uint b) public pure returns (uint256) {
-        return a > b ? a : b;
-        // uint256 i;
-    }
+    // function getMax(uint a, uint b) public pure returns (uint256) {
+    //     return a > b ? a : b;
+    //     // uint256 i;
+    // }
 
-    function getMin(uint a, uint b) public pure returns (uint256) {
-        return a < b ? a : b;
-        // uint256 i;
-    }
+    // function getMin(uint a, uint b) public pure returns (uint256) {
+    //     return a < b ? a : b;
+    //     // uint256 i;
+    // }
 
     function rpow(uint256 x, uint256 n, uint256 base) internal pure returns (uint256 z) {
         assembly {
