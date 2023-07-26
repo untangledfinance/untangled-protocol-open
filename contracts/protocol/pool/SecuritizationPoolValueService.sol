@@ -321,15 +321,17 @@ contract SecuritizationPoolValueService is
 
     function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
         return crowdsale.currencyRaised() - securitizationPool.paidPrincipalAmountSOT();
     }
 
     function getPoolValue(address poolAddress) external view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 nAVpoolValue;
         nAVpoolValue = this.getNetAssetsValue(poolAddress);
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
@@ -338,15 +340,9 @@ contract SecuritizationPoolValueService is
         return poolValue;
     }
 
-    function getExpectedSeniorAsset(address poolAddress) external view returns (uint256) {
-        // need to implement the scenario
-        uint256 expectedSeniorAsset;
-        return expectedSeniorAsset;
-    }
-
     function getBeginningSeniorDebt(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
         require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 seniorAsset = this.getBeginningSeniorAsset(poolAddress);
@@ -364,7 +360,7 @@ contract SecuritizationPoolValueService is
     // @notice calculate the interest of SOT until current time, with unix time dividate year length in second
     function getInterestSOT(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require (securitizationPool.address != address(0), "Pool was not deployed");
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
         require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
@@ -385,12 +381,13 @@ contract SecuritizationPoolValueService is
 
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 beginningSeniorAsset;
         beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
 
         uint256 seniorBalance;
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require (securitizationPool.address != address(0), "Pool was not deployed");
+
         uint256 poolValue;
         poolValue = this.getPoolValue(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
@@ -406,6 +403,7 @@ contract SecuritizationPoolValueService is
 
     function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 beginningSeniorAsset;
         uint256 rateJunior = securitizationPool.minFirstLossCushion();
         require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
@@ -421,11 +419,12 @@ contract SecuritizationPoolValueService is
         uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
         uint256 poolValue = this.getPoolValue(poolAddress);
         uint256 seniorAsset;
-        uint256 interestSeniorAsset =  beginningSeniorAsset+ (beginningSeniorDebt * (interestOfSOT/RATE_SCALING_FACTOR));
+        uint256 interestSeniorAsset = beginningSeniorAsset +
+            (beginningSeniorDebt * (interestOfSOT / RATE_SCALING_FACTOR));
         if (poolValue >= interestSeniorAsset) {
-            seniorAsset = interestSeniorAsset
-        }else {
-            // case of default 
+            seniorAsset = interestSeniorAsset;
+        } else {
+            // case of default
             seniorAsset = poolValue;
         }
 
@@ -445,17 +444,17 @@ contract SecuritizationPoolValueService is
 
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require (securitizationPool.address != address(0), "Pool was not deployed");
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 rateJunior = securitizationPool.minFirstLossCushion();
         return rateJunior;
     }
 
     function getSeniorRatio(address poolAddress) external view returns (uint256) {
         uint256 rateJunior = this.getJuniorRatio(poolAddress);
-          require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
-        return RATE_SCALING_FACTOR - rateJunior
+        require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
+        return RATE_SCALING_FACTOR - rateJunior;
     }
-    
+
     function getNetAssetsValue(address poolAddress) external view returns (uint256) {
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVPoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
