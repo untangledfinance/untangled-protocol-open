@@ -284,6 +284,7 @@ contract SecuritizationPoolValueService is
 
     function getRiskScoreByIdx(address pool, uint256 idx) private view returns (RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         return
             RiskScore({
                 daysPastDue: getDaysPastDueByIdx(securitizationPool, idx),
