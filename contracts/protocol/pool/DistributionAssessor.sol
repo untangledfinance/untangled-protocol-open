@@ -10,16 +10,12 @@ import '../../interfaces/INoteToken.sol';
 
 contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
-    address poolServiceAddress;
+    address public poolServiceAddress;
 
-    //  function getPoolServiceSeniorAsset(
-    //     address pool,
+    function setPoolService(address _poolServiceAddress) public {
+        poolServiceAddress = _poolServiceAddress;
+    }
 
-    // ) public view override returns (uint256) {
-
-    //     return poolService.getSeniorAsset(pool);
-
-    // }
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
         require(pool != address(0), 'Pool was not deployed');
@@ -195,7 +191,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         uint256 endTime
     ) public view override returns (uint256) {
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        require(poolServiceAddress != address(0), 'Pool service was not seted');
+        require(poolServiceAddress != address(0), 'Pool service was not setted');
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         if (tokenAddress == address(0) || tokenSupply == 0) {
