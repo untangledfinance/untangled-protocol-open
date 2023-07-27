@@ -34,7 +34,7 @@ contract SecuritizationPoolValueService is
         }
         if (!hasValidRiskScore) return totalDebt;
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        return calculateAssetValue(totalDebt, interestRate, overdue, riskscore, assetPurpose);
+        return _calculateAssetValue(totalDebt, interestRate, overdue, riskscore, assetPurpose);
     }
 
     function getExpectedAssetValue(
@@ -159,7 +159,7 @@ contract SecuritizationPoolValueService is
         }
 
         return
-            convertTokenValueToCurrencyAmount(
+            _convertTokenValueToCurrencyAmount(
                 poolAddress,
                 tokenAddress,
                 presentValue < totalDebt ? presentValue : totalDebt

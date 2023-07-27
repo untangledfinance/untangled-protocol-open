@@ -2,27 +2,34 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import './SecuritizationPoolValueService.sol';
 import './base/Interest.sol';
+
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
 contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
+    address poolServiceAddress;
 
+    //  function getPoolServiceSeniorAsset(
+    //     address pool,
+
+    // ) public view override returns (uint256) {
+
+    //     return poolService.getSeniorAsset(pool);
+
+    // }
     // get current individual asset for SOT tranche
-    function getSOTTokenPrice(
-        address pool,
-        uint256 timestamp,
-        address poolServiceAddress
-    ) public view override returns (uint256) {
+    function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
+
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
         uint256 seniorSupply = noteToken.totalSupply();
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        ISecuritizationPoolServiceBase poolService = ISecuritizationPoolServiceBase(poolServiceAddress);
-        uint256 seniorAsset = poolService.getSeniorAsset();
+        SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
+        uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return (seniorAsset) / seniorSupply;
 
         // uint256 ONE_SOT_DEFAULT_PRICE = _convertTokenValueToCurrencyAmount(
@@ -183,18 +190,16 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
     function getJOTTokenPrice(
         ISecuritizationPool securitizationPool,
-        uint256 endTime,
-        address poolServiceAddress
+        uint256 endTime
     ) public view override returns (uint256) {
-        ISecuritizationPoolServiceBase poolService = ISecuritizationPoolServiceBase(poolServiceAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         if (tokenAddress == address(0) || tokenSupply == 0) {
             return 0;
         }
-
-        uint256 juniorAsset = poolService.getJuniorAsset();
+        address pool = address(securitizationPool);
+        SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
+        uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
         return (juniorAsset) / tokenSupply;
         // uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
         // uint256 tokenDecimals = ERC20(tokenAddress).decimals();
