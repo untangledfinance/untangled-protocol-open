@@ -15,7 +15,7 @@ contract SecuritizationPoolValueService is
     ISecuritizationPoolValueService
 {
     using ConfigHelper for Registry;
-    uint256 timeInterval = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
+
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 2;
 
     function getPresentValueWithNAVCalculation(

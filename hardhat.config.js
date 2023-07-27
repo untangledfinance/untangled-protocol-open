@@ -7,12 +7,14 @@ require('@openzeppelin/hardhat-upgrades');
 require("@nomiclabs/hardhat-waffle");
 
 require('dotenv').config();
+
 const MNEMONIC = process.env.MNEMONIC;
-
+const ETHER_API_KEY = process.env.ETHERSCAN_KEY
 const accounts = {
-  mnemonic: MNEMONIC ?? 'test test test test test test test test test test test junk',
+  mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
 };
-
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+ 
 module.exports = {
   solidity: {
     compilers: [
@@ -58,8 +60,9 @@ module.exports = {
     },
     alfajores: {
       saveDeployments: true,
-      accounts,
+      accounts: [PRIVATE_KEY],
       loggingEnabled: true,
+      chainId: 44787,
       url: `https://alfajores-forno.celo-testnet.org`,
     },
     rinkeby: {
@@ -68,6 +71,25 @@ module.exports = {
       loggingEnabled: true,
       url: `https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161`,
     },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: ETHER_API_KEY,
+    customChains: [{
+      network: "alfajores",
+      chainId: 44787,
+      urls: {
+        apiURL: "https://api-alfajores.celoscan.io/api",
+        browserURL: "https://api-alfajores.celoscan.io"
+      }
+    }
+
+    ]
+
+
+
+
   },
   mocha: {
     timeout: 200000,

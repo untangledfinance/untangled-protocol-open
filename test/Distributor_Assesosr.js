@@ -247,12 +247,13 @@ contract('DistributionAssessor', (accounts) => {
 
     it(' Get JOT token price successful', async() => {
         await distributionAssessor.initialize(registryAddress);
+        await distributionAssessor.grantRole(ADMIN_ROLE, accounts[0]);
         await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
         await distributionAssessor.setPoolService(securitizationPoolValueService.address);
         await securitizationPoolValueService.initialize(registryAddress);
         let beginingiSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
-        console.log(254, beginingiSeniorDebt)
-        await distributionAssessor.grantRole(ADMIN_ROLE, accounts[0]);
+        console.log(254, beginingiSeniorDebt.toString())
+  
         let pool = await SecuritizationPool.at(addressPool);
         console.log(255, await pool.jotToken());
         const JOTPrice = await distributionAssessor.getJOTTokenPrice(addressPool,1698539289 )
