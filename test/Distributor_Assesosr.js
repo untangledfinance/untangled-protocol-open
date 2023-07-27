@@ -1,6 +1,6 @@
 const {expectRevert} = require('@openzeppelin/test-helpers');
 const { assert } = require('chai');
-const { assembleFiles } = require('solidity-coverage/plugins/resources/plugin.utils');
+
 const Registry = artifacts.require("Registry");
 const SecuritizationPool = artifacts.require("SecuritizationPool");
 const SecuritizationManager = artifacts.require("SecuritizationManager");
@@ -34,6 +34,10 @@ contract('DistributionAssessor', (accounts) => {
     let myTokenAddress;
     let poolToSOT
     let poolToJOT
+    let sotToken;
+    let jotToken;
+    let tgeAddress;
+    let tgeAddressJOT;
     var BN = web3.utils.BN;
     let distributionAssessorAddress;
     before(async () => {
@@ -120,83 +124,105 @@ contract('DistributionAssessor', (accounts) => {
         await securitizationPool.initialize(registryAddress, myTokenAddress,minFirstLossCushion);        
         await smContract.grantRole(ADMIN_ROLE, accounts[0])
         const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);        
-        let arrReceiptLogs = []
-        arrReceiptLogs.push(transaction.receipt.logs)
+        
       
         let logs = transaction.logs
       
          addressPool = logs[7]['args'][0]
         console.log(90,addressPool)
-        let txSOT = await smContract.initialTGEForSOT(
-            accounts[0],
-            addressPool,
-            0,
-            18,
-            true
-        )  
-        
- 
-        poolToSOT = await smContract.poolToSOT(addressPool);
-        let txJOT = await smContract.initialTGEForJOT(
-            accounts[0],
-            addressPool,
-            0,
-            18,
-            true
-        )
-         poolToJOT = await smContract.poolToJOT(addressPool);
-    // });
-    // it('initialie SOT successful', async () => {
-       
-        
-    // })
-    // it(' should initialize succesful TGE for JOT ', async () => {
-   
-       
-    //     console.log(152, poolToJOT)
-    //     assert.notEqual(poolToJOT, 0x0, "Fail on creating JOT");
-    // })
-
-    // it(' Should  start new round sale succesful', async () => {
+    })
+      
+    it(' Should  set up TGE for SOT succesful', async () => {
         let openingTime = 1689590489;
-         
-        let closingTime =1697539289 ;
-        let rate =2 ;
-        let cap = Math.pow(10,18);
-        console.log(162, cap )
+
+        let closingTime = 1697539289;
+        let rate = 2;
+        let cap = Math.pow(10, 18);
+
         cap = cap.toString();
         // cap = new BN(cap)
-        console.log(163, cap)
-        await mintedIncreasingInterestTGE.initialize(
-            registryAddress,
+        console.log(163, cap, accounts[0])
+        const txSetup = await smContract.setUpTGEForSOT(
+            accounts[1],
             addressPool,
-            poolToSOT,
-            myTokenAddress, 
-            true
+            0,
+            18,
+            true,
+            cap,
+            2,
+            3,
+            4,
+            100,
+            { openingTime, closingTime, rate, cap }
         )
-        await mintedIncreasingInterestTGE.setInterestRange(2,3,4,100);
-        await mintedIncreasingInterestTGE.startNewRoundSale(
-             openingTime,
-             closingTime,
-             rate,
-             cap
+        console.log(201, txSetup.logs)
+        tgeAddress = txSetup.logs[10].args.instanceAddress
+        sotToken = txSetup.logs[11].args.instanceAddress
+        console.log(161, tgeAddress, sotToken)
+        let tgeValid = await smContract.isExistingTGEs(tgeAddress)
+        console.log(204, tgeValid)
+        assert.equal(tgeValid, true, "Fail to set up TGE for SOT")
+    })
+
+    it(' Should  SET UP TGE for JOT succesful', async () => {
+        // await mintedNormalTGE.initialize(registryAddress, addressPool, , myTokenAddress, true)
+        let openingTime = 1689790489;
+
+        let closingTime = 1698539289;
+        let rate = 4;
+        let cap = Math.pow(10, 19);
+
+        cap = cap.toString();
+        // cap = new BN(cap)
+        console.log(233, cap, accounts[0] )
+        const txJOT = await smContract.setUpTGEForJOT(
+            accounts[2],
+            addressPool,
+            1,
+            18,
+            true,
+            cap,
+            { openingTime, closingTime, rate, cap }
         )
-        // let closeTime = await mintedIncreasingInterestTGE.closingTime();
+        console.log(227, txJOT)
+        tgeAddressJOT = txJOT.logs[10].args.instanceAddress
+        jotToken = txJOT.logs[11].args.instanceAddress
+        instanceTGEJOT = await MintedIncreasingInterestTGE.at(tgeAddressJOT);
+        let tgeValid = await smContract.isExistingTGEs(tgeAddressJOT)
+        console.log(231, tgeValid)
+        assert.equal(tgeValid, true, "Fail to set up TGE for JOT")
+
         
-        // console.log(180, closeTime);
-        // assert.equal(closeTime, closingTime, "Fail to start new Round Sale")
-    // })
-    // it(' Should buy token successfully ', async () => {
-        let tgeAddress = await tokenGenerationEventFactory.tgeAddresses(0);
-        console.log(187, tgeAddress);
+    })
+
+    it(' Should buy SOT token successfully ', async () => {
+        console.log(200, sotToken)
+        let sotInstance = await NoteToken.at(sotToken);
+        let balanceSOTBefore = await sotInstance.balanceOf(accounts[0]);
+        console.log(255, tgeAddress);
         let MINTER_ROLE = await noteToken.MINTER_ROLE();
         await noteToken.grantRole(ADMIN_ROLE, accounts[0]);
         await noteToken.grantRole(MINTER_ROLE, accounts[0]);
-        await noteToken.mint(accounts[0],"100000000000000000" );
-        await noteToken.approve(mintedIncreasingInterestTGE.address,"100000000000000000");
-        await noteToken.approve(smAddress,"100000000000000000");
-        // console.log(193, mintedIncreasingInterestTGE.address)
-        // await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
+        await noteToken.mint(accounts[0], "100000000000000000");
+        await noteToken.approve(tgeAddress, "100000000000000000");
         await smContract.buyTokens(tgeAddress, "100000000000000000");
+
+        let balanceSOT = await sotInstance.balanceOf(accounts[0]);
+        assert.equal(balanceSOT > balanceSOTBefore, true, "Fail to buy SOT ")
     })
+
+    it(' Should buy JOT token successfully ', async () => {
+        let jotInstance = await NoteToken.at(jotToken);
+        let balanceJOTBefore = await jotInstance.balanceOf(accounts[0]);
+        // let MINTER_ROLE = await noteToken.MINTER_ROLE();
+        await noteToken.mint(accounts[0], "1000000000000000000");
+        await noteToken.approve(tgeAddressJOT, "100000000000000000");
+        await smContract.buyTokens(tgeAddressJOT, "100000000000000000");
+
+        let balanceJOT = await jotInstance.balanceOf(accounts[0]);
+        assert.equal(balanceJOT > balanceJOTBefore, true, "Fail to buy JOT ")
+    })
+
+    
+    
 })
