@@ -195,7 +195,7 @@ contract('DistributionAssessor', (accounts) => {
         await noteToken.mint(accounts[0],"100000000000000000" );
         await noteToken.approve(mintedIncreasingInterestTGE.address,"100000000000000000");
         await noteToken.approve(smAddress,"100000000000000000");
-        console.log(193, mintedIncreasingInterestTGE.address)
+        // console.log(193, mintedIncreasingInterestTGE.address)
         // await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
         await smContract.buyTokens(tgeAddress, "100000000000000000");
     })
