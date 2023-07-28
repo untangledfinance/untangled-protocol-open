@@ -17,7 +17,8 @@ const LoanRepaymentRouter = artifacts.require("LoanRepaymentRouter");
 const DistributionAssessor = artifacts.require("DistributionAssessor");
 
 const SecuritizationPoolValueService = artifacts.require("SecuritizationPoolValueService");
-contract('DistributionAssessor', (accounts) => {
+var BigNumber = require('bignumber.js');
+contract('SecuritizationPoolValueService', (accounts) => {
     let smContract;
     let registry
     let smAddress;
@@ -33,6 +34,7 @@ contract('DistributionAssessor', (accounts) => {
     let distributionAssessor;
     let distributionAssessorAddress;
     let securitizationPoolValueService;
+    let securitizationPoolValueServiceAddress;
     let instanceTGEJOT
     let tokenGenerationEventFactory;
     let registryInitialize
@@ -40,6 +42,7 @@ contract('DistributionAssessor', (accounts) => {
     let ADMIN_ROLE;
     let OWNER_ROLE;
     let myTokenAddress;
+    let poolInstance 
     let poolToSOT
     let poolToJOT
     var BN = web3.utils.BN;
@@ -59,6 +62,7 @@ contract('DistributionAssessor', (accounts) => {
         distributionAssessor = await DistributionAssessor.new();
         
         securitizationPoolValueService = await SecuritizationPoolValueService.new();
+        securitizationPoolValueServiceAddress = securitizationPoolValueService.address;
         distributionAssessorAddress = distributionAssessor.address;
         // in protocol/fab
         mintedNormalTGE = await MintedNormalTGE.new();
@@ -82,35 +86,39 @@ contract('DistributionAssessor', (accounts) => {
         smAddress = smContract.address;
         console.log(18, smAddress);
         registryAddress = registry.address;
-    })
-
-    it('Should deploy SecuritizationManager contract properly', async () => {
-        assert.notEqual(distributionAssessorAddress, 0x0);
-        assert.notEqual(distributionAssessorAddress, '');
-        assert.notEqual(distributionAssessorAddress, null);
-        assert.notEqual(distributionAssessorAddress, undefined);
-
-    });
-    it('should initialize succesful ', async () => {
         await smContract.initialize(registryAddress);
         registryInitialize = await smContract.registry();
-        assert.equal(registryAddress, registryInitialize, "succesful initialize Registry");
-
-    })
-    it('should grant Role succesful ', async () => {
         OWNER_ROLE = await registry.OWNER_ROLE();
         ADMIN_ROLE = await registry.DEFAULT_ADMIN_ROLE();
         let CREATOR_POOL = await smContract.POOL_CREATOR();
         await smContract.grantRole(CREATOR_POOL, accounts[0]);
         await distributionAssessor.initialize(registryAddress);
         await distributionAssessor.grantRole(ADMIN_ROLE, accounts[0]);
-        let role = await smContract.hasRole(CREATOR_POOL, accounts[0]);
+    })
+
+    it('Should deploy SecuritizationPoolValueService contract properly', async () => {
+        assert.notEqual(securitizationPoolValueServiceAddress, 0x0);
+        assert.notEqual(securitizationPoolValueServiceAddress, '');
+        assert.notEqual(securitizationPoolValueServiceAddress, null);
+        assert.notEqual(securitizationPoolValueServiceAddress, undefined);
+
+    });
+    it('should initialize succesful ', async () => {
+       
+        await securitizationPoolValueService.initialize(registryAddress);
+        let securitizationPoolValueServiceInitialize = await smContract.registry();
+        assert.equal(registryAddress, securitizationPoolValueServiceInitialize, "succesful initialize Registry");
+
+    })
+    it('should grant Role succesful ', async () => {
+       
+        await securitizationPoolValueService.grantRole(ADMIN_ROLE, accounts[0]);
+        let role = await securitizationPoolValueService.hasRole(ADMIN_ROLE, accounts[0]);
         assert.equal(true, role, "succesful grant Role creator Pool for admin");
     })
 
-    it('get JOT Price successful ', async () => {
-        console.log(42, accounts[0])       
-        console.log(45, OWNER_ROLE, accounts[0]);
+    it('get Net Asset Value  correct ', async () => {
+      
         await registry.initialize();
         await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGE.address)
         await registry.setNoteTokenFactory(noteTokenFactory.address);
@@ -203,31 +211,36 @@ contract('DistributionAssessor', (accounts) => {
 
         await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
         await distributionAssessor.setPoolService(securitizationPoolValueService.address);
-        await securitizationPoolValueService.initialize(registryAddress);
-        let beginingiSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
-        console.log(232, beginingiSeniorDebt.toString())
+        
+        // let beginingiSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
+        // console.log(232, beginingiSeniorDebt.toString())
   
-        let pool = await SecuritizationPool.at(addressPool);
-        console.log(255, await pool.jotToken());
-        const JOTPrice = await distributionAssessor.getJOTTokenPrice(addressPool,1698539289 )
-        console.log(257, JOTPrice.toString())
-        let totalJOT = await jotInstance.totalSupply();
-        console.log(239, totalJOT.toString())
-        let juniorAsset = await securitizationPoolValueService.getJuniorAsset(addressPool);
-        let jotPriceCalculcate = juniorAsset/totalJOT;
-        console.log(242, jotPriceCalculcate)
-        assert.equal(JOTPrice.toString(), jotPriceCalculcate.toString(), "Fail to get price of JOT ")
+        poolInstance = await SecuritizationPool.at(addressPool);
+        console.log(255, await poolInstance.jotToken());
+        let getNAV = await securitizationPoolValueService.getNetAssetsValue(addressPool);
+        console.log(219, getNAV.toString());
+        let timeNow = Math.round(Date.now() );
+        console.log(221, timeNow);
+        let expectedNAV =await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
+        console.log(223, expectedNAV.toString());
+        assert.equal( getNAV.toString(),  expectedNAV.toString(), "Fail to get NAV ");
     })
 
-    it(' Get SOT token price successful', async() => { 
-        let totalSOT = await sotInstance.totalSupply();
-        console.log(244, totalSOT.toString())   
-        let seniorAsset =await securitizationPoolValueService.getSeniorAsset(addressPool); 
-        let priceSOTCalculate =   seniorAsset/ totalSOT;
-        console.log(250, priceSOTCalculate)
-        const SOTPrice = await distributionAssessor.getSOTTokenPrice(addressPool,1698539289 )
-        console.log(262, SOTPrice.toString())
-        assert.equal(SOTPrice , priceSOTCalculate, "Fail to get price of SOT ")
+    it(' Get Pool Value correctly ', async() => { 
+    //   
+        let getPoolValue = await securitizationPoolValueService.getPoolValue(addressPool); 
+        let nAVpoolValue = await securitizationPoolValueService.getNetAssetsValue(addressPool);
+        let currencyAddress = await poolInstance.underlyingCurrency();
+        let instanceCurrency = await NoteToken.at(currencyAddress);
+        let reserve = await instanceCurrency.balanceOf(addressPool);
+        reserve = new BigNumber(reserve.toString())
+        nAVpoolValue = new BigNumber(nAVpoolValue.toString())
+        console.log(234, reserve.toString(), nAVpoolValue.toString())
+        let poolValue = nAVpoolValue.plus(reserve) ;
+        console.log(236, poolValue.toString(), getPoolValue.toString(), "Fail to get corrent Pool Value")
+
+
+        assert.equal(poolValue.toString(), getPoolValue.toString(), "Fail to correct Pool value")
     })
 
 })
