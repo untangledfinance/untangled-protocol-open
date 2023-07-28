@@ -461,4 +461,10 @@ contract SecuritizationPoolValueService is
         uint256 nAVPoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
         return nAVPoolValue;
     }
+
+    function getExpectedSeniorAssets(address poolAddress) external view returns (uint256) {
+        uint256 senorDebt = this.getSeniorDebt(poolAddress);
+        uint256 seniorBalance = this.getSeniorBalance(poolAddress);
+        return senorDebt + seniorBalance;
+    }
 }
