@@ -6,6 +6,7 @@ const SecuritizationManager = artifacts.require("SecuritizationManager");
  
 const SecuritizationPool = artifacts.require("SecuritizationPool");
 const NoteTokenFactory = artifacts.require("NoteTokenFactory");
+ 
 const TokenGenerationEventFactory = artifacts.require("TokenGenerationEventFactory");
 const DistributionAssessor = artifacts.require("DistributionAssessor");
 
@@ -18,9 +19,12 @@ module.exports = async function (deployer, accounts) {
   await deployer.deploy(LoanKernel);
   await deployer.deploy(LoanAssetToken);
  
-  await deployer.deploy(SecuritizationPool);
+  const pool = await deployer.deploy(SecuritizationPool);
+  console.log(23, pool.address)
   await deployer.deploy(NoteTokenFactory);
+  await deployer.deploy(NoteToken,"Test", "TST", 18, pool.address, 1);
   await deployer.deploy(TokenGenerationEventFactory);
+
   
   await deployer.deploy(DistributionAssessor);
   await deployer.deploy(SecuritizationPoolValueService);
@@ -34,7 +38,7 @@ module.exports = async function (deployer, accounts) {
   const SecuritizationPoolContract = await SecuritizationPool.deployed();
   const DistributionAssessorContract = await DistributionAssessor.deployed();
   const SecuritizationPoolValueServiceContract = await SecuritizationPoolValueService.deployed();
-
+  const noteToken = await NoteToken.deployed();
   console.log(11, RegistryContract.address)
   console.log(12, SecuritizationManagerContract.address)
 };

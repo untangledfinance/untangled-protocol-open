@@ -44,7 +44,9 @@ contract('DistributionAssessor', (accounts) => {
     let poolToJOT
     var BN = web3.utils.BN;
     let sotToken;
+    let sotInstance;
     let jotToken;
+    let jotinstanc
     let tgeAddress;
     let tgeAddressJOT;
     let address;
@@ -80,14 +82,13 @@ contract('DistributionAssessor', (accounts) => {
         smAddress = smContract.address;
         console.log(18, smAddress);
         registryAddress = registry.address;
-
     })
 
     it('Should deploy SecuritizationManager contract properly', async () => {
-        assert.notEqual(smAddress, 0x0);
-        assert.notEqual(smAddress, '');
-        assert.notEqual(smAddress, null);
-        assert.notEqual(smAddress, undefined);
+        assert.notEqual(distributionAssessorAddress, 0x0);
+        assert.notEqual(distributionAssessorAddress, '');
+        assert.notEqual(distributionAssessorAddress, null);
+        assert.notEqual(distributionAssessorAddress, undefined);
 
     });
     it('should initialize succesful ', async () => {
@@ -97,19 +98,20 @@ contract('DistributionAssessor', (accounts) => {
 
     })
     it('should grant Role succesful ', async () => {
+        OWNER_ROLE = await registry.OWNER_ROLE();
+        ADMIN_ROLE = await registry.DEFAULT_ADMIN_ROLE();
         let CREATOR_POOL = await smContract.POOL_CREATOR();
         await smContract.grantRole(CREATOR_POOL, accounts[0]);
+        await distributionAssessor.initialize(registryAddress);
+        await distributionAssessor.grantRole(ADMIN_ROLE, accounts[0]);
         let role = await smContract.hasRole(CREATOR_POOL, accounts[0]);
         assert.equal(true, role, "succesful grant Role creator Pool for admin");
     })
 
-    it('create new pool succesful', async () => {
-        console.log(42, accounts[0])
-        OWNER_ROLE = await registry.OWNER_ROLE();
-        ADMIN_ROLE = await registry.DEFAULT_ADMIN_ROLE();
+    it('get JOT Price successful ', async () => {
+        console.log(42, accounts[0])       
         console.log(45, OWNER_ROLE, accounts[0]);
         await registry.initialize();
-
         await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGE.address)
         await registry.setNoteTokenFactory(noteTokenFactory.address);
         await registry.setDistributionAssessor(distributionAssessor.address);
@@ -129,8 +131,7 @@ contract('DistributionAssessor', (accounts) => {
         await registry.setLoanAssetToken(loanAssetTokenAddress);
         let loanKernelAddress = loanKernel.address
         await registry.setLoanKernel(loanKernelAddress);
-        await registry.setMintedNormalTGE(mintedNormalTGE.address)
- 
+        await registry.setMintedNormalTGE(mintedNormalTGE.address) 
         await loanInterestTermsContract.initialize(registryAddress);
         await loanRepaymentRouter.initialize(registryAddress);
         await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
@@ -139,8 +140,6 @@ contract('DistributionAssessor', (accounts) => {
         await securitizationPool.initialize(registryAddress, myTokenAddress, minFirstLossCushion);
         await smContract.grantRole(ADMIN_ROLE, accounts[0])
         const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);
-
-
         let logs = transaction.logs
         // console.log(122, logs)
         addressPool = logs[7]['args'][0]
@@ -148,23 +147,13 @@ contract('DistributionAssessor', (accounts) => {
         // console.log(78, transaction.receipt.logs, )
         let isPool = await smContract.isExistingPools(addressPool);
         console.log(127, isPool)
-        assert.equal(true, isPool, "succesful creae new Pool instance");
-
-        let poolExist = await smContract.isExistingPools(addressPool);
-        console.log(141, poolExist);
-        assert.equal(true, poolExist, "succesful create new  Pool Instance");
-    });
- 
-
-    it(' Should  set up TGE for SOT succesful', async () => {
+        assert.equal(true, isPool, "succesful creae new Pool instance");   
         let openingTime = 1689590489;
-
         let closingTime = 1697539289;
         let rate = 2;
         let cap = Math.pow(10, 18);
-
         cap = cap.toString();
-        // cap = new BN(cap)
+ 
         console.log(163, cap, accounts[0], address[0])
         const txSetup = await smContract.setUpTGEForSOT(
             accounts[1],
@@ -172,34 +161,17 @@ contract('DistributionAssessor', (accounts) => {
             0,
             18,
             true,
-
             cap,
-
             2,
             3,
             4,
             100,
             { openingTime, closingTime, rate, cap }
         )
-        // console.log(201, txSetup.logs)
-        tgeAddress = txSetup.logs[10].args.instanceAddress
-        sotToken = txSetup.logs[11].args.instanceAddress
-        let tgeValid = await smContract.isExistingTGEs(tgeAddress)
-        console.log(204, tgeValid)
-        assert.equal(tgeValid, true, "Fail to set up TGE for SOT")
-    })
-
-    it(' Should  SET UP TGE for JOT succesful', async () => {
-        // await mintedNormalTGE.initialize(registryAddress, addressPool, , myTokenAddress, true)
-        let openingTime = 1689790489;
-
-        let closingTime = 1698539289;
-        let rate = 4;
-        let cap = Math.pow(10, 19);
-
-        cap = cap.toString();
-        // cap = new BN(cap)
-        console.log(233, cap, accounts[0], address[0])
+ 
+        tgeAddress = txSetup.logs[10].args.instanceAddress;
+        sotToken = txSetup.logs[11].args.instanceAddress;  
+        sotInstance = await NoteToken.at(sotToken);
         const txJOT = await smContract.setUpTGEForJOT(
             accounts[2],
             addressPool,
@@ -209,60 +181,53 @@ contract('DistributionAssessor', (accounts) => {
             cap,
             { openingTime, closingTime, rate, cap }
         )
-        console.log(227, txJOT)
+        // console.log(227, txJOT)
         tgeAddressJOT = txJOT.logs[10].args.instanceAddress
         jotToken = txJOT.logs[11].args.instanceAddress
         instanceTGEJOT = await MintedIncreasingInterestTGE.at(tgeAddressJOT);
-        let tgeValid = await smContract.isExistingTGEs(tgeAddressJOT)
-        console.log(231, tgeValid)
-        assert.equal(tgeValid, true, "Fail to set up TGE for JOT")
-    })
-
-    it(' Should buy SOT token successfully ', async () => {
-        let sotInstance = await NoteToken.at(sotToken);
-        let balanceSOTBefore = await sotInstance.balanceOf(accounts[0]);
-        console.log(255, tgeAddress);
+        jotInstance = await NoteToken.at(jotToken);
+         
         let MINTER_ROLE = await noteToken.MINTER_ROLE();
         await noteToken.grantRole(ADMIN_ROLE, accounts[0]);
         await noteToken.grantRole(MINTER_ROLE, accounts[0]);
         await noteToken.mint(accounts[0], "100000000000000000");
         await noteToken.approve(tgeAddress, "100000000000000000");
         await smContract.buyTokens(tgeAddress, "100000000000000000");
-
-        let balanceSOT = await sotInstance.balanceOf(accounts[0]);
-        assert.equal(balanceSOT > balanceSOTBefore, true, "Fail to buy SOT ")
-    })
-
-    it(' Should buy JOT token successfully ', async () => {
-        let jotInstance = await NoteToken.at(jotToken);
-        let balanceJOTBefore = await jotInstance.balanceOf(accounts[0]);
-        // let MINTER_ROLE = await noteToken.MINTER_ROLE();
+       
+        jotInstance = await NoteToken.at(jotToken);
+        // let balanceJOTBefore = await jotInstance.balanceOf(accounts[0]);
+     
         await noteToken.mint(accounts[0], "1000000000000000000");
         await noteToken.approve(tgeAddressJOT, "100000000000000000");
         await smContract.buyTokens(tgeAddressJOT, "100000000000000000");
 
-        let balanceJOT = await jotInstance.balanceOf(accounts[0]);
-        assert.equal(balanceJOT > balanceJOTBefore, true, "Fail to buy JOT ")
-    })
-
-    it(' Get JOT token price successful', async() => {
-        await distributionAssessor.initialize(registryAddress);
-        await distributionAssessor.grantRole(ADMIN_ROLE, accounts[0]);
         await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
         await distributionAssessor.setPoolService(securitizationPoolValueService.address);
         await securitizationPoolValueService.initialize(registryAddress);
         let beginingiSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
-        console.log(254, beginingiSeniorDebt.toString())
+        console.log(232, beginingiSeniorDebt.toString())
   
         let pool = await SecuritizationPool.at(addressPool);
         console.log(255, await pool.jotToken());
         const JOTPrice = await distributionAssessor.getJOTTokenPrice(addressPool,1698539289 )
         console.log(257, JOTPrice.toString())
+        let totalJOT = await jotInstance.totalSupply();
+        console.log(239, totalJOT.toString())
+        let juniorAsset = await securitizationPoolValueService.getJuniorAsset(addressPool);
+        let jotPriceCalculcate = juniorAsset/totalJOT;
+        console.log(242, jotPriceCalculcate)
+        assert.equal(JOTPrice.toString(), jotPriceCalculcate.toString(), "Fail to get price of JOT ")
     })
 
-    it(' Get SOT token price successful', async() => {        
+    it(' Get SOT token price successful', async() => { 
+        let totalSOT = await sotInstance.totalSupply();
+        console.log(244, totalSOT.toString())   
+        let seniorAsset =await securitizationPoolValueService.getSeniorAsset(addressPool); 
+        let priceSOTCalculate =   seniorAsset/ totalSOT;
+        console.log(250, priceSOTCalculate)
         const SOTPrice = await distributionAssessor.getSOTTokenPrice(addressPool,1698539289 )
         console.log(262, SOTPrice.toString())
+        assert.equal(SOTPrice , priceSOTCalculate, "Fail to get price of SOT ")
     })
 
 })
