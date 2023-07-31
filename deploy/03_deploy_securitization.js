@@ -1,5 +1,5 @@
 const { deployProxy } = require('../utils/deployHelper');
-
+console.log(2, "Securitization")
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
@@ -48,7 +48,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       securitizationPoolValueServiceProxy.address
     );
   }
-
+  console.log(51, securitizationPoolValueServiceProxy.address)
   //deploy NoteTokenFactory
   const noteTokenFactoryProxy = await deployProxy({ getNamedAccounts, deployments }, 'NoteTokenFactory', [
     registry.address,

@@ -10,7 +10,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
     args: [],
     log: true,
   });
-
+  console.log(13, deployer)
   const contractProxy = await deploy(`${contractName}Proxy`, {
     contract: 'UpgradableProxy',
     skipIfAlreadyDeployed: true,

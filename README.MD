@@ -58,3 +58,5 @@ yarn deploy --tags [..] --network [..]
 `npx hardhat run ./deploy/12_deploy_SM.js --network alfajores`
 
 `npx hardhat verify 0x8594888F7617444Ca1baD59fC73a7703783710a5 --network alfajores`
+
+[Document on Verify and Upload](https://docs.google.com/document/d/12tGPUNdDWYi6iyv_Kr7X3eJuNmDZIaosjn9WTEnOXOQ/edit?usp=sharing)
