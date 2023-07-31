@@ -29,19 +29,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return (seniorAsset) / seniorSupply;
-
-        // uint256 ONE_SOT_DEFAULT_PRICE = _convertTokenValueToCurrencyAmount(
-        //     address(securitizationPool),
-        //     address(noteToken),
-        //     1 * 10**uint256(noteToken.decimals())
-        // );
-        // uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-
-        // if (timestamp < openingBlockTimestamp) return ONE_SOT_DEFAULT_PRICE;
-
-        // uint32 interestRateSOT = securitizationPool.interestRateSOT();
-
-        // return ONE_SOT_DEFAULT_PRICE + _calculateInterestForDuration(ONE_SOT_DEFAULT_PRICE, interestRateSOT, timestamp - openingBlockTimestamp);
     }
 
     // get current individual asset for SOT tranche
@@ -201,19 +188,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
         return (juniorAsset) / tokenSupply;
-        // uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
-        // uint256 tokenDecimals = ERC20(tokenAddress).decimals();
-
-        // uint256 totalJotValue = _calcJuniorAssetValue(address(securitizationPool), endTime);
-        // uint256 totalTokenRedeem = securitizationPool.totalLockedRedeemBalances(tokenAddress);
-        // tokenSupply = tokenSupply - totalTokenRedeem;
-
-        // return
-        //     currencyDecimals > tokenDecimals
-        //         ? (totalJotValue * Configuration.PRICE_SCALING_FACTOR) /
-        //             (tokenSupply * 10 ** (currencyDecimals - tokenDecimals))
-        //         : (totalJotValue * 10 ** (tokenDecimals - currencyDecimals) * Configuration.PRICE_SCALING_FACTOR) /
-        //             tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
