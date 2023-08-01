@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../interfaces/INoteToken.sol';
 import '../../interfaces/ISecuritizationPool.sol';
-import '../../interfaces/IDistributionAssessor.sol';
+// import '../../interfaces/IDistributionAssessor.sol';
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
@@ -15,8 +15,7 @@ import '../../libraries/UntangledMath.sol';
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
     NAVCalculation,
-    ISecuritizationPoolValueService,
-    IDistributionAssessor
+    ISecuritizationPoolValueService
 {
     using ConfigHelper for Registry;
 
@@ -350,8 +349,10 @@ contract SecuritizationPoolValueService is
 
     // @notice get beginning of senior debt, get interest of this debt over number of interval
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
-        uint256 seniorAmount = this.getSeniorAmount(poolAddress);
-        uint256 seniorRatio = this.getSeniorRatio(poolAddress);
+        uint256 currentTimestamp = block.timestamp;
+        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+        uint256 poolValue = this.getPoolValue(poolAddress);
+        uint256 seniorAsset = this.getSeniorAsset(poolAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
@@ -359,11 +360,11 @@ contract SecuritizationPoolValueService is
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 elapsedTime = block.timestamp - openingTime;
         uint256 timeInterval = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
-        uint256 numberInterval = (elapsedTime) / timeInterval;
-        uint256 seniorDebt = (seniorRatio / RATE_SCALING_FACTOR) *
-            seniorAmount *
-            (1 + seniorInterestRate) *
-            numberInterval;
+        uint256 compoundingPeriods = (elapsedTime * RATE_SCALING_FACTOR) / timeInterval;
+        uint256 seniorDebt = ((nAVpoolValue / poolValue) *
+            seniorAsset *
+            (1 + seniorInterestRate / (compoundingPeriods / RATE_SCALING_FACTOR))) ^
+            (compoundingPeriods / RATE_SCALING_FACTOR);
     }
 
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
@@ -387,19 +388,69 @@ contract SecuritizationPoolValueService is
         return seniorBalance;
     }
 
-    function getReserve(address poolAddress, address distributorAssessor) external view returns (uint256) {
+    function getJOTTokenPrice(address pool, uint256 endTime) public view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        address tokenAddress = securitizationPool.jotToken();
+        uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
+        if (tokenAddress == address(0) || tokenSupply == 0) {
+            return 0;
+        }
+
+        uint256 juniorAsset = this.getJuniorAsset(pool);
+        return (juniorAsset * RATE_SCALING_FACTOR) / tokenSupply;
+    }
+
+    function getSOTTokenPrice(
+        address pool,
+        uint256 endTime
+    )
+        public
+        view
+        returns (
+            // address poolServiceAddress
+            uint256
+        )
+    {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        address tokenAddress = securitizationPool.sotToken();
+        uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
+        if (tokenAddress == address(0) || tokenSupply == 0) {
+            return 0;
+        }
+
+        uint256 seniorAsset = this.getSeniorAsset(pool);
+        return ((seniorAsset) * RATE_SCALING_FACTOR) / tokenSupply;
+    }
+
+    function getReserve(
+        address poolAddress,
+        address distributorAssessor,
+        uint256 JOTPrincipal,
+        uint256 SOTTokenRedeem,
+        uint256 JOTTokenRedeem
+    ) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        IDistributionAssessor distributorAssessorInstance = IDistributionAssessor(distributorAssessor);
-        require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
+        // IDistributionAssessor distributorAssessorInstance = IDistributionAssessor(distributorAssessor);
+        // require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
         uint256 currentTimestamp = block.timestamp;
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress, currentTimestamp);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(poolAddress, currentTimestamp);
+        uint256 sotPrice = this.getSOTTokenPrice(poolAddress, currentTimestamp);
+        uint256 jotPrice = this.getJOTTokenPrice(poolAddress, currentTimestamp);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);
-        uint256 SOTInvest = securitizationPool.principalAmountSOT();
-        uint256 totalReserve;
+        uint256 SOTPrincipal = securitizationPool.principalAmountSOT();
+        // uint256 JOTPrincipal;
+        // uint256 SOTTokenRedeem;
+        // uint256 JOTTokenRedeem;
+
+        uint256 totalReserve = reserve +
+            SOTPrincipal +
+            JOTPrincipal -
+            SOTTokenRedeem *
+            sotPrice +
+            JOTTokenRedeem *
+            jotPrice;
         return totalReserve;
     }
 
@@ -415,7 +466,7 @@ contract SecuritizationPoolValueService is
         // we need to change this value with interest rate by time
         uint256 seniorAsset;
         uint256 poolValue = this.getPoolValue(poolAddress);
-        uint256 expectedSeniorAsset = this.getExpectedSeniorAsset(poolAddress);
+        uint256 expectedSeniorAsset = this.getExpectedSeniorAssets(poolAddress);
 
         if (poolValue > expectedSeniorAsset) {
             seniorAsset = expectedSeniorAsset;
@@ -429,7 +480,7 @@ contract SecuritizationPoolValueService is
 
     function getJuniorAsset(address poolAddress) external view returns (uint256) {
         uint256 poolValue = this.getPoolValue(poolAddress);
-        uint256 seniorAsset = this.getBeginningSeniorAsset(poolAddress);
+        uint256 seniorAsset = this.getSeniorAsset(poolAddress);
         uint256 juniorAsset = 0;
         if (poolValue >= seniorAsset) {
             juniorAsset = poolValue - seniorAsset;

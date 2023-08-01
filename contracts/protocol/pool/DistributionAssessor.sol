@@ -18,8 +18,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
-        require(pool != address(0), 'Pool was not deployed');
-        require(poolServiceAddress != address(0), 'Pool service was not seted');
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
@@ -28,7 +26,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
         SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return (seniorAsset) / seniorSupply;
+        return ((seniorAsset) * 100) / seniorSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -177,17 +175,17 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         ISecuritizationPool securitizationPool,
         uint256 endTime
     ) public view override returns (uint256) {
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        require(poolServiceAddress != address(0), 'Pool service was not setted');
+        require(address(securitizationPool) != address(0), 'pool was not deployed');
+        // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         if (tokenAddress == address(0) || tokenSupply == 0) {
             return 0;
         }
-        address pool = address(securitizationPool);
+        // address pool = address(securitizationPool);
         SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return (juniorAsset) / tokenSupply;
+        return (juniorAsset * 100) / tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {

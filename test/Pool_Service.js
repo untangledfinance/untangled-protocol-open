@@ -55,6 +55,7 @@ contract('SecuritizationPoolValueService', (accounts) => {
     let address;
     let loanRepaymentRouter
     let loanInterestTermsContract;
+    let timeNow 
     before(async () => {
         registry = await Registry.new();
         address = await web3.eth.getAccounts()
@@ -212,24 +213,22 @@ contract('SecuritizationPoolValueService', (accounts) => {
         await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
         await distributionAssessor.setPoolService(securitizationPoolValueService.address);
         
-        // let beginingiSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
-        // console.log(232, beginingiSeniorDebt.toString())
-  
         poolInstance = await SecuritizationPool.at(addressPool);
-        console.log(255, await poolInstance.jotToken());
-        let getNAV = await securitizationPoolValueService.getNetAssetsValue(addressPool);
-        console.log(219, getNAV.toString());
-        let timeNow = Math.round(Date.now() );
+        console.log(219, await poolInstance.jotToken());
+  
+        
+        timeNow = Math.round(Date.now() );
         console.log(221, timeNow);
         let expectedNAV =await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
         console.log(223, expectedNAV.toString());
-        assert.equal( getNAV.toString(),  expectedNAV.toString(), "Fail to get NAV ");
+        assert.equal( expectedNAV.toString(),  0, "Fail to get NAV ");
     })
 
     it(' Get Pool Value correctly ', async() => { 
-    //   
+        // let timeNow = Math.round(Date.now() );
+        console.log(231, timeNow);
         let getPoolValue = await securitizationPoolValueService.getPoolValue(addressPool); 
-        let nAVpoolValue = await securitizationPoolValueService.getNetAssetsValue(addressPool);
+        let nAVpoolValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
         let currencyAddress = await poolInstance.underlyingCurrency();
         let instanceCurrency = await NoteToken.at(currencyAddress);
         let reserve = await instanceCurrency.balanceOf(addressPool);

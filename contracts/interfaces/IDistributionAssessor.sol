@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "./ISecuritizationPool.sol";
+import './ISecuritizationPool.sol';
 
 abstract contract IDistributionAssessor {
     function getSOTTokenPrice(address securitizationPool, uint256 timestamp) public view virtual returns (uint256);
 
-    function getJOTTokenPrice(ISecuritizationPool securitizationPool, uint256 endTime) public view virtual returns (uint256);
+    function getJOTTokenPrice(
+        ISecuritizationPool securitizationPool,
+        uint256 endTime
+    ) public view virtual returns (uint256);
 
     function calcTokenPrice(address pool, address tokenAddress) external view virtual returns (uint256);
 

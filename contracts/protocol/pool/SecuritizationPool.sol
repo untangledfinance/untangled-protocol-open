@@ -126,12 +126,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         existsTokenAssetAddress[tokenAddress] = true;
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(
             _msgSender() == address(registry.getAcceptedInvoiceToken()) ||
                 _msgSender() == address(registry.getLoanAssetToken()),
@@ -201,8 +196,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(tokenAddresses.length == tokenIds.length, "tokenAddresses length and tokenIds length are not equal");
-        require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
+        require(tokenAddresses.length == tokenIds.length, 'tokenAddresses length and tokenIds length are not equal');
+        require(
+            tokenAddresses.length == recipients.length,
+            'tokenAddresses length and recipients length are not equal'
+        );
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
@@ -243,8 +241,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(tokenAddresses.length == recipients.length, "tokenAddresses length and tokenIds length are not equal");
-        require(tokenAddresses.length == amounts.length, "tokenAddresses length and recipients length are not equal");
+        require(tokenAddresses.length == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
+        require(tokenAddresses.length == amounts.length, 'tokenAddresses length and recipients length are not equal');
         for (uint256 i = 0; i < tokenAddresses.length; ++i) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
@@ -266,14 +264,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     // After closed pool and redeem all not -> get remain cash to recipient wallet
-    function claimCashRemain(address recipientWallet)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlyRole(OWNER_ROLE)
-        finishRedemptionValidator
-    {
+    function claimCashRemain(
+        address recipientWallet
+    ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) finishRedemptionValidator {
         IERC20 currency = IERC20(underlyingCurrency);
         currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot));
     }
@@ -364,7 +357,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     // Increase by value
-    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
+    function increaseTotalAssetRepaidCurrency(
+        uint256 amount
+    ) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
 
@@ -378,7 +373,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             _msgSender() == address(registry.getDistributionTranche()),
             'SecuritizationPool: Caller must be DistributionTranche'
         );
-
+        if (sotToken == notesToken) {
+            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+        }
         if (tokenAmount > 0) {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
@@ -386,8 +383,5 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
-        if (sotToken == notesToken) {
-            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
-        }
     }
 }
