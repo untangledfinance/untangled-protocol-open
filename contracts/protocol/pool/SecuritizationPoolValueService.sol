@@ -10,7 +10,7 @@ import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
 import '../../libraries/UntangledMath.sol';
 
-// import './DistributionAssessor.sol';
+import './DistributionAssessor.sol';
 
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
@@ -345,26 +345,42 @@ contract SecuritizationPoolValueService is
         return poolValue;
     }
 
-    // @notice calculate the interest of SOT until current time, with unix time dividate year length in second
+    // @notice this function return value 90 in example
+    function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
+        uint256 rateJunior = securitizationPool.minFirstLossCushion();
+        require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
+        uint256 rateSenior = RATE_SCALING_FACTOR - rateJunior;
+        uint256 poolValue = this.getPoolValue(poolAddress);
+        return poolValue * rateSenior;
+    }
+
+    // @notice this function will return 72 in example
+    function getBeginningSeniorDebt(address poolAddress) external view returns (uint256) {
+        uint256 poolValue = this.getPoolValue(poolAddress);
+        require(poolValue > 0, 'Pool value is 0');
+        uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
+        uint256 currentTimestamp = block.timestamp;
+        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+
+        return (beginningSeniorAsset * nAVpoolValue) / poolValue;
+    }
 
     // @notice get beginning of senior debt, get interest of this debt over number of interval
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
         uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
-        uint256 poolValue = this.getPoolValue(poolAddress);
-        uint256 seniorAsset = this.getSeniorAsset(poolAddress);
+        uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
         require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
-        uint256 elapsedTime = block.timestamp - openingTime;
-        uint256 timeInterval = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
-        uint256 compoundingPeriods = (elapsedTime * RATE_SCALING_FACTOR) / timeInterval;
-        uint256 seniorDebt = ((nAVpoolValue / poolValue) *
-            seniorAsset *
-            (1 + seniorInterestRate / (compoundingPeriods / RATE_SCALING_FACTOR))) ^
-            (compoundingPeriods / RATE_SCALING_FACTOR);
+        uint256 compoundingPeriods = block.timestamp - openingTime;
+        uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
+
+        uint256 seniorDebt = (beginningSeniorDebt *
+            (1 + (seniorInterestRate / RATE_SCALING_FACTOR) * (compoundingPeriods / oneYearInSeconds)));
     }
 
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
@@ -388,40 +404,6 @@ contract SecuritizationPoolValueService is
         return seniorBalance;
     }
 
-    function getJOTTokenPrice(address pool, uint256 endTime) public view returns (uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        address tokenAddress = securitizationPool.jotToken();
-        uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
-        if (tokenAddress == address(0) || tokenSupply == 0) {
-            return 0;
-        }
-
-        uint256 juniorAsset = this.getJuniorAsset(pool);
-        return (juniorAsset * RATE_SCALING_FACTOR) / tokenSupply;
-    }
-
-    function getSOTTokenPrice(
-        address pool,
-        uint256 endTime
-    )
-        public
-        view
-        returns (
-            // address poolServiceAddress
-            uint256
-        )
-    {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        address tokenAddress = securitizationPool.sotToken();
-        uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
-        if (tokenAddress == address(0) || tokenSupply == 0) {
-            return 0;
-        }
-
-        uint256 seniorAsset = this.getSeniorAsset(pool);
-        return ((seniorAsset) * RATE_SCALING_FACTOR) / tokenSupply;
-    }
-
     function getReserve(
         address poolAddress,
         address distributorAssessor,
@@ -431,11 +413,11 @@ contract SecuritizationPoolValueService is
     ) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        // IDistributionAssessor distributorAssessorInstance = IDistributionAssessor(distributorAssessor);
-        // require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
+        DistributionAssessor distributorAssessorInstance = DistributionAssessor(distributorAssessor);
+        require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
         uint256 currentTimestamp = block.timestamp;
-        uint256 sotPrice = this.getSOTTokenPrice(poolAddress, currentTimestamp);
-        uint256 jotPrice = this.getJOTTokenPrice(poolAddress, currentTimestamp);
+        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress, currentTimestamp);
+        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool, currentTimestamp);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);

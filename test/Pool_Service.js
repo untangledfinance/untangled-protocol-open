@@ -236,36 +236,50 @@ contract('SecuritizationPoolValueService', (accounts) => {
         nAVpoolValue = new BigNumber(nAVpoolValue.toString())
         console.log(234, reserve.toString(), nAVpoolValue.toString())
         let poolValue = nAVpoolValue.plus(reserve) ;
-        console.log(236, poolValue.toString(), getPoolValue.toString(), "Fail to get corrent Pool Value")
-
-
+        console.log(236, poolValue.toString(), getPoolValue.toString());
         assert.equal(poolValue.toString(), getPoolValue.toString(), "Fail to correct Pool value")
     })
 
     it(' Get Senior asset  correctly ', async() => { 
+        let poolValue = await securitizationPoolValueService.getPoolValue(addressPool);
+        console.log(245, poolValue.toString());
+        let seniorBalance =await securitizationPoolValueService.getSeniorBalance(addressPool);
+        console.log(247, seniorBalance.toString());
+        let rateSenior = await securitizationPoolValueService.getSeniorRatio(addressPool);
+        console.log(247, rateSenior.toString());
+
+        // let  beginningSeniorAsset = await securitizationPoolValueService.getBeginningSeniorAsset(addressPool);
+        // console.log(248, beginningSeniorAsset.toString())
+        let nAVpoolValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
+        console.log(249, nAVpoolValue)
+        let senorDebt =await securitizationPoolValueService.getSeniorDebt(addressPool);
+        console.log(256, senorDebt.toString());
+       
+        let expectedSeniorAsset = await securitizationPoolValueService.getExpectedSeniorAssets(addressPool);
+        console.log(259, expectedSeniorAsset.toString()) 
         let seniorAsset = await securitizationPoolValueService.getSeniorAsset(addressPool);
-        console.log(248, seniorAsset.toString()) 
+        console.log(261, seniorAsset.toString()) 
     }) 
 
     it(' Get Expected Senior asset  correctly ', async() => { 
         let getExpectedSeniorAssets = await securitizationPoolValueService.getExpectedSeniorAssets(addressPool);
-        console.log(253, getExpectedSeniorAssets.toString()) 
+        console.log(263, getExpectedSeniorAssets.toString()) 
     }) 
 
     it(' Get  Senior debt  correctly ', async() => { 
         let getSeniorDebt = await securitizationPoolValueService.getSeniorDebt(addressPool);
-        console.log(258, getSeniorDebt.toString()) 
+        console.log(268, getSeniorDebt.toString()) 
     }) 
 
     it(' Get  Senior Balance  correctly ', async() => { 
         let getSeniorBalance = await securitizationPoolValueService.getSeniorBalance(addressPool);
-        console.log(263, getSeniorBalance.toString()) 
+        console.log(276, getSeniorBalance.toString()) 
     }) 
 
 
     it(' Get  Junior Asset correctly ', async() => { 
         let getJuniorAsset = await securitizationPoolValueService.getJuniorAsset(addressPool);
-        console.log(269, getJuniorAsset.toString()) 
+        console.log(282, getJuniorAsset.toString()) 
     }) 
 
 
