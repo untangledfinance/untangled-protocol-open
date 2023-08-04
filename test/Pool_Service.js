@@ -248,10 +248,10 @@ contract('SecuritizationPoolValueService', (accounts) => {
         let rateSenior = await securitizationPoolValueService.getSeniorRatio(addressPool);
         console.log(247, rateSenior.toString());
 
-        // let  beginningSeniorAsset = await securitizationPoolValueService.getBeginningSeniorAsset(addressPool);
-        // console.log(248, beginningSeniorAsset.toString())
-        let nAVpoolValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
-        console.log(249, nAVpoolValue)
+        let  beginningSeniorAsset = await securitizationPoolValueService.getBeginningSeniorAsset(addressPool);
+        console.log(248, beginningSeniorAsset.toString())
+        let expectedAssetsValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
+        console.log(249, expectedAssetsValue.toString())
         let senorDebt =await securitizationPoolValueService.getSeniorDebt(addressPool);
         console.log(256, senorDebt.toString());
        
@@ -267,10 +267,19 @@ contract('SecuritizationPoolValueService', (accounts) => {
     }) 
 
     it(' Get  Senior debt  correctly ', async() => { 
+        let getBeginningSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
+        console.log(271, getBeginningSeniorDebt.toString())
         let getSeniorDebt = await securitizationPoolValueService.getSeniorDebt(addressPool);
         console.log(268, getSeniorDebt.toString()) 
     }) 
 
+    it(' Get  Senior Amount  correctly ', async() => { 
+        let amountFromPool = await poolInstance.principalAmountSOT();
+        console.log(270, amountFromPool.toString())
+        let getSeniorAmount = await securitizationPoolValueService.getSeniorAmount(addressPool);
+        console.log(275, getSeniorAmount.toString()) 
+        assert.equal(amountFromPool.toString() ,getSeniorAmount.toString(), "Fail to get Senior Amount ")
+    }) 
     it(' Get  Senior Balance  correctly ', async() => { 
         let getSeniorBalance = await securitizationPoolValueService.getSeniorBalance(addressPool);
         console.log(276, getSeniorBalance.toString()) 
