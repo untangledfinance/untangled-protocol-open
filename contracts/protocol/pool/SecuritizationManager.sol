@@ -81,22 +81,23 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function initialTGEForSOT(
         address issuerTokenController,
         ISecuritizationPool pool,
-        uint8 saleType,
-        uint8 decimalToken,
-        bool longSale
+        uint8[] memory saleTypeAndDecimal,
+        bool longSale,
+        string memory ticker
     ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address sotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
-            decimalToken
+            saleTypeAndDecimal[1],
+            ticker
         );
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
             address(pool),
             sotToken,
             pool.underlyingCurrency(),
-            saleType,
+            saleTypeAndDecimal[0],
             longSale
         );
         noteTokenFactory.changeMinterRole(sotToken, tgeAddress);
@@ -114,8 +115,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function setUpTGEForSOT(
         address issuerTokenController,
         ISecuritizationPool pool,
-        uint8 saleType,
-        uint8 decimalToken,
+        uint8[] memory saleTypeAndDecimal,
         bool longSale,
 
         uint256 additionalCap,
@@ -124,9 +124,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint32 _finalInterest,
         uint32 _timeInterval,
         uint32 _amountChangeEachInterval,
-        NewRoundSaleParam memory saleParam
+        NewRoundSaleParam memory saleParam,
+        string calldata ticker
     ) public {
-        address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleType, decimalToken, longSale);
+        address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         tge.addFunding(additionalCap);
         tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
@@ -136,15 +137,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function setUpTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,
-        uint8 saleType,
-        uint8 decimalToken,
+        uint8[] memory saleTypeAndDecimal,
         bool longSale,
 
         uint256 additionalCap,
 
-        NewRoundSaleParam memory saleParam
+        NewRoundSaleParam memory saleParam,
+        string calldata ticker
     ) public {
-        address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleType, decimalToken, longSale);
+        address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.addFunding(additionalCap);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
@@ -153,22 +154,23 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function initialTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,
-        uint8 saleType,
-        uint8 decimalToken,
-        bool longSale
+        uint8[] memory saleTypeAndDecimal,
+        bool longSale,
+        string memory ticker
     ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address jotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.JUNIOR,
-            decimalToken
+            saleTypeAndDecimal[1],
+            ticker
         );
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
             address(pool),
             jotToken,
             pool.underlyingCurrency(),
-            saleType,
+            saleTypeAndDecimal[0],
             longSale
         );
         noteTokenFactory.changeMinterRole(jotToken, tgeAddress);
