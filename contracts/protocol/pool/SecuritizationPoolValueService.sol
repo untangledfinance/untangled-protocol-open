@@ -381,6 +381,7 @@ contract SecuritizationPoolValueService is
 
         uint256 seniorDebt = (beginningSeniorDebt *
             (1 + (seniorInterestRate / RATE_SCALING_FACTOR) * (compoundingPeriods / oneYearInSeconds)));
+        return seniorDebt;
     }
 
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
