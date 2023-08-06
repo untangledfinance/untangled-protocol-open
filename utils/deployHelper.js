@@ -10,7 +10,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
     args: [],
     log: true,
   });
-
+  // console.log(12, contractImpl)
   const contractProxy = await deploy(`${contractName}Proxy`, {
     contract: 'UpgradableProxy',
     skipIfAlreadyDeployed: true,
@@ -18,7 +18,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
     args: [contractImpl.address],
     log: true,
   });
-
+  // console.log(21, contractProxy)
   if (contractProxy.newlyDeployed) {
     const contract = contractImpl;
     contract.address = contractProxy.address;

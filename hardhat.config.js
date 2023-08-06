@@ -12,7 +12,7 @@ const MNEMONIC = process.env.MNEMONIC;
 const accounts = {
   mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
 };
-console.log(15, accounts[0])
+// console.log(15, accounts[0])
 module.exports = {
   solidity: {
     compilers: [
