@@ -58,7 +58,7 @@ module.exports = {
     },
     alfajores: {
       saveDeployments: true,
-      accounts: ['59b1b5223986af26d3b6830f7c273e95d2036d46c6451091efcbf9b5e184c174'],
+      accounts: accounts,
       loggingEnabled: true,
       url: `https://alfajores-forno.celo-testnet.org`,
     },
