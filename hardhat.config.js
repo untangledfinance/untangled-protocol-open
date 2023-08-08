@@ -84,12 +84,7 @@ module.exports = {
         browserURL: "https://api-alfajores.celoscan.io"
       }
     }
-
     ]
-
-
-
-
   },
   mocha: {
     timeout: 200000,
