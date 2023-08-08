@@ -55,7 +55,7 @@ yarn deploy --tags [..] --network [..]
 
 `truffle migrate --reset --compile-all --network development`
 
-`npx hardhat run ./deploy/12_deploy_SM.js --network alfajores`
+`npx hardhat run ./deploy/14_deploy_instance.js --network alfajores`
 
 `npx hardhat verify 0x8594888F7617444Ca1baD59fC73a7703783710a5 --network alfajores`
 

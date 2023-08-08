@@ -349,11 +349,11 @@ contract SecuritizationPoolValueService is
     function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 rateJunior = securitizationPool.minFirstLossCushion();
-        require(rateJunior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
+        uint256 rateJunior = securitizationPool.minFirstLossCushion() / 10000;
+        require(rateJunior <= RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion greater 100');
         uint256 rateSenior = RATE_SCALING_FACTOR - rateJunior;
         uint256 poolValue = this.getPoolValue(poolAddress);
-        return poolValue * rateSenior;
+        return (poolValue * rateSenior) / RATE_SCALING_FACTOR;
     }
 
     // @notice this function will return 72 in example

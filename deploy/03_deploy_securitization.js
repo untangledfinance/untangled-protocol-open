@@ -17,22 +17,36 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       securitizationManagerProxy.address
     );
   }
-
-  //deploy SecuritizationPool
-  const poolImpl = await deploy(`SecuritizationPoolImpl`, {
-    contract: 'SecuritizationPool',
-    skipIfAlreadyDeployed: true,
-    from: deployer,
-    args: [],
-    log: true,
-  });
-  if (poolImpl.newlyDeployed) {
-    const POOL_IMPLEMENTATION_ADDRESS = poolImpl.address
-    const pool = poolImpl;
-    pool.address = poolImpl.address;
-    await save('SecuritizationPool', pool);
-    await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', POOL_IMPLEMENTATION_ADDRESS);
+  //deploy SecuritizationPoolValueService
+  const securitizationPoolProxy = await deployProxy(
+    { getNamedAccounts, deployments },
+    'SecuritizationPool ',
+    [registry.address]
+  );
+  if (securitizationPoolProxy.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setSecuritizationPool ',
+      securitizationPoolProxy.address
+    );
   }
+
+  // //deploy SecuritizationPool
+  // const poolImpl = await deploy(`SecuritizationPoolImpl`, {
+  //   contract: 'SecuritizationPool',
+  //   skipIfAlreadyDeployed: true,
+  //   from: deployer,
+  //   args: [],
+  //   log: true,
+  // });
+  // if (poolImpl.newlyDeployed) {
+  //   const POOL_IMPLEMENTATION_ADDRESS = poolImpl.address
+  //   const pool = poolImpl;
+  //   pool.address = poolImpl.address;
+  //   await save('SecuritizationPool', pool);
+  //   await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', POOL_IMPLEMENTATION_ADDRESS);
+  // }
 
   //deploy SecuritizationPoolValueService
   const securitizationPoolValueServiceProxy = await deployProxy(
