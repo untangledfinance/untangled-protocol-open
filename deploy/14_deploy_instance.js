@@ -1,7 +1,6 @@
 const hre = require("hardhat");
 async function main() {
  
-
   const Contract = await hre.ethers.getContractFactory("MintedIncreasingInterestTGE");
   const instance = await Contract.deploy();
   await instance.deployed();

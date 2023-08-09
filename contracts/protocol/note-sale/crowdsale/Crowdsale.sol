@@ -13,7 +13,7 @@ abstract contract Crowdsale is UntangledBase {
     Registry public registry;
 
     // decimal calculating for rate
-    uint256 public constant RATE_SCALING_FACTOR = 10**4;
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     address public pool;
 
@@ -60,7 +60,10 @@ abstract contract Crowdsale is UntangledBase {
     }
 
     function addFunding(uint256 additionalCap) public nonReentrant whenNotPaused {
-        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: caller must be owner or pool");
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'Crowdsale: caller must be owner or pool'
+        );
         require(additionalCap > 0, 'Crowdsale: total cap is 0');
 
         totalCap = additionalCap + totalCap;
@@ -77,7 +80,8 @@ abstract contract Crowdsale is UntangledBase {
         address payee,
         address beneficiary,
         uint256 currencyAmount
-    ) external whenNotPaused nonReentrant smpRestricted returns (uint256) {
+    ) external whenNotPaused nonReentrant returns (uint256) {
+        ) external whenNotPaused nonReentrant smpRestricted returns (uint256) {
         uint256 tokenAmount = isLongSale() ? getLongSaleTokenAmount(currencyAmount) : _getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
@@ -119,7 +123,7 @@ abstract contract Crowdsale is UntangledBase {
         uint256 tokenAmount
     ) internal view {
         require(beneficiary != address(0), 'Crowdsale: beneficiary is zero address');
-        //        require(currencyAmount != 0, "currency amount is 0");
+        require(currencyAmount != 0, 'currency amount is 0');
         require(tokenAmount != 0, 'Crowdsale: token amount is 0');
         require(isUnderTotalCap(currencyAmount), 'Crowdsale: cap exceeded');
     }
@@ -152,16 +156,16 @@ abstract contract Crowdsale is UntangledBase {
         require(rate > 0, 'Crowdsale: rate is 0');
         uint256 TEN = 10;
         return
-            (currencyAmount * rate * TEN**ERC20(token).decimals()) /
-            (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
+            (currencyAmount * rate * TEN ** ERC20(token).decimals()) /
+            (RATE_SCALING_FACTOR * TEN ** ERC20(currency).decimals());
     }
 
     function _getCurrencyAmount(uint256 tokenAmount) internal view returns (uint256) {
         if (rate == 0) return 0;
         uint256 TEN = 10;
         return
-            (tokenAmount * RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals()) /
-            (rate * TEN**ERC20(token).decimals());
+            (tokenAmount * RATE_SCALING_FACTOR * TEN ** ERC20(currency).decimals()) /
+            (rate * TEN ** ERC20(token).decimals());
     }
 
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
