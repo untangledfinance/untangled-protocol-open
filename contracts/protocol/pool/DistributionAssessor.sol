@@ -10,11 +10,6 @@ import '../../interfaces/INoteToken.sol';
 
 contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
-    address public poolServiceAddress;
-
-    function setPoolService(address _poolServiceAddress) public {
-        poolServiceAddress = _poolServiceAddress;
-    }
 
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
@@ -22,11 +17,12 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
         uint256 seniorSupply = noteToken.totalSupply();
+        uint256 seniorDecimals = noteToken.decimals();
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
+        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return ((seniorAsset) * 100) / seniorSupply;
+        return ((seniorAsset) * seniorDecimals) / seniorSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -179,13 +175,14 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
+        uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
         if (tokenAddress == address(0) || tokenSupply == 0) {
             return 0;
         }
         // address pool = address(securitizationPool);
-        SecuritizationPoolValueService poolService = SecuritizationPoolValueService(poolServiceAddress);
+        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return (juniorAsset * 100) / tokenSupply;
+        return (juniorAsset * tokenDecimals) / tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
