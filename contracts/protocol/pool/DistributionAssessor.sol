@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import './SecuritizationPoolValueService.sol';
 import './base/Interest.sol';
 
 import './base/SecuritizationPoolServiceBase.sol';
@@ -20,7 +19,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         uint256 seniorDecimals = noteToken.decimals();
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return ((seniorAsset) * seniorDecimals) / seniorSupply;
     }
@@ -180,7 +179,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             return 0;
         }
         // address pool = address(securitizationPool);
-        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
         return (juniorAsset * tokenDecimals) / tokenSupply;
     }
