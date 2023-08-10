@@ -80,8 +80,14 @@ abstract contract Crowdsale is UntangledBase {
         address payee,
         address beneficiary,
         uint256 currencyAmount
-    ) external whenNotPaused nonReentrant returns (uint256) {
-        ) external whenNotPaused nonReentrant smpRestricted returns (uint256) {
+    )
+        external
+        // ) external whenNotPaused nonReentrant returns (uint256) {
+        whenNotPaused
+        nonReentrant
+        smpRestricted
+        returns (uint256)
+    {
         uint256 tokenAmount = isLongSale() ? getLongSaleTokenAmount(currencyAmount) : _getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);

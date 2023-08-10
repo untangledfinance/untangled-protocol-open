@@ -55,13 +55,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return pools.length;
     }
 
-    function newPoolInstance(address currency, uint32 minFirstLossCushion)
-        external
-        whenNotPaused
-        nonReentrant
-        onlyRole(POOL_CREATOR)
-        returns (address)
-    {
+    function newPoolInstance(
+        address currency,
+        uint32 minFirstLossCushion
+    ) external whenNotPaused nonReentrant onlyRole(POOL_CREATOR) returns (address) {
         address poolImplAddress = address(registry.getSecuritizationPool());
         address poolAddress = deployMinimal(poolImplAddress);
 
@@ -84,7 +81,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         string memory ticker
-    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address sotToken = noteTokenFactory.createToken(
             address(pool),
@@ -117,9 +114,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-
         uint256 additionalCap,
-
         uint32 _initialInterest,
         uint32 _finalInterest,
         uint32 _timeInterval,
@@ -139,9 +134,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-
         uint256 additionalCap,
-
         NewRoundSaleParam memory saleParam,
         string calldata ticker
     ) public {
@@ -157,7 +150,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         string memory ticker
-    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns(address){
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address jotToken = noteTokenFactory.createToken(
             address(pool),
