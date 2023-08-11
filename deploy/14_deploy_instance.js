@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 async function main() {
  
-  const Contract = await hre.ethers.getContractFactory("DistributionAssessor");
+  const Contract = await hre.ethers.getContractFactory("SecuritizationPoolValueService");
   const instance = await Contract.deploy();
   await instance.deployed();
   // console.log(8, Contract)

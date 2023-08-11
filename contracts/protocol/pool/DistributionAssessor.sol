@@ -19,12 +19,13 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
         if (pool == address(0)) return 0;
-        if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
+
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         require(address(poolService) != address(0), 'Pool Value Service was not deployed');
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
+        if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
         uint256 seniorSupply = noteToken.totalSupply();
         uint256 seniorDecimals = noteToken.decimals();
 
