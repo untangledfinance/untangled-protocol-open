@@ -8,4 +8,8 @@ interface ISecuritizationPoolValueService {
         external
         view
         returns (uint256 expectedAssetsValue);
+
+    function getSeniorAsset(address poolAddress) external view returns (uint256);
+
+    function getJuniorAsset(address poolAddress) external view returns (uint256);
 }

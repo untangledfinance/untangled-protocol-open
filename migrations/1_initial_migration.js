@@ -19,8 +19,7 @@ module.exports = async function (deployer, accounts) {
   await deployer.deploy(LoanKernel);
   await deployer.deploy(LoanAssetToken);
  
-  const pool = await deployer.deploy(SecuritizationPool);
-  console.log(23, pool.address)
+  await deployer.deploy(SecuritizationPool);
   await deployer.deploy(NoteTokenFactory);
   await deployer.deploy(NoteToken,"Test", "TST", 18, pool.address, 1);
   await deployer.deploy(TokenGenerationEventFactory);
