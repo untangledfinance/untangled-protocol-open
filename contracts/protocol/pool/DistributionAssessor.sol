@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import './SecuritizationPoolValueService.sol';
 import './base/Interest.sol';
 
 import './base/SecuritizationPoolServiceBase.sol';
@@ -10,27 +9,21 @@ import '../../interfaces/INoteToken.sol';
 
 contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
-    address public poolServiceAddress;
-
-    function setPoolService(address _poolServiceAddress) public {
-        poolServiceAddress = _poolServiceAddress;
-    }
 
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
         if (pool == address(0)) return 0;
-
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        require(address(poolService) != address(0), 'Pool Value Service was not deployed');
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-
+        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        require(address(poolService) != address(0), 'Pool service was not deployed');
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
-        if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
         uint256 seniorSupply = noteToken.totalSupply();
         uint256 seniorDecimals = noteToken.decimals();
 
+        if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
+        I
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
+        return ((seniorAsset) * (10 ** seniorDecimals)) / seniorSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -183,7 +176,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             return 0;
         }
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        require(address(poolService) != address(0), 'Pool Value Service was not deployed');
+        require(address(poolService) != address(0), 'Pool service was not deployed');
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
@@ -192,7 +185,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         }
 
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
+        return (juniorAsset * (10 ** tokenDecimals)) / tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
