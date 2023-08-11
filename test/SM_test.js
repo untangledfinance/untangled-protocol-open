@@ -5,7 +5,7 @@ const Registry = artifacts.require("Registry");
 const SecuritizationPool = artifacts.require("SecuritizationPool");
 const SecuritizationManager = artifacts.require("SecuritizationManager");
 const LoanKernel = artifacts.require("LoanKernel");
-const MyToken = artifacts.require("MyToken");
+ 
 const NoteToken = artifacts.require("NoteToken");
 const NoteTokenFactory = artifacts.require("NoteTokenFactory");
 const LoanAssetToken = artifacts.require("LoanAssetToken");
