@@ -359,7 +359,8 @@ contract SecuritizationPoolValueService is
     // @notice this function will return 72 in example
     function getBeginningSeniorDebt(address poolAddress) external view returns (uint256) {
         uint256 poolValue = this.getPoolValue(poolAddress);
-        require(poolValue > 0, 'Pool value is 0');
+        if (poolValue == 0) return 0;
+        // require(poolValue > 0, 'Pool value is 0');
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
@@ -371,6 +372,7 @@ contract SecuritizationPoolValueService is
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
         uint256 currentTimestamp = block.timestamp;
         uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
+        if (beginningSeniorDebt == 0) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
@@ -388,7 +390,7 @@ contract SecuritizationPoolValueService is
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 seniorAmount = this.getSeniorAmount(poolAddress);
+        uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
 
         uint256 seniorBalance;
 
@@ -397,10 +399,11 @@ contract SecuritizationPoolValueService is
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
-        require(balancePool > 0, 'pool does not have balance');
+        if (balancePool == 0) return 0;
+        // require(balancePool > 0, 'pool does not have balance');
         uint256 ratioForReserve = balancePool / (poolValue);
 
-        seniorBalance = ratioForReserve * seniorAmount;
+        seniorBalance = ratioForReserve * beginningSeniorAsset;
 
         return seniorBalance;
     }
@@ -435,14 +438,6 @@ contract SecuritizationPoolValueService is
             JOTTokenRedeem *
             jotPrice;
         return totalReserve;
-    }
-
-    function getSeniorAmount(address poolAddress) external view returns (uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 seniorAmount = securitizationPool.principalAmountSOT();
-
-        return seniorAmount;
     }
 
     function getSeniorAsset(address poolAddress) external view returns (uint256) {
@@ -482,7 +477,10 @@ contract SecuritizationPoolValueService is
     function getSeniorRatio(address poolAddress) external view returns (uint256) {
         uint256 seniorAsset = this.getSeniorAsset(poolAddress);
         uint256 poolValue = this.getPoolValue(poolAddress);
-        require(poolValue > 0, 'Pool value has no value');
+        if (poolValue == 0) {
+            return 0;
+        }
+        // require(poolValue > 0, 'Pool value has no value');
 
         return (seniorAsset * RATE_SCALING_FACTOR) / poolValue;
     }
