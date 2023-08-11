@@ -22,7 +22,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return ((seniorAsset) * seniorDecimals) / seniorSupply;
+        return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -185,7 +185,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         // address pool = address(securitizationPool);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return (juniorAsset * tokenDecimals) / tokenSupply;
+        return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
