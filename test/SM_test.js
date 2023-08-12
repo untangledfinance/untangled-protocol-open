@@ -135,8 +135,9 @@ contract('SecuritizationManager', (accounts) => {
             18],
             true,
             "SOT Test"
-        )  
-        tgeSOT = txSOT.logs[11].args.instanceAddress
+        ) 
+        console.log(136, txSOT) 
+        tgeSOT = txSOT.logs[10].args.instanceAddress
         console.log(137,tgeSOT)        
         poolToSOT = await smContract.poolToSOT(addressPool);
         console.log(138, poolToSOT)
@@ -152,7 +153,8 @@ contract('SecuritizationManager', (accounts) => {
             true,
             "JOT TOKEN"
         )
-        tgeJOT = txJOT.logs[11].args.instanceAddress
+        console.log(154, txJOT)
+        tgeJOT = txJOT.logs[10].args.instanceAddress
         console.log(155, tgeJOT)
          poolToJOT = await smContract.poolToJOT(addressPool);
         console.log(152, poolToJOT)
@@ -195,10 +197,10 @@ contract('SecuritizationManager', (accounts) => {
         await noteToken.grantRole(ADMIN_ROLE, accounts[0]);
         await noteToken.grantRole(MINTER_ROLE, accounts[0]);
         await noteToken.mint(accounts[0],"100000000000000000" );
-        await noteToken.approve(mintedIncreasingInterestTGE.address,"100000000000000000");
+       
         await noteToken.approve(smAddress,"100000000000000000");
         console.log(193, mintedIncreasingInterestTGE.address)
-        // await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
+         
         await smContract.buyTokens(tgeSOT, "100000000000000000");
     })
 })
