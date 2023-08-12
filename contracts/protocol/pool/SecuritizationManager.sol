@@ -188,12 +188,14 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
 
-        uint256 tokenAmount = MintedIncreasingInterestTGE(tgeAddress).buyTokens(
+        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
+        uint256 tokenAmount = tge.buyTokens(
             _msgSender(),
             _msgSender(),
             currencyAmount
         );
 
+        ISecuritizationPool(tge.pool()).onBuyNoteToken(currencyAmount);
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
     }
 

@@ -407,4 +407,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
         }
     }
+
+    function onBuyNoteToken(
+        uint256 currencyAmount
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager {
+        reserve = reserve + currencyAmount;
+    }
 }
