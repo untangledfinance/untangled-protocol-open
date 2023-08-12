@@ -33,6 +33,8 @@ contract('SecuritizationManager', (accounts) => {
     let poolToSOT
     let poolToJOT
     var BN = web3.utils.BN;
+    var tgeSOT;
+    var tgeJOT;
     before(async () => {
         registry = await Registry.new();
        
@@ -134,8 +136,8 @@ contract('SecuritizationManager', (accounts) => {
             true,
             "SOT Test"
         )  
-        
- 
+        tgeSOT = txSOT.logs[11].args.instanceAddress
+        console.log(137,tgeSOT)        
         poolToSOT = await smContract.poolToSOT(addressPool);
         console.log(138, poolToSOT)
         assert.notEqual(poolToSOT, 0x0, "Fail on creating SOT");
@@ -150,6 +152,8 @@ contract('SecuritizationManager', (accounts) => {
             true,
             "JOT TOKEN"
         )
+        tgeJOT = txJOT.logs[11].args.instanceAddress
+        console.log(155, tgeJOT)
          poolToJOT = await smContract.poolToJOT(addressPool);
         console.log(152, poolToJOT)
         assert.notEqual(poolToJOT, 0x0, "Fail on creating JOT");
@@ -181,12 +185,12 @@ contract('SecuritizationManager', (accounts) => {
         )
         let closeTime = await mintedIncreasingInterestTGE.closingTime();
         
-        console.log(180, closeTime);
+        console.log(180, closeTime.toString());
         assert.equal(closeTime, closingTime, "Fail to start new Round Sale")
     })
     it(' Should buy token successfully ', async () => {
         let tgeAddress = await tokenGenerationEventFactory.tgeAddresses(0);
-        console.log(187, tgeAddress);
+        console.log(187, tgeAddress, tgeSOT);
         let MINTER_ROLE = await noteToken.MINTER_ROLE();
         await noteToken.grantRole(ADMIN_ROLE, accounts[0]);
         await noteToken.grantRole(MINTER_ROLE, accounts[0]);
@@ -195,6 +199,6 @@ contract('SecuritizationManager', (accounts) => {
         await noteToken.approve(smAddress,"100000000000000000");
         console.log(193, mintedIncreasingInterestTGE.address)
         // await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
-        await smContract.buyTokens(tgeAddress, "100000000000000000");
+        await smContract.buyTokens(tgeSOT, "100000000000000000");
     })
 })
