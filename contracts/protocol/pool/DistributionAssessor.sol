@@ -187,36 +187,11 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
-    function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        INoteToken sot = INoteToken(securitizationPool.sotToken());
-
-        uint256 price = getSOTTokenPrice(address(securitizationPool));
-        uint256 totalSotSupply = sot.totalSupply();
-        uint256 ONE_SOT = 10 ** uint256(sot.decimals());
-
-        return (address(sot), (price * totalSotSupply) / ONE_SOT);
-    }
-
     function getCashBalance(address pool) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         return
             IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) -
             securitizationPool.totalLockedDistributeBalance();
-    }
-
-    function _calcJuniorAssetValue(address pool, uint256 timestamp) internal view returns (uint256) {
-        (, uint256 seniorAssetValue) = calcSeniorAssetValue(pool, timestamp);
-
-        uint256 available = registry.getSecuritizationPoolValueService().getExpectedAssetsValue(pool, timestamp) +
-            this.getCashBalance(pool);
-
-        // senior debt needs to be covered first
-        if (available > seniorAssetValue) {
-            return available - seniorAssetValue;
-        }
-        // currently junior would receive nothing
-        return 0;
     }
 
     function _calcPrincipalInterestSOT(
@@ -252,20 +227,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                 (currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR - currentPrincipal
             );
         else return ((currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR, 0);
-    }
-
-    function _getPrincipalLeftOfSOT(
-        ISecuritizationPool securitizationPool,
-        address sotToken
-    ) internal view returns (uint256) {
-        uint256 totalPrincipal = 0;
-        uint256 totalTokenRedeem = 0;
-        if (sotToken != address(0x0)) {
-            totalPrincipal = IERC20(sotToken).totalSupply();
-            totalTokenRedeem = securitizationPool.totalLockedRedeemBalances(sotToken);
-        }
-
-        return totalPrincipal - totalTokenRedeem;
     }
 
     function _calcSeniorAssetValue(
