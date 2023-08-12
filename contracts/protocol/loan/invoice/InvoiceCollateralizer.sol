@@ -140,8 +140,8 @@ contract InvoiceCollateralizer is Initializable, PausableUpgradeable, AccessCont
         // store collaterallizer in mapping, effectively demarcating that the
         // agreement is now collateralized.
         agreementToCollateralizer[agreementId] = collateralizer;
-
-        for (uint256 i = 0; i < invoiceTokenIds.length; i++) {
+        uint256 invoiceTokenIdsLength = invoiceTokenIds.length;
+        for (uint256 i = 0; i < invoiceTokenIdsLength; i++) {
             /*
             The collateralizer must have sufficient balance equal to or greater
             than the amount being put up for collateral.

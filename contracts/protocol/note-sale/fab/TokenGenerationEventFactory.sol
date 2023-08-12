@@ -98,7 +98,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
     }
 
     function pauseUnpauseAllTges() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < tgeAddresses.length; i++) {
+        uint256  tgeAddressesLength =  tgeAddresses.length;
+        for (uint256 i = 0; i < tgeAddressesLength; i++) {
             MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddresses[i]);
             if (tge.paused()) tge.unpause();
             else tge.pause();

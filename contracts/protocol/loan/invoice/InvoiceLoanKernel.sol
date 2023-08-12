@@ -126,7 +126,8 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         bytes32[] memory invoiceTokenIds = new bytes32[](
             orderBytes32.length - 1
         );
-        for (uint256 i = 0; i < invoiceTokenIds.length; i++) {
+        uint256 invoiceTokenIdsLength = invoiceTokenIds.length; 
+        for (uint256 i = 0; i < invoiceTokenIdsLength; i++) {
             invoiceTokenIds[i] = orderBytes32[i + 1];
         }
         return invoiceTokenIds;
@@ -342,7 +343,8 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         address[5] memory beneficiaries,
         uint256[5] memory amounts
     ) internal {
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint256 amountsLength = amounts.length;
+        for (uint256 i = 0; i < amountsLength; i++) {
             if (amounts[i] > 0 && beneficiaries[i] != address(0x0)) {
                 _transferTokensFrom(token, from, beneficiaries[i], amounts[i]);
                 emit LogFeeTransfer(payer, token, amounts[i], beneficiaries[i]);
@@ -356,7 +358,8 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         returns (uint256)
     {
         uint256 totalAmount;
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint256 amountsLength = amounts.length;
+        for (uint256 i = 0; i < amountsLength; i++) {
             totalAmount = totalAmount.add(amounts[i]);
         }
         return totalAmount;
@@ -439,7 +442,8 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         bool isDebtor
     ) internal pure returns (address[5] memory result) {
         uint256 dataMargin = isDebtor ? 0 : 5;
-        for (uint8 i = 0; i < result.length; i++) {
+        uint256 resultLength = result.length; 
+        for (uint8 i = 0; i < resultLength; i++) {
             result[i] = feeBeneficiaries[i + dataMargin];
         }
     }
@@ -449,7 +453,8 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         bool isDebtor
     ) internal pure returns (uint256[5] memory result) {
         uint256 dataMargin = isDebtor ? 0 : 5;
-        for (uint8 i = 0; i < result.length; i++) {
+         uint256 resultLength = result.length; 
+        for (uint8 i = 0; i < resultLength; i++) {
             result[i] = feeAmounts[i + dataMargin];
         }
     }
@@ -536,17 +541,7 @@ contract InvoiceLoanKernel is PausableUpgradeable, OwnableUpgradeable {
     }
 
     // Modify financing status of AIT
-/*
-    function _changeInvoiceFinancingState(
-        bytes32[] memory _tokenIds,
-        bytes32 _agreementId
-    ) internal {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            AcceptedInvoiceToken ait = registry.getAcceptedInvoiceToken();
-            ait.beginFinancing(_tokenIds[i], _agreementId);
-        }
-    }
-*/
+ 
 
     /**
      * Helper function that mints LAT associated with the

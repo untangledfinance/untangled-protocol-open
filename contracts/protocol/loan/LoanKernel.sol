@@ -262,7 +262,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32[] calldata agreementIds,
         address termContract
     ) external whenNotPaused nonReentrant {
-        uint256 creditorsLength = creditors.length;;
+        uint256 creditorsLength = creditors.length;
         for (uint256 i = 0; i < creditorsLength; i++) {
             concludeLoan(creditors[i], agreementIds[i], termContract);
         }
@@ -294,8 +294,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         );
 
         require(debtOrder.issuance.termsContract != address(0x0), 'LoanKernel: Invalid Term Contract.');
-
-        for (uint256 i = 0; i < debtOrder.issuance.agreementIds.length; i++) {
+        uint256 agreementIdsLength =  debtOrder.issuance.agreementIds.length;
+        for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
 
             _issueDebtAgreements(
@@ -488,7 +488,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address[5] memory beneficiaries,
         uint256[5] memory amounts
     ) private {
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint256 amountsLength = amounts.length;
+        for (uint256 i = 0; i < amountsLength; i++) {
             if (amounts[i] > 0 && beneficiaries[i] != address(0x0)) {
                 _transferTokensFrom(token, from, beneficiaries[i], amounts[i]);
                 emit LogFeeTransfer(payer, token, amounts[i], beneficiaries[i]);

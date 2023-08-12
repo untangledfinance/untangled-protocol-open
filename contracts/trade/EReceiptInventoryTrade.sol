@@ -811,8 +811,8 @@ contract EReceiptInventoryTrade is Initializable, PausableUpgradeable, OwnableUp
         address[] memory spendingTokens = new address[](totalLength);
         uint256[] memory expectedAmounts = new uint[](totalLength);
         uint256[] memory paidAmounts = new uint[](totalLength);
-
-        for (uint256 i = 0; i < feeTokens.length; i++) {
+        uint256 feeTokensLength = feeTokens.length;
+        for (uint256 i = 0; i < feeTokensLength; i++) {
             spendingTokens[i] = feeTokens[i];
             expectedAmounts[i] = tokenFeeAmounts[seller][feeTokens[i]];
             paidAmounts[i] = paidTokenFeeAmounts[seller][feeTokens[i]];

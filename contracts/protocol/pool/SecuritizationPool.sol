@@ -105,7 +105,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        for (uint256 i = 0; i < nftAssets.length; i++) {
+        uint256  nftAssetsLength =  nftAssets.length; 
+        for (uint256 i = 0; i < nftAssetsLength; i++) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
                 _removeNFTAssetIndex(i);
@@ -117,6 +118,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
+         
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
         nftAssets.pop();
     }
@@ -156,13 +158,15 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
     ) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
+          uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
-            _daysPastDues.length * 5 == _ratesAndDefaults.length &&
-                _daysPastDues.length * 4 == _periodsAndWriteOffs.length,
+            _daysPastDuesLength * 5 == _ratesAndDefaults.length &&
+                _daysPastDuesLength * 4 == _periodsAndWriteOffs.length,
             'SecuritizationPool: Riskscore params length is not equal'
         );
         delete riskScores;
-        for (uint256 i = 0; i < _daysPastDues.length; i++) {
+      
+        for (uint256 i = 0; i < _daysPastDuesLength; i++) {
             require(
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
                 'SecuritizationPool: Risk scores must be sorted'
@@ -171,14 +175,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 RiskScore({
                     daysPastDue: _daysPastDues[i],
                     advanceRate: _ratesAndDefaults[i],
-                    penaltyRate: _ratesAndDefaults[i + _daysPastDues.length],
-                    interestRate: _ratesAndDefaults[i + _daysPastDues.length * 2],
-                    probabilityOfDefault: _ratesAndDefaults[i + _daysPastDues.length * 3],
-                    lossGivenDefault: _ratesAndDefaults[i + _daysPastDues.length * 4],
+                    penaltyRate: _ratesAndDefaults[i + _daysPastDuesLength],
+                    interestRate: _ratesAndDefaults[i + _daysPastDuesLength * 2],
+                    probabilityOfDefault: _ratesAndDefaults[i + _daysPastDuesLength * 3],
+                    lossGivenDefault: _ratesAndDefaults[i + _daysPastDuesLength * 4],
                     gracePeriod: _periodsAndWriteOffs[i],
-                    collectionPeriod: _periodsAndWriteOffs[i + _daysPastDues.length],
-                    writeOffAfterGracePeriod: _periodsAndWriteOffs[i + _daysPastDues.length * 2],
-                    writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDues.length * 3]
+                    collectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength],
+                    writeOffAfterGracePeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 2],
+                    writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
         }
@@ -189,7 +193,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address toPoolAddress,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
+        uint256 tokenIdsLength = tokenIds.length;
+        for (uint256 i = 0; i < tokenIdsLength; ++i) {
             require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddress).approve(toPoolAddress, tokenIds[i]);
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
@@ -201,9 +206,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(tokenAddresses.length == tokenIds.length, "tokenAddresses length and tokenIds length are not equal");
+        uint256  tokenIdsLength =  tokenIds.length; 
+        require(tokenAddresses.length == tokenIdsLength, "tokenAddresses length and tokenIds length are not equal");
         require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
-        for (uint256 i = 0; i < tokenIds.length; i++) {
+        for (uint256 i = 0; i < tokenIdsLength; i++) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
         }
@@ -214,7 +220,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address from,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
+        uint256  tokenIdsLength =  tokenIds.length; 
+        for (uint256 i = 0; i < tokenIdsLength; ++i) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
     }
@@ -224,11 +231,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata senders,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant notClosingStage onlyRole(ORIGINATOR_ROLE) {
+        uint256 tokenAddressesLength = tokenAddresses.length;
         require(
-            tokenAddresses.length == senders.length && senders.length == amounts.length,
+            tokenAddressesLength == senders.length && senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
-        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
+        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
@@ -243,16 +251,18 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        require(tokenAddresses.length == recipients.length, "tokenAddresses length and tokenIds length are not equal");
-        require(tokenAddresses.length == amounts.length, "tokenAddresses length and recipients length are not equal");
-        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
+        uint256 tokenAddressesLength = tokenAddresses.length;
+        require(tokenAddressesLength == recipients.length, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddressesLength == amounts.length, "tokenAddresses length and recipients length are not equal");
+        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
         }
     }
 
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-        for (uint256 i = 0; i < tokenAddresses.length; ++i) {
+         uint256 tokenAddressesLength = tokenAddresses.length;
+        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'

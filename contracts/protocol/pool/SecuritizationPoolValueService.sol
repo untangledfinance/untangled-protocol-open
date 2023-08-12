@@ -72,8 +72,9 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256[] memory balances = new uint256[](tokenIds.length);
-        for (uint256 i; i < tokenIds.length; i++) {
+        uint256 tokenIdsLength = tokenIds.length;
+        uint256[] memory balances = new uint256[](tokenIdsLength);
+        for (uint256 i; i < tokenIdsLength; i++) {
             balances[i] = getExpectedAssetValue(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return balances;
@@ -117,8 +118,9 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256[] memory interestRates = new uint256[](tokenIds.length);
-        for (uint256 i; i < tokenIds.length; i++) {
+        uint256  tokenIdsLength =  tokenIds.length;
+        uint256[] memory interestRates = new uint256[](tokenIdsLength);
+        for (uint256 i; i < tokenIdsLength; i++) {
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return interestRates;
@@ -315,7 +317,8 @@ contract SecuritizationPoolValueService is
         address[] calldata investors
     ) external view returns (uint256) {
         uint256 result = 0;
-        for (uint256 i = 0; i < investors.length; i++) {
+        uint256 investorsLength = investors.length; 
+        for (uint256 i = 0; i < investorsLength; i++) {
             result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
         }
         return result;
