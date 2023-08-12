@@ -262,7 +262,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32[] calldata agreementIds,
         address termContract
     ) external whenNotPaused nonReentrant {
-        for (uint256 i = 0; i < creditors.length; i++) {
+        uint256 creditorsLength = creditors.length;;
+        for (uint256 i = 0; i < creditorsLength; i++) {
             concludeLoan(creditors[i], agreementIds[i], termContract);
         }
     }
