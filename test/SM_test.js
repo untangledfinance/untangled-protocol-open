@@ -202,9 +202,13 @@ contract('SecuritizationManager', (accounts) => {
         console.log(162, cap )
         cap = cap.toString();
         const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);
-        const txSetup = await smContract.setUpTGEForSOT(
+        let logs = transaction.logs
+      
+        let newPool =  logs[7]['args'][0]
+      
+        const txSetup1 = await smContract.setUpTGEForSOT(
             accounts[2],
-            addressPool,
+            newPool,
             [0, 18],
             true,
             cap,
@@ -215,7 +219,11 @@ contract('SecuritizationManager', (accounts) => {
             { "openingTime": openingTime,   "closingTime": closingTime,"rate": rate,"cap": cap },
             "SOT"
         )
-        tgeAddress = txSetup.logs[10].args.instanceAddress;
+        tgeAddress = txSetup1.logs[10].args.instanceAddress;
+        console.log(223, tgeAddress)
+        let checkTGE = await smContract.isExistingTGEs(tgeAddress);
+        console.log(225, checkTGE)
+        assert.equal(checkTGE, true, "Fail on setup TGE")
     })
     it(' Should buy token successfully ', async () => {
        
@@ -225,8 +233,11 @@ contract('SecuritizationManager', (accounts) => {
         await noteToken.mint(accounts[0],"100000000000000000" );
        
         await noteToken.approve(smAddress,"100000000000000000");
-        console.log(193, mintedIncreasingInterestTGE.address)
+        await noteToken.approve(tgeAddress,"100000000000000000");
+        
          
-        await smContract.buyTokens(tgeAddress, "100000000000000000");
+        const buyTX = await smContract.buyTokens(tgeAddress, "100000000000000000");
+        console.log(239, buyTX.logs)
+        // https://alfajores.celoscan.io/tx/0x9e9e2f2842eab65bf8917bbd46f6e18e176d72ee9d986979230c553dd09c7d5c#eventlog
     })
 })
