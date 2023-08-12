@@ -17,25 +17,4 @@ contract LongSaleInterest {
     uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
     uint256 public constant PURCHASE_PRICE_SCALING_FACTOR = 10**4;
 
-    function getPurchasePrice(
-        uint256 _interestRate,
-        uint256 _yield,
-        uint256 _durationLengthInSec,
-        uint256 _termLengthInSeconds
-    ) public pure returns (uint256) {
-        require(_termLengthInSeconds > _durationLengthInSec, "LongSaleInterest: _termLength must be greater than durationLength");
-        uint256 moreDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
-        _interestRate = _interestRate * moreDecimal;
-        _yield = _yield * moreDecimal;
-
-        uint256 pricipalWithInterestInPercent = UntangledMath.ONE + _interestRate / YEAR_LENGTH_IN_SECONDS;
-
-        uint256 pricipalWithYieldInPercent = UntangledMath.ONE + _yield / YEAR_LENGTH_IN_SECONDS;
-
-        uint256 durationToEndTerm = _termLengthInSeconds - _durationLengthInSec;
-        return
-            (UntangledMath.rpow(pricipalWithInterestInPercent, _termLengthInSeconds, UntangledMath.ONE) *
-                PURCHASE_PRICE_SCALING_FACTOR) /
-            UntangledMath.rpow(pricipalWithYieldInPercent, durationToEndTerm, UntangledMath.ONE);
-    }
 }

@@ -47,15 +47,14 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         }
     }
 
-    function getLongSaleTokenPrice(uint256 timestamp) public view returns (uint256) {
+    function getTokenPrice() public view returns (uint256) {
         return registry.getDistributionAssessor().getJOTTokenPrice(
-            ISecuritizationPool(pool),
-            timestamp
+            ISecuritizationPool(pool)
         );
     }
 
-    function getLongSaleTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return currencyAmount / getLongSaleTokenPrice(block.timestamp);
+    function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
+        return currencyAmount / getTokenPrice();
     }
 
     function startNewRoundSale(
