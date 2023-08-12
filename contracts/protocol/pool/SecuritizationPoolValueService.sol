@@ -337,9 +337,10 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-        address currencyAddress = securitizationPool.underlyingCurrency();
+//        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
+        // use reserve variable instead
+        uint256 balancePool = securitizationPool.reserve();
         uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;

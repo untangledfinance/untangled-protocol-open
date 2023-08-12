@@ -30,7 +30,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     );
 
-    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant {
+    function _makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) internal {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
             registry.getNoteTokenFactory().isExistingTokens(address(noteToken)),
@@ -75,7 +75,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
                 securitizationPool,
                 block.timestamp
-            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR;
+            );
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
@@ -146,8 +146,8 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         return currencyLocked;
     }
 
-    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public returns (uint256) {
-        makeRedeemRequest(noteToken, tokenAmount);
+    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant returns (uint256) {
+        _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
     }

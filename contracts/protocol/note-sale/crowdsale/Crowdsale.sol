@@ -156,14 +156,6 @@ abstract contract Crowdsale is UntangledBase {
             (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
     }
 
-    function _getCurrencyAmount(uint256 tokenAmount) internal view returns (uint256) {
-        if (rate == 0) return 0;
-        uint256 TEN = 10;
-        return
-            (tokenAmount * RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals()) /
-            (rate * TEN**ERC20(token).decimals());
-    }
-
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
         IERC20(currency).transfer(beneficiary, currencyAmount);
     }
