@@ -8,9 +8,7 @@ import '../../interfaces/ISecuritizationPool.sol';
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
-import '../../libraries/UntangledMath.sol';
-
-import './DistributionAssessor.sol';
+import '../../interfaces/IDistributionAssessor.sol';
 
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
@@ -400,7 +398,7 @@ contract SecuritizationPoolValueService is
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
         if (balancePool == 0) return 0;
-        // require(balancePool > 0, 'pool does not have balance');
+
         uint256 ratioForReserve = balancePool / (poolValue);
 
         seniorBalance = ratioForReserve * beginningSeniorAsset;
@@ -410,14 +408,14 @@ contract SecuritizationPoolValueService is
 
     function getReserve(
         address poolAddress,
-        address distributorAssessor,
         uint256 JOTPrincipal,
         uint256 SOTTokenRedeem,
         uint256 JOTTokenRedeem
     ) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        DistributionAssessor distributorAssessorInstance = DistributionAssessor(distributorAssessor);
+        IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
+
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
         uint256 currentTimestamp = block.timestamp;
         uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress, currentTimestamp);
@@ -480,7 +478,6 @@ contract SecuritizationPoolValueService is
         if (poolValue == 0) {
             return 0;
         }
-        // require(poolValue > 0, 'Pool value has no value');
 
         return (seniorAsset * RATE_SCALING_FACTOR) / poolValue;
     }
