@@ -287,10 +287,6 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         registry.getCollateralManagementToken().mint(trader, projectCommodityId, quantity, "");
     }
 
-    function isProjectExisting(uint256 projectId) public override view returns (bool) {
-        return isExistingProjects[projectId];
-    }
-
     /**
     * @dev NOTE: memory & public is not recommeneded for function which have input param is arrays, calldata & external function instead
      */
@@ -413,60 +409,7 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     function getAgreementsOfProjectCommodity(uint256 projectCommodityId) public override view returns (bytes32[] memory) {
         return projectCommodityToAgreements[projectCommodityId];
     }
-/*
-    function getProjectDetail(uint256 projectId) public override view onlyProjectExisted(projectId)
-    returns (address managerAddress, address projectWallet, bytes32 companyHash) {
-        return (collateralProjects[projectId].managerAddress, collateralProjects[projectId].projectWallet, collateralProjects[projectId].companyHash);
-    }
-
-    function getMovementDetail(string memory movementId, uint256 projectId)
-    public
-    override
-    view
-    onlyProjectExisted(projectId)
-    returns (
-        uint256 projectCommodityId,
-        MovementType movementType,
-        MovementState state,
-        uint256 quantity,
-        address initiator,
-        address approver,
-        address executor
-    )
-    {
-        require(
-            _isMovementExisting(projectId, movementId),
-            'Movement does not exist.'
-        );
-        bytes32 identifyHashMovement = keccak256(abi.encodePacked(movementId));
-
-        Movement memory movement = projectToMovements[projectId][identifyHashMovement];
-        return (
-        movement.projectCommodityId,
-        movement.movementType,
-        movement.state,
-        movement.quantity,
-        movement.initiator,
-        movement.approver,
-        movement.executor
-        );
-    }
-*/
-
-/*
-    function getProjectCommodityDetail(uint256 projectCommodityId) public override view
-    returns (
-        uint256 projectId,
-        uint256 price,
-        bytes32 commoditySymbol
-    ) {
-        return (
-        projectCommodityToProject[projectCommodityId],
-        projectCommodityToPrice[projectCommodityId],
-        projectCommodityToCommodity[projectCommodityId]
-        );
-    }
-*/
+    
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
