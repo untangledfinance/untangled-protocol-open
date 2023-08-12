@@ -52,3 +52,5 @@ For interactions or contract deployments on public testnets / mainnet, create a 
 ```
 yarn deploy --tags [..] --network [..]
 ```
+
+`truffle migrate --reset --compile-all --network development`

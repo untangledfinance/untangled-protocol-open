@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import '../../../libraries/UntangledMath.sol';
 import '../../../libraries/Configuration.sol';
 
-contract NAVCalculation {
+contract VS {
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
