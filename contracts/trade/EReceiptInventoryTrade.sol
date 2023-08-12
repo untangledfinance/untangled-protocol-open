@@ -380,27 +380,7 @@ contract EReceiptInventoryTrade is Initializable, PausableUpgradeable, OwnableUp
         }
 
     }
-
-    // function _releaseMandatoryFees() internal {
-    //     uint feeTypesLength = mandatoryFeeTypeIds.length;
-    //     uint payerListLength = feePayers.length;
-
-    //     for(uint j = 0; j < feeTypesLength; j++) {
-    //         for (uint i = 0; i < payerListLength; i++) {
-    //             if (hasSetupFees[feePayers[i]][mandatoryFeeTypeIds[j]]) {
-    //                 Fees memory fee = requiredFees[feePayers[i]][mandatoryFeeTypeIds[j]];
-    //                 if (paidTokenFeeAmounts[feePayers[i]][fee.token] > releasedTokenAmounts[feePayers[i]][fee.token]) {
-    //                     uint remainAmount = paidTokenFeeAmounts[feePayers[i]][fee.token].sub(releasedTokenAmounts[feePayers[i]][fee.token]);
-    //                     if (remainAmount >= fee.amount) {
-    //                         _transferFeeToBeneficiary(feePayers[i], fee.amount, fee.token, fee.beneficiary);
-    //                     } else {
-    //                         _transferFeeToBeneficiary(feePayers[i], remainAmount, fee.token, fee.beneficiary);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+ 
 
     /**
     * Transfer fee to corresponding beneficiary
@@ -453,12 +433,13 @@ contract EReceiptInventoryTrade is Initializable, PausableUpgradeable, OwnableUp
         delete hasSetupFees[_payer][bytes32(_feeId)];
         delete tokenFeeAmounts[_payer][_erc20Token];
         delete isOptionalFeeTypeIds[bytes32(_feeId)];
+        uint optionalFeeTypeIdsLength  =optionalFeeTypeIds.length;
 
-        for (uint i = 0; i < optionalFeeTypeIds.length; ++i) {
+        for (uint i = 0; i <optionalFeeTypeIdsLength; ++i) {
             if (optionalFeeTypeIds[i] == bytes32(_feeId)) {
 
                 // Remove i element from optionalFeeTypeIds
-                for (uint index = i; index < optionalFeeTypeIds.length-1; index++){
+                for (uint index = i; index < optionalFeeTypeIdsLength-1; index++){
                     optionalFeeTypeIds[index] = optionalFeeTypeIds[index+1];
                 }
                 optionalFeeTypeIds.pop();
@@ -489,12 +470,7 @@ contract EReceiptInventoryTrade is Initializable, PausableUpgradeable, OwnableUp
         return isCompleted;
     }
 
-    // function isSatisfiedMandatoryFeePayment(address account) {
-    //     uint mandatoryFeeIdsLength = mandatoryFeeTypeIds.length;
-    //     for(uint i = 0; i < mandatoryFeeIdsLength; i++) {
-
-    //     }
-    // }
+ 
 
     function feePaymentStatus(address account)
     public
@@ -818,68 +794,16 @@ contract EReceiptInventoryTrade is Initializable, PausableUpgradeable, OwnableUp
             paidAmounts[i] = paidTokenFeeAmounts[seller][feeTokens[i]];
         }
 
-        spendingTokens[feeTokens.length] = address(registry.getCollateralManagementToken());
+        spendingTokens[feeTokensLength] = address(registry.getCollateralManagementToken());
 
-        expectedAmounts[feeTokens.length] = sellerPayment.amount;
+        expectedAmounts[feeTokensLength] = sellerPayment.amount;
 
-        paidAmounts[feeTokens.length] = sellerPayment.paidAmount;
-
-        return (spendingTokens, expectedAmounts, paidAmounts);
-    }
-
-    /**
-     * response formatting:
-     */
-/*
-    function getBuyerPaymentStatus()
-    external
-    view
-    returns (address[] memory, uint256[] memory, uint256[] memory)
-    {
-        address[] memory spendingTokens;
-        uint256[] memory expectedAmounts;
-        uint256[] memory paidAmounts;
-
-        (spendingTokens, expectedAmounts, paidAmounts) = feePaymentStatus(
-            buyer
-        );
-
-        uint256 tokenFeesLength = spendingTokens.length;
-        if (tokenFeesLength == 0) {
-            spendingTokens = new address[](1);
-            expectedAmounts = new uint256[](1);
-            paidAmounts = new uint256[](1);
-
-            spendingTokens[0] = address(buyerPayment.token);
-            expectedAmounts[0] = buyerPayment.amount;
-            paidAmounts[0] = buyerPayment.paidAmount;
-        } else {
-            bool isFiatTokenInList = false;
-            for (uint256 i = 0; i < tokenFeesLength; i++) {
-                // if trading fiat token is including in list
-                if (
-                    spendingTokens[i] == address(buyerPayment.token)
-                ) {
-                    expectedAmounts[i] = expectedAmounts[i].add(
-                        buyerPayment.amount
-                    );
-                    paidAmounts[i] = paidAmounts[i].add(
-                        buyerPayment.paidAmount
-                    );
-                    isFiatTokenInList = true;
-                }
-            }
-            // If fiat token is not in list, append it to list
-            if (!isFiatTokenInList) {
-                spendingTokens.push(address(buyerPayment.token));
-                expectedAmounts.push(buyerPayment.amount);
-                paidAmounts.push(buyerPayment.paidAmount);
-            }
-        }
+        paidAmounts[feeTokensLength] = sellerPayment.paidAmount;
 
         return (spendingTokens, expectedAmounts, paidAmounts);
     }
-*/
+
+ 
 
     function getTradeInfo()
     public

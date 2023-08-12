@@ -323,8 +323,9 @@ contract InvoiceCollateralizer is Initializable, PausableUpgradeable, AccessCont
             .getInvoiceTokenIds(agreementId);
             if (invoiceTokenIds.length > 0) {
                 AcceptedInvoiceToken invoiceToken = registry.getAcceptedInvoiceToken();
+                uint256 invoiceTokenIdsLength = invoiceTokenIds.length;
 
-                for (uint256 i = 0; i < invoiceTokenIds.length; ++i) {
+                for (uint256 i = 0; i <invoiceTokenIdsLength; ++i) {
                     if (invoiceToken.ownerOf(uint256(invoiceTokenIds[i])) != address(0)) {
                         IERC721(collateralToken).safeTransferFrom(address(this), collateralizer, invoiceTokenIds[i]);
                         // stop financing

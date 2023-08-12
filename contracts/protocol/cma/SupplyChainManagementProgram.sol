@@ -303,7 +303,8 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         address[] memory executors,
         uint[] memory quantities
     ) public override {
-        for (uint256 i = 0; i < movementIdsHashes.length; ++i) {
+        uint256  movementIdsHashesLength =  movementIdsHashes.length;
+        for (uint256 i = 0; i < movementIdsHashesLength; ++i) {
             require(isExistingProjects[projectIds[i]], "Project does not exists.");
             require(!_isMovementExisting(projectIds[i], movementIdsHashes[i]), "Movement already existed.");
             require(projectToExistedProjectCommodity[projectIds[i]][projectCommodityIds[i]], "Project commodity not existed.");
@@ -375,9 +376,9 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         if (projectCommodityToPrice[projectCommodityId] != price) {
             projectCommodityToPrice[projectCommodityId] = price;
             InventoryLoanRegistry debtRegistry = registry.getInventoryLoanRegistry();
-
-            if (projectCommodityToAgreements[projectCommodityId].length > 0) {
-                for (uint i = 0; i < projectCommodityToAgreements[projectCommodityId].length; ++i) {
+            uint projectCommodityToAgreementsProjectCommodityIdLength = projectCommodityToAgreements[projectCommodityId].length;
+            if (projectCommodityToAgreementsProjectCommodityIdLength > 0) {
+                for (uint i = 0; i < projectCommodityToAgreementsProjectCommodityIdLength; ++i) {
                     debtRegistry.selfEvaluateCollateralRatio(projectCommodityToAgreements[projectCommodityId][i]);
                 }
             }
@@ -394,9 +395,9 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     function removeAgreementFromCommodity(uint256 projectCommodityId, bytes32 agreementId) public override onlyRole(OWNER_ROLE) {
 //        require(isOwner() || _isAuthorizedContract(msg.sender), "SupplyChainManagementProgram: not authorized to remove agreement");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
-
-        if (projectCommodityToAgreements[projectCommodityId].length > 0) {
-            for (uint i = 0; i < projectCommodityToAgreements[projectCommodityId].length; ++i) {
+        uintprojectCommodityIdLength =  projectCommodityToAgreements[projectCommodityId].length;
+        if (uintprojectCommodityIdLength > 0) {
+            for (uint i = 0; i < uintprojectCommodityIdLength; ++i) {
                 if (projectCommodityToAgreements[projectCommodityId][i] == agreementId) {
 
                     // Remove i element from projectCommodityToAgreements[projectCommodityId]

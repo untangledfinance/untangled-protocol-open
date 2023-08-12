@@ -543,12 +543,13 @@ contract InventoryLoanRegistry is
     }
 
     function removeInvoiceId(bytes32 agreementId, uint256 invoiceId) public {
-        if (registryToInvoice[agreementId].length > 0) {
-            for (uint i = 0; i < registryToInvoice[agreementId].length; ++i) {
+        uint registryToInvoiceAgreementIdLength = registryToInvoice[agreementId].length;
+        if (registryToInvoiceAgreementIdLength > 0) {
+            for (uint i = 0; i < registryToInvoiceAgreementIdLength; ++i) {
                 if (registryToInvoice[agreementId][i] == invoiceId) {
 
                     // Remove i element from registryToInvoice[agreementId]
-                    for (uint index = i; index<registryToInvoice[agreementId].length-1; index++){
+                    for (uint index = i; index< registryToInvoice[agreementId].length-1; index++){
                         registryToInvoice[agreementId][index] = registryToInvoice[agreementId][index+1];
                     }
                     registryToInvoice[agreementId].pop();
@@ -562,10 +563,10 @@ contract InventoryLoanRegistry is
 
     function _getTotalInvoiceAmount(bytes32 agreementId) public view returns (uint256 amount) {
         AcceptedInvoiceToken acceptedInvoiceToken = registry.getAcceptedInvoiceToken();
-
+        uint registryToInvoiceAgreementIdLength = registryToInvoice[agreementId].length;
         amount = 0;
-        if (registryToInvoice[agreementId].length > 0) {
-            for (uint i = 0; i < registryToInvoice[agreementId].length; ++i) {
+        if (registryToInvoiceAgreementIdLength > 0) {
+            for (uint i = 0; i < registryToInvoiceAgreementIdLength; ++i) {
                 amount += acceptedInvoiceToken.getFiatAmount(registryToInvoice[agreementId][i]);
             }
         }
