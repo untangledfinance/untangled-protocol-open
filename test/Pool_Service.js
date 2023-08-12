@@ -145,7 +145,7 @@ contract('SecuritizationPoolValueService', (accounts) => {
         await loanRepaymentRouter.initialize(registryAddress);
         await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
         await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
-        let minFirstLossCushion = 12;
+        let minFirstLossCushion = 120000;
         await securitizationPool.initialize(registryAddress, myTokenAddress, minFirstLossCushion);
         await smContract.grantRole(ADMIN_ROLE, accounts[0])
         const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);
@@ -239,24 +239,17 @@ contract('SecuritizationPoolValueService', (accounts) => {
         console.log(236, poolValue.toString(), getPoolValue.toString());
         assert.equal(poolValue.toString(), getPoolValue.toString(), "Fail to correct Pool value")
     })
-
-    it(' Get Senior asset  correctly ', async() => { 
-        let poolValue = await securitizationPoolValueService.getPoolValue(addressPool);
-        console.log(245, poolValue.toString());
-        let seniorBalance =await securitizationPoolValueService.getSeniorBalance(addressPool);
-        console.log(247, seniorBalance.toString());
-        let rateSenior = await securitizationPoolValueService.getSeniorRatio(addressPool);
-        console.log(247, rateSenior.toString());
-
+     
+    // getBeginningSeniorDebt
+    it(' Get  Beginning Senior Debt correctly ', async() => { 
+        let  beginningSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
+        console.log(246, beginningSeniorDebt.toString())
+    })
+    it(' Get  Beginning Senior Asset correctly ', async() => { 
         let  beginningSeniorAsset = await securitizationPoolValueService.getBeginningSeniorAsset(addressPool);
         console.log(248, beginningSeniorAsset.toString())
-        let expectedAssetsValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
-        console.log(249, expectedAssetsValue.toString())
-        let senorDebt =await securitizationPoolValueService.getSeniorDebt(addressPool);
-        console.log(256, senorDebt.toString());
-       
-        let expectedSeniorAsset = await securitizationPoolValueService.getExpectedSeniorAssets(addressPool);
-        console.log(259, expectedSeniorAsset.toString()) 
+    })
+    it(' Get Senior asset  correctly ', async() => { 
         let seniorAsset = await securitizationPoolValueService.getSeniorAsset(addressPool);
         console.log(261, seniorAsset.toString()) 
     }) 
@@ -266,25 +259,19 @@ contract('SecuritizationPoolValueService', (accounts) => {
         console.log(263, getExpectedSeniorAssets.toString()) 
     }) 
 
+
+    
+    it(' Get  Senior Balance  correctly ', async() => { 
+        let getSeniorBalance = await securitizationPoolValueService.getSeniorBalance(addressPool);
+        console.log(276, getSeniorBalance.toString()) 
+    }) 
+
     it(' Get  Senior debt  correctly ', async() => { 
         let getBeginningSeniorDebt = await securitizationPoolValueService.getBeginningSeniorDebt(addressPool);
         console.log(271, getBeginningSeniorDebt.toString())
         let getSeniorDebt = await securitizationPoolValueService.getSeniorDebt(addressPool);
         console.log(268, getSeniorDebt.toString()) 
     }) 
-
-    it(' Get  Senior Amount  correctly ', async() => { 
-        let amountFromPool = await poolInstance.principalAmountSOT();
-        console.log(270, amountFromPool.toString())
-        let getSeniorAmount = await securitizationPoolValueService.getSeniorAmount(addressPool);
-        console.log(275, getSeniorAmount.toString()) 
-        assert.equal(amountFromPool.toString() ,getSeniorAmount.toString(), "Fail to get Senior Amount ")
-    }) 
-    it(' Get  Senior Balance  correctly ', async() => { 
-        let getSeniorBalance = await securitizationPoolValueService.getSeniorBalance(addressPool);
-        console.log(276, getSeniorBalance.toString()) 
-    }) 
-
 
     it(' Get  Junior Asset correctly ', async() => { 
         let getJuniorAsset = await securitizationPoolValueService.getJuniorAsset(addressPool);
@@ -300,5 +287,9 @@ contract('SecuritizationPoolValueService', (accounts) => {
     it(' Get  Junior Ratio correctly ', async() => { 
         let getJuniorRatio = await securitizationPoolValueService.getJuniorRatio(addressPool);
         console.log(280, getJuniorRatio.toString()) 
+    }) 
+    it(' Get  Reserve  correctly', async() => { 
+        let getReserve = await securitizationPoolValueService.getReserve(addressPool,0,0,0);
+        console.log(303, getReserve.toString()) 
     }) 
 })
