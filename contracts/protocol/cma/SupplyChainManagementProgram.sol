@@ -406,10 +406,6 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
         }
     }
 
-    function getAgreementsOfProjectCommodity(uint256 projectCommodityId) public override view returns (bytes32[] memory) {
-        return projectCommodityToAgreements[projectCommodityId];
-    }
-    
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
