@@ -14,14 +14,14 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
         if (pool == address(0)) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        SecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         require(address(poolService) != address(0), 'Pool service was not deployed');
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
         uint256 seniorSupply = noteToken.totalSupply();
         uint256 seniorDecimals = noteToken.decimals();
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        I
+
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return ((seniorAsset) * (10 ** seniorDecimals)) / seniorSupply;
     }

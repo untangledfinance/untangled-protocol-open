@@ -129,9 +129,10 @@ contract('SecuritizationManager', (accounts) => {
         let txSOT = await smContract.initialTGEForSOT(
             accounts[0],
             addressPool,
-            0,
-            18,
-            true
+            [0,
+            18],
+            true,
+            "SOT Test"
         )  
         
  
@@ -144,9 +145,10 @@ contract('SecuritizationManager', (accounts) => {
         let txJOT = await smContract.initialTGEForJOT(
             accounts[0],
             addressPool,
-            0,
-            18,
-            true
+            [0,
+            18],
+            true,
+            "JOT TOKEN"
         )
          poolToJOT = await smContract.poolToJOT(addressPool);
         console.log(152, poolToJOT)
@@ -192,7 +194,7 @@ contract('SecuritizationManager', (accounts) => {
         await noteToken.approve(mintedIncreasingInterestTGE.address,"100000000000000000");
         await noteToken.approve(smAddress,"100000000000000000");
         console.log(193, mintedIncreasingInterestTGE.address)
-        await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
-        // await smContract.buyTokens(tgeAddress, "100000000000000000");
+        // await mintedIncreasingInterestTGE.buyTokens(accounts[0],accounts[0], "100000000000000000");
+        await smContract.buyTokens(tgeAddress, "100000000000000000");
     })
 })

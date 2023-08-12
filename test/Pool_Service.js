@@ -187,7 +187,7 @@ contract('SecuritizationPoolValueService', (accounts) => {
             [1,18],
             true,
             cap,
-            { openingTime:"openingTime", closingTime :"closingTime", rate: "rate", cap: "cap" },
+            { "openingTime": openingTime,   "closingTime": closingTime,"rate": rate,"cap": cap },
             "JOT"
         )
         // console.log(227, txJOT)
@@ -211,7 +211,7 @@ contract('SecuritizationPoolValueService', (accounts) => {
         await smContract.buyTokens(tgeAddressJOT, "100000000000000000");
 
         await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
-        await distributionAssessor.setPoolService(securitizationPoolValueService.address);
+        // await distributionAssessor.setPoolService(securitizationPoolValueService.address);
         
         poolInstance = await SecuritizationPool.at(addressPool);
         console.log(219, await poolInstance.jotToken());
