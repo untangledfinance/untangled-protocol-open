@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './base/Interest.sol';
+
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
@@ -11,22 +12,17 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
+        if (pool == address(0)) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
+        uint256 seniorSupply = noteToken.totalSupply();
+        uint256 seniorDecimals = noteToken.decimals();
 
         if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
-        uint256 ONE_SOT_DEFAULT_PRICE = _convertTokenValueToCurrencyAmount(
-            address(securitizationPool),
-            address(noteToken),
-            1 * 10**uint256(noteToken.decimals())
-        );
-        uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-
-        if (timestamp < openingBlockTimestamp) return ONE_SOT_DEFAULT_PRICE;
-
-        uint32 interestRateSOT = securitizationPool.interestRateSOT();
-
-        return ONE_SOT_DEFAULT_PRICE + _calculateInterestForDuration(ONE_SOT_DEFAULT_PRICE, interestRateSOT, timestamp - openingBlockTimestamp);
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        uint256 seniorAsset = poolService.getSeniorAsset(pool);
+        return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -171,26 +167,25 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return 0;
     }
 
-    function getJOTTokenPrice(ISecuritizationPool securitizationPool, uint256 endTime) public view override returns (uint256) {
+    function getJOTTokenPrice(
+        ISecuritizationPool securitizationPool,
+        uint256 endTime
+    ) public view override returns (uint256) {
+        if (address(securitizationPool) == address(0)) {
+            return 0;
+        }
+        // require(address(securitizationPool) != address(0), 'pool was not deployed');
+        // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
+        uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
         if (tokenAddress == address(0) || tokenSupply == 0) {
             return 0;
         }
-
-        uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
-        uint256 tokenDecimals = ERC20(tokenAddress).decimals();
-
-        uint256 totalJotValue = _calcJuniorAssetValue(address(securitizationPool), endTime);
-        uint256 totalTokenRedeem = securitizationPool.totalLockedRedeemBalances(tokenAddress);
-        tokenSupply = tokenSupply - totalTokenRedeem;
-
-        return
-            currencyDecimals > tokenDecimals
-                ? (totalJotValue * Configuration.PRICE_SCALING_FACTOR) /
-                    (tokenSupply * 10**(currencyDecimals - tokenDecimals))
-                : (totalJotValue * 10**(tokenDecimals - currencyDecimals) * Configuration.PRICE_SCALING_FACTOR) /
-                    tokenSupply;
+        // address pool = address(securitizationPool);
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
     function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
@@ -199,7 +194,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
         uint256 price = getSOTTokenPrice(address(securitizationPool), timestamp);
         uint256 totalSotSupply = sot.totalSupply();
-        uint256 ONE_SOT = 10**uint256(sot.decimals());
+        uint256 ONE_SOT = 10 ** uint256(sot.decimals());
 
         return (address(sot), (price * totalSotSupply) / ONE_SOT);
     }
@@ -260,11 +255,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         else return ((currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR, 0);
     }
 
-    function _getPrincipalLeftOfSOT(ISecuritizationPool securitizationPool, address sotToken)
-        internal
-        view
-        returns (uint256)
-    {
+    function _getPrincipalLeftOfSOT(
+        ISecuritizationPool securitizationPool,
+        address sotToken
+    ) internal view returns (uint256) {
         uint256 totalPrincipal = 0;
         uint256 totalTokenRedeem = 0;
         if (sotToken != address(0x0)) {
