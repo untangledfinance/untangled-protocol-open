@@ -35,6 +35,8 @@ contract('SecuritizationManager', (accounts) => {
     var BN = web3.utils.BN;
     var tgeSOT;
     var tgeJOT;
+    var minFirstLossCushion
+    var tgeAddress
     before(async () => {
         registry = await Registry.new();
        
@@ -107,7 +109,7 @@ contract('SecuritizationManager', (accounts) => {
         let loanKernelAddress = loanKernel.address
         await registry.setLoanKernel(loanKernelAddress);
         
-        let minFirstLossCushion= 1234;
+        minFirstLossCushion= 120000;
         await securitizationPool.initialize(registryAddress, myTokenAddress,minFirstLossCushion);        
         await smContract.grantRole(ADMIN_ROLE, accounts[0])
         const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);        
@@ -190,9 +192,33 @@ contract('SecuritizationManager', (accounts) => {
         console.log(180, closeTime.toString());
         assert.equal(closeTime, closingTime, "Fail to start new Round Sale")
     })
+    // need to create a new pool and call set up tge for sot 
+    it(' Should set up TGE  successfully ', async () => {
+        let openingTime = 1689590489;
+         
+        let closingTime =1697539289 ;
+        let rate =2 ;
+        let cap = Math.pow(10,18);
+        console.log(162, cap )
+        cap = cap.toString();
+        const transaction = await smContract.newPoolInstance(myTokenAddress, minFirstLossCushion);
+        const txSetup = await smContract.setUpTGEForSOT(
+            accounts[2],
+            addressPool,
+            [0, 18],
+            true,
+            cap,
+            100000,
+            100000,
+            86400,
+            0,
+            { "openingTime": openingTime,   "closingTime": closingTime,"rate": rate,"cap": cap },
+            "SOT"
+        )
+        tgeAddress = txSetup.logs[10].args.instanceAddress;
+    })
     it(' Should buy token successfully ', async () => {
-        let tgeAddress = await tokenGenerationEventFactory.tgeAddresses(0);
-        console.log(187, tgeAddress, tgeSOT);
+       
         let MINTER_ROLE = await noteToken.MINTER_ROLE();
         await noteToken.grantRole(ADMIN_ROLE, accounts[0]);
         await noteToken.grantRole(MINTER_ROLE, accounts[0]);
@@ -201,6 +227,6 @@ contract('SecuritizationManager', (accounts) => {
         await noteToken.approve(smAddress,"100000000000000000");
         console.log(193, mintedIncreasingInterestTGE.address)
          
-        await smContract.buyTokens(tgeSOT, "100000000000000000");
+        await smContract.buyTokens(tgeAddress, "100000000000000000");
     })
 })
