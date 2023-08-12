@@ -388,7 +388,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             _msgSender() == address(registry.getDistributionTranche()),
             'SecuritizationPool: Caller must be DistributionTranche'
         );
-
+        if (sotToken == notesToken) {
+            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+        }
         if (tokenAmount > 0) {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
@@ -396,8 +398,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
-        if (sotToken == notesToken) {
-            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
-        }
+   
     }
 }

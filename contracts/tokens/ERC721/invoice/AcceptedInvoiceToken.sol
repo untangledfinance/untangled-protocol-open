@@ -74,19 +74,21 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256[] calldata salt,
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
-        uint256 _fiatAmountLength = _fiatAmount.length;
+        
         require(
             hasRole(INVOICE_CREATOR_ROLE, _msgSender()),
             'not permission to create token'
         );
-
+        // fail to cached the array length due to stack too deep
+        // uint256 fiatAmountLength = _fiatAmount.length;
         Configuration.ASSET_PURPOSE assetPurpose = Configuration.ASSET_PURPOSE(
-            riskScoreIdxsAndAssetPurpose[_fiatAmountLength- 1]
+            riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1]
         );
-        for (uint256 i = 0; i < _fiatAmountLength; ++i) {
+        for (uint256 i = 0; i < _fiatAmount.length; ++i) {
+            
             _createAIT(
                 addressPayerAndReceiver[i],
-                addressPayerAndReceiver[i + _fiatAmountLength],
+                addressPayerAndReceiver[i + _fiatAmount.length],
                 _fiatAmount[i],
                 _fiatTokenAddress[i],
                 _dueDate[i],

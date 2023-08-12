@@ -86,6 +86,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         string memory ticker
     ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
+        require(address(noteTokenFactory) != address(0), "Note Token Factory was not registered");
+        require(address(registry.getTokenGenerationEventFactory()) != address(0), "TGE Factory was not registered");
         address sotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
@@ -187,7 +189,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
-
+        // require(msg.value ==0, "Don't send Eth to this contract");
         uint256 tokenAmount = MintedIncreasingInterestTGE(tgeAddress).buyTokens(
             _msgSender(),
             _msgSender(),

@@ -395,9 +395,9 @@ contract SupplyChainManagementProgram is ISupplyChainManagementProgram {
     function removeAgreementFromCommodity(uint256 projectCommodityId, bytes32 agreementId) public override onlyRole(OWNER_ROLE) {
 //        require(isOwner() || _isAuthorizedContract(msg.sender), "SupplyChainManagementProgram: not authorized to remove agreement");
         require(projectCommodityToCommodity[projectCommodityId] != bytes32(0), "SupplyChainManagementProgram: project commodity not existed");
-        uintprojectCommodityIdLength =  projectCommodityToAgreements[projectCommodityId].length;
-        if (uintprojectCommodityIdLength > 0) {
-            for (uint i = 0; i < uintprojectCommodityIdLength; ++i) {
+        uint  projectCommodityIdLength =  projectCommodityToAgreements[projectCommodityId].length;
+        if (projectCommodityIdLength > 0) {
+            for (uint i = 0; i < projectCommodityIdLength; ++i) {
                 if (projectCommodityToAgreements[projectCommodityId][i] == agreementId) {
 
                     // Remove i element from projectCommodityToAgreements[projectCommodityId]
