@@ -140,8 +140,8 @@ contract InvoiceCollateralizer is Initializable, PausableUpgradeable, AccessCont
         // store collaterallizer in mapping, effectively demarcating that the
         // agreement is now collateralized.
         agreementToCollateralizer[agreementId] = collateralizer;
-
-        for (uint256 i = 0; i < invoiceTokenIds.length; i++) {
+        uint256 invoiceTokenIdsLength = invoiceTokenIds.length;
+        for (uint256 i = 0; i < invoiceTokenIdsLength; i++) {
             /*
             The collateralizer must have sufficient balance equal to or greater
             than the amount being put up for collateral.
@@ -323,8 +323,9 @@ contract InvoiceCollateralizer is Initializable, PausableUpgradeable, AccessCont
             .getInvoiceTokenIds(agreementId);
             if (invoiceTokenIds.length > 0) {
                 AcceptedInvoiceToken invoiceToken = registry.getAcceptedInvoiceToken();
+                uint256 invoiceTokenIdsLength = invoiceTokenIds.length;
 
-                for (uint256 i = 0; i < invoiceTokenIds.length; ++i) {
+                for (uint256 i = 0; i <invoiceTokenIdsLength; ++i) {
                     if (invoiceToken.ownerOf(uint256(invoiceTokenIds[i])) != address(0)) {
                         IERC721(collateralToken).safeTransferFrom(address(this), collateralizer, invoiceTokenIds[i]);
                         // stop financing

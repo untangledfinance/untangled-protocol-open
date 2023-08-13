@@ -24,7 +24,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     // To convert an encoded interest rate into its equivalent in percents,
     // divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
     //     10,000 => 1% interest rate
-    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
 
     // To convert an encoded interest rate into its equivalent multiplier
     // (for purposes of calculating total interest), divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
@@ -93,26 +93,16 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     // Register to start Loan term for batch of agreement Ids
-    function registerTermStart(bytes32 agreementId)
-        public
-        override
-        whenNotPaused
-        onlyKernel
-        onlyHaventStartedLoan(agreementId)
-        returns (bool)
-    {
+    function registerTermStart(
+        bytes32 agreementId
+    ) public override whenNotPaused onlyKernel onlyHaventStartedLoan(agreementId) returns (bool) {
         startedLoan[agreementId] = true;
         return true;
     }
 
-    function registerConcludeLoan(bytes32 agreementId)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlyKernel
-        returns (bool)
-    {
+    function registerConcludeLoan(
+        bytes32 agreementId
+    ) external override whenNotPaused nonReentrant onlyKernel returns (bool) {
         require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
 
         registry.getLoanRegistry().setCompletedLoan(agreementId);
@@ -142,14 +132,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             tokenAddress == loanRegistry.getPrincipalTokenAddress(agreementId),
             'LoanTermsContract: Invalid token for repayment.'
         );
-        require(
-            !loanRegistry.completedLoans(agreementId),
-            'LoanTermsContract: Completed Loan.'
-        );
-        require(
-            startedLoan[agreementId],
-            'LoanTermsContract: Loan has not started yet.'
-        );
+        require(!loanRegistry.completedLoans(agreementId), 'LoanTermsContract: Completed Loan.');
+        require(startedLoan[agreementId], 'LoanTermsContract: Loan has not started yet.');
 
         uint256 currentTimestamp = block.timestamp;
 
@@ -200,7 +184,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
+        uint256 aagreementIdsLength = agreementIds.length;
+        for (uint256 i = 0; i < aagreementIdsLength; i++) {
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
@@ -210,12 +195,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      * Expected repayment value with Amortization of Interest and Principal
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
-    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedPrincipal, uint256 expectedInterest)
-    {
+    function getExpectedRepaymentValues(
+        bytes32 agreementId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
         UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
 
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
@@ -241,15 +224,14 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         );
     }
 
-    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256[] memory, uint256[] memory)
-    {
+    function getMultiExpectedRepaymentValues(
+        bytes32[] memory agreementIds,
+        uint256 timestamp
+    ) public view override returns (uint256[] memory, uint256[] memory) {
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
+        uint256 agreementIdsLength = agreementIds.length;
+        for (uint256 i = 0; i < agreementIdsLength; i++) {
             (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
                 agreementIds[i],
                 timestamp
@@ -264,11 +246,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
 
-    function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
-        private
-        pure
-        returns (uint256)
-    {
+    function _getAmortizationUnitLengthInSeconds(
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
+    ) private pure returns (uint256) {
         if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
             return MINUTE_LENGTH_IN_SECONDS;
         } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {
@@ -289,11 +269,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
-    function _unpackParamsForAgreementID(bytes32 agreementId)
-        private
-        view
-        returns (UnpackLoanParamtersLib.InterestParams memory params)
-    {
+    function _unpackParamsForAgreementID(
+        bytes32 agreementId
+    ) private view returns (UnpackLoanParamtersLib.InterestParams memory params) {
         bytes32 parameters;
         uint256 issuanceBlockTimestamp = 0;
         ILoanRegistry loanRegistry = registry.getLoanRegistry();

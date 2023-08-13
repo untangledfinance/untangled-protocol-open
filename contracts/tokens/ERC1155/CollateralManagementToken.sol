@@ -80,8 +80,9 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1
     function totalSupplyOfBatch(uint256[] calldata _ids)
     external view returns (uint256[] memory)
     {
-        uint256[] memory batchTotalSupplies = new uint256[](_ids.length);
-        for (uint256 i = 0; i < _ids.length; i++) {
+        uint256 _idsLength = _ids.length;
+        uint256[] memory batchTotalSupplies = new uint256[](_idsLength);
+        for (uint256 i = 0; i < _idsLength; i++) {
             batchTotalSupplies[i] = totalSupply(_ids[i]);
         }
         return batchTotalSupplies;
@@ -93,8 +94,9 @@ contract CollateralManagementToken is ERC1155PresetMinterPauserUpgradeable, ERC1
         // there is no extra cost to also privide a querry function.
 
         uint256[] memory balanceOfWallets = new uint256[](_projectIds.length);
+        uint256 _projectIdsLength = _projectIds.length;
 
-        for (uint i = 0; i < _projectIds.length; i++) {
+        for (uint i = 0; i < _projectIdsLength; i++) {
             balanceOfWallets[i] = balanceOf(_owner, _projectIds[i]);
         }
 

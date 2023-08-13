@@ -268,8 +268,9 @@ contract InvoiceFinanceInterestTermsContract is PausableUpgradeable, OwnableUpgr
             debtor == debtRegistry.getDebtor(agreementId),
             'Invalid debtor of agreement'
         );
+        uint256 invoiceTokenIdLength = invoiceTokenIds.length;
 
-        for (uint256 i = 0; i < invoiceTokenIds.length; i++) {
+        for (uint256 i = 0; i < invoiceTokenIdLength; i++) {
             // Sezie collateral tokens with addition amount
             bool collateralized = registry.getInvoiceCollateralizer()
                 .additionERC721Collateralize(
@@ -300,8 +301,9 @@ contract InvoiceFinanceInterestTermsContract is PausableUpgradeable, OwnableUpgr
         InvoiceDebtRegistry debtRegistry = registry.getInvoiceDebtRegistry();
         address debtorOfAgreement = debtRegistry.getDebtor(agreementId);
         require(debtor == debtorOfAgreement, 'Invalid debtor of agreement');
+        uint256 invoiceTokenIdLength  = invoiceTokenIds.length;
 
-        for (uint256 i = 0; i < invoiceTokenIds.length; i++) {
+        for (uint256 i = 0; i < invoiceTokenIdLength; i++) {
             // Sezie collateral tokens with addition amount
             bool collateralized = registry.getInvoiceCollateralizer()
                 .withdrawERC721Collateralize(

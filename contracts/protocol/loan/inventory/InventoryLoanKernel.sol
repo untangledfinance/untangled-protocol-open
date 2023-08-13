@@ -444,7 +444,8 @@ contract InventoryLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         address[5] memory beneficiaries,
         uint256[5] memory amounts
     ) internal {
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint256 amountsLength = amounts.length;
+        for (uint256 i = 0; i < amountsLength; i++) {
             if (amounts[i] > 0 && beneficiaries[i] != address(0x0)) {
                 _transferTokensFrom(token, from, beneficiaries[i], amounts[i]);
                 emit LogFeeTransfer(payer, token, amounts[i], beneficiaries[i]);
@@ -458,7 +459,8 @@ contract InventoryLoanKernel is PausableUpgradeable, OwnableUpgradeable {
         returns (uint256)
     {
         uint256 totalAmount;
-        for (uint256 i = 0; i < amounts.length; i++) {
+        uint256 amountsLength = amounts.length;
+        for (uint256 i = 0; i < amountsLength; i++) {
             totalAmount = totalAmount.add(amounts[i]);
         }
         return totalAmount;

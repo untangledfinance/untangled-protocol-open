@@ -103,8 +103,9 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         address tokenAddress,
         address[] calldata investors
     ) external view returns (uint256[] memory principals, uint256[] memory interests) {
-        principals = new uint256[](investors.length);
-        interests = new uint256[](investors.length);
+        uint256 investorsLength = investors.length;
+        principals = new uint256[](investorsLength);
+        interests = new uint256[](investorsLength);
 
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
@@ -113,11 +114,11 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         require(tokenAddress == sotToken || tokenAddress == jotToken, 'DistributionAssessor: unknown-tranche-address');
 
         uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-
+        
         if (tokenAddress == sotToken) {
             uint32 interestRateSOT = securitizationPool.interestRateSOT();
-
-            for (uint256 i = 0; i < investors.length; i++) {
+            
+            for (uint256 i = 0; i < investorsLength; i++) {
                 (uint256 principal, uint256 interest) = _calcPrincipalInterestSOT(
                     securitizationPool,
                     sotToken,
@@ -131,7 +132,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                 interests[i] = interest;
             }
         } else {
-            for (uint256 i = 0; i < investors.length; i++) {
+            for (uint256 i = 0; i <investorsLength; i++) {
                 (uint256 principal, uint256 interest) = _calcPrincipalInterestJOT(
                     pool,
                     jotToken,
@@ -150,10 +151,11 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         address[] calldata investors,
         uint256 endTime
     ) external view returns (uint256[] memory principals, uint256[] memory interests) {
-        principals = new uint256[](investors.length);
-        interests = new uint256[](investors.length);
+         uint256 investorsLength = investors.length;
+        principals = new uint256[](investorsLength);
+        interests = new uint256[](investorsLength);
 
-        for (uint256 i = 0; i < investors.length; i++) {
+        for (uint256 i = 0; i < investorsLength; i++) {
             (principals[i], interests[i]) = _calcCorrespondingAssetValue(tokenAddress, investors[i], endTime);
         }
     }

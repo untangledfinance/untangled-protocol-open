@@ -432,10 +432,11 @@ contract InventoryCollateralizer is IERC721ReceiverUpgradeable, IERC1155Receiver
 
         // stop financing invoices
         uint256[] memory invoiceTokenIds = inventoryLoanDebtRegistry.getInvoiceIds(agreementId);
-        if (invoiceTokenIds.length > 0) {
+        uint invoiceTokenIdsLength = invoiceTokenIds.length;
+        if (invoiceTokenIdsLength > 0) {
             AcceptedInvoiceToken invoiceToken = registry.getAcceptedInvoiceToken();
-
-            for (uint i = 0; i < invoiceTokenIds.length; ++i) {
+             
+            for (uint i = 0; i < invoiceTokenIdsLength; ++i) {
                 registry.getAcceptedInvoiceToken().transferFrom(
                     address(this),
                     collateralizer,

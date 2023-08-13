@@ -157,7 +157,7 @@ abstract contract Crowdsale is UntangledBase {
     }
 
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
-        IERC20(currency).transfer(beneficiary, currencyAmount);
+        require(IERC20(currency).transfer(beneficiary, currencyAmount), "Fail to transfer currency to Beneficiary");
     }
 
     function _setTotalCap(uint256 cap) internal {

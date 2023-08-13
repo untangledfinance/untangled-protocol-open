@@ -100,8 +100,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address tokenAddress
     ) external whenNotPaused nonReentrant {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        uint256 redeemersLength = redeemers.length;
 
-        for (uint256 i = 0; i < redeemers.length; ++i) {
+        for (uint256 i = 0; i < redeemersLength; ++i) {
             uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemers[i]);
             uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, redeemers[i]);
             if (currencyLocked > 0) {

@@ -192,8 +192,8 @@ contract InvoiceDebtRegistry is Initializable, PausableUpgradeable, OwnableUpgra
         );
 
         entries[agreementId] = entry;
-
-        for (uint256 i = 0; i < _invoiceTokenIds.length; i++) {
+        uint256 _invoiceTokenIdsLength = _invoiceTokenIds.length;
+        for (uint256 i = 0; i < _invoiceTokenIdsLength; i++) {
             registryToInvoice[agreementId].push(uint256(_invoiceTokenIds[i]));
         }
 

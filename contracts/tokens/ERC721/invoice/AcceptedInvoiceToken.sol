@@ -74,15 +74,18 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256[] calldata salt,
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
+        
         require(
             hasRole(INVOICE_CREATOR_ROLE, _msgSender()),
             'not permission to create token'
         );
-
+        // fail to cached the array length due to stack too deep
+        // uint256 fiatAmountLength = _fiatAmount.length;
         Configuration.ASSET_PURPOSE assetPurpose = Configuration.ASSET_PURPOSE(
-            riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1]
+            riskScoreIdxsAndAssetPurpose[_fiatAmount.length- 1]
         );
-        for (uint256 i = 0; i < _fiatAmount.length; ++i) {
+        for (uint256 i = 0; i <_fiatAmount.length; ++i) {            
+            
             _createAIT(
                 addressPayerAndReceiver[i],
                 addressPayerAndReceiver[i + _fiatAmount.length],
@@ -97,9 +100,10 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     }
 
     function payInBatch(uint256[] calldata tokenIds, uint256[] calldata payAmounts) external returns (bool) {
-        require(tokenIds.length == payAmounts.length, 'Length miss match');
+        uint256 tokenIdsLength = tokenIds.length;
+        require(tokenIdsLength == payAmounts.length, 'Length miss match');
 
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
+        for (uint256 i = 0; i < tokenIdsLength; ++i) {
             require(!isPaid(tokenIds[i]), 'AIT: Invoice is already paid');
 
             InvoiceMetaData storage metadata = entries[bytes32(tokenIds[i])];

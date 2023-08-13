@@ -86,6 +86,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         string memory ticker
     ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
+        require(address(noteTokenFactory) != address(0), "Note Token Factory was not registered");
+        require(address(registry.getTokenGenerationEventFactory()) != address(0), "TGE Factory was not registered");
         address sotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
@@ -187,9 +189,14 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
+<<<<<<< HEAD
+        // require(msg.value ==0, "Don't send Eth to this contract");
+        uint256 tokenAmount = MintedIncreasingInterestTGE(tgeAddress).buyTokens(
+=======
 
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(
+>>>>>>> dev
             _msgSender(),
             _msgSender(),
             currencyAmount
@@ -212,13 +219,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     }
 
     function pauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < pools.length; i++) {
+        uint256 poolsLength = pools.length;
+        for (uint256 i = 0; i < poolsLength; i++) {
             pools[i].pause();
         }
     }
 
     function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < pools.length; i++) {
+        uint256 poolsLength = pools.length;
+        for (uint256 i = 0; i < poolsLength; i++) {
             pools[i].unpause();
         }
     }
