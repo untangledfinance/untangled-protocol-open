@@ -382,8 +382,8 @@ contract SecuritizationPoolValueService is
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
 
-        uint256 seniorDebt = (beginningSeniorDebt *
-            (1 + (seniorInterestRate / RATE_SCALING_FACTOR) * (compoundingPeriods / oneYearInSeconds)));
+        uint256 seniorDebt = beginningSeniorDebt *
+             + (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) / (RATE_SCALING_FACTOR * oneYearInSeconds);
         return seniorDebt;
     }
 
