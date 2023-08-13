@@ -56,6 +56,8 @@ contract('SecuritizationPoolValueService', (accounts) => {
     let loanRepaymentRouter
     let loanInterestTermsContract;
     let timeNow 
+    let poolValue 
+
     before(async () => {
         registry = await Registry.new();
         address = await web3.eth.getAccounts()
@@ -241,24 +243,26 @@ contract('SecuritizationPoolValueService', (accounts) => {
     })
 
     it(' Get Senior asset  correctly ', async() => { 
-        let poolValue = await securitizationPoolValueService.getPoolValue(addressPool);
-        console.log(245, poolValue.toString());
-        let seniorBalance =await securitizationPoolValueService.getSeniorBalance(addressPool);
-        console.log(247, seniorBalance.toString());
-        let rateSenior = await securitizationPoolValueService.getSeniorRatio(addressPool);
-        console.log(247, rateSenior.toString());
-
-        let  beginningSeniorAsset = await securitizationPoolValueService.getBeginningSeniorAsset(addressPool);
-        console.log(248, beginningSeniorAsset.toString())
-        let expectedAssetsValue = await securitizationPoolValueService.getExpectedAssetsValue(addressPool, timeNow);
-        console.log(249, expectedAssetsValue.toString())
-        let senorDebt =await securitizationPoolValueService.getSeniorDebt(addressPool);
-        console.log(256, senorDebt.toString());
+   
        
         let expectedSeniorAsset = await securitizationPoolValueService.getExpectedSeniorAssets(addressPool);
+        // expectedSeniorAsset = expectedSeniorAsset.toNumber()
         console.log(259, expectedSeniorAsset.toString()) 
+        // poolValue = poolValue.toNumber()
         let seniorAsset = await securitizationPoolValueService.getSeniorAsset(addressPool);
         console.log(261, seniorAsset.toString()) 
+        let minValue
+        // Senior asset is the min value of senior Asset and get Expected Senior Asset
+        if (poolValue > expectedSeniorAsset) {
+         
+            minValue = expectedSeniorAsset
+            console.log(257, minValue)
+        } else {
+            minValue = poolValue
+            console.log(262, minValue)
+        }
+        console.log(271, minValue)
+        assert.equal(minValue.toString(), seniorAsset.toString(), "Fail to get Senior Asset") 
     }) 
 
     it(' Get Expected Senior asset  correctly ', async() => { 

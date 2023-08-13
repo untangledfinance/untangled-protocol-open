@@ -8,7 +8,9 @@ import '../../interfaces/ISecuritizationPool.sol';
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
-import '../../interfaces/IDistributionAssessor.sol';
+import '../../libraries/UntangledMath.sol';
+
+import './DistributionAssessor.sol';
 
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
@@ -17,7 +19,7 @@ contract SecuritizationPoolValueService is
 {
     using ConfigHelper for Registry;
 
-    uint256 public constant RATE_SCALING_FACTOR = 10 ** 2;
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     function getPresentValueWithNAVCalculation(
         address poolAddress,
@@ -72,9 +74,8 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256 tokenIdsLength = tokenIds.length;
-        uint256[] memory balances = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        uint256[] memory balances = new uint256[](tokenIds.length);
+        for (uint256 i; i < tokenIds.length; i++) {
             balances[i] = getExpectedAssetValue(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return balances;
@@ -118,9 +119,8 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256  tokenIdsLength =  tokenIds.length;
-        uint256[] memory interestRates = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        uint256[] memory interestRates = new uint256[](tokenIds.length);
+        for (uint256 i; i < tokenIds.length; i++) {
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return interestRates;
@@ -317,8 +317,7 @@ contract SecuritizationPoolValueService is
         address[] calldata investors
     ) external view returns (uint256) {
         uint256 result = 0;
-        uint256 investorsLength = investors.length; 
-        for (uint256 i = 0; i < investorsLength; i++) {
+        for (uint256 i = 0; i < investors.length; i++) {
             result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
         }
         return result;
@@ -338,9 +337,10 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-        address currencyAddress = securitizationPool.underlyingCurrency();
+//        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
+        // use reserve variable instead
+        uint256 balancePool = securitizationPool.reserve();
         uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;
@@ -350,9 +350,8 @@ contract SecuritizationPoolValueService is
     function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 rateJunior = securitizationPool.minFirstLossCushion() / 10000;
-        require(rateJunior <= RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion greater 100');
-        uint256 rateSenior = RATE_SCALING_FACTOR - rateJunior;
+        uint256 rateJunior = securitizationPool.minFirstLossCushion();
+        uint256 rateSenior = 100 * RATE_SCALING_FACTOR - rateJunior;
         uint256 poolValue = this.getPoolValue(poolAddress);
         return (poolValue * rateSenior) / RATE_SCALING_FACTOR;
     }
@@ -401,7 +400,7 @@ contract SecuritizationPoolValueService is
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
         if (balancePool == 0) return 0;
-
+        // require(balancePool > 0, 'pool does not have balance');
         uint256 ratioForReserve = balancePool / (poolValue);
 
         seniorBalance = ratioForReserve * beginningSeniorAsset;
@@ -411,18 +410,17 @@ contract SecuritizationPoolValueService is
 
     function getReserve(
         address poolAddress,
+        address distributorAssessor,
         uint256 JOTPrincipal,
         uint256 SOTTokenRedeem,
         uint256 JOTTokenRedeem
     ) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
-
+        DistributionAssessor distributorAssessorInstance = DistributionAssessor(distributorAssessor);
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-        uint256 currentTimestamp = block.timestamp;
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress, currentTimestamp);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool, currentTimestamp);
+        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
+        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);
@@ -470,9 +468,9 @@ contract SecuritizationPoolValueService is
 
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
         uint256 rateSenior = this.getSeniorRatio(poolAddress);
-        require(rateSenior < RATE_SCALING_FACTOR, 'securitizationPool.minFirstLossCushion >100');
+        require(rateSenior < 100*RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
 
-        return RATE_SCALING_FACTOR - rateSenior;
+        return 100*RATE_SCALING_FACTOR - rateSenior;
     }
 
     function getSeniorRatio(address poolAddress) external view returns (uint256) {
@@ -481,6 +479,7 @@ contract SecuritizationPoolValueService is
         if (poolValue == 0) {
             return 0;
         }
+        // require(poolValue > 0, 'Pool value has no value');
 
         return (seniorAsset * RATE_SCALING_FACTOR) / poolValue;
     }
