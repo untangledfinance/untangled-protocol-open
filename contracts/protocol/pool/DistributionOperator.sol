@@ -30,7 +30,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     );
 
-    function makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant {
+    function _makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) internal {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
             registry.getNoteTokenFactory().isExistingTokens(address(noteToken)),
@@ -51,8 +51,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 ONE_TOKEN = 10 ** uint256(noteToken.decimals());
         if (securitizationPool.sotToken() == address(noteToken)) {
             tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(
-                address(securitizationPool),
-                block.timestamp
+                address(securitizationPool)
             );
 
             tokenToBeRedeemed = Math.min(
@@ -73,9 +72,8 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         } else if (securitizationPool.jotToken() == address(noteToken)) {
             uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
-                securitizationPool,
-                block.timestamp
-            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR;
+                securitizationPool
+            );
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
@@ -147,8 +145,8 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         return currencyLocked;
     }
 
-    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public returns (uint256) {
-        makeRedeemRequest(noteToken, tokenAmount);
+    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant returns (uint256) {
+        _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
     }

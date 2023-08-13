@@ -134,8 +134,6 @@ abstract contract ISupplyChainManagementProgram is Initializable, PausableUpgrad
         address caller
     ) public virtual;
 
-    function isProjectExisting(uint256 projectId) public view virtual returns (bool);
-
     /**
     * @dev NOTE: memory & public is not recommeneded for function which have input param is arrays, calldata & external function instead
      */
@@ -170,8 +168,6 @@ abstract contract ISupplyChainManagementProgram is Initializable, PausableUpgrad
     function insertAgreementToCommodity(uint256 projectCommodityId, bytes32 agreementId) public virtual;
 
     function removeAgreementFromCommodity(uint256 projectCommodityId, bytes32 agreementId) public virtual;
-
-    function getAgreementsOfProjectCommodity(uint256 projectCommodityId) public view virtual returns (bytes32[] memory);
 
 /*
     function getProjectDetail(uint256 projectId) public view virtual
