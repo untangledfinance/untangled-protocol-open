@@ -7,11 +7,8 @@ import '../../interfaces/ISecuritizationPool.sol';
 
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/ICrowdSale.sol';
-import '../../libraries/UntangledMath.sol';
-
-import './DistributionAssessor.sol';
-
+import '../../interfaces/ICrowdSale.sol'; 
+import '../../interfaces/IDistributionAssessor.sol';
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
     NAVCalculation,
@@ -337,10 +334,9 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-//        address currencyAddress = securitizationPool.underlyingCurrency();
+        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        // use reserve variable instead
-        uint256 balancePool = securitizationPool.reserve();
+        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
         uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;
@@ -410,17 +406,18 @@ contract SecuritizationPoolValueService is
 
     function getReserve(
         address poolAddress,
-        address distributorAssessor,
+      
         uint256 JOTPrincipal,
         uint256 SOTTokenRedeem,
         uint256 JOTTokenRedeem
     ) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        DistributionAssessor distributorAssessorInstance = DistributionAssessor(distributorAssessor);
+        IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
+        uint256 currentTimestamp = block.timestamp;
+        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress,currentTimestamp);
+        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool,currentTimestamp);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);
