@@ -74,7 +74,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
                 securitizationPool              
-            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR);
+            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR;
  
 
             tokenToBeRedeemed = Math.min(

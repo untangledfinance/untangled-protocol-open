@@ -223,7 +223,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return 0;
     }
 
- v
     function _calcPrincipalInterestSOT(
         ISecuritizationPool securitizationPool,
         address sotToken,
