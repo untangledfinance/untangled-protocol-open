@@ -52,7 +52,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                     block.timestamp
                 );
         } else {
-            return _calcPrincipalInterestJOT(pool, jotToken, investor, block.timestamp);
+            return _calcPrincipalInterestJOT(pool, jotToken, investor);
         }
     }
 
@@ -94,7 +94,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                     endTime
                 );
         } else {
-            return _calcPrincipalInterestJOT(notesToken.poolAddress(), tokenAddress, investor, endTime);
+            return _calcPrincipalInterestJOT(notesToken.poolAddress(), tokenAddress, investor);
         }
     }
 
@@ -136,10 +136,9 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                 (uint256 principal, uint256 interest) = _calcPrincipalInterestJOT(
                     pool,
                     jotToken,
-                    investors[i],
-                    block.timestamp
+                    investors[i]
+                    
                 );
-
                 principals[i] = principal;
                 interests[i] = interest;
             }
@@ -189,6 +188,19 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
+ 
+    function calcSeniorAssetValue(address pool) public view returns (address, uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        INoteToken sot = INoteToken(securitizationPool.sotToken());
+
+        uint256 price = getSOTTokenPrice(address(securitizationPool));
+        uint256 totalSotSupply = sot.totalSupply();
+        uint256 ONE_SOT = 10 ** uint256(sot.decimals());
+
+        return (address(sot), (price * totalSotSupply) / ONE_SOT);
+    }
+
+ 
     function getCashBalance(address pool) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         return
@@ -196,6 +208,22 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             securitizationPool.totalLockedDistributeBalance();
     }
 
+ 
+    function _calcJuniorAssetValue(address pool, uint256 timestamp) internal view returns (uint256) {
+        (, uint256 seniorAssetValue) = calcSeniorAssetValue(pool);
+
+        uint256 available = registry.getSecuritizationPoolValueService().getExpectedAssetsValue(pool, timestamp) +
+            this.getCashBalance(pool);
+
+        // senior debt needs to be covered first
+        if (available > seniorAssetValue) {
+            return available - seniorAssetValue;
+        }
+        // currently junior would receive nothing
+        return 0;
+    }
+
+ v
     function _calcPrincipalInterestSOT(
         ISecuritizationPool securitizationPool,
         address sotToken,
@@ -218,8 +246,8 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     function _calcPrincipalInterestJOT(
         address pool,
         address jotToken,
-        address investor,
-        uint256 termEndUnixTimestamp
+        address investor
+      
     ) internal view returns (uint256 principal, uint256 interest) {
         uint256 tokenPrice = getJOTTokenPrice(ISecuritizationPool(pool));
         uint256 currentPrincipal = IERC20(jotToken).balanceOf(investor);

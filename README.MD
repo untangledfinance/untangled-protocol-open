@@ -59,6 +59,9 @@ yarn deploy --tags [..] --network [..]
 
 `slither .`
 
-## To create checklist 
+## To test run 
 
-`slither . --checklist --markdown-root https://github.com/untangledfinance/untangled-protocol-open/blob/a57c20d7e2a04b26655fec9bb099db70bb053088/`
+`truffle test`
+
+
+

@@ -7,16 +7,14 @@ import '../../interfaces/ISecuritizationPool.sol';
 
 import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/ICrowdSale.sol';
+import '../../interfaces/ICrowdSale.sol'; 
 import '../../interfaces/IDistributionAssessor.sol';
-
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
     NAVCalculation,
     ISecuritizationPoolValueService
 {
     using ConfigHelper for Registry;
-
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     function getPresentValueWithNAVCalculation(
@@ -72,9 +70,8 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256 tokenIdsLength = tokenIds.length;
-        uint256[] memory balances = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        uint256[] memory balances = new uint256[](tokenIds.length);
+        for (uint256 i; i < tokenIds.length; i++) {
             balances[i] = getExpectedAssetValue(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return balances;
@@ -118,9 +115,8 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256  tokenIdsLength =  tokenIds.length;
-        uint256[] memory interestRates = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        uint256[] memory interestRates = new uint256[](tokenIds.length);
+        for (uint256 i; i < tokenIds.length; i++) {
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return interestRates;
@@ -317,8 +313,7 @@ contract SecuritizationPoolValueService is
         address[] calldata investors
     ) external view returns (uint256) {
         uint256 result = 0;
-        uint256 investorsLength = investors.length; 
-        for (uint256 i = 0; i < investorsLength; i++) {
+        for (uint256 i = 0; i < investors.length; i++) {
             result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
         }
         return result;
@@ -392,18 +387,15 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
-
         uint256 seniorBalance;
-
         uint256 poolValue;
         poolValue = this.getPoolValue(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
         if (balancePool == 0) return 0;
-
+        // require(balancePool > 0, 'pool does not have balance');
         uint256 ratioForReserve = balancePool / (poolValue);
-
         seniorBalance = ratioForReserve * beginningSeniorAsset;
 
         return seniorBalance;
@@ -411,6 +403,7 @@ contract SecuritizationPoolValueService is
 
     function getReserve(
         address poolAddress,
+      
         uint256 JOTPrincipal,
         uint256 SOTTokenRedeem,
         uint256 JOTTokenRedeem
@@ -418,14 +411,12 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
-
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-                uint256 currentTimestamp = block.timestamp;
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress,currentTimestamp);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool,currentTimestamp);        
-        // later we will use this 
-        // uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
-        // uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
+ 
+       
+        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
+        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
+ 
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);
@@ -483,7 +474,7 @@ contract SecuritizationPoolValueService is
         uint256 poolValue = this.getPoolValue(poolAddress);
         if (poolValue == 0) {
             return 0;
-        }
+        }        
 
         return (seniorAsset * RATE_SCALING_FACTOR) / poolValue;
     }

@@ -52,6 +52,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         if (securitizationPool.sotToken() == address(noteToken)) {
             tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(
                 address(securitizationPool)
+ 
             );
 
             tokenToBeRedeemed = Math.min(
@@ -72,8 +73,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         } else if (securitizationPool.jotToken() == address(noteToken)) {
             uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
-                securitizationPool
-            );
+                securitizationPool              
+            ) * (10 ** currencyDecimals)/Configuration.PRICE_SCALING_FACTOR);
+ 
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
