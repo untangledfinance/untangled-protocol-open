@@ -15,7 +15,6 @@ contract SecuritizationPoolValueService is
     ISecuritizationPoolValueService
 {
     using ConfigHelper for Registry;
-
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     function getPresentValueWithNAVCalculation(
@@ -387,9 +386,7 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
-
         uint256 seniorBalance;
-
         uint256 poolValue;
         poolValue = this.getPoolValue(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
@@ -398,7 +395,6 @@ contract SecuritizationPoolValueService is
         if (balancePool == 0) return 0;
         // require(balancePool > 0, 'pool does not have balance');
         uint256 ratioForReserve = balancePool / (poolValue);
-
         seniorBalance = ratioForReserve * beginningSeniorAsset;
 
         return seniorBalance;
@@ -475,8 +471,7 @@ contract SecuritizationPoolValueService is
         uint256 poolValue = this.getPoolValue(poolAddress);
         if (poolValue == 0) {
             return 0;
-        }
-        // require(poolValue > 0, 'Pool value has no value');
+        }        
 
         return (seniorAsset * RATE_SCALING_FACTOR) / poolValue;
     }

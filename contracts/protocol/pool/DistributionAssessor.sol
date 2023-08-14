@@ -139,7 +139,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                     investors[i],
                     block.timestamp
                 );
-
                 principals[i] = principal;
                 interests[i] = interest;
             }
