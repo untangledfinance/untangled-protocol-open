@@ -11,7 +11,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     using ConfigHelper for Registry;
 
     // get current individual asset for SOT tranche
-    function getSOTTokenPrice(address pool, uint256 timestamp) public view override returns (uint256) {
+    function getSOTTokenPrice(address pool) public view override returns (uint256) {
         if (pool == address(0)) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
@@ -52,7 +52,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                     block.timestamp
                 );
         } else {
-            return _calcPrincipalInterestJOT(pool, jotToken, investor, block.timestamp);
+            return _calcPrincipalInterestJOT(pool, jotToken, investor);
         }
     }
 
@@ -94,7 +94,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                     endTime
                 );
         } else {
-            return _calcPrincipalInterestJOT(notesToken.poolAddress(), tokenAddress, investor, endTime);
+            return _calcPrincipalInterestJOT(notesToken.poolAddress(), tokenAddress, investor);
         }
     }
 
@@ -136,8 +136,8 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                 (uint256 principal, uint256 interest) = _calcPrincipalInterestJOT(
                     pool,
                     jotToken,
-                    investors[i],
-                    block.timestamp
+                    investors[i]
+                    
                 );
                 principals[i] = principal;
                 interests[i] = interest;
@@ -162,15 +162,15 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     function calcTokenPrice(address pool, address tokenAddress) external view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         if (tokenAddress == securitizationPool.sotToken())
-            return getSOTTokenPrice(address(securitizationPool), block.timestamp);
+            return getSOTTokenPrice(address(securitizationPool));
         else if (tokenAddress == securitizationPool.jotToken())
-            return getJOTTokenPrice(securitizationPool, block.timestamp);
+            return getJOTTokenPrice(securitizationPool);
         return 0;
     }
 
     function getJOTTokenPrice(
-        ISecuritizationPool securitizationPool,
-        uint256 endTime
+        ISecuritizationPool securitizationPool
+        
     ) public view override returns (uint256) {
         if (address(securitizationPool) == address(0)) {
             return 0;
@@ -189,11 +189,11 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
-    function calcSeniorAssetValue(address pool, uint256 timestamp) public view returns (address, uint256) {
+    function calcSeniorAssetValue(address pool) public view returns (address, uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         INoteToken sot = INoteToken(securitizationPool.sotToken());
 
-        uint256 price = getSOTTokenPrice(address(securitizationPool), timestamp);
+        uint256 price = getSOTTokenPrice(address(securitizationPool));
         uint256 totalSotSupply = sot.totalSupply();
         uint256 ONE_SOT = 10 ** uint256(sot.decimals());
 
@@ -208,7 +208,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     }
 
     function _calcJuniorAssetValue(address pool, uint256 timestamp) internal view returns (uint256) {
-        (, uint256 seniorAssetValue) = calcSeniorAssetValue(pool, timestamp);
+        (, uint256 seniorAssetValue) = calcSeniorAssetValue(pool);
 
         uint256 available = registry.getSecuritizationPoolValueService().getExpectedAssetsValue(pool, timestamp) +
             this.getCashBalance(pool);
@@ -243,10 +243,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     function _calcPrincipalInterestJOT(
         address pool,
         address jotToken,
-        address investor,
-        uint256 termEndUnixTimestamp
+        address investor
+      
     ) internal view returns (uint256 principal, uint256 interest) {
-        uint256 tokenPrice = getJOTTokenPrice(ISecuritizationPool(pool), termEndUnixTimestamp);
+        uint256 tokenPrice = getJOTTokenPrice(ISecuritizationPool(pool));
         uint256 currentPrincipal = IERC20(jotToken).balanceOf(investor);
         if (tokenPrice > Configuration.PRICE_SCALING_FACTOR)
             return (
