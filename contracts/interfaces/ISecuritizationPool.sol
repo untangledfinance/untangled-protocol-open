@@ -8,6 +8,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     address public tgeAddress;
     address public secondTGEAddress;
@@ -21,6 +22,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
+    uint256 public reserve; // Money in pool
     uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
     uint256 public totalLockedDistributeBalance;
@@ -183,5 +185,13 @@ abstract contract ISecuritizationPool is UntangledBase {
         address notesToken,
         uint256 currencyAmount,
         uint256 tokenAmount
+    ) external virtual;
+
+    function withdraw(
+        uint256 amount
+    ) external virtual;
+
+    function onBuyNoteToken(
+        uint256 currencyAmount
     ) external virtual;
 }

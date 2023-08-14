@@ -47,27 +47,14 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         }
     }
 
-    function getLongSaleTokenPrice(uint256 timestamp) public view returns (uint256) {
-        if (!finalized) return (RATE_SCALING_FACTOR**2) / rate;
-        else if (
-            Configuration.NOTE_TOKEN_TYPE(INoteToken(token).noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.JUNIOR
-        ) {
-            address sotTgeAddress = ISecuritizationPool(pool).tgeAddress();
-            if (sotTgeAddress != address(0) && !FinalizableCrowdsale(sotTgeAddress).finalized())
-                return (RATE_SCALING_FACTOR**2) / rate;
-            return registry.getDistributionAssessor().calcTokenPrice(pool, token);
-        } else {
-            require(
-                timeStartEarningInterest != 0,
-                'MintedIncreasingInterestTGE: timeStartEarningInterest need to be setup'
-            );
-            return getPurchasePrice(interestRate, yield, timestamp - timeStartEarningInterest, termLengthInSeconds);
-        }
+    function getTokenPrice() public view returns (uint256) {
+        return registry.getDistributionAssessor().getJOTTokenPrice(
+            ISecuritizationPool(pool)
+        );
     }
 
-    function getLongSaleTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return
-            _getTokenAmount((currencyAmount * PURCHASE_PRICE_SCALING_FACTOR) / getLongSaleTokenPrice(block.timestamp));
+    function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
+        return currencyAmount / getTokenPrice();
     }
 
     function startNewRoundSale(

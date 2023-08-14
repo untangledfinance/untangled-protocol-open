@@ -170,7 +170,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
     function getJOTTokenPrice(
         ISecuritizationPool securitizationPool
-        
     ) public view override returns (uint256) {
         if (address(securitizationPool) == address(0)) {
             return 0;
@@ -189,6 +188,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
+ 
     function calcSeniorAssetValue(address pool) public view returns (address, uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         INoteToken sot = INoteToken(securitizationPool.sotToken());
@@ -200,6 +200,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (address(sot), (price * totalSotSupply) / ONE_SOT);
     }
 
+ 
     function getCashBalance(address pool) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         return
@@ -207,6 +208,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             securitizationPool.totalLockedDistributeBalance();
     }
 
+ 
     function _calcJuniorAssetValue(address pool, uint256 timestamp) internal view returns (uint256) {
         (, uint256 seniorAssetValue) = calcSeniorAssetValue(pool);
 
@@ -221,6 +223,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return 0;
     }
 
+ v
     function _calcPrincipalInterestSOT(
         ISecuritizationPool securitizationPool,
         address sotToken,
@@ -254,20 +257,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
                 (currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR - currentPrincipal
             );
         else return ((currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR, 0);
-    }
-
-    function _getPrincipalLeftOfSOT(
-        ISecuritizationPool securitizationPool,
-        address sotToken
-    ) internal view returns (uint256) {
-        uint256 totalPrincipal = 0;
-        uint256 totalTokenRedeem = 0;
-        if (sotToken != address(0x0)) {
-            totalPrincipal = IERC20(sotToken).totalSupply();
-            totalTokenRedeem = securitizationPool.totalLockedRedeemBalances(sotToken);
-        }
-
-        return totalPrincipal - totalTokenRedeem;
     }
 
     function _calcSeniorAssetValue(

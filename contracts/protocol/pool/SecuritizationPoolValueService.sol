@@ -333,9 +333,10 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-        address currencyAddress = securitizationPool.underlyingCurrency();
+//        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
+        // use reserve variable instead
+        uint256 balancePool = securitizationPool.reserve();
         uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;
@@ -376,8 +377,8 @@ contract SecuritizationPoolValueService is
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
 
-        uint256 seniorDebt = (beginningSeniorDebt *
-            (1 + (seniorInterestRate / RATE_SCALING_FACTOR) * (compoundingPeriods / oneYearInSeconds)));
+        uint256 seniorDebt = beginningSeniorDebt *
+             + (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) / (RATE_SCALING_FACTOR * oneYearInSeconds);
         return seniorDebt;
     }
 
@@ -411,9 +412,11 @@ contract SecuritizationPoolValueService is
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
+ 
        
         uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
         uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
+ 
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);

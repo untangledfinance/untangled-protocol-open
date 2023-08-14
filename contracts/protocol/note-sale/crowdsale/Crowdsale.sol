@@ -78,7 +78,7 @@ abstract contract Crowdsale is UntangledBase {
         address beneficiary,
         uint256 currencyAmount
     ) external whenNotPaused nonReentrant smpRestricted returns (uint256) {
-        uint256 tokenAmount = isLongSale() ? getLongSaleTokenAmount(currencyAmount) : _getTokenAmount(currencyAmount);
+        uint256 tokenAmount = getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
 
@@ -111,7 +111,7 @@ abstract contract Crowdsale is UntangledBase {
 
     function isLongSale() public view virtual returns (bool);
 
-    function getLongSaleTokenAmount(uint256 currencyAmount) public view virtual returns (uint256);
+    function getTokenAmount(uint256 currencyAmount) public view virtual returns (uint256);
 
     function _defaultPreValidatePurchase(
         address beneficiary,
@@ -154,14 +154,6 @@ abstract contract Crowdsale is UntangledBase {
         return
             (currencyAmount * rate * TEN**ERC20(token).decimals()) /
             (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
-    }
-
-    function _getCurrencyAmount(uint256 tokenAmount) internal view returns (uint256) {
-        if (rate == 0) return 0;
-        uint256 TEN = 10;
-        return
-            (tokenAmount * RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals()) /
-            (rate * TEN**ERC20(token).decimals());
     }
 
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {

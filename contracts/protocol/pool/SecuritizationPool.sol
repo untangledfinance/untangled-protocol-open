@@ -19,6 +19,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address _currency,
         uint32 _minFirstLossCushion
     ) public override initializer {
+        require(_minFirstLossCushion < 100*RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
         __UntangledBase__init(_msgSender());
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
@@ -226,6 +227,19 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    function withdraw(
+        uint256 amount
+    ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+        reserve = reserve - amount;
+        require(checkMinFirstLost(), "MinFirstLoss is not satisfied");
+        IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount);
+    }
+
+    function checkMinFirstLost() public returns(bool) {
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
+    }
+
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,
@@ -375,6 +389,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
+        reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
 
@@ -394,10 +409,18 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (tokenAmount > 0) {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
+        reserve = reserve - currencyAmount;
+        require(checkMinFirstLost(), "MinFirstLoss is not satisfied");
         require(
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
    
+    }
+
+    function onBuyNoteToken(
+        uint256 currencyAmount
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager {
+        reserve = reserve + currencyAmount;
     }
 }
