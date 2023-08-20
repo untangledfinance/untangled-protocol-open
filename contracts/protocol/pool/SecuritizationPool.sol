@@ -229,7 +229,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     function withdraw(
         uint256 amount
-    ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+    ) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
         reserve = reserve - amount;
         require(checkMinFirstLost(), "MinFirstLoss is not satisfied");
         IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount);
