@@ -371,7 +371,6 @@ contract SecuritizationPoolValueService is
 
     // @notice get beginning of senior debt, get interest of this debt over number of interval
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
-        uint256 currentTimestamp = block.timestamp;
         uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
         if (beginningSeniorDebt == 0) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);

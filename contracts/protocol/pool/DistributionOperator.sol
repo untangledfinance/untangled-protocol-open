@@ -70,7 +70,6 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
             tranche.redeemToken(address(noteToken), _msgSender(), tokenToBeRedeemed);
         } else if (securitizationPool.jotToken() == address(noteToken)) {
-            uint256 currencyDecimals = ERC20(securitizationPool.underlyingCurrency()).decimals();
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
                 securitizationPool
             );
