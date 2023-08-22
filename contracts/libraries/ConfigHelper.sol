@@ -19,11 +19,7 @@ import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
-import '../protocol/loan/invoice/InvoiceCollateralizer.sol';
-import '../protocol/loan/invoice/InvoiceDebtRegistry.sol';
-import '../protocol/loan/invoice/InvoiceFinanceInterestTermsContract.sol';
-import '../protocol/loan/invoice/InvoiceLoanKernel.sol';
-import '../protocol/loan/invoice/InvoiceLoanRepaymentRouter.sol';
+import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
@@ -109,25 +105,5 @@ library ConfigHelper {
         MintedNormalTGE(
             getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
         );
-    }
-
-    function getInvoiceDebtRegistry(Registry registry) internal view returns (InvoiceDebtRegistry) {
-        return InvoiceDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_DEBT_REGISTRY));
-    }
-
-    function getInvoiceCollateralizer(Registry registry) internal view returns (InvoiceCollateralizer) {
-        return InvoiceCollateralizer(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_COLLATERALIZER));
-    }
-
-    function getInvoiceFinanceInterestTermsContract(Registry registry) internal view returns (InvoiceFinanceInterestTermsContract) {
-        return InvoiceFinanceInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_FINANCE_INTEREST_TERMS_CONTRACT));
-    }
-
-    function getInvoiceLoanKernel(Registry registry) internal view returns (InvoiceLoanKernel) {
-        return InvoiceLoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_KERNEL));
-    }
-
-    function getInvoiceLoanRepaymentRouter(Registry registry) internal view returns (InvoiceLoanRepaymentRouter) {
-        return InvoiceLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_REPAYMENT_ROUTER));
     }
 }
