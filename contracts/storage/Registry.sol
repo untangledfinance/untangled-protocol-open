@@ -130,34 +130,6 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_KERNEL), newAddress);
     }
 
-    function setCollateralManagementToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.COLLATERAL_MANAGEMENT_TOKEN), newAddress);
-    }
-
-    function setSupplyChainManagementProgram(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.SUPPLY_CHAIN_MANAGEMENT_PROGRAM), newAddress);
-    }
-
-    function setInventoryLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_LOAN_KERNEL), newAddress);
-    }
-
-    function setInventoryLoanRegistry(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_LOAN_REGISTRY), newAddress);
-    }
-
-    function setInventoryLoanRepaymentRouter(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_LOAN_REPAYMENT_ROUTER), newAddress);
-    }
-
-    function setInventoryInterestTermsContract(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_INTEREST_TERMS_CONTRACT), newAddress);
-    }
-
-    function setInventoryCollateralizer(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.INVENTORY_COLLATERALIZER), newAddress);
-    }
-
     function setInvoiceLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused nonReentrant {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.INVOICE_LOAN_KERNEL), newAddress);
     }
