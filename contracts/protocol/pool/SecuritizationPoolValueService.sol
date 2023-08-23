@@ -140,8 +140,7 @@ contract SecuritizationPoolValueService is
 
         uint256 totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
             tokenAddress,
-            poolAddress,
-            timestamp
+            poolAddress
         );
 
         uint256 presentValue = getPresentValueWithNAVCalculation(
@@ -156,8 +155,7 @@ contract SecuritizationPoolValueService is
         if (timestamp < expirationTimestamp) {
             totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
                 tokenAddress,
-                poolAddress,
-                timestamp
+                poolAddress
             );
         }
 
@@ -317,7 +315,7 @@ contract SecuritizationPoolValueService is
         address[] calldata investors
     ) external view returns (uint256) {
         uint256 result = 0;
-        uint256 investorsLength = investors.length; 
+        uint256 investorsLength = investors.length;
         for (uint256 i = 0; i < investorsLength; i++) {
             result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
         }

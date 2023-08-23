@@ -25,138 +25,49 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
     }
 
-    // get current individual asset for SOT tranche
-    function calcAssetValue(
-        address pool,
-        address tokenAddress,
-        address investor
-    ) external view override returns (uint256 principal, uint256 interest) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-
-        address sotToken = securitizationPool.sotToken();
-        address jotToken = securitizationPool.jotToken();
-
-        require(tokenAddress == sotToken || tokenAddress == jotToken, 'DistributionAssessor: unknown-tranche-address');
-
-        uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-
-        if (tokenAddress == sotToken) {
-            uint32 interestRateSOT = securitizationPool.interestRateSOT();
-            uint256 currentPrincipal = IERC20(tokenAddress).balanceOf(investor);
-            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(sotToken, investor);
-            return
-                _calcSeniorAssetValue(
-                    currentPrincipal - tokenRedeem,
-                    interestRateSOT,
-                    openingBlockTimestamp,
-                    block.timestamp
-                );
-        } else {
-            return _calcPrincipalInterestJOT(pool, jotToken, investor, block.timestamp);
-        }
-    }
-
     function calcCorrespondingTotalAssetValue(
         address tokenAddress,
-        address investor,
-        uint256 endTime
+        address investor
     ) external view override returns (uint256) {
-        (uint256 principal, uint256 interest) = _calcCorrespondingAssetValue(tokenAddress, investor, endTime);
-        return principal + interest;
+        return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
     function calcCorrespondingAssetValue(
         address tokenAddress,
-        address investor,
-        uint256 endTime
-    ) external view returns (uint256 principal, uint256 interest) {
-        return _calcCorrespondingAssetValue(tokenAddress, investor, endTime);
+        address investor
+    ) external view returns (uint256) {
+        return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
     function _calcCorrespondingAssetValue(
         address tokenAddress,
-        address investor,
-        uint256 endTime
-    ) internal view returns (uint256 principal, uint256 interest) {
+        address investor
+    ) internal view returns (uint256) {
         INoteToken notesToken = INoteToken(tokenAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(notesToken.poolAddress());
 
         if (Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
-            uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-            uint32 interestRateSOT = securitizationPool.interestRateSOT();
-            return
-                _calcPrincipalInterestSOT(
-                    securitizationPool,
-                    tokenAddress,
-                    investor,
-                    interestRateSOT,
-                    openingBlockTimestamp,
-                    endTime
-                );
+            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
+            uint256 sotBalance = notesToken.balanceOf(investor) - tokenRedeem;
+            uint256 sotPrice = getSOTTokenPrice(notesToken.poolAddress());
+            return sotBalance*sotPrice;
         } else {
-            return _calcPrincipalInterestJOT(notesToken.poolAddress(), tokenAddress, investor, endTime);
-        }
-    }
-
-    function calcAssetValue(
-        address pool,
-        address tokenAddress,
-        address[] calldata investors
-    ) external view returns (uint256[] memory principals, uint256[] memory interests) {
-        uint256 investorsLength = investors.length;
-        principals = new uint256[](investorsLength);
-        interests = new uint256[](investorsLength);
-
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-
-        address sotToken = securitizationPool.sotToken();
-        address jotToken = securitizationPool.jotToken();
-        require(tokenAddress == sotToken || tokenAddress == jotToken, 'DistributionAssessor: unknown-tranche-address');
-
-        uint256 openingBlockTimestamp = securitizationPool.openingBlockTimestamp();
-        
-        if (tokenAddress == sotToken) {
-            uint32 interestRateSOT = securitizationPool.interestRateSOT();
-            
-            for (uint256 i = 0; i < investorsLength; i++) {
-                (uint256 principal, uint256 interest) = _calcPrincipalInterestSOT(
-                    securitizationPool,
-                    sotToken,
-                    investors[i],
-                    interestRateSOT,
-                    openingBlockTimestamp,
-                    block.timestamp
-                );
-
-                principals[i] = principal;
-                interests[i] = interest;
-            }
-        } else {
-            for (uint256 i = 0; i <investorsLength; i++) {
-                (uint256 principal, uint256 interest) = _calcPrincipalInterestJOT(
-                    pool,
-                    jotToken,
-                    investors[i],
-                    block.timestamp
-                );
-
-                principals[i] = principal;
-                interests[i] = interest;
-            }
+            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
+            uint256 jotBalance = notesToken.balanceOf(investor) - tokenRedeem;
+            uint256 jotPrice = getJOTTokenPrice(securitizationPool);
+            return jotBalance * jotPrice;
         }
     }
 
     function calcCorrespondingAssetValue(
         address tokenAddress,
-        address[] calldata investors,
-        uint256 endTime
-    ) external view returns (uint256[] memory principals, uint256[] memory interests) {
+        address[] calldata investors
+    ) external view returns (uint256[] memory values) {
          uint256 investorsLength = investors.length;
-        principals = new uint256[](investorsLength);
-        interests = new uint256[](investorsLength);
+        values = new uint256[](investorsLength);
 
         for (uint256 i = 0; i < investorsLength; i++) {
-            (principals[i], interests[i]) = _calcCorrespondingAssetValue(tokenAddress, investors[i], endTime);
+            values[i] = _calcCorrespondingAssetValue(tokenAddress, investors[i]);
         }
     }
 
@@ -196,30 +107,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             securitizationPool.totalLockedDistributeBalance();
     }
 
-    function _calcPrincipalInterestSOT(
-        ISecuritizationPool securitizationPool,
-        address sotToken,
-        address investor,
-        uint32 interestRateSOT,
-        uint256 openingBlockTimestamp,
-        uint256 timestamp
-    ) internal view returns (uint256 principal, uint256 interest) {
-        uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(sotToken, investor);
-
-        return
-            _calcSeniorAssetValue(
-                IERC20(sotToken).balanceOf(investor) - tokenRedeem,
-                interestRateSOT,
-                openingBlockTimestamp,
-                timestamp
-            );
-    }
-
     function _calcPrincipalInterestJOT(
         address pool,
         address jotToken,
-        address investor,
-        uint256 termEndUnixTimestamp
+        address investor
     ) internal view returns (uint256 principal, uint256 interest) {
         uint256 tokenPrice = getJOTTokenPrice(ISecuritizationPool(pool));
         uint256 currentPrincipal = IERC20(jotToken).balanceOf(investor);
@@ -231,13 +122,4 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         else return ((currentPrincipal * tokenPrice) / Configuration.PRICE_SCALING_FACTOR, 0);
     }
 
-    function _calcSeniorAssetValue(
-        uint256 _currentPrincipalAmount,
-        uint256 _annualInterestRate,
-        uint256 _startTermTimestamp,
-        uint256 _timestamp
-    ) internal pure returns (uint256 principal, uint256 interest) {
-        principal = _currentPrincipalAmount;
-        interest = chargeLendingInterest(_currentPrincipalAmount, _annualInterestRate, _startTermTimestamp, _timestamp);
-    }
 }
