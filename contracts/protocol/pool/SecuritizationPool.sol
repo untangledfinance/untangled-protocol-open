@@ -235,7 +235,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount);
     }
 
-    function checkMinFirstLost() public returns(bool) {
+    function checkMinFirstLost() public view returns(bool) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }

@@ -11,15 +11,8 @@ abstract contract IDistributionAssessor {
 
     function getCashBalance(address pool) public view virtual returns (uint256);
 
-    function calcAssetValue(
-        address pool,
-        address tokenAddress,
-        address investor
-    ) external view virtual returns (uint256 principal, uint256 interest);
-
     function calcCorrespondingTotalAssetValue(
         address tokenAddress,
-        address investor,
-        uint256 timestamp
+        address investor
     ) external view virtual returns (uint256);
 }
