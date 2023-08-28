@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "Decentralized lending and liquidity protocol for real world asset collaterals",
   "scripts": {
-    "compile": "yarn hardhat compile",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "hardhat deploy"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat deploy",
+    "slither": "bash ./scripts/static_analysis.sh"
   },
-  "author": "Teddy Nguyen",
+  "author": "Untangled Finance Ltd",
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",

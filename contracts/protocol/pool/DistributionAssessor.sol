@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.21;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './base/Interest.sol';
@@ -12,14 +12,16 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 
     // get current individual asset for SOT tranche
     function getSOTTokenPrice(address pool) public view override returns (uint256) {
-        if (pool == address(0)) return 0;
+        require(pool != address(0), "DistributionAssessor: Invalid pool address");
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
         uint256 seniorSupply = noteToken.totalSupply();
         uint256 seniorDecimals = noteToken.decimals();
 
-        if (address(noteToken) == address(0) || noteToken.totalSupply() == 0) return 0;
+        require(address(noteToken) != address(0), "DistributionAssessor: Invalid note token address");
+        // In initial state, SOT price = 1$
+        if (noteToken.totalSupply() == 0) return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals()-seniorDecimals);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
@@ -83,17 +85,15 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     function getJOTTokenPrice(
         ISecuritizationPool securitizationPool
     ) public view override returns (uint256) {
-        if (address(securitizationPool) == address(0)) {
-            return 0;
-        }
+        require(address(securitizationPool) != address(0), "DistributionAssessor: Invalid pool address");
         // require(address(securitizationPool) != address(0), 'pool was not deployed');
         // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         address tokenAddress = securitizationPool.jotToken();
         uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
         uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
-        if (tokenAddress == address(0) || tokenSupply == 0) {
-            return 0;
-        }
+        require(tokenAddress != address(0), "DistributionAssessor: Invalid note token address");
+        // In initial state, SOT price = 1$
+        if (tokenSupply == 0) return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals()-tokenDecimals);
         // address pool = address(securitizationPool);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
