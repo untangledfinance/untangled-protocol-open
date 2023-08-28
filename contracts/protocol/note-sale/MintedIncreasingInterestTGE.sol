@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 import './crowdsale/IncreasingInterestCrowdsale.sol';
 import './base/LongSaleInterest.sol';

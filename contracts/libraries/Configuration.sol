@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 library Configuration {
     uint256 public constant PRICE_SCALING_FACTOR = 10**4;

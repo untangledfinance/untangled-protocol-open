@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 import '../../interfaces/IUntangledERC721.sol';
 import '../../interfaces/INoteToken.sol';
