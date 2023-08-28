@@ -4,7 +4,7 @@ require('@nomiclabs/hardhat-etherscan');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
 require('@openzeppelin/hardhat-upgrades');
-require('@nomiclabs/hardhat-waffle');
+require("@nomiclabs/hardhat-waffle");
 
 require('dotenv').config();
 const MNEMONIC = process.env.MNEMONIC;
@@ -12,12 +12,12 @@ const MNEMONIC = process.env.MNEMONIC;
 const accounts = {
   mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
 };
-console.log(15, accounts[0]);
+console.log(15, accounts[0])
 module.exports = {
   solidity: {
     compilers: [
       {
-        version: '0.8.21',
+        version: '0.8.13',
         settings: {
           optimizer: {
             enabled: true,
@@ -28,7 +28,7 @@ module.exports = {
     ],
     overrides: {
       'contracts/protocol/pool/SecuritizationPool.sol': {
-        version: '0.8.21',
+        version: '0.8.13',
         settings: {
           optimizer: {
             enabled: true,
@@ -41,7 +41,7 @@ module.exports = {
   defaultNetwork: 'hardhat',
   namedAccounts: {
     deployer: 0,
-    invoiceOperator: '0x5380e40aFAd8Cdec0B841c4740985F1735Aa5aCB',
+    invoiceOperator: '0x5380e40aFAd8Cdec0B841c4740985F1735Aa5aCB'
   },
   networks: {
     hardhat: {
@@ -72,17 +72,17 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: 'QHKKRV5QTID4QH9MMIKU6ADXNIIHE1V4Z4',
-    customChains: [
-      {
-        network: 'alfajores',
-        chainId: 44787,
-        urls: {
-          apiURL: 'https://api-alfajores.celoscan.io/api',
-          browserURL: 'https://api-alfajores.celoscan.io',
-        },
-      },
-    ],
+    apiKey: "QHKKRV5QTID4QH9MMIKU6ADXNIIHE1V4Z4",
+    customChains: [{
+      network: "alfajores",
+      chainId: 44787,
+      urls: {
+        apiURL: "https://api-alfajores.celoscan.io/api",
+        browserURL: "https://api-alfajores.celoscan.io"
+      }
+    }
+
+    ]
   },
   mocha: {
     timeout: 200000,
