@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0;
+pragma solidity 0.8.21;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol';
 
 interface IUniqueIdentity is IERC1155Upgradeable {
     /// @notice Mint a new UniqueIdentity token to the msgSender
@@ -20,12 +20,7 @@ interface IUniqueIdentity is IERC1155Upgradeable {
     /// @param signature An EIP-191 signature of the corresponding mintTo params:
     ///                  (account, recipient, id, expiresAt, address(this), nonces[account], block.chainid)
     ///                  from an address with the SIGNER_ROLE.
-    function mintTo(
-        address recipient,
-        uint256 id,
-        uint256 expiresAt,
-        bytes calldata signature
-    ) external payable;
+    function mintTo(address recipient, uint256 id, uint256 expiresAt, bytes calldata signature) external payable;
 
     /// @notice Burn a UniqueIdentity token of `id` from the `account`
     /// @param account The account which currently owns the UID
