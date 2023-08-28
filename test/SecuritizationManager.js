@@ -1,11 +1,14 @@
-const { ethers, getNamedAccounts } = require('hardhat');
+const { ethers} = require('hardhat');
 const { deployments } = require('hardhat');
 const { BigNumber } = require('ethers');
+const { expect } = require('./shared/expect.js');
 
 
-describe('Token', () => {
+
+describe('SecuritizationManager', () => {
   let setupTest;
   let tokenA;
+  let securitizationManagerContract
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -17,6 +20,12 @@ describe('Token', () => {
         const tokenFactory = await ethers.getContractFactory('TestERC20');
         const tokenA = (await tokenFactory.deploy('cUSD', 'cUSD', BigNumber.from(2).pow(255)));
         await tokenA.transfer(lenderSigner.address, BigNumber.from(1000).pow(18)) // Lender has 1000$
+        const { get } = deployments;
+        securitizationManagerContract = await ethers.getContractAt(
+          'SecuritizationManager',
+          (await get('SecuritizationManager')).address,
+        );
+
         return {
           tokenA: tokenA,
         };
@@ -27,24 +36,26 @@ describe('Token', () => {
   beforeEach('deploy fixture', async () => {
     ({ tokenA } = await setupTest());
   });
-  it('testing 1', async function() {
+  it('Should create new pool instance', async function() {
     // await deployments.fixture();
-    const { deployer } = await getNamedAccounts();
-    const { deploy, execute, get, save } = deployments;
+    const { get } = deployments;
 
-    // const TokenContract = await ethers.getContractAt('TestERC20', (await get('TestERC20')).address);
-    /*
-        console.log("Deploy", deployer);
-        await tokenA.connect(untangledAdminSigner).transfer(borrowerSigner.address, '10000000000000000000')
-        const result = await tokenA.balanceOf(borrowerSigner.address)
-        console.log(result);
-    */
+    //
+    const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
+    await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    // Create new pool
+    const transaction = await securitizationManagerContract.connect(poolCreatorSigner).newPoolInstance(tokenA.address, '100000')
+    const receipt = await transaction.wait();
+    const [SecuritizationPoolAddress] = receipt.events.find(e => e.event == 'NewPoolCreated').args;
+    expect(SecuritizationPoolAddress).to.be.properAddress;
   });
-  it('testing 2', async function() {
-    const { deployer } = await getNamedAccounts();
-    const { deploy, execute, get, save } = deployments;
+  it('should emit RoleGranted event with an address', async function() {
+    const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
+    const transaction = await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    await transaction.wait();
+    await expect(transaction)
+      .to.emit(securitizationManagerContract, "RoleGranted")
+      .withArgs(POOL_CREATOR_ROLE, poolCreatorSigner.address, untangledAdminSigner.address);
 
-    const balance = await tokenA.balanceOf(lenderSigner.address);
-    console.log(balance);
   });
 });
