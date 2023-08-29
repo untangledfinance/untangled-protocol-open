@@ -64,12 +64,19 @@ describe('SecuritizationManager', () => {
       const [SecuritizationPoolAddress] = receipt.events.find(e => e.event == 'NewPoolCreated').args;
       expect(SecuritizationPoolAddress).to.be.properAddress;
       const securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', SecuritizationPoolAddress);
+
       expect(await securitizationPoolContract.underlyingCurrency()).to.equal(stableCoin.address);
       expect(await securitizationPoolContract.minFirstLossCushion()).to.equal(minFirstLostCushion);
+      expect(await securitizationManagerContract.isExistingPools(SecuritizationPoolAddress)).to.equal(true);
+      expect(await securitizationPoolContract.hasRole(await securitizationPoolContract.OWNER_ROLE(), poolCreatorSigner.address)).to.equal(true);
     });
 
     it('revert if minFistLossCushion >= 100%', async () => {
       // TODO Try create new pool with minFirstLossCushion >=100%
+    })
+
+    it('only pool creator role can create pool', async () => {
+      // TODO Try create new pool by wallet which is not POOL_CREATOR role
     })
 
   });
@@ -78,6 +85,10 @@ describe('SecuritizationManager', () => {
   });
 
   describe('#setUpTGEForJOT', async () => {
+
+  });
+
+  describe('#buyTokens', async () => {
 
   });
 });
