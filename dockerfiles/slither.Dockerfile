@@ -12,4 +12,4 @@ RUN npm install
 
 COPY . /src
 
-ENTRYPOINT [ "slither", "--print", "contract-summary"]
+ENTRYPOINT [ "slither"]
