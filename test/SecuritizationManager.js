@@ -2,6 +2,7 @@ const { ethers} = require('hardhat');
 const { deployments } = require('hardhat');
 const { BigNumber } = require('ethers');
 const { expect } = require('./shared/expect.js');
+const RATE_SCALING_FACTOR = 10 ** 4;
 
 
 
@@ -54,13 +55,22 @@ describe('SecuritizationManager', () => {
       const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
       await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
       // Create new pool
-      const transaction = await securitizationManagerContract.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, '100000')
+      const minFirstLostCushion = 10 * RATE_SCALING_FACTOR;
+      const transaction = await securitizationManagerContract.connect(poolCreatorSigner).newPoolInstance(
+        stableCoin.address,
+        minFirstLostCushion,
+      );
       const receipt = await transaction.wait();
       const [SecuritizationPoolAddress] = receipt.events.find(e => e.event == 'NewPoolCreated').args;
       expect(SecuritizationPoolAddress).to.be.properAddress;
       const securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', SecuritizationPoolAddress);
       expect(await securitizationPoolContract.underlyingCurrency()).to.equal(stableCoin.address);
+      expect(await securitizationPoolContract.minFirstLossCushion()).to.equal(minFirstLostCushion);
     });
+
+    it('revert if minFistLossCushion >= 100%', async () => {
+      // TODO Try create new pool with minFirstLossCushion >=100%
+    })
 
   });
   describe('#setUpTGEForSOT', async () => {
