@@ -2,13 +2,17 @@
 
 IMAGE_NAME="slither-analyzer-local"
 
-if ! docker images | awk '{print $1}' | grep -q "^$IMAGE_NAME$"; then
-    echo "Image does not exist"
-    # Build Slither image
-    DOCKER_CLI_HINTS=false docker build -t $IMAGE_NAME -f Dockerfiles/slither.Dockerfile .
-else
-    echo "Image $IMAGE_NAME is already exists, ignore building image."
+# Compile smart contracts
+npm run compile
+
+# Remove to rebuild
+if docker images | awk '{print $1}' | grep -q "^$IMAGE_NAME$"; then
+    echo "Image $IMAGE_NAME is already exists"
+    docker rmi "$IMAGE_NAME:latest"
 fi
+
+# Build Docker image
+DOCKER_CLI_HINTS=false docker build -t $IMAGE_NAME -f Dockerfiles/slither.Dockerfile .
 
 # Run Docker with cleanup option
 docker run -it --rm $IMAGE_NAME .
