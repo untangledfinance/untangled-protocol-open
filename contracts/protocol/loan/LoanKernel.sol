@@ -5,7 +5,6 @@ import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import 'hardhat/console.sol';
 
 contract LoanKernel is ILoanKernel, UntangledBase {
     using ConfigHelper for Registry;
