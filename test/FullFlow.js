@@ -1,9 +1,7 @@
 const { ethers } = require('hardhat');
 const { deployments } = require('hardhat');
-const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { BigNumber } = require('ethers');
 const { expect } = require('./shared/expect.js');
-
 
 const ONE_DAY = 86400;
 describe('Full flow', () => {
@@ -17,43 +15,39 @@ describe('Full flow', () => {
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
   before('create fixture', async () => {
-    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] = await ethers.getSigners();
-    setupTest = deployments.createFixture(
-      async ({ deployments, getNamedAccounts, ethers }, options) => {
-        await deployments.fixture(); // ensure you start from a fresh deployments
-        const tokenFactory = await ethers.getContractFactory('TestERC20');
-        const stableCoin = (await tokenFactory.deploy('cUSD', 'cUSD', BigNumber.from(2).pow(255)));
-        await stableCoin.transfer(lenderSigner.address, BigNumber.from(1000).pow(18)); // Lender has 1000$
-        const { get } = deployments;
-        securitizationManagerContract = await ethers.getContractAt(
-          'SecuritizationManager',
-          (await get('SecuritizationManager')).address,
-        );
-        loanKernelContract = await ethers.getContractAt(
-          'LoanKernel',
-          (await get('LoanKernel')).address,
-        );
-        loanRepaymentRouterContract = await ethers.getContractAt(
-          'LoanRepaymentRouter',
-          (await get('LoanRepaymentRouter')).address,
-        );
-        loanAssetTokenContract = await ethers.getContractAt(
-          'LoanAssetToken',
-          (await get('LoanAssetToken')).address,
-        );
+    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
+      await ethers.getSigners();
+    setupTest = deployments.createFixture(async ({ deployments, getNamedAccounts, ethers }, options) => {
+      await deployments.fixture(); // ensure you start from a fresh deployments
+      const tokenFactory = await ethers.getContractFactory('TestERC20');
+      const stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', BigNumber.from(2).pow(255));
+      await stableCoin.transfer(lenderSigner.address, BigNumber.from(1000).pow(18)); // Lender has 1000$
+      const { get } = deployments;
+      securitizationManagerContract = await ethers.getContractAt(
+        'SecuritizationManager',
+        (
+          await get('SecuritizationManager')
+        ).address
+      );
+      loanKernelContract = await ethers.getContractAt('LoanKernel', (await get('LoanKernel')).address);
+      loanRepaymentRouterContract = await ethers.getContractAt(
+        'LoanRepaymentRouter',
+        (
+          await get('LoanRepaymentRouter')
+        ).address
+      );
+      loanAssetTokenContract = await ethers.getContractAt('LoanAssetToken', (await get('LoanAssetToken')).address);
 
-        return {
-          stableCoin: stableCoin,
-        };
-      },
-    );
-
+      return {
+        stableCoin: stableCoin,
+      };
+    });
   });
   beforeEach('deploy fixture', async () => {
     ({ stableCoin } = await setupTest());
   });
 
-  it('Full flow', async function() {
+  it('Full flow', async function () {
     // await deployments.fixture();
     const { get } = deployments;
 
@@ -61,17 +55,28 @@ describe('Full flow', () => {
     const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
     await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
     // Create new pool
-    const transaction = await securitizationManagerContract.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, '100000');
+    const transaction = await securitizationManagerContract
+      .connect(poolCreatorSigner)
+      .newPoolInstance(stableCoin.address, '100000');
     const receipt = await transaction.wait();
-    const [securitizationPoolAddress] = receipt.events.find(e => e.event == 'NewPoolCreated').args;
+    const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
     const securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
 
-    await securitizationPoolContract.connect(poolCreatorSigner).setupRiskScores(
-      [86400, 2592000, 5184000, 7776000, 10368000, 31536000],
-      [950000, 900000, 910000, 800000, 810000, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 80000, 100000, 120000, 120000, 140000, 1000000, 10000, 20000, 30000, 40000, 50000, 1000000, 250000, 500000, 500000, 750000, 1000000, 1000000],
-      [432000, 432000, 432000, 432000, 432000, 432000, 2592000, 2592000, 2592000, 2592000, 2592000, 2592000, 250000, 500000, 500000, 750000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000],
-    );
+    await securitizationPoolContract
+      .connect(poolCreatorSigner)
+      .setupRiskScores(
+        [86400, 2592000, 5184000, 7776000, 10368000, 31536000],
+        [
+          950000, 900000, 910000, 800000, 810000, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 80000,
+          100000, 120000, 120000, 140000, 1000000, 10000, 20000, 30000, 40000, 50000, 1000000, 250000, 500000, 500000,
+          750000, 1000000, 1000000,
+        ],
+        [
+          432000, 432000, 432000, 432000, 432000, 432000, 2592000, 2592000, 2592000, 2592000, 2592000, 2592000, 250000,
+          500000, 500000, 750000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000,
+        ]
+      );
 
     await loanKernelContract.fillDebtOrder(
       [
@@ -248,33 +253,36 @@ describe('Full flow', () => {
         '0xeb03ce11837f5e93a467938bc2c2150408f7938d9936f2fede0be9d54fcded04',
         '0x956c75a3f42cc0d4fab9180b5700adb69cf8d1e7c58b291d35237117403bfe11',
         '0xcf2fb5fd35e534c77ca7b14914fc80741241437f9c2e324ac8373fd687b8f7ad',
-      ]);
+      ]
+    );
 
-    await securitizationPoolContract.connect(poolCreatorSigner).grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
-    await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true );
-    await securitizationPoolContract.connect(originatorSigner).collectAssets(loanAssetTokenContract.address,
-      originatorSigner.address,
-      [
-        "68573754499950287139712752973314570379296281614027304774473155089973215579519",
-        "39888941571860786265340489425254739441353721495892246225639551495367240395819",
-        "1814376911303643558138225754850733580633933175059860852674847724414762062843",
-        "70176507447801386923525276155217627110933503150876918878877518382174110024632",
-        "98118009304676984946015583983417753948122531080421117734495028460749452488367",
-        "13184540353607289166840638357985936899957388517674636340327471056718548051675",
-        "83378247069380986250526902606367526639054384236549274190483059284776773414400",
-        "29795738136514905421472504164247611249593715092255973320131889482931667072348",
-        "106969624913022291481467850417059640937452008089072537065333347573836882649380",
-        "66902177247152043284623974883866501610157473446318928265416164984638838841924",
-        "16650313732364427706792684982647382099554909210443990100148715977514019563770",
-        "91091763986385153195943774888791254267913176463413127206954586663336132185849",
-        "20563478995389133911121238096571360032566733604933388324098500955894817107649",
-        "67075287676467095685548462535475050985328875712978701397149470147804597152555",
-        "51730419522028920359106813668960282638874369762340820148694098713869232713424",
-        "11556642148502968487863217399752875389098952516788771489224131844822530661769",
-        "70208770243744035519858235428577522937894224175390973109373861583998825639738",
-        "85224920843883154661539632269513388620224003839792324636110164277511388046",
-        "104335167814861111609111785713569069376740936907905312938242163662766553376308",
-        "54779740532818110306575739016863079018584445701231128063898729506664653093348",
-      ])
+    await securitizationPoolContract
+      .connect(poolCreatorSigner)
+      .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+    await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
+    await securitizationPoolContract
+      .connect(originatorSigner)
+      .collectAssets(loanAssetTokenContract.address, originatorSigner.address, [
+        '68573754499950287139712752973314570379296281614027304774473155089973215579519',
+        '39888941571860786265340489425254739441353721495892246225639551495367240395819',
+        '1814376911303643558138225754850733580633933175059860852674847724414762062843',
+        '70176507447801386923525276155217627110933503150876918878877518382174110024632',
+        '98118009304676984946015583983417753948122531080421117734495028460749452488367',
+        '13184540353607289166840638357985936899957388517674636340327471056718548051675',
+        '83378247069380986250526902606367526639054384236549274190483059284776773414400',
+        '29795738136514905421472504164247611249593715092255973320131889482931667072348',
+        '106969624913022291481467850417059640937452008089072537065333347573836882649380',
+        '66902177247152043284623974883866501610157473446318928265416164984638838841924',
+        '16650313732364427706792684982647382099554909210443990100148715977514019563770',
+        '91091763986385153195943774888791254267913176463413127206954586663336132185849',
+        '20563478995389133911121238096571360032566733604933388324098500955894817107649',
+        '67075287676467095685548462535475050985328875712978701397149470147804597152555',
+        '51730419522028920359106813668960282638874369762340820148694098713869232713424',
+        '11556642148502968487863217399752875389098952516788771489224131844822530661769',
+        '70208770243744035519858235428577522937894224175390973109373861583998825639738',
+        '85224920843883154661539632269513388620224003839792324636110164277511388046',
+        '104335167814861111609111785713569069376740936907905312938242163662766553376308',
+        '54779740532818110306575739016863079018584445701231128063898729506664653093348',
+      ]);
   });
 });
