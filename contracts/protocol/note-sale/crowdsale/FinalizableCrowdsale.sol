@@ -8,6 +8,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
 
     event CrowdsaleFinalized();
 
+    /// @dev Validates that the crowdsale has not already been finalized and that it has either closed or reached the total cap
     function finalize(bool claimRemainToken, address remainTokenRecipient)
         public
         whenNotPaused
@@ -34,6 +35,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
         emit CrowdsaleFinalized();
     }
 
+    /// @dev This function is meant to be overridden in derived contracts to implement specific finalization logic
     function _finalization() internal virtual {
         // solhint-disable-previous-line no-empty-blocks
     }
