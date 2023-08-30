@@ -12,8 +12,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     uint256 public constant NUM_AMORTIZATION_UNIT_TYPES = 6;
 
+    /// @dev Represents the number of days in a year
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
+    /// @dev Represents the number of seconds in a minute
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
     uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
