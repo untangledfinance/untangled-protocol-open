@@ -11,6 +11,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     using ConfigHelper for Registry;
 
     // get current individual asset for SOT tranche
+    /// @inheritdoc IDistributionAssessor
     function getSOTTokenPrice(address pool) public view override returns (uint256) {
         if (pool == address(0)) return 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
@@ -25,6 +26,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
     }
 
+    /// @inheritdoc IDistributionAssessor
     function calcCorrespondingTotalAssetValue(
         address tokenAddress,
         address investor
@@ -71,6 +73,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         }
     }
 
+    /// @inheritdoc IDistributionAssessor
     function calcTokenPrice(address pool, address tokenAddress) external view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         if (tokenAddress == securitizationPool.sotToken())
@@ -80,6 +83,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return 0;
     }
 
+    /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(
         ISecuritizationPool securitizationPool
     ) public view override returns (uint256) {
@@ -100,6 +104,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
     }
 
+    /// @inheritdoc IDistributionAssessor
     function getCashBalance(address pool) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         return
