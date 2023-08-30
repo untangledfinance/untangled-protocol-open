@@ -13,6 +13,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         _;
     }
 
+    /// @inheritdoc IDistributionTranche
     function redeem(
         address usr,
         address pool,
@@ -26,6 +27,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         ISecuritizationPool(pool).redeem(usr, notesToken, currencyAmount, tokenAmount);
     }
 
+    /// @inheritdoc IDistributionTranche
     function redeemToken(
         address noteToken,
         address usr,

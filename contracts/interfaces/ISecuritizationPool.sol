@@ -142,7 +142,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256[] calldata tokenIds
     ) external virtual;
 
-    ///@notice collects ERC20 assets from specified senders
+    /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,
@@ -188,6 +188,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256 token
     ) external virtual;
 
+    /// @dev trigger update asset value repaid
     function increaseTotalAssetRepaidCurrency(
         uint256 amount
     ) external virtual;
@@ -213,6 +214,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256 amount
     ) public virtual;
 
+    /// @dev trigger update reserve when buy note token action happens
     function onBuyNoteToken(
         uint256 currencyAmount
     ) external virtual;
