@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IDistributionTranche {
+    /// @notice allows the redemption of tokens for a specific redeemer from a specified pool and tokenAddress
     function redeem(
         address usr,
         address pool,
@@ -10,6 +11,7 @@ interface IDistributionTranche {
         uint256 tokenAmount
     ) external;
 
+    /// @notice allows the distribution operator to redeem tokenAmount tokens of a specific noteToken from a given usr
     function redeemToken(
         address noteToken,
         address usr,

@@ -10,6 +10,7 @@ abstract contract ITokenGenerationEventFactory {
 
     mapping(address => bool) public isExistingTge;
 
+    /// @notice creates a new TGE instance based on the provided parameters and the sale type
     function createNewSaleInstance(
         address issuerTokenController,
         address pool,

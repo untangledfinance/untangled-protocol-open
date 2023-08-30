@@ -29,6 +29,8 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
 
     event LogError(uint8 indexed _errorId, bytes32 indexed _agreementId);
 
+    /// @notice allows batch repayment of multiple loans by iterating over the given agreement IDs and amounts
+    /// @dev calls _assertRepaymentRequest and _doRepay for each repayment, and emits the LogRepayments event to indicate the successful batch repayment
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,

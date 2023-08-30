@@ -13,23 +13,27 @@ abstract contract ILoanInterestTermsContract {
 
     mapping(bytes32 => bool) public completedRepayment;
 
-    // Register to start Loan term for batch of agreement Ids
+    /// @notice register the start of a loan term
     function registerTermStart(bytes32 agreementId) public virtual returns (bool);
 
+    /// @notice the total amount of principal and interest repaid for a given loan agreement
     function getValueRepaidToDate(bytes32 agreementId) public view virtual returns (uint256, uint256);
 
+    /// @notice checks whether the repayments for a batch of loan agreements have been completed
     function isCompletedRepayments(bytes32[] memory agreementIds) public view virtual returns (bool[] memory);
 
     /**
      * Expected repayment value with Amortization of Interest and Principal
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
+    /// @notice calculates the expected repayment values (principal and interest) for a given loan agreement and timestamp
     function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
         public
         view
         virtual
         returns (uint256 expectedPrincipal, uint256 expectedInterest);
 
+    /// @notice calculates the expected repayment values (principal and interest) for a batch of loan agreements and a given timestamp
     function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
         public
         view
@@ -42,6 +46,7 @@ abstract contract ILoanInterestTermsContract {
     ///  repayment, as well as any auxiliary metadata needed by the contract
     ///  to determine ex post facto the value repaid (e.g. current USD
     ///  exchange rate)
+    /// @notice register a loan repayment
     /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
     /// @param  payer address. The address of the payer.
     /// @param  beneficiary address. The address of the payment's beneficiary.
@@ -55,5 +60,7 @@ abstract contract ILoanInterestTermsContract {
         address tokenAddress
     ) public virtual returns (uint256 remains);
 
+    /// @notice the interest rate for a given loan agreement
+    /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
     function getInterestRate(bytes32 agreementId) public view virtual returns (uint256);
 }

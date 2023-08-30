@@ -10,6 +10,12 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 
+/**
+ * @title Untangled's SecuritizationPool contract
+ * @notice Main entry point for senior LPs (a.k.a. capital providers)
+ *  Automatically invests across borrower pools using an adjustable strategy.
+ * @author Goldfinch
+ */
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
 
@@ -106,7 +112,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        uint256  nftAssetsLength =  nftAssets.length; 
+        uint256  nftAssetsLength =  nftAssets.length;
         for (uint256 i = 0; i < nftAssetsLength; i++) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
@@ -119,7 +125,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
-         
+
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
         nftAssets.pop();
     }
@@ -166,7 +172,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             'SecuritizationPool: Riskscore params length is not equal'
         );
         delete riskScores;
-      
+
         for (uint256 i = 0; i < _daysPastDuesLength; i++) {
             require(
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
@@ -207,7 +213,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length; 
+        uint256  tokenIdsLength =  tokenIds.length;
         require(tokenAddresses.length == tokenIdsLength, "tokenAddresses length and tokenIds length are not equal");
         require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenIdsLength; i++) {
@@ -221,7 +227,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address from,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length; 
+        uint256  tokenIdsLength =  tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; ++i) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
@@ -415,7 +421,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
-   
+
     }
 
     function onBuyNoteToken(
