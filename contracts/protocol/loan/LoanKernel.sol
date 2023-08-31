@@ -230,7 +230,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return registry.getLoanInterestTermsContract().completedRepayment(agreementId);
     }
 
-    //Conclude a loan, stop lending/loan terms or allow the loan loss
+    /// @inheritdoc ILoanKernel
+    /// @dev A loan, stop lending/loan terms or allow the loan loss
     function concludeLoan(
         address creditor,
         bytes32 agreementId,
