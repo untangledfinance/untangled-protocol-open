@@ -160,7 +160,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
-    /// @inheritdoc ISecuritgetJuniorRatioizationPool
+    /// @inheritdoc ISecuritizationPool
     function setupRiskScores(
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
