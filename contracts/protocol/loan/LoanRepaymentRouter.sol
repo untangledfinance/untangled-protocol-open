@@ -88,6 +88,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         return true;
     }
 
+    /// @inheritdoc ILoanRepaymentRouter
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,

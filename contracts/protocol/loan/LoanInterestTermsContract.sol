@@ -93,6 +93,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     // Register to start Loan term for batch of agreement Ids
+    /// @inheritdoc ILoanInterestTermsContract
     function registerTermStart(
         bytes32 agreementId
     ) public override whenNotPaused onlyKernel onlyHaventStartedLoan(agreementId) returns (bool) {
@@ -100,6 +101,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return true;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function registerConcludeLoan(
         bytes32 agreementId
     ) external override whenNotPaused nonReentrant onlyKernel returns (bool) {
@@ -120,6 +122,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /// @param  beneficiary address. The address of the payment's beneficiary.
     /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
     /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
+    /// @inheritdoc ILoanInterestTermsContract
     function registerRepayment(
         bytes32 agreementId,
         address payer,
@@ -178,10 +181,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return remains;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {
         return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
         uint256 aagreementIdsLength = agreementIds.length;
@@ -195,6 +200,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      * Expected repayment value with Amortization of Interest and Principal
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
+    /// @inheritdoc ILoanInterestTermsContract
     function getExpectedRepaymentValues(
         bytes32 agreementId,
         uint256 timestamp
@@ -224,6 +230,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         );
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getMultiExpectedRepaymentValues(
         bytes32[] memory agreementIds,
         uint256 timestamp
@@ -242,6 +249,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return (expectedPrincipals, expectedInterests);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
