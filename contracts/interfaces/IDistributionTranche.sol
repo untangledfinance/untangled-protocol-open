@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 interface IDistributionTranche {
     /// @notice allows the redemption of tokens for a specific redeemer from a specified pool and tokenAddress

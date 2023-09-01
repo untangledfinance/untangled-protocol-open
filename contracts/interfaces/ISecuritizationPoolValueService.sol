@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 interface ISecuritizationPoolValueService {
     /// @notice calculates the outstanding principal in currency amount for a given investor address.
