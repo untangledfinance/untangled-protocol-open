@@ -5,7 +5,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
 
   //deploy UniqueIdentity
-  console.log("DEPLOYER", deployer);
   const uniqueIdentityProxy = await deployProxy({ getNamedAccounts, deployments }, 'UniqueIdentity', [
     deployer, ''
   ]);

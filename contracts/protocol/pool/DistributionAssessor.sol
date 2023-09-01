@@ -125,7 +125,8 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     /// @param pool Pool address which issues note token
     /// @param jotToken JOT token address
     /// @param investor Investor's wallet address
-    /// @return A tuple contains JOT principal value and interest value
+    /// @return principal A tuple contains JOT principal value and interest value
+    /// @return interest A tuple contains JOT principal value and interest value
     function _calcPrincipalInterestJOT(
         address pool,
         address jotToken,
