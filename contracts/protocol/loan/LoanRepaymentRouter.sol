@@ -68,8 +68,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         // Transfer amount to creditor
         if (_payer != address(0x0)) {
             ISecuritizationPool poolInstance = ISecuritizationPool(beneficiary);
-            if (registry.getSecuritizationManager().isExistingPools(beneficiary))
-                beneficiary = poolInstance.pot();
+            if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
             uint256 repayAmount = _amount - remains;
             require(
                 IERC20(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
@@ -79,7 +78,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         }
         ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
 
-        if (loanTermContract.completedRepayment(_agreementId)) { // Burn LAT token when repay completely
+        if (loanTermContract.completedRepayment(_agreementId)) {
+            // Burn LAT token when repay completely
             registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);
         }
 
@@ -93,7 +93,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         uint256[] calldata amounts,
         address tokenAddress
     ) external override whenNotPaused nonReentrant returns (bool) {
-        uint256  agreementIdsLength = agreementIds.length;
+        uint256 agreementIdsLength = agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(
                 _assertRepaymentRequest(agreementIds[i], _msgSender(), amounts[i], tokenAddress),

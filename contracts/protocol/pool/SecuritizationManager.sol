@@ -84,10 +84,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         string memory ticker
-    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns(address){
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesSOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
-        require(address(noteTokenFactory) != address(0), "Note Token Factory was not registered");
-        require(address(registry.getTokenGenerationEventFactory()) != address(0), "TGE Factory was not registered");
+        require(address(noteTokenFactory) != address(0), 'Note Token Factory was not registered');
+        require(address(registry.getTokenGenerationEventFactory()) != address(0), 'TGE Factory was not registered');
         address sotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
@@ -119,9 +119,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-
         uint256 additionalCap,
-
         uint32 _initialInterest,
         uint32 _finalInterest,
         uint32 _timeInterval,
@@ -141,9 +139,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-
         uint256 additionalCap,
-
         NewRoundSaleParam memory saleParam,
         string calldata ticker
     ) public {
@@ -159,7 +155,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         string memory ticker
-    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns(address){
+    ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address jotToken = noteTokenFactory.createToken(
             address(pool),
@@ -191,11 +187,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
 
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-        uint256 tokenAmount = tge.buyTokens(
-            _msgSender(),
-            _msgSender(),
-            currencyAmount
-        );
+        uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
 
         ISecuritizationPool(tge.pool()).onBuyNoteToken(currencyAmount);
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);

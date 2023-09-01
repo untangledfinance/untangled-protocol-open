@@ -4,6 +4,8 @@ const { expect } = require('./shared/expect.js');
 
 const { parseEther } = ethers.utils;
 
+const { unlimitedAllowance } = require('./utils.js');
+
 const ONE_DAY = 86400;
 describe('LoanAssetToken', () => {
   let stableCoin;
@@ -13,6 +15,10 @@ describe('LoanAssetToken', () => {
   let loanRegistry;
   let loanKernel;
   let loanRepaymentRouter;
+  let securitizationManager;
+  let securitizationPoolContract;
+  let securitizationPoolValueService;
+  let securitizationPoolImpl;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -27,6 +33,11 @@ describe('LoanAssetToken', () => {
     const Registry = await ethers.getContractFactory('Registry');
     registry = await upgrades.deployProxy(Registry, []);
 
+    const SecuritizationManager = await ethers.getContractFactory('SecuritizationManager');
+    securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address]);
+    const SecuritizationPoolValueService = await ethers.getContractFactory('SecuritizationPoolValueService');
+    securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
+
     const LoanInterestTermsContract = await ethers.getContractFactory('LoanInterestTermsContract');
     loanInterestTermsContract = await upgrades.deployProxy(LoanInterestTermsContract, [registry.address]);
     const LoanRegistry = await ethers.getContractFactory('LoanRegistry');
@@ -36,9 +47,13 @@ describe('LoanAssetToken', () => {
     const LoanRepaymentRouter = await ethers.getContractFactory('LoanRepaymentRouter');
     loanRepaymentRouter = await upgrades.deployProxy(LoanRepaymentRouter, [registry.address]);
 
+    await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
+
     await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
     await registry.setLoanRegistry(loanRegistry.address);
     await registry.setLoanKernel(loanKernel.address);
+    await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
+    await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
 
     const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
     loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
@@ -46,6 +61,42 @@ describe('LoanAssetToken', () => {
     });
 
     await registry.setLoanAssetToken(loanAssetTokenContract.address);
+
+    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+    securitizationPoolImpl = await SecuritizationPool.deploy();
+
+    await registry.setSecuritizationPool(securitizationPoolImpl.address);
+    await registry.setSecuritizationManager(securitizationManager.address);
+  });
+
+  describe('#security pool', async () => {
+    it('Create pool', async () => {
+      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      // Create new pool
+      const transaction = await securitizationManager
+        .connect(poolCreatorSigner)
+        .newPoolInstance(stableCoin.address, '100000');
+      const receipt = await transaction.wait();
+      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+      securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+
+      await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .setupRiskScores(
+          [86400, 2592000, 5184000, 7776000, 10368000, 31536000],
+          [
+            950000, 900000, 910000, 800000, 810000, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 80000,
+            100000, 120000, 120000, 140000, 1000000, 10000, 20000, 30000, 40000, 50000, 1000000, 250000, 500000, 500000,
+            750000, 1000000, 1000000,
+          ],
+          [
+            432000, 432000, 432000, 432000, 432000, 432000, 2592000, 2592000, 2592000, 2592000, 2592000, 2592000,
+            250000, 500000, 500000, 750000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000,
+          ]
+        );
+    });
   });
 
   describe('#mint', async () => {
@@ -58,11 +109,11 @@ describe('LoanAssetToken', () => {
     });
 
     it('Only Loan Kernel can mint', async () => {
-      const tokenIds = ['0x2b8f68a1bc9d67fc462cee4a00e6d216cd5914b5a6d742a33562722a5c9718d3'];
+      const tokenIds = ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'];
 
       await loanKernel.fillDebtOrder(
         [
-          originatorSigner.address,
+          securitizationPoolContract.address,
           stableCoin.address,
           loanRepaymentRouter.address,
           loanInterestTermsContract.address,
@@ -109,12 +160,18 @@ describe('LoanAssetToken', () => {
       await expect(
         loanAssetTokenContract
           .connect(untangledAdminSigner)
-          .burn('0x2b8f68a1bc9d67fc462cee4a00e6d216cd5914b5a6d742a33562722a5c9718d3')
+          .burn('0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a')
       ).to.be.revertedWith(`ERC721: caller is not token owner or approved`);
     });
 
     it('only LoanKernel contract can burn', async () => {
-      await loanKernel.concludeLoan();
+      await loanRepaymentRouter
+        .connect(untangledAdminSigner)
+        .repayInBatch(
+          ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'],
+          [parseEther('100')],
+          stableCoin.address
+        );
     });
   });
 });
