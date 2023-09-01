@@ -21,6 +21,12 @@ import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
 import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 
+/**
+ * @title ConfigHelper
+ * @notice A convenience library for getting easy access to other contracts and constants within the
+ *  protocol, through the use of the Registry contract
+ * @author Untangled Team
+ */
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
         return registry.getAddress(uint8(contractType));

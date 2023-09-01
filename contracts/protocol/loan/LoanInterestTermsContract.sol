@@ -12,8 +12,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     uint256 public constant NUM_AMORTIZATION_UNIT_TYPES = 6;
 
+    /// @dev Represents the number of days in a year
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
+    /// @dev Represents the number of seconds in a minute
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
     uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
@@ -93,6 +95,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     // Register to start Loan term for batch of agreement Ids
+    /// @inheritdoc ILoanInterestTermsContract
     function registerTermStart(
         bytes32 agreementId
     ) public override whenNotPaused onlyKernel onlyHaventStartedLoan(agreementId) returns (bool) {
@@ -100,6 +103,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return true;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function registerConcludeLoan(
         bytes32 agreementId
     ) external override whenNotPaused nonReentrant onlyKernel returns (bool) {
@@ -120,6 +124,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /// @param  beneficiary address. The address of the payment's beneficiary.
     /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
     /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
+    /// @inheritdoc ILoanInterestTermsContract
     function registerRepayment(
         bytes32 agreementId,
         address payer,
@@ -178,10 +183,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return remains;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {
         return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
         uint256 aagreementIdsLength = agreementIds.length;
@@ -195,6 +202,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      * Expected repayment value with Amortization of Interest and Principal
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
+    /// @inheritdoc ILoanInterestTermsContract
     function getExpectedRepaymentValues(
         bytes32 agreementId,
         uint256 timestamp
@@ -224,6 +232,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         );
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getMultiExpectedRepaymentValues(
         bytes32[] memory agreementIds,
         uint256 timestamp
@@ -242,10 +251,13 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return (expectedPrincipals, expectedInterests);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
 
+    /// @param amortizationUnitType AmortizationUnitType enum
+    /// @return the corresponding length of the unit in seconds
     function _getAmortizationUnitLengthInSeconds(
         UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
     ) private pure returns (uint256) {
@@ -336,6 +348,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      * Calculate values which Debtor need to pay to conclude current Loan
      */
+    /// @dev calculates the expected principal and interest amounts that the debtor needs to pay to conclude the current loan
+    /// It takes into account the repayment history, timestamps, and additional parameters specific to manual interest loans
     function _getExpectedRepaymentValuesToTimestamp(
         UnpackLoanParamtersLib.InterestParams memory _params,
         uint256 _lastRepaymentTimestamp, // timestamp of last repayment from debtor

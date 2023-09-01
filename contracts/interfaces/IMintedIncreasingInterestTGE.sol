@@ -17,12 +17,14 @@ abstract contract IMintedIncreasingInterestTGE is UntangledBase {
 
     uint256 public currencyRaised;
 
+    /// @notice initialize long sale settings
     function setupLongSale(
         uint256 interestRate,
         uint256 termLengthInSeconds,
         uint256 timeStartEarningInterest
     ) public virtual;
 
+    ///@notice investor bids for SOT/JOT token. Paid by pool's currency
     function buyTokens(
         address payee,
         address beneficiary,

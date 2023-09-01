@@ -41,6 +41,7 @@ abstract contract TimedCrowdsale is Crowdsale {
         return block.timestamp > closingTime;
     }
 
+    /// @notice Updates the closing time with the new closing time
     function extendTime(uint256 newClosingTime) external whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         require(newClosingTime > closingTime, 'TimedCrowdsale: new closing time is before current closing time');
 
@@ -48,6 +49,7 @@ abstract contract TimedCrowdsale is Crowdsale {
         closingTime = newClosingTime;
     }
 
+    /// @notice Updates the opening time and closing time accordingly
     function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: Caller must be owner or pool");
         require(newClosingTime >= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time');
@@ -64,6 +66,7 @@ abstract contract TimedCrowdsale is Crowdsale {
         closingTime = newClosingTime;
     }
 
+    /// @dev Sets the isEnableTimeLimit variable to the specified value
     function setUsingTimeLimit(bool usingTimeLimit) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         isEnableTimeLimit = usingTimeLimit;
     }

@@ -59,6 +59,7 @@ abstract contract Crowdsale is UntangledBase {
         _;
     }
 
+    /// @notice add funding amount to be added to the total cap
     function addFunding(uint256 additionalCap) public nonReentrant whenNotPaused {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: caller must be owner or pool");
         require(additionalCap > 0, 'Crowdsale: total cap is 0');
@@ -66,6 +67,7 @@ abstract contract Crowdsale is UntangledBase {
         totalCap = additionalCap + totalCap;
     }
 
+    /// @notice Sets the rate variable to the new rate
     function _newSaleRound(uint256 newRate) internal {
         require(!hasStarted, 'Crowdsale: Sale round overflow');
 
@@ -73,6 +75,11 @@ abstract contract Crowdsale is UntangledBase {
         rate = newRate;
     }
 
+
+    /// @notice  Allows users to buy note token
+    /// @param payee pay for purchase
+    /// @param wallet receives note token
+    /// @param currencyAmount amount of currency used for purchase
     function buyTokens(
         address payee,
         address beneficiary,
@@ -97,22 +104,30 @@ abstract contract Crowdsale is UntangledBase {
         return tokenAmount;
     }
 
+    /// @notice Check if the total amount of currency raised is equal to the total cap
     function isDistributedFully() public view returns (bool) {
         return currencyRaised == totalCap;
     }
 
+    /// @notice Retrieves the remaining token balance held by the crowdsale contract
     function getTokenRemainAmount() public view returns (uint256) {
         return IERC20(token).balanceOf(address(this));
     }
 
+    /// @notice Calculates the remaining amount of currency available for purchase
     function getCurrencyRemainAmount() public view virtual returns (uint256) {
         return totalCap - currencyRaised;
     }
 
+    /// @notice Determines whether the current sale round is a long sale
+    /// @dev This is an abstract function that needs to be implemented in derived contracts
     function isLongSale() public view virtual returns (bool);
 
+    /// @notice Calculates the corresponding token amount based on the currency amount and the current rate
+    /// @dev This is an abstract function that needs to be implemented in derived contracts
     function getTokenAmount(uint256 currencyAmount) public view virtual returns (uint256);
 
+    /// @notice Requires that the currency amount does not exceed the total cap
     function _defaultPreValidatePurchase(
         address beneficiary,
         uint256 currencyAmount,
@@ -132,10 +147,12 @@ abstract contract Crowdsale is UntangledBase {
         _defaultPreValidatePurchase(beneficiary, currencyAmount, tokenAmount);
     }
 
+    /// @dev Mints and delivers tokens to the beneficiary
     function _deliverTokens(address beneficiary, uint256 tokenAmount) internal {
         INoteToken(token).mint(beneficiary, tokenAmount);
     }
 
+    /// @dev Burns and delivers tokens to the beneficiary
     function _ejectTokens(uint256 tokenAmount) internal {
         INoteToken(token).burn(tokenAmount);
     }
@@ -144,6 +161,7 @@ abstract contract Crowdsale is UntangledBase {
         _deliverTokens(beneficiary, tokenAmount);
     }
 
+    /// @dev Transfers the currency from the payer to the crowdsale contract
     function _claimPayment(address payee, uint256 currencyAmount) internal {
         IERC20(currency).transferFrom(payee, address(this), currencyAmount);
     }
@@ -156,10 +174,12 @@ abstract contract Crowdsale is UntangledBase {
             (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
     }
 
+    /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
         require(IERC20(currency).transfer(beneficiary, currencyAmount), "Fail to transfer currency to Beneficiary");
     }
 
+    /// @dev Sets the total cap to the specified amount
     function _setTotalCap(uint256 cap) internal {
         require(cap > 0, 'Crowdsale: cap is 0');
         require(cap >= currencyRaised, 'Crowdsale: cap is bellow currency raised');
@@ -167,10 +187,12 @@ abstract contract Crowdsale is UntangledBase {
         totalCap = cap;
     }
 
+    /// @notice Checks if the total amount of currency raised is greater than or equal to the total cap
     function totalCapReached() public view returns (bool) {
         return currencyRaised >= totalCap;
     }
 
+    /// @notice Checks if the sum of the current currency raised and the specified currency amount is less than or equal to the total cap
     function isUnderTotalCap(uint256 currencyAmount) public view returns (bool) {
         return currencyRaised + currencyAmount <= totalCap;
     }

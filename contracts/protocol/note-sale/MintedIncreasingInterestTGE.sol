@@ -25,10 +25,12 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         longSale = _longSale;
     }
 
+    /// @inheritdoc Crowdsale
     function isLongSale() public view override returns (bool) {
         return longSale;
     }
 
+    /// @dev Sets the yield variable to the specified value
     function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
     }
@@ -46,16 +48,23 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         }
     }
 
+    /// @notice Calculate token price
+    /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
         return registry.getDistributionAssessor().getSOTTokenPrice(
             address(pool)
         );
     }
 
+    /// @notice Get amount of token can receive from an amount of currency
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
         return currencyAmount / getTokenPrice();
     }
 
+    /// @notice Setup a new round sale for note token
+    /// @param openingTime Define when the sale should start
+    /// @param closingTime Define when the sale should end
+    /// @param cap Target amount of raised currency
     function startNewRoundSale(
         uint256 openingTime,
         uint256 closingTime,
@@ -71,6 +80,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         _setTotalCap(cap);
     }
 
+    /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
         require(timeInterval > 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');

@@ -9,6 +9,12 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 
 import '../libraries/Configuration.sol';
 
+/**
+ * @title Untangled's SecuritizationPool contract
+ * @notice Abstract contract that serves as a base contract for other contracts in the Untangled system.
+ *  It provides functionalities for contract initialization, pausing, and access control.
+ * @author Untangled Team
+ */
 abstract contract UntangledBase is
     Initializable,
     PausableUpgradeable,

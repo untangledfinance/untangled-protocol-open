@@ -27,17 +27,22 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         _mint(to, tokenId);
     }
 
+    /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         external
         view
         virtual
         returns (uint256);
 
+    /// @notice the expiration timestamp of an invoice/loan token
     function getExpirationTimestamp(uint256 agreementId) external view virtual returns (uint256);
 
+    /// @notice  the interest rate associated with an token
     function getInterestRate(uint256 agreementId) external view virtual returns (uint256);
 
+    /// @notice the risk score associated with a token
     function getRiskScore(uint256 agreementId) external view virtual returns (uint8);
 
+    /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
 }
