@@ -30,6 +30,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     );
 
+    /// @dev Create a redemption request for note token
+    /// @param noteToken SOT/JOT token address
+    /// @param tokenAmount Amount of SOT/JOT token to be redeemed
     function _makeRedeemRequest(INoteToken noteToken, uint256 tokenAmount) internal {
         ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
         require(
@@ -118,6 +121,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         }
     }
 
+    /// @notice Redeem SOT/JOT token and receive an amount of currency
+    /// @dev Fulfill redeem request created
+    /// @param redeemer Redeemer wallet address
+    /// @param pool Pool address which issued note token
+    /// @param tokenAddress Note token address
     function redeem(
         address redeemer,
         address pool,
@@ -144,6 +152,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         return currencyLocked;
     }
 
+    /// @dev This calls make redeem request and redeem at once
     function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));

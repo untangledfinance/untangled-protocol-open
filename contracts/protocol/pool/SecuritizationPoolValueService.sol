@@ -167,6 +167,7 @@ contract SecuritizationPoolValueService is
             );
     }
 
+    /// @inheritdoc ISecuritizationPoolValueService
     function getExpectedAssetsValue(
         address poolAddress,
         uint256 timestamp
@@ -301,6 +302,7 @@ contract SecuritizationPoolValueService is
             });
     }
 
+    /// @inheritdoc ISecuritizationPoolValueService
     function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
@@ -437,6 +439,7 @@ contract SecuritizationPoolValueService is
         return totalReserve;
     }
 
+    /// @inheritdoc ISecuritizationPoolValueService
     function getSeniorAsset(address poolAddress) external view returns (uint256) {
         // we need to change this value with interest rate by time
         uint256 seniorAsset;
@@ -453,6 +456,7 @@ contract SecuritizationPoolValueService is
         return seniorAsset;
     }
 
+    /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorAsset(address poolAddress) external view returns (uint256) {
         uint256 poolValue = this.getPoolValue(poolAddress);
         uint256 seniorAsset = this.getSeniorAsset(poolAddress);
@@ -464,6 +468,7 @@ contract SecuritizationPoolValueService is
         return juniorAsset;
     }
 
+    /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
         uint256 rateSenior = this.getSeniorRatio(poolAddress);
         require(rateSenior < 100*RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');

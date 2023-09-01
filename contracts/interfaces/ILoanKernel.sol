@@ -99,6 +99,7 @@ abstract contract ILoanKernel {
     mapping(bytes32 => bool) public debtOrderCancelled;
     mapping(bytes32 => bool) public debtOrderCompleted;
 
+    /// @notice conclude a loan by stopping lending/loan terms or allowing the loan loss. It takes the creditor, agreement ID, and term contract as input
     function concludeLoan(
         address creditor,
         bytes32 agreementId,

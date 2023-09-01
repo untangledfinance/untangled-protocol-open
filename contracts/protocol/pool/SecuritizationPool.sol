@@ -10,6 +10,12 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 
+/**
+ * @title Untangled's SecuritizationPool contract
+ * @notice Main entry point for senior LPs (a.k.a. capital providers)
+ *  Automatically invests across borrower pools using an adjustable strategy.
+ * @author Goldfinch
+ */
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
 
@@ -106,7 +112,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        uint256  nftAssetsLength =  nftAssets.length; 
+        uint256  nftAssetsLength =  nftAssets.length;
         for (uint256 i = 0; i < nftAssetsLength; i++) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
@@ -119,7 +125,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
-         
+
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
         nftAssets.pop();
     }
@@ -144,7 +150,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         return this.onERC721Received.selector;
     }
 
-    /** EXTERNAL */
+    /// @inheritdoc ISecuritizationPool
     function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
@@ -154,6 +160,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function setupRiskScores(
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
@@ -166,7 +173,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             'SecuritizationPool: Riskscore params length is not equal'
         );
         delete riskScores;
-      
+
         for (uint256 i = 0; i < _daysPastDuesLength; i++) {
             require(
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
@@ -189,6 +196,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function exportAssets(
         address tokenAddress,
         address toPoolAddress,
@@ -202,12 +210,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function withdrawAssets(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length; 
+        uint256  tokenIdsLength =  tokenIds.length;
         require(tokenAddresses.length == tokenIdsLength, "tokenAddresses length and tokenIds length are not equal");
         require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenIdsLength; i++) {
@@ -216,17 +225,19 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function collectAssets(
         address tokenAddress,
         address from,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length; 
+        uint256  tokenIdsLength =  tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; ++i) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function withdraw(
         uint256 amount
     ) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
@@ -240,6 +251,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
 
+    /// @inheritdoc ISecuritizationPool
     function collectERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata senders,
@@ -260,6 +272,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function withdrawERC20Assets(
         address[] calldata tokenAddresses,
         address[] calldata recipients,
@@ -274,6 +287,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
+    /// @inheritdoc ISecuritizationPool
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
          uint256 tokenAddressesLength = tokenAddresses.length;
         for (uint256 i = 0; i < tokenAddressesLength; ++i) {
@@ -290,6 +304,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     // After closed pool and redeem all not -> get remain cash to recipient wallet
+    /// @inheritdoc ISecuritizationPool
     function claimCashRemain(address recipientWallet)
         external
         override
@@ -302,6 +317,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot));
     }
 
+    /// @inheritdoc ISecuritizationPool
     function injectTGEAddress(
         address _tgeAddress,
         address _tokenAddress,
@@ -319,6 +335,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         state = CycleState.CROWDSALE;
     }
 
+    /// @inheritdoc ISecuritizationPool
     function startCycle(
         uint64 _termLengthInSeconds,
         uint256 _principalAmountForSOT,
@@ -353,12 +370,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         state = CycleState.OPEN;
     }
 
+    /// @inheritdoc ISecuritizationPool
     function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
         require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge can update interest');
         interestRateSOT = _interestRateSOT;
     }
 
     // Increase by value
+    /// @inheritdoc ISecuritizationPool
     function increaseLockedDistributeBalance(
         address tokenAddress,
         address investor,
@@ -373,6 +392,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     // Decrease by value
+
+    /// @inheritdoc ISecuritizationPool
     function decreaseLockedDistributeBalance(
         address tokenAddress,
         address investor,
@@ -388,11 +409,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     // Increase by value
+    /// @inheritdoc ISecuritizationPool
     function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
         reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
 
+    /// @inheritdoc ISecuritizationPool
     function redeem(
         address usr,
         address notesToken,
@@ -415,9 +438,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
-   
+
     }
 
+    /// @inheritdoc ISecuritizationPool
     function onBuyNoteToken(
         uint256 currencyAmount
     ) external override whenNotPaused nonReentrant onlySecuritizationManager {

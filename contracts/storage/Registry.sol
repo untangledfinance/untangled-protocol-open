@@ -3,6 +3,13 @@ pragma solidity 0.8.21;
 
 import '../base/UntangledBase.sol';
 
+/**
+ * @title Registry
+ * @notice This contract stores mappings of useful "protocol config state", giving a central place
+ *  for all other contracts to access it. These config vars
+ *  are enumerated in the `Configuration` library, and can only be changed by admins of the protocol.
+ * @author Untangled Team
+ */
 contract Registry is UntangledBase {
     mapping(uint8 => address) public contractAddresses;
 

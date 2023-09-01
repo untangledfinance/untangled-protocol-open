@@ -26,10 +26,12 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         longSale = _longSale;
     }
 
+    /// @inheritdoc Crowdsale
     function isLongSale() public view override returns (bool) {
         return longSale;
     }
 
+    /// @dev Sets the yield variable to the specified value
     function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         yield = _yield;
     }
@@ -57,6 +59,10 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         return currencyAmount / getTokenPrice();
     }
 
+    /// @notice Setup a new round sale for note token
+    /// @param openingTime Define when the sale should start
+    /// @param closingTime Define when the sale should end
+    /// @param cap Target amount of raised currency
     function startNewRoundSale(
         uint256 openingTime,
         uint256 closingTime,
@@ -72,6 +78,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         _setTotalCap(cap);
     }
 
+    /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
     }

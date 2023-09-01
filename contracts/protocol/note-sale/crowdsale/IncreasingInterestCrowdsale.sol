@@ -50,6 +50,7 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         }
     }
 
+    /// @dev Override _finalization function. In Auction note sale, interest of token determined when the auction ends
     function _finalization() internal override {
         super._finalization();
 

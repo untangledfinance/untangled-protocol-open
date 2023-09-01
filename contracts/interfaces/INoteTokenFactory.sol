@@ -13,6 +13,8 @@ abstract contract INoteTokenFactory {
 
     function changeMinterRole(address token, address newController) external virtual;
 
+    /// @notice Creates a new NoteToken contract instance with the specified parameters
+    /// Initializes the token with the provided parameters, including the pool address and note token type
     function createToken(
         address poolAddress,
         Configuration.NOTE_TOKEN_TYPE noteTokenType,
