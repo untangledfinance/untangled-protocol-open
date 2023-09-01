@@ -59,6 +59,10 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         return currencyAmount / getTokenPrice();
     }
 
+    /// @notice Setup a new round sale for note token
+    /// @param openingTime Define when the sale should start
+    /// @param closingTime Define when the sale should end
+    /// @param cap Target amount of raised currency
     function startNewRoundSale(
         uint256 openingTime,
         uint256 closingTime,

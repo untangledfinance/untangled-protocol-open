@@ -48,16 +48,23 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         }
     }
 
+    /// @notice Calculate token price
+    /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
         return registry.getDistributionAssessor().getSOTTokenPrice(
             address(pool)
         );
     }
 
+    /// @notice Get amount of token can receive from an amount of currency
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
         return currencyAmount / getTokenPrice();
     }
 
+    /// @notice Setup a new round sale for note token
+    /// @param openingTime Define when the sale should start
+    /// @param closingTime Define when the sale should end
+    /// @param cap Target amount of raised currency
     function startNewRoundSale(
         uint256 openingTime,
         uint256 closingTime,

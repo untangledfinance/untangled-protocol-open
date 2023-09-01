@@ -114,6 +114,17 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return tgeAddress;
     }
 
+    /// @notice Sets up the token generation event (TGE) for the senior tranche (SOT) of a securitization pool with additional configuration parameters
+    /// @param issuerTokenController Who acts as owner of note sale
+    /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
+    /// @param longSale Define this sale is long sale. Default true
+    /// @param _initialInterest For SOT auction token sale. An initial interest rate is defined
+    /// @param _finalInterest For SOT auction token sale. This is the largest interest rate
+    /// @param _timeInterval For SOT auction token sale. After every time interval, the current interest rate will increase from initial interest value
+    /// @param _amountChangeEachInterval For SOT auction token sale. After every time interval, the current interest rate will increase a value of amountChangeEachInterval
+    /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
+    /// @param ticker Prefix for note token symbol name. Ex: Saff_SOT
     function setUpTGEForSOT(
         address issuerTokenController,
         ISecuritizationPool pool,
@@ -136,6 +147,13 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
+    /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
+    /// @param issuerTokenController Who acts as owner of note sale
+    /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
+    /// @param longSale Define this sale is long sale. Default true
+    /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
+    /// @param ticker Prefix for note token symbol name. Ex: Saff_JOT
     function setUpTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,

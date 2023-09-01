@@ -256,6 +256,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
 
+    /// @param amortizationUnitType AmortizationUnitType enum
+    /// @return the corresponding length of the unit in seconds
     function _getAmortizationUnitLengthInSeconds(
         UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
     ) private pure returns (uint256) {
@@ -346,6 +348,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      * Calculate values which Debtor need to pay to conclude current Loan
      */
+    /// @dev calculates the expected principal and interest amounts that the debtor needs to pay to conclude the current loan
+    /// It takes into account the repayment history, timestamps, and additional parameters specific to manual interest loans
     function _getExpectedRepaymentValuesToTimestamp(
         UnpackLoanParamtersLib.InterestParams memory _params,
         uint256 _lastRepaymentTimestamp, // timestamp of last repayment from debtor

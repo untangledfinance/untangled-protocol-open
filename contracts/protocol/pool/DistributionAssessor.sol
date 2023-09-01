@@ -36,6 +36,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
+    /// @notice Calculate SOT/JOT asset value belongs to an investor
+    /// @param tokenAddress Address of SOT or JOT token
+    /// @param investor Investor's wallet
+    /// @return The value in pool's underlying currency
     function calcCorrespondingAssetValue(
         address tokenAddress,
         address investor
@@ -43,6 +47,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
+    /// @dev Calculate SOT/JOT asset value belongs to an investor
+    /// @param tokenAddress Address of SOT or JOT token
+    /// @param investor Investor's wallet
+    /// @return The value in pool's underlying currency
     function _calcCorrespondingAssetValue(
         address tokenAddress,
         address investor
@@ -63,6 +71,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         }
     }
 
+    /// @notice Calculate SOT/JOT asset value for multiple investors
     function calcCorrespondingAssetValue(
         address tokenAddress,
         address[] calldata investors
@@ -112,6 +121,11 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
             securitizationPool.totalLockedDistributeBalance();
     }
 
+    /// @notice Calculate principal value and interest value for a JOT token
+    /// @param pool Pool address which issues note token
+    /// @param jotToken JOT token address
+    /// @param investor Investor's wallet address
+    /// @return A tuple contains JOT principal value and interest value
     function _calcPrincipalInterestJOT(
         address pool,
         address jotToken,

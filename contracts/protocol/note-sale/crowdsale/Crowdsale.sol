@@ -76,6 +76,10 @@ abstract contract Crowdsale is UntangledBase {
     }
 
 
+    /// @notice  Allows users to buy note token
+    /// @param payee pay for purchase
+    /// @param wallet receives note token
+    /// @param currencyAmount amount of currency used for purchase
     function buyTokens(
         address payee,
         address beneficiary,

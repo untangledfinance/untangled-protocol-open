@@ -30,6 +30,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     /**
      * Record new Loan to blockchain
      */
+    /// @dev Records a new loan entry by inserting loan details into the entries mapping
     function insert(
         bytes32 tokenId,
         address termContract,

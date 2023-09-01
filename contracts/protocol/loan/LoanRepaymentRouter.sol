@@ -19,6 +19,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         registry = _registry;
     }
 
+    /// @dev performs various checks to validate the repayment request, including ensuring that the token address is not null,
+    /// the amount is greater than zero, and the debt agreement exists
     function _assertRepaymentRequest(
         bytes32 _agreementId,
         address _payer,
@@ -45,6 +47,9 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         return true;
     }
 
+    /// @dev executes the loan repayment by notifying the terms contract about the repayment,
+    /// transferring the repayment amount to the creditor, and handling additional logic related to securitization pools
+    /// and completed repayments
     function _doRepay(
         bytes32 _agreementId,
         address _payer,
