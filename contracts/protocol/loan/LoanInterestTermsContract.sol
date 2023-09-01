@@ -26,7 +26,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     // To convert an encoded interest rate into its equivalent in percents,
     // divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
     //     10,000 => 1% interest rate
-    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
 
     // To convert an encoded interest rate into its equivalent multiplier
     // (for purposes of calculating total interest), divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
@@ -281,9 +281,11 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
-    function _unpackParamsForAgreementID(
-        bytes32 agreementId
-    ) private view returns (UnpackLoanParamtersLib.InterestParams memory params) {
+    function _unpackParamsForAgreementID(bytes32 agreementId)
+        private
+        view
+        returns (UnpackLoanParamtersLib.InterestParams memory params)
+    {
         bytes32 parameters;
         uint256 issuanceBlockTimestamp = 0;
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
