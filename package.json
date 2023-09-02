@@ -38,6 +38,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/test-helpers": "^0.5.16",
     "eth-gas-reporter": "^0.2.25",
+    "lodash": "^4.17.21",
     "solidity-coverage": "^0.7.11",
     "truffle-contract-size": "^2.0.1"
   }

@@ -1,5 +1,7 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
+const _ = require('lodash');
+
 const { expect } = require('./shared/expect.js');
 
 const { parseEther } = ethers.utils;
@@ -9,6 +11,8 @@ const {
   genLoanAgreementIds,
   saltFromOrderValues,
   debtorsFromOrderAddresses,
+  packTermsContractParameters,
+  interestRateFixedPoint,
 } = require('./utils.js');
 
 const ONE_DAY = 86400;
@@ -132,7 +136,19 @@ describe('LoanAssetToken', () => {
       const principalAmounts = '456820000000000000';
       const orderValues = [CREDITOR_FEE, ASSET_PURPOSE, principalAmounts, expirationTimestamps, salt, riskScore];
 
-      const termsContractParameters = ['0x00000000000656f35ea24b40000186a010000000000000000000044700200000'];
+      const inputAmount = 10;
+      const inputPrice = 15;
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount: _.round(inputAmount * inputPrice * 100),
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
