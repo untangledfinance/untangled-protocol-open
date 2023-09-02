@@ -16,6 +16,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       'setSecuritizationManager',
       securitizationManagerProxy.address
     );
+    await execute(
+      'SecuritizationManager',
+      { from: deployer, log: true },
+      'setAllowedUIDTypes',
+      [0, 1, 2, 3],
+    );
   }
 
   //deploy SecuritizationPool
