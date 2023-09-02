@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './base/Interest.sol';
@@ -25,7 +25,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         if (noteToken.totalSupply() == 0) return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals()-seniorDecimals);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return ((seniorAsset) * (10**seniorDecimals)) / seniorSupply;
+        return seniorAsset / seniorSupply;
     }
 
     /// @inheritdoc IDistributionAssessor
@@ -110,7 +110,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         // address pool = address(securitizationPool);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return (juniorAsset * (10**tokenDecimals)) / tokenSupply;
+        return juniorAsset / tokenSupply;
     }
 
     /// @inheritdoc IDistributionAssessor

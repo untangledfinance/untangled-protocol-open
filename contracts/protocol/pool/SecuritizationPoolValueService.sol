@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../interfaces/INoteToken.sol';
@@ -349,12 +349,13 @@ contract SecuritizationPoolValueService is
 
     // @notice this function return value 90 in example
     function getBeginningSeniorAsset(address poolAddress) external view returns (uint256) {
+        require(poolAddress != address(0), 'Invalid pool address');
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 rateJunior = securitizationPool.minFirstLossCushion();
-        uint256 rateSenior = 100 * RATE_SCALING_FACTOR - rateJunior;
-        uint256 poolValue = this.getPoolValue(poolAddress);
-        return (poolValue * rateSenior) / RATE_SCALING_FACTOR;
+        address sotToken = securitizationPool.sotToken();
+        require(sotToken != address(0), 'Invalid sot address');
+        uint256 tokenSupply = INoteToken(sotToken).totalSupply();
+        uint256 tokenDecimals = INoteToken(sotToken).decimals();
+        return tokenSupply * 10**(ERC20(securitizationPool.underlyingCurrency()).decimals()-tokenDecimals);
     }
 
     // @notice this function will return 72 in example
@@ -398,8 +399,8 @@ contract SecuritizationPoolValueService is
         poolValue = this.getPoolValue(poolAddress);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        uint256 balancePool = IERC20(currencyAddress).balanceOf(poolAddress);
-        if (balancePool == 0) return 0;
+        uint256 balancePool = securitizationPool.reserve();
+        if (poolValue == 0) return 0;
 
         uint256 ratioForReserve = balancePool / (poolValue);
 
