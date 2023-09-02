@@ -27,9 +27,9 @@ describe('LoanAssetToken', () => {
   let tokenIds;
 
   // Wallets
-  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
+  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
   before('create fixture', async () => {
-    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
+    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
       await ethers.getSigners();
 
     const tokenFactory = await ethers.getContractFactory('TestERC20');
@@ -120,38 +120,18 @@ describe('LoanAssetToken', () => {
         stableCoin.address,
         loanRepaymentRouter.address,
         loanInterestTermsContract.address,
-        '0x5d99687F0d1F20C39EbBb4E9890999BEB7F754A5',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000',
+        relayer.address,
+        borrowerSigner.address,
       ];
-      const orderValues = [
-        '0',
-        '0',
-        '456820000000000000',
-        '365550000000000000',
-        '350030000000000000',
-        '118530000000000000',
-        '385910000000000000',
-        '100820000000000000',
-        '280300000000000000',
-        '193210000000000000',
-        '164940000000000000',
-        '248450000000000000',
-        '262010000000000030',
-        '221970000000000000',
-        '191120000000000000',
-      ];
+
+      const CREDITOR_FEE = '0';
+      const ASSET_PURPOSE = '0';
+      const salt = '350030000000000000';
+      const riskScore = '118530000000000000';
+      const expirationTimestamps = '365550000000000000';
+      const principalAmounts = '456820000000000000';
+      const orderValues = [CREDITOR_FEE, ASSET_PURPOSE, principalAmounts, expirationTimestamps, salt, riskScore];
+
       const termsContractParameters = ['0x00000000000656f35ea24b40000186a010000000000000000000044700200000'];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
