@@ -4,7 +4,12 @@ const { expect } = require('./shared/expect.js');
 
 const { parseEther } = ethers.utils;
 
-const { unlimitedAllowance } = require('./utils.js');
+const {
+  unlimitedAllowance,
+  genLoanAgreementIds,
+  saltFromOrderValues,
+  debtorsFromOrderAddresses,
+} = require('./utils.js');
 
 const ONE_DAY = 86400;
 describe('LoanAssetToken', () => {
@@ -19,6 +24,7 @@ describe('LoanAssetToken', () => {
   let securitizationPoolContract;
   let securitizationPoolValueService;
   let securitizationPoolImpl;
+  let tokenIds;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -109,69 +115,71 @@ describe('LoanAssetToken', () => {
     });
 
     it('Only Loan Kernel can mint', async () => {
-      const tokenIds = ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'];
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        '0x5d99687F0d1F20C39EbBb4E9890999BEB7F754A5',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000',
+      ];
+      const orderValues = [
+        '0',
+        '0',
+        '456820000000000000',
+        '365550000000000000',
+        '350030000000000000',
+        '118530000000000000',
+        '385910000000000000',
+        '100820000000000000',
+        '280300000000000000',
+        '193210000000000000',
+        '164940000000000000',
+        '248450000000000000',
+        '262010000000000030',
+        '221970000000000000',
+        '191120000000000000',
+      ];
+      const termsContractParameters = ['0x00000000000656f35ea24b40000186a010000000000000000000044700200000'];
 
-      await loanKernel.fillDebtOrder(
-        [
-          securitizationPoolContract.address,
-          stableCoin.address,
-          loanRepaymentRouter.address,
-          loanInterestTermsContract.address,
-          '0x5d99687F0d1F20C39EbBb4E9890999BEB7F754A5',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-        ],
-        [
-          '0',
-          '0',
-          '456820000000000000',
-          '365550000000000000',
-          '350030000000000000',
-          '118530000000000000',
-          '385910000000000000',
-          '100820000000000000',
-          '280300000000000000',
-          '193210000000000000',
-          '164940000000000000',
-          '248450000000000000',
-          '262010000000000030',
-          '221970000000000000',
-          '191120000000000000',
-        ],
-        ['0x00000000000656f35ea24b40000186a010000000000000000000044700200000'],
-        tokenIds
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
       );
+
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
     });
   });
 
   describe('#burn', async () => {
     it('No one than LoanKernel contract can burn', async () => {
-      await expect(
-        loanAssetTokenContract
-          .connect(untangledAdminSigner)
-          .burn('0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a')
-      ).to.be.revertedWith(`ERC721: caller is not token owner or approved`);
+      await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
+        `ERC721: caller is not token owner or approved`
+      );
     });
 
     it('only LoanKernel contract can burn', async () => {
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
-        .repayInBatch(
-          ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'],
-          [parseEther('100')],
-          stableCoin.address
-        );
+        .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
     });
   });
 });
