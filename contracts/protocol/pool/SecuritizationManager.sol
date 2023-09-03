@@ -145,7 +145,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-        uint256 additionalCap,
         uint32 _initialInterest,
         uint32 _finalInterest,
         uint32 _timeInterval,
@@ -155,7 +154,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     ) public {
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-        tge.addFunding(additionalCap);
         tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
@@ -172,13 +170,11 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         ISecuritizationPool pool,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
-        uint256 additionalCap,
         NewRoundSaleParam memory saleParam,
         string calldata ticker
     ) public {
         address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
-        tge.addFunding(additionalCap);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
