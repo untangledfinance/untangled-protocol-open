@@ -4,6 +4,7 @@ const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('./shared/expect.js');
 
+const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther } = ethers.utils;
 
 const {
@@ -38,7 +39,7 @@ describe('LoanAssetToken', () => {
       await ethers.getSigners();
 
     const tokenFactory = await ethers.getContractFactory('TestERC20');
-    stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', parseEther('10000000000000000'));
+    stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', parseEther('100000'));
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
 
     const Registry = await ethers.getContractFactory('Registry');
@@ -129,6 +130,13 @@ describe('LoanAssetToken', () => {
     });
   });
 
+  let expirationTimestamps;
+  const CREDITOR_FEE = '0';
+  const ASSET_PURPOSE = '0';
+  const inputAmount = 10;
+  const inputPrice = 15;
+  const principalAmount = _.round(inputAmount * inputPrice * 100);
+
   describe('#mint', async () => {
     it('No one than LoanKernel can mint', async () => {
       await expect(
@@ -148,15 +156,9 @@ describe('LoanAssetToken', () => {
         borrowerSigner.address,
       ];
 
-      const inputAmount = 10;
-      const inputPrice = 15;
-
-      const CREDITOR_FEE = '0';
-      const ASSET_PURPOSE = '0';
       const salt = genSalt();
-      const riskScore = parseUnits('11853', 8).toString();
-      const expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
-      const principalAmount = _.round(inputAmount * inputPrice * 100);
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
         CREDITOR_FEE,
@@ -200,6 +202,43 @@ describe('LoanAssetToken', () => {
     });
   });
 
+  describe('#info', async () => {
+    it('getExpirationTimestamp', async () => {
+      const data = await loanAssetTokenContract.getExpirationTimestamp(tokenIds[0]);
+      expect(data.toString()).equal(expirationTimestamps.toString());
+    });
+
+    it('getRiskScore', async () => {
+      const data = await loanAssetTokenContract.getRiskScore(tokenIds[0]);
+      expect(data).equal(50);
+    });
+
+    it('getAssetPurpose', async () => {
+      const data = await loanAssetTokenContract.getAssetPurpose(tokenIds[0]);
+      expect(data).equal(parseInt(ASSET_PURPOSE));
+    });
+
+    it('getInterestRate', async () => {
+      const data = await loanAssetTokenContract.getInterestRate(tokenIds[0]);
+      expect(data.toString()).equal(interestRateFixedPoint(5).toString());
+    });
+
+    it('getExpectedRepaymentValues', async () => {
+      const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
+      const data = await loanAssetTokenContract.getExpectedRepaymentValues(tokenIds[0], nextTimeStamps);
+
+      expect(data.expectedPrincipal.toNumber()).equal(principalAmount);
+      expect(data.expectedInterest.toString()).equal('0');
+    });
+
+    it('getTotalExpectedRepaymentValue', async () => {
+      const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
+      const data = await loanAssetTokenContract.getTotalExpectedRepaymentValue(tokenIds[0], nextTimeStamps);
+
+      expect(data.toNumber()).equal(principalAmount);
+    });
+  });
+
   describe('#burn', async () => {
     it('No one than LoanKernel contract can burn', async () => {
       await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
@@ -208,6 +247,12 @@ describe('LoanAssetToken', () => {
     });
 
     it('only LoanKernel contract can burn', async () => {
+      const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerBefore)).equal('99000.0');
+
+      const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
+      expect(formatEther(stablecoinBalanceOfPoolBefore)).equal('0.0');
+
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
         .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
@@ -216,6 +261,12 @@ describe('LoanAssetToken', () => {
 
       const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
       expect(balanceOfPool).equal(tokenIds.length - 1);
+
+      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
+      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount)));
+
+      const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
+      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(principalAmount);
     });
   });
 });

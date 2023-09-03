@@ -82,4 +82,5 @@ module.exports = {
   packTermsContractParameters,
   interestRateFixedPoint,
   genSalt,
+  bitShiftLeft,
 };
