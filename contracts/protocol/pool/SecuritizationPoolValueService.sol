@@ -10,6 +10,9 @@ import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
 import '../../interfaces/IDistributionAssessor.sol';
 
+/// @title SecuritizationPoolValueService
+/// @author Untangled Team
+/// @dev Calculate pool's values
 contract SecuritizationPoolValueService is
     SecuritizationPoolServiceBase,
     NAVCalculation,
@@ -397,7 +400,6 @@ contract SecuritizationPoolValueService is
 
         uint256 poolValue;
         poolValue = this.getPoolValue(poolAddress);
-        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         uint256 balancePool = securitizationPool.reserve();
         if (poolValue == 0) return 0;

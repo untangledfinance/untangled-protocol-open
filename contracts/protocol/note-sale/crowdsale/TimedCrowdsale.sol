@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import './Crowdsale.sol';
 
+/// @title TimedCrowdsale
+/// @author Untangled Team
+/// @dev Note sale that has open time and close time
 abstract contract TimedCrowdsale is Crowdsale {
     using ConfigHelper for Registry;
     uint256 public openingTime;

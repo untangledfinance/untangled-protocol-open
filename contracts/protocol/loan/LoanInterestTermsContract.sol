@@ -7,6 +7,9 @@ import '../../libraries/UnpackLoanParamtersLib.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../libraries/ConfigHelper.sol';
 
+/// @title LoanKernel
+/// @author Untangled Team
+/// @dev Upload loan and conclude loan
 contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract {
     using ConfigHelper for Registry;
 

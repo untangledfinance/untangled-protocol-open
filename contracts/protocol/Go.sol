@@ -10,6 +10,9 @@ import "../libraries/ConfigHelper.sol";
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
+/// @title Go
+/// @author Untangled Team
+/// @dev Provides functions with UID
 contract Go is IGo, AccessControlEnumerableUpgradeable {
   bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
   bytes32 public constant ZAPPER_ROLE = keccak256("ZAPPER_ROLE");

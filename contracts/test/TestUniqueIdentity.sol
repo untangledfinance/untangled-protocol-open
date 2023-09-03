@@ -4,7 +4,9 @@ pragma solidity ^0.8.13;
 
 import "../uid/UniqueIdentity.sol";
 
-
+/// @title TestUniqueIdentity
+/// @author Untangled Team
+/// @dev Used for test purpose only
 contract TestUniqueIdentity is UniqueIdentity {
   function _mintForTest(
     address to,

@@ -6,6 +6,9 @@ import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 
+/// @title LoanKernel
+/// @author Untangled Team
+/// @notice Upload loan and conclude loan
 contract LoanKernel is ILoanKernel, UntangledBase {
     using ConfigHelper for Registry;
 

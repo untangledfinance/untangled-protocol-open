@@ -5,6 +5,9 @@ import './base/LongSaleInterest.sol';
 import "../../libraries/ConfigHelper.sol";
 import './crowdsale/FinalizableCrowdsale.sol';
 
+/// @title MintedNormalTGE
+/// @author Untangled Team
+/// @dev Note sale for JOT
 contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 

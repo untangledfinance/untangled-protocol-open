@@ -7,6 +7,9 @@ import './base/Interest.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
+/// @title DistributionAssessor
+/// @author Untangled Team
+/// @notice Calculate values in a pool
 contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
 

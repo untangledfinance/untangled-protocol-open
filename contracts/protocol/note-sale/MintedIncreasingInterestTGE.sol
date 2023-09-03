@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import './crowdsale/IncreasingInterestCrowdsale.sol';
 import './base/LongSaleInterest.sol';
 
+/// @title MintedIncreasingInterestTGE
+/// @author Untangled Team
+/// @dev Note sale for SOT - auction
 contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 

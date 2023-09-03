@@ -14,7 +14,7 @@ import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeabl
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
  *  Automatically invests across borrower pools using an adjustable strategy.
- * @author Goldfinch
+ * @author Untangled Team
  */
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
