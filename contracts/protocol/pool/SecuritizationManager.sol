@@ -5,9 +5,11 @@ import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
+import "../../interfaces/IRequiresUID.sol";
 
-contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager {
+contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
+    uint256[] public allowedUIDTypes;
 
     struct NewRoundSaleParam {
         uint256 openingTime;
@@ -203,12 +205,21 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
+        require(hasAllowedUID(_msgSender()), 'Unauthorized. Must have correct UID');
 
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
 
         ISecuritizationPool(tge.pool()).onBuyNoteToken(currencyAmount);
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
+    }
+
+    function setAllowedUIDTypes(uint256[] calldata ids) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        allowedUIDTypes = ids;
+    }
+
+    function hasAllowedUID(address sender) public view override returns (bool) {
+        return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
     function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {

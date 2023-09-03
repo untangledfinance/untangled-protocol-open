@@ -20,6 +20,7 @@ import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
 import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
+import "../interfaces/IGo.sol";
 
 /**
  * @title ConfigHelper
@@ -111,5 +112,9 @@ library ConfigHelper {
         MintedNormalTGE(
             getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
         );
+    }
+
+    function getGo(Registry registry) internal view returns (IGo) {
+        return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
 }
