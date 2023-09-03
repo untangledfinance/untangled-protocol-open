@@ -1,5 +1,6 @@
 const { ethers, utils } = require('ethers');
 const { BigNumber } = require('bignumber.js');
+const crypto = require('crypto');
 
 const unlimitedAllowance = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 
@@ -67,6 +68,12 @@ const interestRateFixedPoint = (amount) => {
   return new BigNumber(amount).times(INTEREST_RATE_SCALING_FACTOR);
 };
 
+const genSalt = () => {
+  const saltBuffer = crypto.randomBytes(8);
+  const saltBufferHex = saltBuffer.toString('hex');
+  return new BigNumber(`0x${saltBufferHex}`).toString();
+};
+
 module.exports = {
   unlimitedAllowance,
   saltFromOrderValues,
@@ -74,4 +81,5 @@ module.exports = {
   genLoanAgreementIds,
   packTermsContractParameters,
   interestRateFixedPoint,
+  genSalt,
 };

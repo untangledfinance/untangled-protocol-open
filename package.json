@@ -37,6 +37,7 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/test-helpers": "^0.5.16",
+    "dayjs": "^1.11.9",
     "eth-gas-reporter": "^0.2.25",
     "lodash": "^4.17.21",
     "solidity-coverage": "^0.7.11",

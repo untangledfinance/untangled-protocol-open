@@ -1,10 +1,10 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
 const _ = require('lodash');
-
+const dayjs = require('dayjs');
 const { expect } = require('./shared/expect.js');
 
-const { parseEther } = ethers.utils;
+const { parseEther, parseUnits, formatEther } = ethers.utils;
 
 const {
   unlimitedAllowance,
@@ -13,6 +13,7 @@ const {
   debtorsFromOrderAddresses,
   packTermsContractParameters,
   interestRateFixedPoint,
+  genSalt,
 } = require('./utils.js');
 
 const ONE_DAY = 86400;
@@ -128,22 +129,31 @@ describe('LoanAssetToken', () => {
         borrowerSigner.address,
       ];
 
-      const CREDITOR_FEE = '0';
-      const ASSET_PURPOSE = '0';
-      const salt = '350030000000000000';
-      const riskScore = '118530000000000000';
-      const expirationTimestamps = '365550000000000000';
-      const principalAmounts = '456820000000000000';
-      const orderValues = [CREDITOR_FEE, ASSET_PURPOSE, principalAmounts, expirationTimestamps, salt, riskScore];
-
       const inputAmount = 10;
       const inputPrice = 15;
+
+      const CREDITOR_FEE = '0';
+      const ASSET_PURPOSE = '0';
+      const salt = genSalt();
+      const riskScore = parseUnits('11853', 8).toString();
+      const expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+      const principalAmount = _.round(inputAmount * inputPrice * 100);
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
       const termInDaysLoan = 10;
       const interestRatePercentage = 5;
       const termsContractParameter = packTermsContractParameters({
         amortizationUnitType: 1,
         gracePeriodInDays: 2,
-        principalAmount: _.round(inputAmount * inputPrice * 100),
+        principalAmount,
         termLengthUnits: _.ceil(termInDaysLoan * 24),
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
