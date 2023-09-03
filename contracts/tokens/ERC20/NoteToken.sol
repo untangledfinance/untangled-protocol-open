@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import '../../interfaces/INoteToken.sol';
 
+/// @title NoteToken
+/// @author Untangled Team
+/// @dev Template for SOT/JOT token
 contract NoteToken is INoteToken {
     constructor(
         string memory name,

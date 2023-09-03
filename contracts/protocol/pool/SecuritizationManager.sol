@@ -7,6 +7,9 @@ import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import "../../interfaces/IRequiresUID.sol";
 
+/// @title SecuritizationManager
+/// @author Untangled Team
+/// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
     uint256[] public allowedUIDTypes;
@@ -57,6 +60,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return pools.length;
     }
 
+    /// @notice Creates a new securitization pool
+    /// @param currency The main currency used in this new pool. Ex: cUSD's address
+    /// @param minFirstLossCushion Define the minimum JOT ratio in pool
+    /// @dev Creates a new instance of a securitization pool. Set msg sender as owner of the new pool
     function newPoolInstance(address currency, uint32 minFirstLossCushion)
         external
         whenNotPaused
@@ -80,6 +87,12 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return poolAddress;
     }
 
+    /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool
+    /// @param issuerTokenController who acts as owner of note sale
+    /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
+    /// @param longSale Define this sale is long sale. Default true
+    /// @param ticker Prefix for note token symbol name. Ex: Saff_SOT
     function initialTGEForSOT(
         address issuerTokenController,
         ISecuritizationPool pool,
@@ -148,7 +161,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     }
 
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
-    /// @param issuerTokenController Who acts as owner of note sale
+    /// @param issuerTokenController who acts as owner of note sale
     /// @param pool SecuritizationPool address where this sale belongs to
     /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
     /// @param longSale Define this sale is long sale. Default true
@@ -169,6 +182,12 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
+    /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool
+    /// @param issuerTokenController who acts as owner of note sale
+    /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
+    /// @param longSale Define this sale is long sale. Default true
+    /// @param ticker Prefix for note token symbol name. Ex: Saff_JOT
     function initialTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,
@@ -203,6 +222,9 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return tgeAddress;
     }
 
+    /// @notice Investor bid for SOT or JOT token
+    /// @param tgeAddress SOT/JOT token sale instance
+    /// @param currencyAmount Currency amount investor will pay
     function buyTokens(address tgeAddress, uint256 currencyAmount) external whenNotPaused nonReentrant {
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
         require(hasAllowedUID(_msgSender()), 'Unauthorized. Must have correct UID');
@@ -218,6 +240,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         allowedUIDTypes = ids;
     }
 
+    /// @notice Check if an user has valid UID type
     function hasAllowedUID(address sender) public view override returns (bool) {
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }

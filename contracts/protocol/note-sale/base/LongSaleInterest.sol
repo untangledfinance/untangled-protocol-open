@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import '../../../libraries/UntangledMath.sol';
 
+/// @title LongSaleInterest
+/// @author Untangled Team
+/// @dev Define some constant for interest calculation
 contract LongSaleInterest {
     /// @dev represents the number of days in a year
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;

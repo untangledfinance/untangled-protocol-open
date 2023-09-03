@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+/// @title Unpack
+/// @author Untangled Team
+/// @dev Library for retrieving loan's information packed in an bytes32 variable
 library Unpack {
 
     function unpackPrincipalAmount(bytes32 term) internal

@@ -15,21 +15,24 @@ abstract contract Crowdsale is UntangledBase {
     // decimal calculating for rate
     uint256 public constant RATE_SCALING_FACTOR = 10**4;
 
+    /// @dev Pool address which this sale belongs to
     address public pool;
 
-    // The token being sold
+    /// @dev The token being sold
     address public token;
-    // The token for pay
+    /// @dev The token being sold
     address public currency;
 
     // How many token units a buyer gets per currency.
     uint256 public rate; // support by RATE_SCALING_FACTOR decimal numbers
     bool public hasStarted;
 
-    // Amount of currency raised
+    /// @dev Amount of currency raised
     uint256 public currencyRaised;
+    /// @dev Amount of token raised
     uint256 public tokenRaised;
 
+    /// @dev Target raised currency amount
     uint256 public totalCap;
 
     mapping(address => uint256) public currencyRaisedByInvestor;

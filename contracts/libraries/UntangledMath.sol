@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title UntangledMath
+/// @author Untangled Team
 library UntangledMath {
     uint256 public constant ONE = 10**27;
 

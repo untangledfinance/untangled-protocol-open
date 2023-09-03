@@ -5,6 +5,8 @@ import './base/SecuritizationPoolServiceBase.sol';
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 
+/// @title DistributionTranche
+/// @author Untangled Team
 contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTranche {
     using ConfigHelper for Registry;
 
