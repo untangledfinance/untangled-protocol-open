@@ -191,6 +191,12 @@ describe('LoanAssetToken', () => {
       );
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+
+      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+      expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length);
     });
   });
 
@@ -205,6 +211,11 @@ describe('LoanAssetToken', () => {
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
         .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
+
+      await expect(loanAssetTokenContract.ownerOf(tokenIds[0])).to.be.revertedWith(`ERC721: invalid token ID`);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length - 1);
     });
   });
 });

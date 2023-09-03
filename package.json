@@ -6,7 +6,9 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy": "hardhat deploy",
-    "slither": "bash ./scripts/static_analysis.sh"
+    "slither": "bash ./scripts/static_analysis.sh",
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles test/**/*.js",
+    "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles"
   },
   "author": "Untangled Finance Ltd",
   "license": "MIT",
@@ -40,7 +42,7 @@
     "dayjs": "^1.11.9",
     "eth-gas-reporter": "^0.2.25",
     "lodash": "^4.17.21",
-    "solidity-coverage": "^0.7.11",
+    "solidity-coverage": "0.8.4",
     "truffle-contract-size": "^2.0.1"
   }
 }
