@@ -6,6 +6,8 @@ import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 import '@openzeppelin/contracts/utils/math/Math.sol';
 
+/// @title DistributionOperator
+/// @author Untangled Team
 contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOperator {
     using ConfigHelper for Registry;
 

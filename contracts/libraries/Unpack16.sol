@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+/// @title Unpack16
+/// @author Untangled Team
+/// @dev Library for retrieving loan's information packed in an bytes16 variable
 library Unpack16 {
 
     function unpackCollateralTokenId(bytes16 collateralParams) internal

@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import './FinalizableCrowdsale.sol';
 
+/// @title IncreasingInterestCrowdsale
+/// @author Untangled Team
 abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
     using ConfigHelper for Registry;
     uint32 public initialInterest;

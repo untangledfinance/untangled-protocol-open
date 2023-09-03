@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Configuration
+/// @author Untangled Team
 library Configuration {
     uint256 public constant PRICE_SCALING_FACTOR = 10**4;
 
@@ -30,7 +32,8 @@ library Configuration {
         INVOICE_DEBT_REGISTRY,
         INVOICE_FINANCE_INTEREST_TERMS_CONTRACT,
         INVOICE_LOAN_KERNEL,
-        INVOICE_LOAN_REPAYMENT_ROUTER
+        INVOICE_LOAN_REPAYMENT_ROUTER,
+        GO
     }
 
     enum NOTE_TOKEN_TYPE {

@@ -8,9 +8,9 @@ import '../../interfaces/ILoanRegistry.sol';
 import '../../interfaces/ILoanRepaymentRouter.sol';
 import '../../libraries/ConfigHelper.sol';
 
-/**
- * Repayment Router smart contract for Loan
- */
+/// @title LoanRepaymentRouter
+/// @author Untangled Team
+/// @dev Repay for loan
 contract LoanRepaymentRouter is ILoanRepaymentRouter {
     using ConfigHelper for Registry;
 

@@ -5,6 +5,9 @@ import '../../interfaces/ILoanRegistry.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 
+/// @title LoanRegistry
+/// @author Untangled Team
+/// @dev Store LoanAssetToken information
 contract LoanRegistry is UntangledBase, ILoanRegistry {
     using ConfigHelper for Registry;
 

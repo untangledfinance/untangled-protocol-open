@@ -13,10 +13,24 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       'UniqueIdentity',
       { from: deployer, log: true },
       'setSupportedUIDTypes',
-      [0, 1, 2],
-      [true, true, true]
+      [0, 1, 2, 3],
+      [true, true, true, true]
     );
   }
+
+  const goProxy = await deployProxy({ getNamedAccounts, deployments }, 'Go', [
+    deployer, uniqueIdentityProxy.address
+  ]);
+  if (goProxy.newlyDeployed) {
+    await execute(
+      'Registry',
+      { from: deployer, log: true },
+      'setGo',
+      goProxy.address
+    );
+  }
+
 };
 
+module.exports.dependencies = ['registry'];
 module.exports.tags = ['unique_identity'];
