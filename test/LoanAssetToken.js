@@ -93,20 +93,39 @@ describe('LoanAssetToken', () => {
 
       securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
 
+      const oneDayInSecs = 1 * 24 * 3600;
+      const halfOfADay = oneDayInSecs / 2;
+
+      const riskScore = {
+        daysPastDue: oneDayInSecs,
+        advanceRate: 950000,
+        penaltyRate: 900000,
+        interestRate: 910000,
+        probabilityOfDefault: 800000,
+        lossGivenDefault: 810000,
+        gracePeriod: halfOfADay,
+        collectionPeriod: halfOfADay,
+        writeOffAfterGracePeriod: halfOfADay,
+        writeOffAfterCollectionPeriod: halfOfADay,
+      };
+      const daysPastDues = [riskScore.daysPastDue];
+      const ratesAndDefaults = [
+        riskScore.advanceRate,
+        riskScore.penaltyRate,
+        riskScore.interestRate,
+        riskScore.probabilityOfDefault,
+        riskScore.lossGivenDefault,
+      ];
+      const periodsAndWriteOffs = [
+        riskScore.gracePeriod,
+        riskScore.collectionPeriod,
+        riskScore.writeOffAfterGracePeriod,
+        riskScore.writeOffAfterCollectionPeriod,
+      ];
+
       await securitizationPoolContract
         .connect(poolCreatorSigner)
-        .setupRiskScores(
-          [86400, 2592000, 5184000, 7776000, 10368000, 31536000],
-          [
-            950000, 900000, 910000, 800000, 810000, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 80000,
-            100000, 120000, 120000, 140000, 1000000, 10000, 20000, 30000, 40000, 50000, 1000000, 250000, 500000, 500000,
-            750000, 1000000, 1000000,
-          ],
-          [
-            432000, 432000, 432000, 432000, 432000, 432000, 2592000, 2592000, 2592000, 2592000, 2592000, 2592000,
-            250000, 500000, 500000, 750000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000,
-          ]
-        );
+        .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
     });
   });
 
