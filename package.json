@@ -7,8 +7,9 @@
     "test": "hardhat test",
     "deploy": "hardhat deploy",
     "slither": "bash ./scripts/static_analysis.sh",
-    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles test/**/*.js",
-    "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles"
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles ./test/",
+    "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles",
+    "clean": "hardhat clean"
   },
   "author": "Untangled Finance Ltd",
   "license": "MIT",
