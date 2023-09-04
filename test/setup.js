@@ -12,9 +12,14 @@ async function setup() {
   let loanKernel;
   let loanRepaymentRouter;
   let securitizationManager;
-  let securitizationPoolContract;
   let securitizationPoolValueService;
   let securitizationPoolImpl;
+  let go;
+  let uniqueIdentity;
+  let noteTokenFactory;
+  let tokenGenerationEventFactory;
+
+  const [untangledAdminSigner] = await ethers.getSigners();
 
   const tokenFactory = await ethers.getContractFactory('TestERC20');
   stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', parseEther('100000'));
@@ -26,6 +31,16 @@ async function setup() {
   securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address]);
   const SecuritizationPoolValueService = await ethers.getContractFactory('SecuritizationPoolValueService');
   securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
+
+  const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
+  noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address]);
+  const TokenGenerationEventFactory = await ethers.getContractFactory('TokenGenerationEventFactory');
+  tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [registry.address]);
+
+  const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
+  uniqueIdentity = await upgrades.deployProxy(UniqueIdentity, [untangledAdminSigner.address, '']);
+  const Go = await ethers.getContractFactory('Go');
+  go = await upgrades.deployProxy(Go, [untangledAdminSigner.address, uniqueIdentity.address]);
 
   const LoanInterestTermsContract = await ethers.getContractFactory('LoanInterestTermsContract');
   loanInterestTermsContract = await upgrades.deployProxy(LoanInterestTermsContract, [registry.address]);
@@ -55,6 +70,11 @@ async function setup() {
   await registry.setSecuritizationPool(securitizationPoolImpl.address);
   await registry.setSecuritizationManager(securitizationManager.address);
 
+  await registry.setNoteTokenFactory(noteTokenFactory.address);
+  await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
+
+  await registry.setGo(go.address);
+
   return {
     stableCoin,
     registry,
@@ -64,9 +84,12 @@ async function setup() {
     loanKernel,
     loanRepaymentRouter,
     securitizationManager,
-    securitizationPoolContract,
     securitizationPoolValueService,
     securitizationPoolImpl,
+    go,
+    uniqueIdentity,
+    noteTokenFactory,
+    tokenGenerationEventFactory,
   };
 }
 

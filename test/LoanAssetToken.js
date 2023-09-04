@@ -48,7 +48,6 @@ describe('LoanAssetToken', () => {
       loanKernel,
       loanRepaymentRouter,
       securitizationManager,
-      securitizationPoolContract,
       securitizationPoolValueService,
       securitizationPoolImpl,
     } = await setup());

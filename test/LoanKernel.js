@@ -49,7 +49,6 @@ describe('LoanKernel', () => {
       loanKernel,
       loanRepaymentRouter,
       securitizationManager,
-      securitizationPoolContract,
       securitizationPoolValueService,
       securitizationPoolImpl,
     } = await setup());
