@@ -1,9 +1,12 @@
-const { ethers } = require('hardhat');
+const { ethers, getChainId } = require('hardhat');
 const { deployments } = require('hardhat');
 const { BigNumber } = require('ethers');
+const dayjs = require('dayjs');
 const { expect } = require('./shared/expect.js');
+const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const ONE_DAY = 86400;
+const DECIMAL = BigNumber.from(10).pow(18);
 describe('Full flow', () => {
   let setupTest;
   let stableCoin;
@@ -11,6 +14,7 @@ describe('Full flow', () => {
   let loanKernelContract;
   let loanRepaymentRouterContract;
   let loanAssetTokenContract;
+  let uniqueIdentityContract;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -38,6 +42,7 @@ describe('Full flow', () => {
       );
       loanAssetTokenContract = await ethers.getContractAt('LoanAssetToken', (await get('LoanAssetToken')).address);
 
+      uniqueIdentityContract = await ethers.getContractAt('UniqueIdentity', (await get('UniqueIdentity')).address);
       return {
         stableCoin: stableCoin,
       };
@@ -284,5 +289,54 @@ describe('Full flow', () => {
         '104335167814861111609111785713569069376740936907905312938242163662766553376308',
         '54779740532818110306575739016863079018584445701231128063898729506664653093348',
       ]);
+
+    // Init JOT sale
+    const jotCap = '10000000000000000000';
+    const isLongSaleTGEJOT = true;
+    const now = dayjs().unix();
+    const setUpTGEJOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForJOT(poolCreatorSigner.address, securitizationPoolAddress, [1, 2], isLongSaleTGEJOT, {
+      openingTime: now,
+      closingTime: now + ONE_DAY,
+      rate: 10000,
+      cap: jotCap,
+    }, 'Ticker');
+    const setUpTGEJOTReceipt = await setUpTGEJOTTransaction.wait();
+    const [jotTGEAddress] = setUpTGEJOTReceipt.events.find(e => e.event == 'NewTGECreated').args;
+    const mintedNormalTGEContract = await ethers.getContractAt('MintedNormalTGE', jotTGEAddress);
+
+    // Init SOT sale
+    const sotCap = '10000000000000000000';
+    const isLongSaleTGESOT = true;
+    const setUpTGESOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForSOT(poolCreatorSigner.address, securitizationPoolAddress, [0, 2], isLongSaleTGESOT, 10000, 10000, 86400, 10000, {
+      openingTime: now,
+      closingTime: now + 2 * ONE_DAY,
+      rate: 10000,
+      cap: sotCap,
+    }, 'Ticker');
+    const setUpTGESOTReceipt = await setUpTGESOTTransaction.wait();
+    const [sotTGEAddress] = setUpTGESOTReceipt.events.find(e => e.event == 'NewTGECreated').args;
+    const mintedIncreasingInterestTGEContract = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
+
+    // Gain UID
+    const UID_TYPE = 0
+    const chainId = await getChainId();
+    const expiredAt = now + ONE_DAY;
+    const nonce = 0;
+    const ethRequired = ethers.utils.parseEther("0.00083")
+
+    const uidMintMessage = presignedMintMessage(lenderSigner.address, UID_TYPE, expiredAt, uniqueIdentityContract.address, nonce, chainId)
+    const signature = await untangledAdminSigner.signMessage(uidMintMessage)
+    await uniqueIdentityContract.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+
+    // Buy JOT Token
+    const stableCoinAmountToBuyJOT = BigNumber.from(1).mul(DECIMAL); // $1
+    await stableCoin.connect(lenderSigner).approve(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT)
+    await securitizationManagerContract.connect(lenderSigner).buyTokens(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT)
+
+    // Buy SOT Token
+    const stableCoinAmountToBuySOT = BigNumber.from(1).mul(DECIMAL); // $1
+    await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
+    await securitizationManagerContract.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
+
   });
 });

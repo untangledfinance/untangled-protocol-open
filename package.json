@@ -37,6 +37,9 @@
     "web3": "^1.7.3"
   },
   "dependencies": {
+    "@ethersproject/bytes": "^5.7.0",
+    "@ethersproject/keccak256": "^5.7.0",
+    "@ethersproject/solidity": "^5.7.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/test-helpers": "^0.5.16",
