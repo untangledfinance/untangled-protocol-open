@@ -39,6 +39,8 @@ async function setup() {
 
   const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
   uniqueIdentity = await upgrades.deployProxy(UniqueIdentity, [untangledAdminSigner.address, '']);
+  await uniqueIdentity.setSupportedUIDTypes([0, 1, 2, 3], [true, true, true, true]);
+
   const Go = await ethers.getContractFactory('Go');
   go = await upgrades.deployProxy(Go, [untangledAdminSigner.address, uniqueIdentity.address]);
 
