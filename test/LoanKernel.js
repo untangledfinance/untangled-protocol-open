@@ -263,10 +263,6 @@ describe('LoanKernel', () => {
     });
   });
 
-  describe('#info', async () => {
-    it('abc', async () => {});
-  });
-
   describe('#concludeLoan', async () => {
     it('No one than LoanKernel contract can burn', async () => {
       await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
