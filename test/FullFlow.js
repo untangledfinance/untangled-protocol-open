@@ -315,7 +315,7 @@ describe('Full flow', () => {
     // Init SOT sale
     const sotCap = '10000000000000000000';
     const isLongSaleTGESOT = true;
-    const setUpTGESOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForSOT(poolCreatorSigner.address, securitizationPoolAddress, [0, 2], isLongSaleTGESOT, 10000, 10000, 86400, 10000, {
+    const setUpTGESOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForSOT(poolCreatorSigner.address, securitizationPoolAddress, [0, 2], isLongSaleTGESOT, 10000, 90000, 86400, 10000, {
       openingTime: now,
       closingTime: now + 2 * ONE_DAY,
       rate: 10000,
