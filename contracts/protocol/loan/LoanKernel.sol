@@ -257,13 +257,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             revert('Debt does not exsits or Debtor have not completed repayment.');
         }
 
-        bool isTermCompleted = ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
-
-        if (isTermCompleted) {
-            _burnLoanAssetToken(agreementId);
-        } else {
-            revert('Unable to conclude terms contract.');
-        }
+        ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
+        _burnLoanAssetToken(agreementId);
     }
 
     /*********************** */
@@ -295,7 +290,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
         bytes32[] calldata tokenIds // [x]-Loan liability token Id, [x]-Loan liability token Id
     ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
-        require(termsContractParameters.length > 0, 'Loanernel: Invalid Term Contract params');
+        require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
         LoanOrder memory debtOrder = _getLoanOrder(
@@ -306,7 +301,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             salts
         );
 
-        require(debtOrder.issuance.termsContract != address(0x0), 'LoanKernel: Invalid Term Contract.');
         uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
@@ -323,10 +317,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 _getAssetPurposeAndRiskScore(debtOrder.assetPurpose, debtOrder.riskScores[i])
             );
 
-            require(
-                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]),
-                'LoanKernel: Failed to register starting Loan terms.'
-            );
+            ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]);
 
             emit LogDebtOrderFilled(
                 debtOrder.issuance.agreementIds[i],
