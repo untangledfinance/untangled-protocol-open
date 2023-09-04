@@ -13,11 +13,11 @@ async function setup() {
   let loanRepaymentRouter;
   let securitizationManager;
   let securitizationPoolValueService;
-  let securitizationPoolImpl;
   let go;
   let uniqueIdentity;
   let noteTokenFactory;
   let tokenGenerationEventFactory;
+  let distributionAssessor;
 
   const [untangledAdminSigner] = await ethers.getSigners();
 
@@ -50,12 +50,15 @@ async function setup() {
   loanKernel = await upgrades.deployProxy(LoanKernel, [registry.address]);
   const LoanRepaymentRouter = await ethers.getContractFactory('LoanRepaymentRouter');
   loanRepaymentRouter = await upgrades.deployProxy(LoanRepaymentRouter, [registry.address]);
+  const DistributionAssessor = await ethers.getContractFactory('DistributionAssessor');
+  distributionAssessor = await upgrades.deployProxy(DistributionAssessor, [registry.address]);
 
   await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
   await registry.setLoanRegistry(loanRegistry.address);
   await registry.setLoanKernel(loanKernel.address);
   await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
   await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
+  await registry.setDistributionAssessor(distributionAssessor.address);
 
   const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
   loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
@@ -65,10 +68,16 @@ async function setup() {
   await registry.setLoanAssetToken(loanAssetTokenContract.address);
 
   const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
-  securitizationPoolImpl = await SecuritizationPool.deploy();
+  const securitizationPoolImpl = await SecuritizationPool.deploy();
+  const MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE');
+  const mintedIncreasingInterestTGEImpl = await MintedIncreasingInterestTGE.deploy();
+  const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
+  const mintedNormalTGEImpl = await MintedNormalTGE.deploy();
 
   await registry.setSecuritizationPool(securitizationPoolImpl.address);
   await registry.setSecuritizationManager(securitizationManager.address);
+  await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGEImpl.address);
+  await registry.setMintedNormalTGE(mintedNormalTGEImpl.address);
 
   await registry.setNoteTokenFactory(noteTokenFactory.address);
   await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
