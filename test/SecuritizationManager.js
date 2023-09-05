@@ -141,6 +141,9 @@ describe('SecuritizationManager', () => {
     });
 
     it('Get SOT info', async () => {
+      const poolLength = await securitizationManager.getPoolsLength();
+      expect(poolLength).equal(1);
+
       const isExistingPools = await securitizationManager.isExistingPools(securitizationPoolContract.address);
       expect(isExistingPools).equal(true);
 
@@ -154,8 +157,20 @@ describe('SecuritizationManager', () => {
       expect(isExistingTGEs).equal(true);
     });
 
-    it('Should buy tokens successfully', async () => {
+    it('Should pause pool', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager.pausePool(securitizationPoolContract.address);
+
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`Pausable: paused`);
+    });
+
+    it('Should un-pause pool', async () => {
+      await securitizationManager.unpausePool(securitizationPoolContract.address);
+    });
+
+    it('Should buy tokens successfully', async () => {
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
@@ -216,9 +231,20 @@ describe('SecuritizationManager', () => {
       expect(isExistingTGEs).equal(true);
     });
 
-    it('Should buy tokens successfully', async () => {
+    it('Should pause all pools', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager.pauseAllPools();
 
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`Pausable: paused`);
+    });
+
+    it('Should un-pause all pools', async () => {
+      await securitizationManager.unpauseAllPools();
+    });
+
+    it('Should buy tokens successfully', async () => {
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
