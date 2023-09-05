@@ -99,6 +99,7 @@ describe('SecuritizationManager', () => {
   });
   describe('#setUpTGEForSOT', async () => {
     let mintedIncreasingInterestTGE;
+    let sotTokenAddress;
 
     it('Should set up TGE for SOT successfully', async () => {
       const tokenDecimals = 18;
@@ -135,21 +136,40 @@ describe('SecuritizationManager', () => {
 
       mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
 
-      const [sotToken] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
-      expect(sotToken).to.be.properAddress;
+      [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(sotTokenAddress).to.be.properAddress;
+    });
+
+    it('Get SOT info', async () => {
+      const isExistingPools = await securitizationManager.isExistingPools(securitizationPoolContract.address);
+      expect(isExistingPools).equal(true);
+
+      const pools = await securitizationManager.pools(0);
+      expect(pools).equal(securitizationPoolContract.address);
+
+      const poolToSOT = await securitizationManager.poolToSOT(securitizationPoolContract.address);
+      expect(poolToSOT).equal(sotTokenAddress);
+
+      const isExistingTGEs = await securitizationManager.isExistingTGEs(mintedIncreasingInterestTGE.address);
+      expect(isExistingTGEs).equal(true);
     });
 
     it('Should buy tokens successfully', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+
+      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
+
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
     });
   });
 
   describe('#setUpTGEForJOT', async () => {
     let mintedIncreasingInterestTGE;
+    let jotTokenAddress;
 
     it('Should set up TGE for JOT successfully', async () => {
       const tokenDecimals = 18;
@@ -178,8 +198,22 @@ describe('SecuritizationManager', () => {
 
       mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
 
-      const [jotToken] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
-      expect(jotToken).to.be.properAddress;
+      [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(jotTokenAddress).to.be.properAddress;
+    });
+
+    it('Get JOT info', async () => {
+      const isExistingPools = await securitizationManager.isExistingPools(securitizationPoolContract.address);
+      expect(isExistingPools).equal(true);
+
+      const pools = await securitizationManager.pools(0);
+      expect(pools).equal(securitizationPoolContract.address);
+
+      const poolToJOT = await securitizationManager.poolToJOT(securitizationPoolContract.address);
+      expect(poolToJOT).equal(jotTokenAddress);
+
+      const isExistingTGEs = await securitizationManager.isExistingTGEs(mintedIncreasingInterestTGE.address);
+      expect(isExistingTGEs).equal(true);
     });
 
     it('Should buy tokens successfully', async () => {
@@ -188,6 +222,11 @@ describe('SecuritizationManager', () => {
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+
+      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
+
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
     });
   });
 });
