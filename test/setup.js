@@ -18,6 +18,8 @@ async function setup() {
   let noteTokenFactory;
   let tokenGenerationEventFactory;
   let distributionAssessor;
+  let distributionOperator;
+  let distributionTranche;
 
   const [untangledAdminSigner] = await ethers.getSigners();
 
@@ -55,6 +57,10 @@ async function setup() {
   loanRepaymentRouter = await upgrades.deployProxy(LoanRepaymentRouter, [registry.address]);
   const DistributionAssessor = await ethers.getContractFactory('DistributionAssessor');
   distributionAssessor = await upgrades.deployProxy(DistributionAssessor, [registry.address]);
+  const DistributionOperator = await ethers.getContractFactory('DistributionOperator');
+  distributionOperator = await upgrades.deployProxy(DistributionOperator, [registry.address]);
+  const DistributionTranche = await ethers.getContractFactory('DistributionTranche');
+  distributionTranche = await upgrades.deployProxy(DistributionTranche, [registry.address]);
 
   await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
   await registry.setLoanRegistry(loanRegistry.address);
@@ -62,6 +68,8 @@ async function setup() {
   await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
   await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
   await registry.setDistributionAssessor(distributionAssessor.address);
+  await registry.setDistributionOperator(distributionOperator.address);
+  await registry.setDistributionTranche(distributionTranche.address);
 
   const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
   loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
@@ -102,6 +110,9 @@ async function setup() {
     uniqueIdentity,
     noteTokenFactory,
     tokenGenerationEventFactory,
+    distributionOperator,
+    distributionAssessor,
+    distributionTranche,
   };
 }
 

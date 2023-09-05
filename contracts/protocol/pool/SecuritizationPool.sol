@@ -25,7 +25,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address _currency,
         uint32 _minFirstLossCushion
     ) public override initializer {
-        require(_minFirstLossCushion < 100*RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
+        require(_minFirstLossCushion < 100 * RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
         __UntangledBase__init(_msgSender());
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
@@ -112,7 +112,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        uint256  nftAssetsLength =  nftAssets.length;
+        uint256 nftAssetsLength = nftAssets.length;
         for (uint256 i = 0; i < nftAssetsLength; i++) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
@@ -125,7 +125,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
-
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
         nftAssets.pop();
     }
@@ -166,7 +165,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
     ) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
-          uint256 _daysPastDuesLength = _daysPastDues.length;
+        uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
             _daysPastDuesLength * 5 == _ratesAndDefaults.length &&
                 _daysPastDuesLength * 4 == _periodsAndWriteOffs.length,
@@ -216,9 +215,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length;
-        require(tokenAddresses.length == tokenIdsLength, "tokenAddresses length and tokenIds length are not equal");
-        require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
+        uint256 tokenIdsLength = tokenIds.length;
+        require(tokenAddresses.length == tokenIdsLength, 'tokenAddresses length and tokenIds length are not equal');
+        require(
+            tokenAddresses.length == recipients.length,
+            'tokenAddresses length and recipients length are not equal'
+        );
         for (uint256 i = 0; i < tokenIdsLength; i++) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
@@ -231,22 +233,20 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address from,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        uint256  tokenIdsLength =  tokenIds.length;
+        uint256 tokenIdsLength = tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; ++i) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
     }
 
     /// @inheritdoc ISecuritizationPool
-    function withdraw(
-        uint256 amount
-    ) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+    function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
         reserve = reserve - amount;
-        require(checkMinFirstLost(), "MinFirstLoss is not satisfied");
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount);
     }
 
-    function checkMinFirstLost() public view returns(bool) {
+    function checkMinFirstLost() public view returns (bool) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
@@ -279,8 +279,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         uint256 tokenAddressesLength = tokenAddresses.length;
-        require(tokenAddressesLength == recipients.length, "tokenAddresses length and tokenIds length are not equal");
-        require(tokenAddressesLength == amounts.length, "tokenAddresses length and recipients length are not equal");
+        require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
+        require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
         for (uint256 i = 0; i < tokenAddressesLength; ++i) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
@@ -289,7 +289,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /// @inheritdoc ISecuritizationPool
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-         uint256 tokenAddressesLength = tokenAddresses.length;
+        uint256 tokenAddressesLength = tokenAddresses.length;
         for (uint256 i = 0; i < tokenAddressesLength; ++i) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
@@ -410,7 +410,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     // Increase by value
     /// @inheritdoc ISecuritizationPool
-    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused nonReentrant onlyLoanRepaymentRouter {
+    function increaseTotalAssetRepaidCurrency(uint256 amount)
+        external
+        override
+        whenNotPaused
+        nonReentrant
+        onlyLoanRepaymentRouter
+    {
         reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
@@ -433,18 +439,21 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
         reserve = reserve - currencyAmount;
-        require(checkMinFirstLost(), "MinFirstLoss is not satisfied");
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
-
     }
 
     /// @inheritdoc ISecuritizationPool
-    function onBuyNoteToken(
-        uint256 currencyAmount
-    ) external override whenNotPaused nonReentrant onlySecuritizationManager {
+    function onBuyNoteToken(uint256 currencyAmount)
+        external
+        override
+        whenNotPaused
+        nonReentrant
+        onlySecuritizationManager
+    {
         reserve = reserve + currencyAmount;
     }
 }

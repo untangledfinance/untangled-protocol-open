@@ -53,15 +53,13 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenPrice;
         uint256 tokenToBeRedeemed;
         uint256 currencyAmtToBeDistributed;
-        uint256 ONE_TOKEN = 10 ** uint256(noteToken.decimals());
+        uint256 ONE_TOKEN = 10**uint256(noteToken.decimals());
         if (securitizationPool.sotToken() == address(noteToken)) {
-            tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(
-                address(securitizationPool)
-            );
+            tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(address(securitizationPool));
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
-                tokenPrice,
+                    tokenPrice,
                 tokenAmount
             );
             currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
@@ -75,9 +73,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
             tranche.redeemToken(address(noteToken), _msgSender(), tokenToBeRedeemed);
         } else if (securitizationPool.jotToken() == address(noteToken)) {
-            tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
-                securitizationPool
-            );
+            tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(securitizationPool);
 
             tokenToBeRedeemed = Math.min(
                 (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
@@ -155,7 +151,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     }
 
     /// @dev This calls make redeem request and redeem at once
-    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant returns (uint256) {
+    function makeRedeemRequestAndRedeem(
+        address pool,
+        INoteToken noteToken,
+        uint256 tokenAmount
+    ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
