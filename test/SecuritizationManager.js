@@ -7,6 +7,8 @@ const { parseEther, formatEther } = ethers.utils;
 const { expect } = require('./shared/expect.js');
 const { setup } = require('./setup.js');
 const { unlimitedAllowance } = require('./utils.js');
+const { presignedMintMessage } = require('./shared/uid-helper.js');
+
 const RATE_SCALING_FACTOR = 10 ** 4;
 
 const SaleType = {
@@ -18,16 +20,34 @@ describe('SecuritizationManager', () => {
   let stableCoin;
   let securitizationManager;
   let securitizationPoolContract;
-
+  let uniqueIdentity;
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
   before('create fixture', async () => {
     [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
       await ethers.getSigners();
 
-    ({ stableCoin, securitizationManager } = await setup());
+    ({ stableCoin, securitizationManager, uniqueIdentity } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
+
+    // Gain UID
+    const UID_TYPE = 0;
+    const chainId = await getChainId();
+    const expiredAt = dayjs().unix() + 86400;
+    const nonce = 0;
+    const ethRequired = parseEther('0.00083');
+
+    const uidMintMessage = presignedMintMessage(
+      lenderSigner.address,
+      UID_TYPE,
+      expiredAt,
+      uniqueIdentity.address,
+      nonce,
+      chainId
+    );
+    const signature = await untangledAdminSigner.signMessage(uidMintMessage);
+    await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
   });
 
   it('should emit RoleGranted event with an address', async function () {
@@ -129,6 +149,8 @@ describe('SecuritizationManager', () => {
   });
 
   describe('#setUpTGEForJOT', async () => {
+    let mintedIncreasingInterestTGE;
+
     it('Should set up TGE for JOT successfully', async () => {
       const tokenDecimals = 18;
 
@@ -139,7 +161,7 @@ describe('SecuritizationManager', () => {
       const prefixOfNoteTokenSaleName = 'JOT_';
 
       // JOT only has SaleType.NORMAL_SALE
-      await securitizationManager
+      const transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .setUpTGEForJOT(
           untangledAdminSigner.address,
@@ -149,6 +171,23 @@ describe('SecuritizationManager', () => {
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
           prefixOfNoteTokenSaleName
         );
+      const receipt = await transaction.wait();
+
+      const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+      expect(tgeAddress).to.be.properAddress;
+
+      mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+      const [jotToken] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(jotToken).to.be.properAddress;
+    });
+
+    it('Should buy tokens successfully', async () => {
+      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
     });
   });
 });
