@@ -334,9 +334,9 @@ describe('SecuritizationPool', () => {
       expect(balanceOfPoolCreator).equal(1);
     });
 
-    // it('#withdraw', async () => {
-    //   await securitizationPoolContract.connect(originatorSigner).withdraw(parseEther('10'));
-    // });
+    it('#withdraw', async () => {
+      await securitizationPoolContract.connect(originatorSigner).withdraw(parseEther('10'));
+    });
 
     it('#collectERC20Assets', async () => {
       await sotToken.connect(lenderSigner).approve(securitizationPoolContract.address, unlimitedAllowance);
