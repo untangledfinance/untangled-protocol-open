@@ -122,7 +122,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     ) private {
         // Mint debt tokens and finalize debt agreement
 
-        registry.getLoanAssetToken().mint(creditor, uint256(latTokenId));
+        registry.getLoanAssetToken().safeMint(creditor, uint256(latTokenId));
 
         registry.getLoanRegistry().insert(
             latTokenId,

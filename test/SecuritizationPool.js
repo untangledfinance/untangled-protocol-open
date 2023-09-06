@@ -30,6 +30,7 @@ describe('SecuritizationPool', () => {
   let loanRepaymentRouter;
   let securitizationManager;
   let securitizationPoolContract;
+  let secondSecuritizationPool;
   let tokenIds;
   let uniqueIdentity;
   let distributionOperator;
@@ -82,13 +83,55 @@ describe('SecuritizationPool', () => {
       const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
       await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
       // Create new pool
-      const transaction = await securitizationManager
+      let transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .newPoolInstance(stableCoin.address, '100000');
-      const receipt = await transaction.wait();
-      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+      let receipt = await transaction.wait();
+      let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
       securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+
+      transaction = await securitizationManager
+        .connect(poolCreatorSigner)
+        .newPoolInstance(stableCoin.address, '100000');
+      receipt = await transaction.wait();
+      [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+      secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+
+      const oneDayInSecs = 1 * 24 * 3600;
+      const halfOfADay = oneDayInSecs / 2;
+
+      const riskScore = {
+        daysPastDue: oneDayInSecs,
+        advanceRate: 950000,
+        penaltyRate: 900000,
+        interestRate: 910000,
+        probabilityOfDefault: 800000,
+        lossGivenDefault: 810000,
+        gracePeriod: halfOfADay,
+        collectionPeriod: halfOfADay,
+        writeOffAfterGracePeriod: halfOfADay,
+        writeOffAfterCollectionPeriod: halfOfADay,
+      };
+      const daysPastDues = [riskScore.daysPastDue];
+      const ratesAndDefaults = [
+        riskScore.advanceRate,
+        riskScore.penaltyRate,
+        riskScore.interestRate,
+        riskScore.probabilityOfDefault,
+        riskScore.lossGivenDefault,
+      ];
+      const periodsAndWriteOffs = [
+        riskScore.gracePeriod,
+        riskScore.collectionPeriod,
+        riskScore.writeOffAfterGracePeriod,
+        riskScore.writeOffAfterCollectionPeriod,
+      ];
+
+      await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
     });
   });
 
@@ -174,19 +217,27 @@ describe('SecuritizationPool', () => {
         loanRepaymentRouter.address,
         loanInterestTermsContract.address,
         relayer.address,
+        // borrower 1
+        borrowerSigner.address,
+        // borrower 2
         borrowerSigner.address,
       ];
 
-      const salt = genSalt();
       const riskScore = '50';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
         CREDITOR_FEE,
         ASSET_PURPOSE,
+        // token 1
         parseEther(principalAmount.toString()),
         expirationTimestamps,
-        salt,
+        genSalt(),
+        riskScore,
+        // token 2
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        genSalt(),
         riskScore,
       ];
 
@@ -200,7 +251,7 @@ describe('SecuritizationPool', () => {
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
 
-      const termsContractParameters = [termsContractParameter];
+      const termsContractParameters = [termsContractParameter, termsContractParameter];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
@@ -224,6 +275,18 @@ describe('SecuritizationPool', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds)
       ).to.be.revertedWith(`ERC721: token already minted`);
+    });
+
+    it('#exportAssets', async () => {
+      await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .exportAssets(loanAssetTokenContract.address, secondSecuritizationPool.address, [tokenIds[1]]);
+
+      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[1]);
+      expect(ownerOfAgreement).equal(secondSecuritizationPool.address);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(secondSecuritizationPool.address);
+      expect(balanceOfPool).equal(1);
     });
 
     it('only LoanKernel contract can burn', async () => {
