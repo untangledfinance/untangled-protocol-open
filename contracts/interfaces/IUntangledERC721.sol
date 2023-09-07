@@ -27,6 +27,10 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         _mint(to, tokenId);
     }
 
+    function safeMint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
+    }
+
     /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         external
