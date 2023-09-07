@@ -364,20 +364,23 @@ describe('SecuritizationPool', () => {
 
     it('#claimCashRemain', async () => {
       expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('0.0');
+      expect(formatEther(await sotToken.totalSupply())).equal('90.0');
       await expect(
         securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address)
       ).to.be.revertedWith(`SecuritizationPool: SOT still remain`);
 
-      await stableCoin.mint(parseEther('100000000000000'));
-      await stableCoin.connect(untangledAdminSigner).transfer(lenderSigner.address, parseEther('1000000'));
-      await securitizationManager
-        .connect(lenderSigner)
-        .buyTokens(mintedIncreasingInterestTGE.address, parseEther('90000'));
+      await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .withdrawERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('1')]);
+
+      await sotToken.connect(lenderSigner).burn(parseEther('90'));
+      expect(formatEther(await sotToken.totalSupply())).equal('0.0');
+
       await securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address);
     });
 
     it('#startCycle', async () => {
-      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('0.0');
+      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('89.99999999999999999');
       await expect(
         securitizationPoolContract
           .connect(poolCreatorSigner)
