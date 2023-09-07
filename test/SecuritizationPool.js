@@ -36,8 +36,10 @@ describe('SecuritizationPool', () => {
   let uniqueIdentity;
   let distributionOperator;
   let sotToken;
+  let jotToken;
   let distributionTranche;
   let mintedIncreasingInterestTGE;
+  let jotMintedIncreasingInterestTGE;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
@@ -141,6 +143,53 @@ describe('SecuritizationPool', () => {
         .connect(poolCreatorSigner)
         .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
     });
+
+    it('Wrong risk scores', async () => {
+      const oneDayInSecs = 1 * 24 * 3600;
+      const halfOfADay = oneDayInSecs / 2;
+
+      const riskScore = {
+        daysPastDue: oneDayInSecs,
+        advanceRate: 950000,
+        penaltyRate: 900000,
+        interestRate: 910000,
+        probabilityOfDefault: 800000,
+        lossGivenDefault: 810000,
+        gracePeriod: halfOfADay,
+        collectionPeriod: halfOfADay,
+        writeOffAfterGracePeriod: halfOfADay,
+        writeOffAfterCollectionPeriod: halfOfADay,
+      };
+      const daysPastDues = [riskScore.daysPastDue, riskScore.daysPastDue];
+      const ratesAndDefaults = [
+        riskScore.advanceRate,
+        riskScore.penaltyRate,
+        riskScore.interestRate,
+        riskScore.probabilityOfDefault,
+        riskScore.lossGivenDefault,
+        riskScore.advanceRate,
+        riskScore.penaltyRate,
+        riskScore.interestRate,
+        riskScore.probabilityOfDefault,
+        riskScore.lossGivenDefault,
+      ];
+      const periodsAndWriteOffs = [
+        riskScore.gracePeriod,
+        riskScore.collectionPeriod,
+        riskScore.writeOffAfterGracePeriod,
+        riskScore.writeOffAfterCollectionPeriod,
+        riskScore.gracePeriod,
+        riskScore.collectionPeriod,
+        riskScore.writeOffAfterGracePeriod,
+        riskScore.writeOffAfterCollectionPeriod,
+      ];
+
+      await expect(
+        securitizationPoolContract
+          .connect(poolCreatorSigner)
+          .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs)
+      ).to.be.revertedWith(`SecuritizationPool: Risk scores must be sorted`);
+    });
   });
 
   describe('#Securitization Manager', async () => {
@@ -185,6 +234,39 @@ describe('SecuritizationPool', () => {
       sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
     });
 
+    it('Should set up TGE for JOT successfully', async () => {
+      const tokenDecimals = 18;
+
+      const openingTime = dayjs(new Date()).unix();
+      const closingTime = dayjs(new Date()).add(7, 'days').unix();
+      const rate = 2;
+      const totalCapOfToken = parseEther('100000');
+      const prefixOfNoteTokenSaleName = 'JOT_';
+
+      // JOT only has SaleType.NORMAL_SALE
+      const transaction = await securitizationManager
+        .connect(poolCreatorSigner)
+        .setUpTGEForJOT(
+          untangledAdminSigner.address,
+          securitizationPoolContract.address,
+          [SaleType.NORMAL_SALE, tokenDecimals],
+          true,
+          { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+          prefixOfNoteTokenSaleName
+        );
+      const receipt = await transaction.wait();
+
+      const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+      expect(tgeAddress).to.be.properAddress;
+
+      jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+      const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(jotTokenAddress).to.be.properAddress;
+
+      jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
+    });
+
     it('Should buy tokens successfully', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
 
@@ -196,6 +278,11 @@ describe('SecuritizationPool', () => {
       expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
 
       expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
+
+      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
     });
   });
 
@@ -297,6 +384,12 @@ describe('SecuritizationPool', () => {
 
       const balanceOfPool = await loanAssetTokenContract.balanceOf(secondSecuritizationPool.address);
       expect(balanceOfPool).equal(1);
+
+      await expect(
+        securitizationPoolContract
+          .connect(poolCreatorSigner)
+          .exportAssets(stableCoin.address, secondSecuritizationPool.address, [tokenIds[1]])
+      ).to.be.revertedWith(`SecuritizationPool: Asset does not exist`);
     });
 
     it('#setPot', async () => {
@@ -373,14 +466,23 @@ describe('SecuritizationPool', () => {
         .connect(poolCreatorSigner)
         .withdrawERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('1')]);
 
+      // Force burn to test
       await sotToken.connect(lenderSigner).burn(parseEther('90'));
       expect(formatEther(await sotToken.totalSupply())).equal('0.0');
+
+      await expect(
+        securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address)
+      ).to.be.revertedWith(`SecuritizationPool: JOT still remain`);
+
+      // Force burn to test
+      await jotToken.connect(lenderSigner).burn(parseEther('100'));
+      expect(formatEther(await jotToken.totalSupply())).equal('0.0');
 
       await securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address);
     });
 
     it('#startCycle', async () => {
-      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('89.99999999999999999');
+      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('189.99999999999999999');
       await expect(
         securitizationPoolContract
           .connect(poolCreatorSigner)
@@ -388,6 +490,14 @@ describe('SecuritizationPool', () => {
       ).to.be.revertedWith(`SecuritizationPool: sale is still on going`);
       await time.increaseTo(dayjs(new Date()).add(8, 'days').unix());
       await mintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
+
+      await expect(
+        securitizationPoolContract
+          .connect(poolCreatorSigner)
+          .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
+      ).to.be.revertedWith(`SecuritizationPool: second sale is still on going`);
+
+      await jotMintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
 
       await securitizationPoolContract
         .connect(poolCreatorSigner)
@@ -402,6 +512,14 @@ describe('SecuritizationPool', () => {
         .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
 
       await expect(loanAssetTokenContract.ownerOf(tokenIds[0])).to.be.revertedWith(`ERC721: invalid token ID`);
+    });
+  });
+
+  describe('Get Info', async () => {
+    it('#getTokenAssetAddresses', async () => {
+      const tokens = await securitizationPoolContract.getTokenAssetAddresses();
+
+      expect(tokens).to.deep.equal([sotToken.address]);
     });
   });
 });
