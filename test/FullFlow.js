@@ -4,6 +4,7 @@ const { BigNumber } = require('ethers');
 const dayjs = require('dayjs');
 const { expect } = require('./shared/expect.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
+const { mine, time } = require('@nomicfoundation/hardhat-network-helpers');
 
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
@@ -15,6 +16,9 @@ describe('Full flow', () => {
   let loanRepaymentRouterContract;
   let loanAssetTokenContract;
   let uniqueIdentityContract;
+  let loanInterestTermContract;
+  let distributionOperator;
+  let distributionTranche;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -25,7 +29,8 @@ describe('Full flow', () => {
       await deployments.fixture(); // ensure you start from a fresh deployments
       const tokenFactory = await ethers.getContractFactory('TestERC20');
       const stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', BigNumber.from(2).pow(255));
-      await stableCoin.transfer(lenderSigner.address, BigNumber.from(1000).pow(18)); // Lender has 1000$
+      await stableCoin.transfer(lenderSigner.address, BigNumber.from(1000).mul(DECIMAL)); // Lender has 1000$
+      await stableCoin.transfer(originatorSigner.address, BigNumber.from(10000).mul(DECIMAL)); // Originator has 10000$
       const { get } = deployments;
       securitizationManagerContract = await ethers.getContractAt(
         'SecuritizationManager',
@@ -43,6 +48,9 @@ describe('Full flow', () => {
       loanAssetTokenContract = await ethers.getContractAt('LoanAssetToken', (await get('LoanAssetToken')).address);
 
       uniqueIdentityContract = await ethers.getContractAt('UniqueIdentity', (await get('UniqueIdentity')).address);
+      loanInterestTermContract = await ethers.getContractAt('LoanInterestTermsContract', (await get('LoanInterestTermsContract')).address);
+      distributionOperator = await ethers.getContractAt('DistributionOperator', (await get('DistributionOperator')).address);
+      distributionTranche = await ethers.getContractAt('DistributionTranche', (await get('DistributionTranche')).address);
       return {
         stableCoin: stableCoin,
       };
@@ -338,5 +346,52 @@ describe('Full flow', () => {
     await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
     await securitizationManagerContract.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
 
+    // Start cycle
+    await time.increase(ONE_DAY*5)
+    // Finalize jot sale
+    await mintedNormalTGEContract.connect(poolCreatorSigner).finalize(false, poolCreatorSigner.address);
+    // Finalize sot sale
+    await mintedIncreasingInterestTGEContract.connect(poolCreatorSigner).finalize(false, poolCreatorSigner.address);
+
+    const interest = await mintedIncreasingInterestTGEContract.getCurrentInterest();
+    console.log(interest);
+    await securitizationPoolContract.connect(poolCreatorSigner).startCycle(ONE_DAY*60, 100, interest, now);
+
+    // Repay loan
+    await stableCoin.connect(originatorSigner).approve(loanRepaymentRouterContract.address, "100000000000000000000")
+
+    await loanRepaymentRouterContract.connect(originatorSigner).repayInBatch(
+      [
+        '0x0402e6a3fda04c590f0de9573cb886b909202a646e29b1505347dbdad71993fb',
+        '0x9b267ee2976a46d4c8d37d7b452b40fe1d524430d3e8bc19a2106cadf20d03b8',
+        '0x1d262f75bc61c2035fe711930f7accf63a4906996cc18c57039f881f835a26db',
+        '0x979b5e9fab60f9433bf1aa924d2d09636ae0f5c10e2c6a8a58fe441cd1414d7f',
+        '0x583057423a4229bfb018a7cf05140649f0f4dc560f4dce8f46f386b1a6df2c2b',
+        '0xd8ecd3440fa68d7d87f9b3d22ad267ba4e42aad35f07f0112b72bef1b3442eaf',
+      ],
+      [
+        '360000000000000000',
+        '10000000000000000',
+        '10000000000000000',
+        '470000000000000000',
+        '380000000000000000',
+        '400000000000000000',
+      ],
+      stableCoin.address,
+    );
+    // Conclude loan
+    const jotAddress = await securitizationPoolContract.jotToken();
+    const sotAddress = await securitizationPoolContract.sotToken();
+    const jotTokenContract = await ethers.getContractAt('NoteToken', jotAddress);
+    const sotTokenContract = await ethers.getContractAt('NoteToken', sotAddress);
+    // const riskScore = await securitizationPoolContract.riskScores(5)
+    // console.log(riskScore);
+
+    // const length = await securitizationPoolContract.getRiskScoresLength();
+    await jotTokenContract.connect(lenderSigner).approve(distributionTranche.address, '100')
+    await distributionOperator.connect(lenderSigner).makeRedeemRequestAndRedeem(securitizationPoolContract.address, jotTokenContract.address, '100')
+
+        // await sotTokenContract.connect(lenderSigner).approve(distributionTranche.address, '100' )
+        // await distributionOperator.connect(lenderSigner).makeRedeemRequestAndRedeem(securitizationPoolContract.address, sotTokenContract.address, '100')
   });
 });
