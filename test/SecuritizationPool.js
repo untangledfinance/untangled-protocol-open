@@ -341,7 +341,8 @@ describe('SecuritizationPool', () => {
 
   let expirationTimestamps;
   const CREDITOR_FEE = '0';
-  const ASSET_PURPOSE = '0';
+  const ASSET_PURPOSE_SALE = '0';
+  const ASSET_PURPOSE_PLEDGE = '1';
   const inputAmount = 10;
   const inputPrice = 15;
   const principalAmount = _.round(inputAmount * inputPrice * 100);
@@ -365,7 +366,7 @@ describe('SecuritizationPool', () => {
 
       const orderValues = [
         CREDITOR_FEE,
-        ASSET_PURPOSE,
+        ASSET_PURPOSE_SALE,
         // token 1
         parseEther(principalAmount.toString()),
         expirationTimestamps,
@@ -412,6 +413,63 @@ describe('SecuritizationPool', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds)
       ).to.be.revertedWith(`ERC721: token already minted`);
+    });
+
+    it('Execute fillDebtOrder successfully with Pledge', async () => {
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        // borrower 1
+        borrowerSigner.address,
+      ];
+
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE_PLEDGE,
+        // token 1
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        genSalt(),
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      const pledgeTokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, pledgeTokenIds);
+
+      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
+      expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+      tokenIds.push(...pledgeTokenIds);
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length);
     });
   });
 
@@ -463,7 +521,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('9817');
+      expect(result.toString()).equal('14834');
     });
 
     it('#getAssetRiskScoreIdx', async () => {
@@ -567,6 +625,16 @@ describe('SecuritizationPool', () => {
         .collectERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('2')]);
 
       expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('88.0');
+    });
+
+    it('#getAssetInterestRate of Pledge token', async () => {
+      const result = await securitizationPoolValueService.getAssetInterestRate(
+        securitizationPoolContract.address,
+        loanAssetTokenContract.address,
+        tokenIds[2],
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+      expect(result.toNumber()).equal(910000);
     });
 
     it('#withdrawERC20Assets', async () => {
