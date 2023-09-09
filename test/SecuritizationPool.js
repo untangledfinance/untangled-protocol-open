@@ -23,6 +23,8 @@ const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
 const ONE_DAY = 86400;
+const RATE_SCALING_FACTOR = 10 ** 4;
+
 describe('SecuritizationPool', () => {
   let stableCoin;
   let loanAssetTokenContract;
@@ -40,6 +42,7 @@ describe('SecuritizationPool', () => {
   let distributionTranche;
   let mintedIncreasingInterestTGE;
   let jotMintedIncreasingInterestTGE;
+  let securitizationPoolValueService;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
@@ -57,6 +60,7 @@ describe('SecuritizationPool', () => {
       uniqueIdentity,
       distributionOperator,
       distributionTranche,
+      securitizationPoolValueService,
     } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
@@ -286,6 +290,44 @@ describe('SecuritizationPool', () => {
     });
   });
 
+  describe('#Pool value service', async () => {
+    it('#getOutstandingPrincipalCurrencyByInvestor', async () => {
+      const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestor(
+        securitizationPoolContract.address,
+        lenderSigner.address
+      );
+
+      expect(formatEther(result)).equal('100.0');
+    });
+
+    it('#getExpectedAssetsValue', async () => {
+      const result = await securitizationPoolValueService.getExpectedAssetsValue(
+        securitizationPoolContract.address,
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+
+      expect(formatEther(result)).equal('0.0');
+    });
+
+    it('#getSeniorAsset', async () => {
+      const result = await securitizationPoolValueService.getSeniorAsset(securitizationPoolContract.address);
+
+      expect(formatEther(result)).equal('100.0');
+    });
+
+    it('#getJuniorAsset', async () => {
+      const result = await securitizationPoolValueService.getJuniorAsset(securitizationPoolContract.address);
+
+      expect(formatEther(result)).equal('100.0');
+    });
+
+    it('#getJuniorRatio', async () => {
+      const result = await securitizationPoolValueService.getJuniorRatio(securitizationPoolContract.address);
+
+      expect(result.toNumber() / RATE_SCALING_FACTOR).equal(99.5);
+    });
+  });
+
   describe('#Distribution Operator', async () => {
     it('makeRedeemRequestAndRedeem', async () => {
       await sotToken.connect(lenderSigner).approve(distributionTranche.address, unlimitedAllowance);
@@ -370,6 +412,92 @@ describe('SecuritizationPool', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds)
       ).to.be.revertedWith(`ERC721: token already minted`);
+    });
+  });
+
+  describe('Pool value after loan kernel executed', async () => {
+    it('#getExpectedAssetValues', async () => {
+      const result = await securitizationPoolValueService.getExpectedAssetValues(
+        securitizationPoolContract.address,
+        [loanAssetTokenContract.address],
+        [tokenIds[0]],
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+
+      expect(result.toString()).equal('5017');
+    });
+
+    it('#getAssetInterestRate', async () => {
+      const result = await securitizationPoolValueService.getAssetInterestRate(
+        securitizationPoolContract.address,
+        loanAssetTokenContract.address,
+        tokenIds[0],
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+      expect(result.toNumber()).equal(50000);
+    });
+
+    it('#getAssetInterestRates', async () => {
+      const result = await securitizationPoolValueService.getAssetInterestRates(
+        securitizationPoolContract.address,
+        [loanAssetTokenContract.address],
+        [tokenIds[0]],
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+      expect(result.map((x) => x.toNumber())).to.deep.equal([50000]);
+    });
+
+    it('#getExpectedERC20AssetValue', async () => {
+      const result = await securitizationPoolValueService.getExpectedERC20AssetValue(
+        securitizationPoolContract.address,
+        securitizationPoolContract.address,
+        sotToken.address,
+        10000,
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+      expect(formatEther(result)).equal('0.0');
+    });
+
+    it('#getExpectedAssetsValue', async () => {
+      const result = await securitizationPoolValueService.getExpectedAssetsValue(
+        securitizationPoolContract.address,
+        dayjs(new Date()).add(1, 'days').unix()
+      );
+      expect(result.toString()).equal('9817');
+    });
+
+    it('#getAssetRiskScoreIdx', async () => {
+      const result = await securitizationPoolValueService.getAssetRiskScoreIdx(
+        securitizationPoolContract.address,
+        dayjs(new Date()).add(10, 'days').unix()
+      );
+      expect(result.hasValidRiskScore).equal(true);
+      expect(result.riskScoreIdx.toNumber()).equal(0);
+    });
+
+    it('#getOutstandingPrincipalCurrencyByInvestors', async () => {
+      const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestors(
+        securitizationPoolContract.address,
+        [lenderSigner.address]
+      );
+      expect(formatEther(result)).equal('99.99999999999999999');
+    });
+
+    it('#getReserve', async () => {
+      const result = await securitizationPoolValueService.getReserve(
+        securitizationPoolContract.address,
+        parseEther('15000'),
+        parseEther('1000'),
+        parseEther('1000')
+      );
+      expect(formatEther(result)).equal('17199.99999999999999999');
+    });
+
+    it('#getOutstandingPrincipalCurrency', async () => {
+      const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
+        securitizationPoolContract.address
+      );
+      expect(formatEther(result)).equal('100.0');
     });
   });
 
