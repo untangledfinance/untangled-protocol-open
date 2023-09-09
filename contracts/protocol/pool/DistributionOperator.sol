@@ -174,18 +174,4 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
     }
-
-    function _calculateAmountDistribute(
-        address investor,
-        address tokenAddress,
-        uint256 totalCurrencyToDistribute,
-        uint256 totalSupply,
-        ISecuritizationPool securitizationPool
-    ) internal view returns (uint256) {
-        uint256 currentToken = IERC20(tokenAddress).balanceOf(investor);
-
-        uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
-
-        return ((currentToken - tokenRedeem) * totalCurrencyToDistribute) / totalSupply;
-    }
 }
