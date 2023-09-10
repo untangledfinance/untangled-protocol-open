@@ -6,5 +6,7 @@ contract ExampleResolver {
 
     function hello() external {
         ///
+        // check role
+        // msgSender == UntangedReceiver
     }
 }
