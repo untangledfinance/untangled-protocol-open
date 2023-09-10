@@ -120,9 +120,11 @@ describe('LoanInterestTermsContract', () => {
         loanInterestTermsContract.address,
         relayer.address,
         borrowerSigner.address,
+        borrowerSigner.address,
       ];
 
       const salt = genSalt();
+      const salt1 = genSalt();
       const riskScore = '50';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
@@ -130,8 +132,12 @@ describe('LoanInterestTermsContract', () => {
         CREDITOR_FEE,
         ASSET_PURPOSE,
         principalAmount.toString(),
+        (principalAmount).toString(),
+        expirationTimestamps,
         expirationTimestamps,
         salt,
+        salt1,
+        riskScore,
         riskScore,
       ];
 
@@ -143,8 +149,15 @@ describe('LoanInterestTermsContract', () => {
         termLengthUnits: _.ceil(termInDaysLoan * 24),
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
+      const termsContractParameter_1 = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount: principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
 
-      const termsContractParameters = [termsContractParameter];
+      const termsContractParameters = [termsContractParameter, termsContractParameter_1];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
@@ -216,21 +229,15 @@ describe('LoanInterestTermsContract', () => {
       );
     });
     it('should revert if repayment for loan has not been completed', async () => {
-      const completedRepayment = await loanInterestTermsContract.completedRepayment(agreementID);
-      expect(completedRepayment).equal(true);
       await expect(
-        loanInterestTermsContract.connect(impersonationKernel).registerConcludeLoan(agreementID),
-      ).to.be.revertedWith(
-        'Debtor has not completed repayment yet.',
-      );
-
-    });
-    it('should register conclude loan successfully', async () => {
-      await expect(
-        loanInterestTermsContract.connect(impersonationKernel).registerConcludeLoan(agreementID),
+        loanInterestTermsContract.connect(impersonationKernel).registerConcludeLoan(tokenIds[1]),
       ).to.be.revertedWith(
         'LoanInterestTermsContract: Only for LoanKernel.',
       );
+    });
+    it('should register conclude loan successfully', async () => {
+      const completedRepayment = await loanInterestTermsContract.completedRepayment(tokenIds[0]);
+      expect(completedRepayment).equal(true);
     });
   });
 
