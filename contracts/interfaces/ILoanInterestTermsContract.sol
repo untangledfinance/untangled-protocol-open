@@ -27,6 +27,10 @@ abstract contract ILoanInterestTermsContract {
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
     /// @notice calculates the expected repayment values (principal and interest) for a given loan agreement and timestamp
+    /// @param agreementId loan asset token in bytes32 format
+    /// @param timestamp unix timestamp
+    /// @return expectedPrincipal value of loan at a specific time
+    /// @return expectedInterest interest value at a specific time
     function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
         public
         view
@@ -40,6 +44,7 @@ abstract contract ILoanInterestTermsContract {
         virtual
         returns (uint256[] memory, uint256[] memory);
 
+    /// @dev set loan as repaid
     function registerConcludeLoan(bytes32 agreementId) external virtual returns (bool);
 
     /// When called, the registerRepayment function records the debtor's

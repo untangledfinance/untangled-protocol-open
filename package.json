@@ -6,7 +6,10 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy": "hardhat deploy",
-    "slither": "bash ./scripts/static_analysis.sh"
+    "slither": "bash ./scripts/static_analysis.sh",
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles ./test/",
+    "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles",
+    "clean": "hardhat clean"
   },
   "author": "Untangled Finance Ltd",
   "license": "MIT",
@@ -36,11 +39,16 @@
   "dependencies": {
     "@chainlink/contracts": "^0.6.1",
     "@chainlink/contracts-ccip": "^0.7.6",
+    "@ethersproject/bytes": "^5.7.0",
+    "@ethersproject/keccak256": "^5.7.0",
+    "@ethersproject/solidity": "^5.7.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/test-helpers": "^0.5.16",
+    "dayjs": "^1.11.9",
     "eth-gas-reporter": "^0.2.25",
-    "solidity-coverage": "^0.7.11",
+    "lodash": "^4.17.21",
+    "solidity-coverage": "0.8.4",
     "truffle-contract-size": "^2.0.1"
   }
 }

@@ -99,17 +99,27 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     // Register to start Loan term for batch of agreement Ids
     /// @inheritdoc ILoanInterestTermsContract
-    function registerTermStart(
-        bytes32 agreementId
-    ) public override whenNotPaused onlyKernel onlyHaventStartedLoan(agreementId) returns (bool) {
+    function registerTermStart(bytes32 agreementId)
+        public
+        override
+        whenNotPaused
+        onlyKernel
+        onlyHaventStartedLoan(agreementId)
+        returns (bool)
+    {
         startedLoan[agreementId] = true;
         return true;
     }
 
     /// @inheritdoc ILoanInterestTermsContract
-    function registerConcludeLoan(
-        bytes32 agreementId
-    ) external override whenNotPaused nonReentrant onlyKernel returns (bool) {
+    function registerConcludeLoan(bytes32 agreementId)
+        external
+        override
+        whenNotPaused
+        nonReentrant
+        onlyKernel
+        returns (bool)
+    {
         require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
 
         registry.getLoanRegistry().setCompletedLoan(agreementId);
@@ -206,10 +216,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
     /// @inheritdoc ILoanInterestTermsContract
-    function getExpectedRepaymentValues(
-        bytes32 agreementId,
-        uint256 timestamp
-    ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
+    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
+        public
+        view
+        override
+        returns (uint256 expectedPrincipal, uint256 expectedInterest)
+    {
         UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
 
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
@@ -236,10 +248,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     /// @inheritdoc ILoanInterestTermsContract
-    function getMultiExpectedRepaymentValues(
-        bytes32[] memory agreementIds,
-        uint256 timestamp
-    ) public view override returns (uint256[] memory, uint256[] memory) {
+    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
+        public
+        view
+        override
+        returns (uint256[] memory, uint256[] memory)
+    {
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
         uint256 agreementIdsLength = agreementIds.length;
@@ -261,9 +275,11 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     /// @param amortizationUnitType AmortizationUnitType enum
     /// @return the corresponding length of the unit in seconds
-    function _getAmortizationUnitLengthInSeconds(
-        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
-    ) private pure returns (uint256) {
+    function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
+        private
+        pure
+        returns (uint256)
+    {
         if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
             return MINUTE_LENGTH_IN_SECONDS;
         } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {

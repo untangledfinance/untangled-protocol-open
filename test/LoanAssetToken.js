@@ -1,10 +1,22 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
+const _ = require('lodash');
+const dayjs = require('dayjs');
 const { expect } = require('./shared/expect.js');
 
-const { parseEther } = ethers.utils;
+const { BigNumber } = ethers;
+const { parseEther, parseUnits, formatEther } = ethers.utils;
 
-const { unlimitedAllowance } = require('./utils.js');
+const {
+  unlimitedAllowance,
+  genLoanAgreementIds,
+  saltFromOrderValues,
+  debtorsFromOrderAddresses,
+  packTermsContractParameters,
+  interestRateFixedPoint,
+  genSalt,
+} = require('./utils.js');
+const { setup } = require('./setup.js');
 
 const ONE_DAY = 86400;
 describe('LoanAssetToken', () => {
@@ -19,54 +31,30 @@ describe('LoanAssetToken', () => {
   let securitizationPoolContract;
   let securitizationPoolValueService;
   let securitizationPoolImpl;
+  let tokenIds;
 
   // Wallets
-  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
+  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
   before('create fixture', async () => {
-    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
+    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
       await ethers.getSigners();
 
-    const tokenFactory = await ethers.getContractFactory('TestERC20');
-    stableCoin = await tokenFactory.deploy('cUSD', 'cUSD', parseEther('10000000000000000'));
+    ({
+      stableCoin,
+      registry,
+      loanAssetTokenContract,
+      loanInterestTermsContract,
+      loanRegistry,
+      loanKernel,
+      loanRepaymentRouter,
+      securitizationManager,
+      securitizationPoolValueService,
+      securitizationPoolImpl,
+    } = await setup());
+
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
 
-    const Registry = await ethers.getContractFactory('Registry');
-    registry = await upgrades.deployProxy(Registry, []);
-
-    const SecuritizationManager = await ethers.getContractFactory('SecuritizationManager');
-    securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address]);
-    const SecuritizationPoolValueService = await ethers.getContractFactory('SecuritizationPoolValueService');
-    securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
-
-    const LoanInterestTermsContract = await ethers.getContractFactory('LoanInterestTermsContract');
-    loanInterestTermsContract = await upgrades.deployProxy(LoanInterestTermsContract, [registry.address]);
-    const LoanRegistry = await ethers.getContractFactory('LoanRegistry');
-    loanRegistry = await upgrades.deployProxy(LoanRegistry, [registry.address]);
-    const LoanKernel = await ethers.getContractFactory('LoanKernel');
-    loanKernel = await upgrades.deployProxy(LoanKernel, [registry.address]);
-    const LoanRepaymentRouter = await ethers.getContractFactory('LoanRepaymentRouter');
-    loanRepaymentRouter = await upgrades.deployProxy(LoanRepaymentRouter, [registry.address]);
-
     await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
-
-    await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
-    await registry.setLoanRegistry(loanRegistry.address);
-    await registry.setLoanKernel(loanKernel.address);
-    await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
-    await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
-
-    const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
-    loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
-      initializer: 'initialize(address,string,string,string)',
-    });
-
-    await registry.setLoanAssetToken(loanAssetTokenContract.address);
-
-    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
-    securitizationPoolImpl = await SecuritizationPool.deploy();
-
-    await registry.setSecuritizationPool(securitizationPoolImpl.address);
-    await registry.setSecuritizationManager(securitizationManager.address);
   });
 
   describe('#security pool', async () => {
@@ -82,22 +70,48 @@ describe('LoanAssetToken', () => {
 
       securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
 
+      const oneDayInSecs = 1 * 24 * 3600;
+      const halfOfADay = oneDayInSecs / 2;
+
+      const riskScore = {
+        daysPastDue: oneDayInSecs,
+        advanceRate: 950000,
+        penaltyRate: 900000,
+        interestRate: 910000,
+        probabilityOfDefault: 800000,
+        lossGivenDefault: 810000,
+        gracePeriod: halfOfADay,
+        collectionPeriod: halfOfADay,
+        writeOffAfterGracePeriod: halfOfADay,
+        writeOffAfterCollectionPeriod: halfOfADay,
+      };
+      const daysPastDues = [riskScore.daysPastDue];
+      const ratesAndDefaults = [
+        riskScore.advanceRate,
+        riskScore.penaltyRate,
+        riskScore.interestRate,
+        riskScore.probabilityOfDefault,
+        riskScore.lossGivenDefault,
+      ];
+      const periodsAndWriteOffs = [
+        riskScore.gracePeriod,
+        riskScore.collectionPeriod,
+        riskScore.writeOffAfterGracePeriod,
+        riskScore.writeOffAfterCollectionPeriod,
+      ];
+
       await securitizationPoolContract
         .connect(poolCreatorSigner)
-        .setupRiskScores(
-          [86400, 2592000, 5184000, 7776000, 10368000, 31536000],
-          [
-            950000, 900000, 910000, 800000, 810000, 0, 1500000, 1500000, 1500000, 1500000, 1500000, 1500000, 80000,
-            100000, 120000, 120000, 140000, 1000000, 10000, 20000, 30000, 40000, 50000, 1000000, 250000, 500000, 500000,
-            750000, 1000000, 1000000,
-          ],
-          [
-            432000, 432000, 432000, 432000, 432000, 432000, 2592000, 2592000, 2592000, 2592000, 2592000, 2592000,
-            250000, 500000, 500000, 750000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000,
-          ]
-        );
+        .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
     });
   });
+
+  let expirationTimestamps;
+  const CREDITOR_FEE = '0';
+  const ASSET_PURPOSE = '0';
+  const inputAmount = 10;
+  const inputPrice = 15;
+  const principalAmount = _.round(inputAmount * inputPrice * 100);
 
   describe('#mint', async () => {
     it('No one than LoanKernel can mint', async () => {
@@ -109,69 +123,126 @@ describe('LoanAssetToken', () => {
     });
 
     it('Only Loan Kernel can mint', async () => {
-      const tokenIds = ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'];
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
 
-      await loanKernel.fillDebtOrder(
-        [
-          securitizationPoolContract.address,
-          stableCoin.address,
-          loanRepaymentRouter.address,
-          loanInterestTermsContract.address,
-          '0x5d99687F0d1F20C39EbBb4E9890999BEB7F754A5',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000',
-        ],
-        [
-          '0',
-          '0',
-          '456820000000000000',
-          '365550000000000000',
-          '350030000000000000',
-          '118530000000000000',
-          '385910000000000000',
-          '100820000000000000',
-          '280300000000000000',
-          '193210000000000000',
-          '164940000000000000',
-          '248450000000000000',
-          '262010000000000030',
-          '221970000000000000',
-          '191120000000000000',
-        ],
-        ['0x00000000000656f35ea24b40000186a010000000000000000000044700200000'],
-        tokenIds
+      const salt = genSalt();
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
       );
+
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+
+      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+      expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length);
+    });
+  });
+
+  describe('#info', async () => {
+    it('getExpirationTimestamp', async () => {
+      const data = await loanAssetTokenContract.getExpirationTimestamp(tokenIds[0]);
+      expect(data.toString()).equal(expirationTimestamps.toString());
+    });
+
+    it('getRiskScore', async () => {
+      const data = await loanAssetTokenContract.getRiskScore(tokenIds[0]);
+      expect(data).equal(50);
+    });
+
+    it('getAssetPurpose', async () => {
+      const data = await loanAssetTokenContract.getAssetPurpose(tokenIds[0]);
+      expect(data).equal(parseInt(ASSET_PURPOSE));
+    });
+
+    it('getInterestRate', async () => {
+      const data = await loanAssetTokenContract.getInterestRate(tokenIds[0]);
+      expect(data.toString()).equal(interestRateFixedPoint(5).toString());
+    });
+
+    it('getExpectedRepaymentValues', async () => {
+      const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
+      const data = await loanAssetTokenContract.getExpectedRepaymentValues(tokenIds[0], nextTimeStamps);
+
+      expect(data.expectedPrincipal.toNumber()).equal(principalAmount);
+      expect(data.expectedInterest.toString()).equal('0');
+    });
+
+    it('getTotalExpectedRepaymentValue', async () => {
+      const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
+      const data = await loanAssetTokenContract.getTotalExpectedRepaymentValue(tokenIds[0], nextTimeStamps);
+
+      expect(data.toNumber()).equal(principalAmount);
     });
   });
 
   describe('#burn', async () => {
     it('No one than LoanKernel contract can burn', async () => {
-      await expect(
-        loanAssetTokenContract
-          .connect(untangledAdminSigner)
-          .burn('0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a')
-      ).to.be.revertedWith(`ERC721: caller is not token owner or approved`);
+      await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
+        `ERC721: caller is not token owner or approved`
+      );
     });
 
     it('only LoanKernel contract can burn', async () => {
+      const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerBefore)).equal('99000.0');
+
+      const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
+      expect(formatEther(stablecoinBalanceOfPoolBefore)).equal('0.0');
+
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
-        .repayInBatch(
-          ['0x7580747133f5948462024dcfc5525f81020876c1725c2ea1a91740e2efb4421a'],
-          [parseEther('100')],
-          stableCoin.address
-        );
+        .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
+
+      await expect(loanAssetTokenContract.ownerOf(tokenIds[0])).to.be.revertedWith(`ERC721: invalid token ID`);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length - 1);
+
+      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
+      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount)));
+
+      const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
+      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(principalAmount);
     });
   });
 });
