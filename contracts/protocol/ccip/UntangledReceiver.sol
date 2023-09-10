@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import {IAny2EVMMessageReceiver} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol';
 
 import {CCIPReceiverUpgradeable} from './chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from './ICommandData.sol';
@@ -43,6 +44,8 @@ contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceive
         override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
         returns (bool)
     {
-        return interfaceId == type(IERC165Upgradeable).interfaceId;
+        return
+            interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
+            interfaceId == type(IERC165Upgradeable).interfaceId;
     }
 }
