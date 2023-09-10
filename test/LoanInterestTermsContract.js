@@ -14,7 +14,8 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const { admin } = require('@openzeppelin/truffle-upgrades');
-const { time } = require('@nomicfoundation/hardhat-network-helpers');
+const { time, impersonateAccount, stopImpersonatingAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
+const { parse } = require('dotenv');
 
 const ONE_DAY = 86400;
 
@@ -229,11 +230,14 @@ describe('LoanInterestTermsContract', () => {
       );
     });
     it('should revert if repayment for loan has not been completed', async () => {
+      await impersonateAccount(loanKernelContract.address)
+      await setBalance(loanKernelContract.address, parseEther('1'));
+      const signer = await ethers.getSigner(loanKernelContract.address);
       await expect(
-        loanInterestTermsContract.connect(impersonationKernel).registerConcludeLoan(tokenIds[1]),
-      ).to.be.revertedWith(
-        'LoanInterestTermsContract: Only for LoanKernel.',
-      );
+        loanInterestTermsContract.connect(signer).registerConcludeLoan(tokenIds[1]))
+        .to.be.revertedWith('Debtor has not completed repayment yet.');
+
+      await stopImpersonatingAccount(loanKernelContract.address);
     });
     it('should register conclude loan successfully', async () => {
       const completedRepayment = await loanInterestTermsContract.completedRepayment(tokenIds[0]);
@@ -241,18 +245,11 @@ describe('LoanInterestTermsContract', () => {
     });
   });
 
-  describe('#getInterestRate', () => {
-
+  describe('#getInterestRate', async () => {
+    it('should unpack interest rate correctly', async () => {
+      const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
+      expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()))
+    })
   });
-  describe('#getMultiExpectedRepaymentValues', () => {
-
-  });
-  describe('#isCompletedRepayments', () => {
-
-  });
-  describe('#getValueRepaidToDate', () => {
-
-  });
-
 
 });
