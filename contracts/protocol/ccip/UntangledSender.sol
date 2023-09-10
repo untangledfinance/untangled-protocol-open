@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
@@ -39,7 +39,6 @@ contract UntangledSender is OwnerIsCreator {
     /// @dev Assumes your contract has sufficient LINK.
     /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
     /// @param receiver The address of the recipient on the destination blockchain.
-    /// @param text The string text to be sent.
     /// @return messageId The ID of the message that was sent.
     /// example: chainIdCode, UntangledReceiver, sig of hello
     function sendMessage(
