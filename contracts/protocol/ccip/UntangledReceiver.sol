@@ -7,20 +7,10 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 import {CCIPReceiverUpgradeable} from './chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from './ICommandData.sol';
 import '../../base/UntangledBase.sol';
+import {CCIPReceiverStorage} from './storage/CCIPReceiverStorage.sol';
 
 /// @title - A simple contract for receiving string data across chains.
-contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable {
-    // Event emitted when a message is received from another chain.
-    event MessageReceived(
-        bytes32 indexed messageId, // The unique ID of the message.
-        uint64 indexed sourceChainSelector, // The chain selector of the source chain.
-        address sender, // The address of the sender from the source chain.
-        bytes data // The text that was received.
-    );
-
-    bytes32 private lastReceivedMessageId; // Store the last received messageId.
-    ICommandData private lastReceivedData; // Store the last received text.
-
+contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
     function initialize(address router) public initializer {
         __UntangledBase__init_unchained(_msgSender());
         __CCIPReceiver__init_unchained(router);

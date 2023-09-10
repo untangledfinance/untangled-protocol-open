@@ -7,13 +7,9 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 import {CCIPReceiverUpgradeable} from '../chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from '../ICommandData.sol';
 import '../../../base/UntangledBase.sol';
+import {CCIPReceiverStorage} from '../storage/CCIPReceiverStorage.sol';
 
-contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable {
-    event MessageReceived(bytes32 indexed messageId, uint64 indexed sourceChainSelector, address sender, bytes data);
-
-    bytes32 private lastReceivedMessageId;
-    ICommandData private lastReceivedData;
-
+contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
     function initialize(address router) public initializer {
         __UntangledBase__init_unchained(_msgSender());
         __CCIPReceiver__init_unchained(router);
