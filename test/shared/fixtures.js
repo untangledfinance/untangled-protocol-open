@@ -27,6 +27,7 @@ const mainFixture = deployments.createFixture(async ({ deployments, getNamedAcco
   const loanRegistryContract = await ethers.getContractAt('LoanRegistry', (await get('LoanRegistry')).address);
   const distributionOperatorContract = await ethers.getContractAt('DistributionOperator', (await get('DistributionOperator')).address);
   const distributionTrancheContract = await ethers.getContractAt('DistributionTranche', (await get('DistributionTranche')).address);
+  const securitizationPoolValueService = await ethers.getContractAt('SecuritizationPoolValueService', (await get('SecuritizationPoolValueService')).address);
   const goContract = await ethers.getContractAt('Go', (await get('Go')).address);
   return {
     stableCoin,
@@ -40,7 +41,8 @@ const mainFixture = deployments.createFixture(async ({ deployments, getNamedAcco
     uniqueIdentityContract,
     distributionOperatorContract,
     distributionTrancheContract,
-    securitizationManagerContract
+    securitizationManagerContract,
+    securitizationPoolValueService
   };
 });
 

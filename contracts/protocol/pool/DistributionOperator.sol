@@ -58,11 +58,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(address(securitizationPool));
 
             tokenToBeRedeemed = Math.min(
-                (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
-                    tokenPrice,
+                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) / tokenPrice,
                 tokenAmount
             );
-            currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
+            currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
 
             securitizationPool.increaseLockedDistributeBalance(
                 address(noteToken),
@@ -76,12 +75,12 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(securitizationPool);
 
             tokenToBeRedeemed = Math.min(
-                (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
+                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) /
                     tokenPrice,
                 tokenAmount
             );
 
-            currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
+            currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
 
             securitizationPool.increaseLockedDistributeBalance(
                 address(noteToken),
