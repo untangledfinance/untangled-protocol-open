@@ -10,9 +10,7 @@ import {CCIPSenderStorage} from './storage/CCIPSenderStorage.sol';
 import {ICommandData, MessageType} from "./ICommandData.sol";
 import {UntangledBase} from '../../base/UntangledBase.sol';
 
-/// @title - A simple contract for sending string data across chains.
 contract UntangledSender is UntangledBase, CCIPSenderStorage {
-    // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 
     function initialize(IRouterClient router_, LinkTokenInterface link_) public initializer {
@@ -26,29 +24,14 @@ contract UntangledSender is UntangledBase, CCIPSenderStorage {
     ) internal onlyInitializing {
         router = router_;
         linkToken = link_;
-    }
+    } 
 
-     function updateWhitelistSelector(MessageType target, bytes4 functionSelector, bool isAllow) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        whitelistSelectors[target][functionSelector] = isAllow;
-        emit UpdateWhitelistSelector(target, functionSelector, isAllow);
-    }
-
-    /// @notice Sends data to receiver on the destination chain.
-    /// @dev Assumes your contract has sufficient LINK.
-    /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
-    /// @param receiver The address of the recipient on the destination blockchain.
-    /// @return messageId The ID of the message that was sent.
-    /// example: chainIdCode, UntangledReceiver, sig of hello
     function sendMessage(
         uint64 destinationChainSelector,
         address receiver,
         ICommandData calldata data,
         uint256 gasLimit
     ) external returns (bytes32 messageId) {
-        bytes4 functionSig = bytes4(data.data[:4]); 
-        require(whitelistSelectors[data.messageType][functionSig], "CCIP_FUNC_NOT_IN_WHITELIST");
-
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
             data: abi.encode(data), // ABI-encoded struct

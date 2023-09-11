@@ -19,8 +19,6 @@ abstract contract CCIPSenderStorage {
 
     event UpdateWhitelistSelector(MessageType indexed target, bytes4 indexed functionSignature, bool isAllow);
 
-    // target address => function sig => is allow
-    mapping(MessageType => mapping(bytes4 => bool)) public whitelistSelectors;
     IRouterClient public router;
     LinkTokenInterface public linkToken;
 

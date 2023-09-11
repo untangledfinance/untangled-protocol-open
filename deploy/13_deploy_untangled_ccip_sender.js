@@ -1,17 +1,21 @@
 const { getChainId } = require('hardhat');
 const { deployProxy } = require('../utils/deployHelper');
+const { networks } = require('../networks');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { execute, deploy, readDotFile } = deployments;
+  const { readDotFile, deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const router = await readDotFile('.CHAINLINK_CCIP_ROUTER');
-  const link = await readDotFile('.CHAINLINK_CCIP_LINK');
-
-  await deployProxy({ getNamedAccounts, deployments }, 'UntangledSender', [
-    router,
-    link
-  ]);
+  await deployments.deploy('UntangledSender', {
+    from: deployer,
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+      execute: {
+        methodName: 'initialize',
+        args: [networks[network.name].router, networks[network.name].linkToken],
+      },
+    },
+  });
 };
 
 module.exports.dependencies = [];
