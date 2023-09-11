@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {ICommandData} from '../ICommandData.sol';
 
 abstract contract CCIPSenderStorage {
-
     // Event emitted when a message is sent to another chain.
     event MessageSent(
         bytes32 indexed messageId, // The unique ID of the CCIP message.
@@ -14,4 +13,9 @@ abstract contract CCIPSenderStorage {
         address feeToken, // the token address used to pay CCIP fees.
         uint256 fees // The fees paid for sending the CCIP message.
     );
+
+    event UpdateWhitelistSelector(address indexed target, bytes4 indexed functionSignature, bool isAllow);
+
+    // target address => function sig => is allow
+    mapping(address => mapping(bytes4 => bool)) public whitelistSelectors;
 }

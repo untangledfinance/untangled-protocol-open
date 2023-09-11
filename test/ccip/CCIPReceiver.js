@@ -12,8 +12,8 @@ describe('CCIPReceiver', () => {
     [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
       await ethers.getSigners();
 
-    const UntangedReceiver = await ethers.getContractFactory('UntangedReceiver');
-    untangedReceiver = await upgrades.deployProxy(UntangedReceiver, [untangledAdminSigner.address]);
+    const UntangledReceiver = await ethers.getContractFactory('UntangledReceiver');
+    untangedReceiver = await upgrades.deployProxy(UntangledReceiver, [untangledAdminSigner.address]);
   });
 
   describe('#Upgrade Proxy', async () => {

@@ -12,6 +12,7 @@ import {ICommandData} from "./ICommandData.sol";
 
 /// @title - A simple contract for sending string data across chains.
 contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
+    
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 
@@ -26,6 +27,11 @@ contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
         linkToken = LinkTokenInterface(_link);
     }
 
+    function updateWhitelistSelector(address target, bytes4 functionSelector, bool isAllow) public onlyOwner {
+        whitelistSelectors[target][functionSelector] = isAllow;
+        emit UpdateWhitelistSelector(target, functionSelector, isAllow);
+    }
+
     /// @notice Sends data to receiver on the destination chain.
     /// @dev Assumes your contract has sufficient LINK.
     /// @param destinationChainSelector The identifier (aka selector) for the destination blockchain.
@@ -38,6 +44,9 @@ contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
         ICommandData calldata data,
         uint256 gasLimit
     ) external returns (bytes32 messageId) {
+        bytes4 functionSig = bytes4(data.data[:4]);
+        require(whitelistSelectors[data.target][functionSig], "CCIP_FUNC_NOT_IN_WHITELIST");
+
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
