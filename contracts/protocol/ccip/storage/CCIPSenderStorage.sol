@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 import {ICommandData} from '../ICommandData.sol';
 
 abstract contract CCIPSenderStorage {
@@ -14,8 +16,13 @@ abstract contract CCIPSenderStorage {
         uint256 fees // The fees paid for sending the CCIP message.
     );
 
-    event UpdateWhitelistSelector(address indexed target, bytes4 indexed functionSignature, bool isAllow);
+    IRouterClient public router;
+    LinkTokenInterface public linkToken;
 
-    // target address => function sig => is allow
-    mapping(address => mapping(bytes4 => bool)) public whitelistSelectors;
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

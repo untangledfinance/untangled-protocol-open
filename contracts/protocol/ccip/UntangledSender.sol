@@ -1,35 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
-import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
-import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+import {OwnerIsCreator} from '@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol';
+import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
+import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol';
+import {IRouterClient} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
+import {CCIPSenderStorage} from './storage/CCIPSenderStorage.sol';
 
-import { CCIPSenderStorage } from "./storage/CCIPSenderStorage.sol";
+import {ICommandData} from './ICommandData.sol';
 
-import {ICommandData} from "./ICommandData.sol";
+import {UntangledBase} from '../../base/UntangledBase.sol';
 
 /// @title - A simple contract for sending string data across chains.
-contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
-    
+contract UntangledSender is UntangledBase, CCIPSenderStorage {
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 
-    IRouterClient router;
-    LinkTokenInterface linkToken;
-
-    /// @notice Constructor initializes the contract with the router address.
-    /// @param _router The address of the router contract.
-    /// @param _link The address of the link contract.
-    constructor(address _router, address _link) {
-        router = IRouterClient(_router);
-        linkToken = LinkTokenInterface(_link);
+    function initialize(IRouterClient router_, LinkTokenInterface link_) public initializer {
+        __UntangledBase__init_unchained(_msgSender());
+        __UntangledSender_init_unchained(router_, link_);
     }
 
-    function updateWhitelistSelector(address target, bytes4 functionSelector, bool isAllow) public onlyOwner {
-        whitelistSelectors[target][functionSelector] = isAllow;
-        emit UpdateWhitelistSelector(target, functionSelector, isAllow);
+    function __UntangledSender_init_unchained(
+        IRouterClient router_,
+        LinkTokenInterface link_
+    ) internal onlyInitializing {
+        router = router_;
+        linkToken = link_;
     }
 
     /// @notice Sends data to receiver on the destination chain.
@@ -44,9 +41,6 @@ contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
         ICommandData calldata data,
         uint256 gasLimit
     ) external returns (bytes32 messageId) {
-        bytes4 functionSig = bytes4(data.data[:4]);
-        require(whitelistSelectors[data.target][functionSig], "CCIP_FUNC_NOT_IN_WHITELIST");
-
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
@@ -74,14 +68,7 @@ contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
         messageId = router.ccipSend(destinationChainSelector, evm2AnyMessage);
 
         // Emit an event with message details
-        emit MessageSent(
-            messageId,
-            destinationChainSelector,
-            receiver,
-            data,
-            address(linkToken),
-            fees
-        );
+        emit MessageSent(messageId, destinationChainSelector, receiver, data, address(linkToken), fees);
 
         // Return the message ID
         return messageId;
