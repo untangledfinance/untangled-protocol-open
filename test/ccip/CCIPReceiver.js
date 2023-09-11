@@ -8,14 +8,25 @@ const abiCoder = new ethers.utils.AbiCoder();
 
 describe('CCIPReceiver', () => {
   let untangedReceiver;
+  let untangledBridgeRouter;
+
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
   before('create fixture', async () => {
     [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
       await ethers.getSigners();
 
+    const UntangledBridgeRouter = await ethers.getContractFactory('UntangledBridgeRouter');
+    untangledBridgeRouter = await upgrades.deployProxy(UntangledBridgeRouter, [untangledAdminSigner.address]);
+
     const UntangedReceiver = await ethers.getContractFactory('UntangedReceiver');
-    untangedReceiver = await upgrades.deployProxy(UntangedReceiver, [untangledAdminSigner.address]);
+    untangedReceiver = await upgrades.deployProxy(UntangedReceiver, [
+      untangledAdminSigner.address,
+      untangledBridgeRouter.address,
+    ]);
+
+    const CCIP_RECEIVER_ROLE = await untangledBridgeRouter.CCIP_RECEIVER_ROLE();
+    await untangledBridgeRouter.grantRole(CCIP_RECEIVER_ROLE, untangedReceiver.address);
   });
 
   describe('#Receiver', async () => {

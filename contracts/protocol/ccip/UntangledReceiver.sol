@@ -9,11 +9,18 @@ import {CCIPReceiverUpgradeable} from './chainlink-upgradeable/CCIPReceiverUpgra
 import {ICommandData} from './ICommandData.sol';
 import '../../base/UntangledBase.sol';
 import {CCIPReceiverStorage} from './storage/CCIPReceiverStorage.sol';
+import {IUntangledBridgeRouter} from './interfaces/IUntangledBridgeRouter.sol';
 
 contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
-    function initialize(address router) public initializer {
+    function initialize(address _router, address _untangledBridgeRouter) public initializer {
         __UntangledBase__init_unchained(_msgSender());
-        __CCIPReceiver__init_unchained(router);
+        __CCIPReceiver__init_unchained(_router);
+
+        untangledBridgeRouter = _untangledBridgeRouter;
+    }
+
+    function setBridgeRouter(address _untangledBridgeRouter) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        untangledBridgeRouter = _untangledBridgeRouter;
     }
 
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
@@ -28,8 +35,10 @@ contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceive
             any2EvmMessage.data
         );
 
-        // execute external contract, no exception
-        // Address.functionCallWithValue(lastReceivedData.target, lastReceivedData.data);
+        IUntangledBridgeRouter(untangledBridgeRouter).processMessage(
+            lastReceivedData.messageType,
+            lastReceivedData.data
+        );
     }
 
     function getLastReceivedMessageDetails() external view returns (bytes32 messageId, ICommandData memory command) {
