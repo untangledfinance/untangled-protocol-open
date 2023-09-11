@@ -8,4 +8,5 @@ abstract contract CCIPReceiverStorage {
 
     bytes32 public lastReceivedMessageId;
     ICommandData public lastReceivedData;
+    mapping(bytes32 => ICommandData) public messageDataGroup;
 }
