@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">43.48% </span>
+        <span class="strong">26.09% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>10/23</span>
+        <span class='fraction'>6/23</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">20% </span>
+        <span class="strong">5% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>8/40</span>
+        <span class='fraction'>2/40</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">57.14% </span>
+        <span class="strong">28.57% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>4/7</span>
+        <span class='fraction'>2/7</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">60.71% </span>
+        <span class="strong">42.86% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>17/28</span>
+        <span class='fraction'>12/28</span>
       </div>
     </div>
   </div>
@@ -130,7 +130,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,35 +138,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31×</span>
+<span class="cline-any cline-yes">12×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-yes">6×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
-<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6×</span>
-<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,33 +205,33 @@ import '../../../libraries/ConfigHelper.sol';
 contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
     using ConfigHelper for Registry;
 &nbsp;
-    modifier onlySecuritizationManager() {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(
+<span class="fstat-no" title="function not covered" >    modifier onlySecuritizationManager() {</span>
+<span class="cstat-no" title="statement not covered" >        require(</span>
             _msgSender() == address(registry.getSecuritizationManager()),
             'SecuritizationPool: Only SecuritizationManager'
         );
         _;
     }
 &nbsp;
-    function initialize(Registry _registry) public <span class="missing-if-branch" title="else path not taken" >E</span>initializer {
+    function initialize(Registry _registry) public initializer {
         __UntangledBase__init(_msgSender());
 &nbsp;
         registry = _registry;
     }
 &nbsp;
-    function changeMinterRole(address tokenAddress, address newController) external override <span class="missing-if-branch" title="else path not taken" >E</span>onlySecuritizationManager {
+    function changeMinterRole(address tokenAddress, address newController) external override onlySecuritizationManager {
         NoteToken token = NoteToken(tokenAddress);
-        token.grantRole(token.MINTER_ROLE(), newController);
+<span class="cstat-no" title="statement not covered" >        token.grantRole(token.MINTER_ROLE(), newController)</span>;
     }
 &nbsp;
-    function createToken(
+<span class="fstat-no" title="function not covered" >    function createToken(</span>
         address _poolAddress,
         Configuration.NOTE_TOKEN_TYPE _noteTokenType,
         uint8 _nDecimals,
         string calldata ticker
-    ) external override <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlySecuritizationManager returns (address) {
-        string memory name;
-        string memory symbol;
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
+<span class="cstat-no" title="statement not covered" >        string memory name;</span>
+<span class="cstat-no" title="statement not covered" >        string memory symbol;</span>
         if (_noteTokenType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
             name = 'Senior Obligation Token';
             symbol = string.concat(ticker, '_SOT');
@@ -277,7 +277,7 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 15:24:51 GMT+0700 (GMT+07:00)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 17:15:17 GMT+0700 (GMT+07:00)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

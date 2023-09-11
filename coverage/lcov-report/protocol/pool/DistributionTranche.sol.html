@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">40% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>5/5</span>
+        <span class='fraction'>2/5</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">50% </span>
+        <span class="strong">12.5% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>8/16</span>
+        <span class='fraction'>2/16</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">33.33% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>3/3</span>
+        <span class='fraction'>1/3</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">33.33% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>6/6</span>
+        <span class='fraction'>2/6</span>
       </div>
     </div>
   </div>
-  <div class='status-line high'></div>
+  <div class='status-line low'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -96,8 +96,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
-<span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -108,19 +108,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
@@ -135,20 +135,20 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTranche {
     using ConfigHelper for Registry;
 &nbsp;
-    modifier onlyOperator() {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(_msgSender() == address(registry.getDistributionOperator()), 'DistributionTranche: Only Operator');
+<span class="fstat-no" title="function not covered" >    modifier onlyOperator() {</span>
+<span class="cstat-no" title="statement not covered" >        require(_msgSender() == address(registry.getDistributionOperator()), 'DistributionTranche: Only Operator')</span>;
         _;
     }
 &nbsp;
     /// @inheritdoc IDistributionTranche
-    function redeem(
+<span class="fstat-no" title="function not covered" >    function redeem(</span>
         address usr,
         address pool,
         address notesToken,
         uint256 currencyAmount,
         uint256 tokenAmount
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlyOperator {
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (tokenAmount &gt; 0) {
+    ) external whenNotPaused nonReentrant onlyOperator {
+<span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (tokenAmount &gt; 0) {</span>
             <span class="missing-if-branch" title="else path not taken" >E</span>require(IERC20(notesToken).transfer(pool, tokenAmount), 'DistributionTranche: token-transfer-failed');
         }
         ISecuritizationPool(pool).redeem(usr, notesToken, currencyAmount, tokenAmount);
@@ -159,8 +159,8 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         address noteToken,
         address usr,
         uint256 tokenAmount
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>onlyOperator returns (bool) {
-        return IERC20(noteToken).transferFrom(usr, address(this), tokenAmount);
+    ) external whenNotPaused onlyOperator returns (bool) {
+<span class="cstat-no" title="statement not covered" >        return IERC20(noteToken).transferFrom(usr, address(this), tokenAmount);</span>
     }
 }
 &nbsp;</pre></td></tr>
@@ -169,7 +169,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 15:24:51 GMT+0700 (GMT+07:00)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 17:15:17 GMT+0700 (GMT+07:00)
 </div>
 </div>
 <script src="../../prettify.js"></script>
