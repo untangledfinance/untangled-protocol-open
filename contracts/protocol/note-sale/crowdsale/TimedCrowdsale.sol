@@ -14,6 +14,8 @@ abstract contract TimedCrowdsale is Crowdsale {
     bool public isEnableTimeLimit;
 
     event TimedCrowdsaleExtended(uint256 prevClosingTime, uint256 newClosingTime);
+    event UpdateUsingTimeLimit(bool isEnableTimeLimit);
+    event UpdateSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime);
 
     function __TimedCrowdsale__init(
         Registry _registry,
@@ -67,10 +69,13 @@ abstract contract TimedCrowdsale is Crowdsale {
 
         openingTime = newOpeningTime;
         closingTime = newClosingTime;
+
+        emit UpdateSaleRoundTime(newOpeningTime, newClosingTime);
     }
 
     /// @dev Sets the isEnableTimeLimit variable to the specified value
     function setUsingTimeLimit(bool usingTimeLimit) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         isEnableTimeLimit = usingTimeLimit;
+        emit UpdateUsingTimeLimit(usingTimeLimit);
     }
 }

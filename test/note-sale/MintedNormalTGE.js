@@ -1,30 +1,36 @@
 const { artifacts } = require("hardhat");
 const { setup } = require("../setup");
 const { expect, assert } = require("chai");
+const { BigNumber } = require("ethers");
 
 const SecuritizationPool = artifacts.require('SecuritizationPool');
 const MintedNormalTGE = artifacts.require('MintedNormalTGE');
 const NoteToken = artifacts.require('NoteToken');
 
+
+const ONE_DAY = 86400;
+const DECIMAL = BigNumber.from(10).pow(18);
 describe('MintedNormalTGE', () => {
     let mintedNormalTGE;
     let registry;
+    let securitizationPool;
 
     before('create fixture', async () => {
+        const [poolTest] = await ethers.getSigners();
         ({
             registry,
             noteTokenFactory
         } = await setup());
 
         mintedNormalTGE = await MintedNormalTGE.new();
-        const securitizationPool = await SecuritizationPool.new();
+        securitizationPool = await SecuritizationPool.new();
         const currencyAddress = await securitizationPool.underlyingCurrency();
         const longSale = true;
         const noteToken = await NoteToken.new('Test', 'TST', 18, securitizationPool.address, 1);
 
         await mintedNormalTGE.initialize(
             registry.address,
-            securitizationPool.address,
+            poolTest.address,
             noteToken.address,
             currencyAddress,
             longSale
