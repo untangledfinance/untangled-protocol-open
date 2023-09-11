@@ -22,6 +22,10 @@ contract TimedCrowdsaleMock is TimedCrowdsale {
         );
     }
 
+    function checkOnlyWhileOpen() public onlyWhileOpen {
+        
+    }
+
     function getTokenAmount(uint256 currencyAmount) public view override virtual returns (uint256) {
         return 0; // ignore
     }
