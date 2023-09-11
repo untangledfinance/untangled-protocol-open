@@ -37,6 +37,8 @@
     "web3": "^1.7.3"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
+    "@chainlink/contracts-ccip": "^0.7.6",
     "@ethersproject/bytes": "^5.7.0",
     "@ethersproject/keccak256": "^5.7.0",
     "@ethersproject/solidity": "^5.7.0",

@@ -4,4 +4,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deployProxy({ getNamedAccounts, deployments }, 'Registry', []);
 };
 
-module.exports.tags = ['registry'];
+module.exports.tags = ['registry', 'core'];
