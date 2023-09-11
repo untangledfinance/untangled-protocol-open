@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {ICommandData, MessageType} from '../ICommandData.sol';
+import {IRouterClient} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
+import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol';
+import {ICommandData} from '../ICommandData.sol';
 
 abstract contract CCIPSenderStorage {
     // Event emitted when a message is sent to another chain.
@@ -18,4 +21,13 @@ abstract contract CCIPSenderStorage {
 
     // target address => function sig => is allow
     mapping(MessageType => mapping(bytes4 => bool)) public whitelistSelectors;
+    IRouterClient public router;
+    LinkTokenInterface public linkToken;
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }

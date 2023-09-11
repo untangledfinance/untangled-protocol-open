@@ -8,12 +8,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const router = await readDotFile('.CHAINLINK_CCIP_ROUTER');
   const link = await readDotFile('.CHAINLINK_CCIP_LINK');
 
-  const untangledSender = await deploy('UntangledSender', {
-    args: [
-      router,
-      link
-    ]
-  });
+  await deployProxy({ getNamedAccounts, deployments }, 'UntangledSender', [
+    router,
+    link
+  ]);
 };
 
 module.exports.dependencies = [];
