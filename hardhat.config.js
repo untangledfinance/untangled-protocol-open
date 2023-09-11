@@ -49,6 +49,11 @@ module.exports = {
       saveDeployments: true,
       allowUnlimitedContractSize: false,
       accounts,
+      
+      forking: {
+        url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
+        blockNumber: 39993365
+      }
     },
     celo: {
       saveDeployments: true,

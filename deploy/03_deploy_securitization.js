@@ -104,4 +104,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['pool'];
+module.exports.tags = ['pool', 'core'];

@@ -2,17 +2,18 @@
 pragma solidity ^0.8.0;
 
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 import {IAny2EVMMessageReceiver} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol';
-
 import {CCIPReceiverUpgradeable} from './chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from './ICommandData.sol';
-import '../../base/UntangledBase.sol';
 import {CCIPReceiverStorage} from './storage/CCIPReceiverStorage.sol';
+import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 
-/// @title - A simple contract for receiving string data across chains.
-contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
+import '../../base/UntangledBase.sol';
+
+contract UntangledReceiver is ERC165Upgradeable, UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
     function initialize(address router) public initializer {
+        __ERC165_init_unchained();
         __UntangledBase__init_unchained(_msgSender());
         __CCIPReceiver__init_unchained(router);
     }
@@ -30,7 +31,7 @@ contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceive
         );
 
         // execute external contract, no exception
-        // Address.functionCallWithValue(lastReceivedData.target, lastReceivedData.data);
+        AddressUpgradeable.functionCall(lastReceivedData.target, lastReceivedData.data);
     }
 
     /// @notice Fetches the details of the last received message.
@@ -38,14 +39,16 @@ contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceive
         return (lastReceivedMessageId, lastReceivedData);
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
-        pure
-        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
+        view
+        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable, ERC165Upgradeable)
         returns (bool)
     {
         return
-            interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
-            interfaceId == type(IERC165Upgradeable).interfaceId;
+            AccessControlEnumerableUpgradeable.supportsInterface(interfaceId) ||
+            CCIPReceiverUpgradeable.supportsInterface(interfaceId);
     }
 }
