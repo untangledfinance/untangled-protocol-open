@@ -8,9 +8,9 @@ import {IAny2EVMMessageReceiver} from '@chainlink/contracts-ccip/src/v0.8/ccip/i
 import {CCIPReceiverUpgradeable} from '../chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from '../ICommandData.sol';
 import '../../../base/UntangledBase.sol';
-import {CCIPReceiverStorage} from '../storage/CCIPReceiverStorage.sol';
+import {CCIPReceiverStorageV2} from './CCIPReceiverStorageV2.sol';
 
-contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
+contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorageV2 {
     function initialize(address router) public initializer {
         __UntangledBase__init_unchained(_msgSender());
         __CCIPReceiver__init_unchained(router);

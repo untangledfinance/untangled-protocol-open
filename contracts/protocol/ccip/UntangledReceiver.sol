@@ -11,7 +11,7 @@ import '../../base/UntangledBase.sol';
 import {CCIPReceiverStorage} from './storage/CCIPReceiverStorage.sol';
 import {IUntangledBridgeRouter} from './interfaces/IUntangledBridgeRouter.sol';
 
-contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
+contract UntangledReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
     function initialize(address _router, address _untangledBridgeRouter) public initializer {
         __UntangledBase__init_unchained(_msgSender());
         __CCIPReceiver__init_unchained(_router);
@@ -35,10 +35,14 @@ contract UntangedReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceive
             any2EvmMessage.data
         );
 
-        IUntangledBridgeRouter(untangledBridgeRouter).processMessage(
-            lastReceivedData.messageType,
-            lastReceivedData.data
+        (bool success, ) = untangledBridgeRouter.call(
+            abi.encodeWithSignature('processMessage(uint8,bytes)', lastReceivedData.messageType, lastReceivedData.data)
         );
+
+        if (!success) {
+            failedMessageDataGroup[lastReceivedMessageId] = lastReceivedData;
+            revert BridgeRouterExecutedFailed(lastReceivedData.messageType, lastReceivedData.data);
+        }
     }
 
     function getLastReceivedMessageDetails() external view returns (bytes32 messageId, ICommandData memory command) {

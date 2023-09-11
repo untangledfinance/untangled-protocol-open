@@ -7,8 +7,10 @@ const { parseEther, defaultAbiCoder } = ethers.utils;
 const abiCoder = new ethers.utils.AbiCoder();
 
 describe('CCIPReceiver', () => {
-  let untangedReceiver;
+  let untangledReceiver;
   let untangledBridgeRouter;
+
+  let userData;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
@@ -19,24 +21,24 @@ describe('CCIPReceiver', () => {
     const UntangledBridgeRouter = await ethers.getContractFactory('UntangledBridgeRouter');
     untangledBridgeRouter = await upgrades.deployProxy(UntangledBridgeRouter, [untangledAdminSigner.address]);
 
-    const UntangedReceiver = await ethers.getContractFactory('UntangedReceiver');
-    untangedReceiver = await upgrades.deployProxy(UntangedReceiver, [
+    const UntangledReceiver = await ethers.getContractFactory('UntangledReceiver');
+    untangledReceiver = await upgrades.deployProxy(UntangledReceiver, [
       untangledAdminSigner.address,
       untangledBridgeRouter.address,
     ]);
 
     const CCIP_RECEIVER_ROLE = await untangledBridgeRouter.CCIP_RECEIVER_ROLE();
-    await untangledBridgeRouter.grantRole(CCIP_RECEIVER_ROLE, untangedReceiver.address);
+    await untangledBridgeRouter.grantRole(CCIP_RECEIVER_ROLE, untangledReceiver.address);
   });
 
   describe('#Receiver', async () => {
     it('should receive message successfully', async () => {
-      const userData = abiCoder.encode(['address', 'uint256'], [lenderSigner.address, parseEther('100')]);
+      userData = abiCoder.encode(['address', 'uint256'], [lenderSigner.address, parseEther('100')]);
       const sender = abiCoder.encode(['address'], [lenderSigner.address]);
 
       const data = defaultAbiCoder.encode(['uint8', 'bytes'], [0, userData]);
 
-      await untangedReceiver.connect(untangledAdminSigner).ccipReceive({
+      await untangledReceiver.connect(untangledAdminSigner).ccipReceive({
         messageId: ethers.constants.HashZero,
         sourceChainSelector: 1234,
         sender: sender,
@@ -44,13 +46,13 @@ describe('CCIPReceiver', () => {
         destTokenAmounts: [],
       });
 
-      const result = await untangedReceiver.getLastReceivedMessageDetails();
+      const result = await untangledReceiver.getLastReceivedMessageDetails();
 
       expect(result.messageId).to.equal(ethers.constants.HashZero);
       expect(result.command.messageType).to.equal(0);
       expect(result.command.data).to.equal(userData);
 
-      const messageDataGroup = await untangedReceiver.messageDataGroup(ethers.constants.HashZero);
+      const messageDataGroup = await untangledReceiver.messageDataGroup(ethers.constants.HashZero);
 
       expect(messageDataGroup.messageType).to.equal(0);
       expect(messageDataGroup.data).to.equal(userData);
@@ -60,12 +62,23 @@ describe('CCIPReceiver', () => {
   describe('#Upgrade Proxy', async () => {
     it('Upgrade successfully', async () => {
       const UntangledReceiverV2 = await ethers.getContractFactory('UntangledReceiverV2');
-      const untangledReceiverV2 = await upgrades.upgradeProxy(untangedReceiver.address, UntangledReceiverV2);
+      const untangledReceiverV2 = await upgrades.upgradeProxy(untangledReceiver.address, UntangledReceiverV2);
 
-      expect(untangledReceiverV2.address).to.equal(untangedReceiver.address);
+      expect(untangledReceiverV2.address).to.equal(untangledReceiver.address);
 
       const hello = await untangledReceiverV2.hello();
       expect(hello).to.equal('Hello world');
+
+      const result = await untangledReceiverV2.getLastReceivedMessageDetails();
+
+      expect(result.messageId).to.equal(ethers.constants.HashZero);
+      expect(result.command.messageType).to.equal(0);
+      expect(result.command.data).to.equal(userData);
+
+      const messageDataGroup = await untangledReceiverV2.messageDataGroup(ethers.constants.HashZero);
+
+      expect(messageDataGroup.messageType).to.equal(0);
+      expect(messageDataGroup.data).to.equal(userData);
     });
   });
 });
