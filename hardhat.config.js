@@ -8,6 +8,7 @@ require('@openzeppelin/hardhat-upgrades');
 require('@nomiclabs/hardhat-waffle');
 
 require('dotenv').config();
+require('./tasks');
 const { networks } = require('./networks');
 
 const MNEMONIC = process.env.MNEMONIC;
