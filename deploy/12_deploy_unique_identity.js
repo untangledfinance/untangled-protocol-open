@@ -33,4 +33,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['unique_identity'];
+module.exports.tags = ['unique_identity', 'core'];

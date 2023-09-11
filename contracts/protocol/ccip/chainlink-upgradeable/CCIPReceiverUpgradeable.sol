@@ -9,13 +9,14 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
 import {IAny2EVMMessageReceiver} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol';
 
-import {IERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol';
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 
 /// @title CCIPReceiver - Base contract for CCIP applications that can receive messages.
-abstract contract CCIPReceiverUpgradeable is Initializable, IAny2EVMMessageReceiver, IERC165Upgradeable {
+abstract contract CCIPReceiverUpgradeable is Initializable, IAny2EVMMessageReceiver, ERC165Upgradeable {
     address internal i_router;
 
     function __CCIPReceiver__init(address router) internal onlyInitializing {
+        __ERC165_init_unchained();
         __CCIPReceiver__init_unchained(router);
     }
 
@@ -27,10 +28,10 @@ abstract contract CCIPReceiverUpgradeable is Initializable, IAny2EVMMessageRecei
     /// @notice IERC165 supports an interfaceId
     /// @param interfaceId The interfaceId to check
     /// @return true if the interfaceId is supported
-    function supportsInterface(bytes4 interfaceId) public pure virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return
             interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
-            interfaceId == type(IERC165Upgradeable).interfaceId;
+            ERC165Upgradeable.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IAny2EVMMessageReceiver

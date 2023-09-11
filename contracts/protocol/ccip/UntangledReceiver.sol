@@ -2,14 +2,13 @@
 pragma solidity ^0.8.0;
 
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import {AccessControlEnumerableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 import {IAny2EVMMessageReceiver} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol';
-
 import {CCIPReceiverUpgradeable} from './chainlink-upgradeable/CCIPReceiverUpgradeable.sol';
 import {ICommandData} from './ICommandData.sol';
-import '../../base/UntangledBase.sol';
 import {CCIPReceiverStorage} from './storage/CCIPReceiverStorage.sol';
 import {IUntangledBridgeRouter} from './interfaces/IUntangledBridgeRouter.sol';
+import '../../base/UntangledBase.sol';
 
 contract UntangledReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiverStorage {
     function initialize(address _router, address _untangledBridgeRouter) public initializer {
@@ -51,12 +50,12 @@ contract UntangledReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiv
 
     function supportsInterface(bytes4 interfaceId)
         public
-        pure
+        view
         override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
         returns (bool)
     {
         return
-            interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
-            interfaceId == type(IERC165Upgradeable).interfaceId;
+            AccessControlEnumerableUpgradeable.supportsInterface(interfaceId) ||
+            CCIPReceiverUpgradeable.supportsInterface(interfaceId);
     }
 }

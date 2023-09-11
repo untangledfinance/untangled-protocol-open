@@ -6,25 +6,17 @@ import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/O
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 
-import {ICommandData} from "./ICommandData.sol";
+import { CCIPSenderStorage } from "./storage/CCIPSenderStorage.sol";
+
+import {ICommandData, MessageType} from "./ICommandData.sol";
 
 /// @title - A simple contract for sending string data across chains.
-contract UntangledSender is OwnerIsCreator {
+contract UntangledSender is OwnerIsCreator, CCIPSenderStorage {
+    
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 
-    // Event emitted when a message is sent to another chain.
-    event MessageSent(
-        bytes32 indexed messageId, // The unique ID of the CCIP message.
-        uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
-        address receiver, // The address of the receiver on the destination chain.
-        ICommandData data, // The text being sent.
-        address feeToken, // the token address used to pay CCIP fees.
-        uint256 fees // The fees paid for sending the CCIP message.
-    );
-
     IRouterClient router;
-
     LinkTokenInterface linkToken;
 
     /// @notice Constructor initializes the contract with the router address.
@@ -33,6 +25,11 @@ contract UntangledSender is OwnerIsCreator {
     constructor(address _router, address _link) {
         router = IRouterClient(_router);
         linkToken = LinkTokenInterface(_link);
+    }
+ 
+    function updateWhitelistSelector(MessageType target, bytes4 functionSelector, bool isAllow) public onlyOwner {
+        whitelistSelectors[target][functionSelector] = isAllow;
+        emit UpdateWhitelistSelector(target, functionSelector, isAllow);
     }
 
     /// @notice Sends data to receiver on the destination chain.
@@ -46,7 +43,10 @@ contract UntangledSender is OwnerIsCreator {
         address receiver,
         ICommandData calldata data,
         uint256 gasLimit
-    ) external onlyOwner returns (bytes32 messageId) {
+    ) external returns (bytes32 messageId) {
+        bytes4 functionSig = bytes4(data.data[:4]); 
+        require(whitelistSelectors[data.messageType][functionSig], "CCIP_FUNC_NOT_IN_WHITELIST");
+
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver), // ABI-encoded receiver address
@@ -63,8 +63,9 @@ contract UntangledSender is OwnerIsCreator {
         // Get the fee required to send the message
         uint256 fees = router.getFee(destinationChainSelector, evm2AnyMessage);
 
-        if (fees > linkToken.balanceOf(address(this)))
+        if (fees > linkToken.balanceOf(address(this))) {
             revert NotEnoughBalance(linkToken.balanceOf(address(this)), fees);
+        }
 
         // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
         linkToken.approve(address(router), fees);
