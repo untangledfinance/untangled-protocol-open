@@ -4,6 +4,6 @@ npx hardhat transfer-message \
   --destchain "mumbai"
 
 #####
-# TxHash: 0x03c9ebf303100e500fd1d134534d6023a53474b26d3dac99417485ad8ad8c3ca
-# https://ccip.chain.link/msg/0x56859070da9e222a3f85a08d4c199cd20a351aa4d51160fffef32eb705964522
+# TxHash: 0x54dc8ce7be8ae383fb5f2b7b99765b4683289298909ce687b06900250f321ad4
+# https://ccip.chain.link/msg/0xcd979ac54762a528833166cde4a8ebb0114cf850cdd7da709bc681272bad4e45
 # ~ 22 minutes to be Success

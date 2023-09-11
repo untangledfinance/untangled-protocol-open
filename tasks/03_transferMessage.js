@@ -28,7 +28,7 @@ task('transfer-message', 'transfers token x-chain from Sender.sol to Protocol.so
         messageType: 0,
         data: userData,
       },
-      '100000'
+      '200000'
     );
     await sendTokensTx.wait();
     console.log('\nTx hash is ', sendTokensTx.hash);

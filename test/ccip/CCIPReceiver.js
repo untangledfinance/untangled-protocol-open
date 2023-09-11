@@ -56,6 +56,9 @@ describe('CCIPReceiver', () => {
 
       expect(messageDataGroup.messageType).to.equal(0);
       expect(messageDataGroup.data).to.equal(userData);
+
+      const failedMessageDataGroup = await untangledReceiver.failedMessageDataGroup(ethers.constants.HashZero);
+      console.log('failedMessageDataGroup', failedMessageDataGroup);
     });
   });
 
