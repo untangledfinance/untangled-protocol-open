@@ -14,32 +14,4 @@ contract SecuritizationPoolServiceBase is UntangledBase {
 
         registry = _registry;
     }
-
-    function _convertTokenValueToCurrencyAmount(
-        address pool,
-        address tokenAddress,
-        uint256 tokenValue
-    ) internal view returns (uint256) {
-        uint256 currencyDecimals = ERC20(ISecuritizationPool(pool).underlyingCurrency()).decimals();
-        uint256 tokenDecimals = ERC20(tokenAddress).decimals();
-
-        return
-            currencyDecimals > tokenDecimals
-                ? tokenValue * (10**(currencyDecimals - tokenDecimals))
-                : tokenValue / (10**(tokenDecimals - currencyDecimals));
-    }
-
-    function _convertCurrencyAmountToTokenValue(
-        address pool,
-        address tokenAddress,
-        uint256 currencyAmount
-    ) internal view returns (uint256) {
-        uint256 currencyDecimals = ERC20(ISecuritizationPool(pool).underlyingCurrency()).decimals();
-        uint256 tokenDecimals = ERC20(tokenAddress).decimals();
-
-        return
-            currencyDecimals > tokenDecimals
-                ? currencyAmount / (10**currencyDecimals - tokenDecimals)
-                : currencyAmount * (10**tokenDecimals - currencyDecimals);
-    }
 }
