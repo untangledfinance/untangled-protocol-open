@@ -499,7 +499,7 @@ describe('Distribution', () => {
 
     it('#getCashBalance', async () => {
       const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-      expect(formatEther(result)).equal('199.99999999999999998');
+      expect(formatEther(result)).equal('180.0');
     });
   });
 

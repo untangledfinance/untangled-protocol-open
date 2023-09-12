@@ -1,6 +1,5 @@
 const { ethers } = require('hardhat');
 const { expect } = require('./shared/expect.js');
-const { mainFixture } = require('./shared/fixtures');
 const { BigNumber } = require('ethers');
 const {
   genSalt,
@@ -8,73 +7,89 @@ const {
   interestRateFixedPoint,
   saltFromOrderValues,
   debtorsFromOrderAddresses,
-  genLoanAgreementIds, unlimitedAllowance
+  genLoanAgreementIds,
+  unlimitedAllowance,
 } = require('./utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const { admin } = require('@openzeppelin/truffle-upgrades');
-const { time, impersonateAccount, stopImpersonatingAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
+const {
+  time,
+  impersonateAccount,
+  stopImpersonatingAccount,
+  setBalance,
+} = require('@nomicfoundation/hardhat-network-helpers');
 const { parse } = require('dotenv');
+const { setup } = require('./setup.js');
 
 const ONE_DAY = 86400;
 
 const YEAR_LENGTH_IN_SECONDS = 31536000; // Number of seconds in a year (approximately)
 function calculateInterestForDuration(principalAmount, interestRate, durationLengthInSec) {
   // Calculate the interest rate as a fraction
-  const interestRateFraction = (interestRate * (1 / 100));
+  const interestRateFraction = interestRate * (1 / 100);
 
   // Calculate the compound interest using the formula
-  const compoundInterest = principalAmount *
-    Math.pow(
-      1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS,
-      durationLengthInSec
-    ) -
+  const compoundInterest =
+    principalAmount * Math.pow(1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS, durationLengthInSec) -
     principalAmount;
 
   return compoundInterest;
 }
 describe('LoanInterestTermsContract', () => {
   let stableCoin;
-  let securitizationManagerContract;
-  let loanKernelContract;
-  let loanRepaymentRouterContract;
+  let securitizationManager;
+  let loanKernel;
+  let loanRepaymentRouter;
   let loanAssetTokenContract;
-  let loanRegistryContract;
-  let uniqueIdentityContract;
-  let registryContract;
-  let loanInterestTermsContract;
+  let loanRegistry;
+  let uniqueIdentity;
+  let registry;
+  let loanInterestTerms;
   let distributionOperator;
   let distributionTranche;
   let securitizationPoolContract;
   let tokenIds;
 
   // Wallets
-  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer,
+  let untangledAdminSigner,
+    poolCreatorSigner,
+    originatorSigner,
+    borrowerSigner,
+    lenderSigner,
+    relayer,
     impersonationKernel;
 
   before('create fixture', async () => {
-    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer, impersonationKernel] =
-      await ethers.getSigners();
+    [
+      untangledAdminSigner,
+      poolCreatorSigner,
+      originatorSigner,
+      borrowerSigner,
+      lenderSigner,
+      relayer,
+      impersonationKernel,
+    ] = await ethers.getSigners();
 
     ({
       stableCoin,
-      uniqueIdentityContract,
+      uniqueIdentity,
       loanAssetTokenContract,
       loanInterestTermsContract,
-      loanRegistryContract,
-      loanKernelContract,
-      loanRepaymentRouterContract,
-      securitizationManagerContract,
+      loanRegistry,
+      loanKernel,
+      loanRepaymentRouter,
+      securitizationManager,
       distributionOperator,
       distributionTranche,
-      registryContract,
-    } = await mainFixture());
+      registry,
+    } = await setup());
 
-    const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
-    await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
+    await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
     // Create new pool
-    const transaction = await securitizationManagerContract
+    const transaction = await securitizationManager
       .connect(poolCreatorSigner)
       .newPoolInstance(stableCoin.address, '100000');
     const receipt = await transaction.wait();
@@ -94,13 +109,11 @@ describe('LoanInterestTermsContract', () => {
   describe('#registerTermStart', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
-        loanInterestTermsContract.connect(untangledAdminSigner).registerTermStart(agreementID),
-      ).to.be.revertedWith(
-        'LoanInterestTermsContract: Only for LoanKernel.',
-      );
+        loanInterestTermsContract.connect(untangledAdminSigner).registerTermStart(agreementID)
+      ).to.be.revertedWith('LoanInterestTermsContract: Only for LoanKernel.');
     });
     it('should start loan successfully', async () => {
-      await registryContract.setLoanKernel(impersonationKernel.address);
+      await registry.setLoanKernel(impersonationKernel.address);
       await loanInterestTermsContract.connect(impersonationKernel).registerTermStart(agreementID);
       expect(await loanInterestTermsContract.startedLoan(agreementID)).equal(true);
     });
@@ -113,11 +126,11 @@ describe('LoanInterestTermsContract', () => {
 
   describe('#getExpectedRepaymentValues', () => {
     before('upload a loan', async () => {
-      await registryContract.setLoanKernel(loanKernelContract.address);
+      await registry.setLoanKernel(loanKernel.address);
       const orderAddresses = [
         securitizationPoolContract.address,
         stableCoin.address,
-        loanRepaymentRouterContract.address,
+        loanRepaymentRouter.address,
         loanInterestTermsContract.address,
         relayer.address,
         borrowerSigner.address,
@@ -133,7 +146,7 @@ describe('LoanInterestTermsContract', () => {
         CREDITOR_FEE,
         ASSET_PURPOSE,
         principalAmount.toString(),
-        (principalAmount).toString(),
+        principalAmount.toString(),
         expirationTimestamps,
         expirationTimestamps,
         salt,
@@ -164,23 +177,23 @@ describe('LoanInterestTermsContract', () => {
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
       tokenIds = genLoanAgreementIds(
-        loanRepaymentRouterContract.address,
+        loanRepaymentRouter.address,
         debtors,
         loanInterestTermsContract.address,
         termsContractParameters,
         salts
       );
 
-      await loanKernelContract.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
-      await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouterContract.address, unlimitedAllowance);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+      await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
     });
     it('should return correct expected principal and expected interest', async () => {
       const now = await time.latest();
-      const duration = YEAR_LENGTH_IN_SECONDS
-      const {
-        expectedPrincipal,
-        expectedInterest,
-      } = await loanInterestTermsContract.getExpectedRepaymentValues(tokenIds[0], now + duration);
+      const duration = YEAR_LENGTH_IN_SECONDS;
+      const { expectedPrincipal, expectedInterest } = await loanInterestTermsContract.getExpectedRepaymentValues(
+        tokenIds[0],
+        now + duration
+      );
       const repaidPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
       expect(expectedPrincipal).equal(BigNumber.from(principalAmount.toString()).sub(repaidPrincipalAmount));
 
@@ -191,23 +204,23 @@ describe('LoanInterestTermsContract', () => {
   describe('#registerRepayment', () => {
     it('should revert if caller is not LoanRepaymentRouter contract address', async () => {
       const agreement = tokenIds[0];
-      const payer =  untangledAdminSigner.address
-      const beneficiary = await securitizationManagerContract.address;
-      const unitOfRepayment = parseEther('100')
+      const payer = untangledAdminSigner.address;
+      const beneficiary = await securitizationManager.address;
+      const unitOfRepayment = parseEther('100');
       const tokenAddress = stableCoin.address;
       await expect(
-        loanInterestTermsContract.registerRepayment(agreement, payer, beneficiary, unitOfRepayment, tokenAddress),
+        loanInterestTermsContract.registerRepayment(agreement, payer, beneficiary, unitOfRepayment, tokenAddress)
       ).to.be.revertedWith('LoanInterestTermsContract: Only for Repayment Router.');
     });
     it('should execute successfully', async () => {
-      await time.increase(YEAR_LENGTH_IN_SECONDS)
+      await time.increase(YEAR_LENGTH_IN_SECONDS);
       const now = await time.latest();
-      const timestampNextBlock = now +1
-      const {
-        expectedPrincipal,
-        expectedInterest,
-      } = await loanInterestTermsContract.getExpectedRepaymentValues(tokenIds[0], timestampNextBlock);
-      await loanRepaymentRouterContract
+      const timestampNextBlock = now + 1;
+      const { expectedPrincipal, expectedInterest } = await loanInterestTermsContract.getExpectedRepaymentValues(
+        tokenIds[0],
+        timestampNextBlock
+      );
+      await loanRepaymentRouter
         .connect(untangledAdminSigner)
         .repayInBatch([tokenIds[0]], [expectedInterest.add(expectedPrincipal)], stableCoin.address);
 
@@ -215,29 +228,26 @@ describe('LoanInterestTermsContract', () => {
       expect(repaidPrincipalAmounts).equal(expectedPrincipal);
       const repaidInterestAmounts = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
       expect(repaidInterestAmounts).equal(expectedInterest, parseEther('0.02'));
-      const loanEntry = await loanRegistryContract.entries(tokenIds[0]);
+      const loanEntry = await loanRegistry.entries(tokenIds[0]);
       expect(loanEntry.lastRepayTimestamp).equal(timestampNextBlock);
     });
-
   });
 
   describe('#registerConcludeLoan', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
-        loanInterestTermsContract.connect(untangledAdminSigner).registerConcludeLoan(agreementID),
-      ).to.be.revertedWith(
-        'LoanInterestTermsContract: Only for LoanKernel.',
-      );
+        loanInterestTermsContract.connect(untangledAdminSigner).registerConcludeLoan(agreementID)
+      ).to.be.revertedWith('LoanInterestTermsContract: Only for LoanKernel.');
     });
     it('should revert if repayment for loan has not been completed', async () => {
-      await impersonateAccount(loanKernelContract.address)
-      await setBalance(loanKernelContract.address, parseEther('1'));
-      const signer = await ethers.getSigner(loanKernelContract.address);
-      await expect(
-        loanInterestTermsContract.connect(signer).registerConcludeLoan(tokenIds[1]))
-        .to.be.revertedWith('Debtor has not completed repayment yet.');
+      await impersonateAccount(loanKernel.address);
+      await setBalance(loanKernel.address, parseEther('1'));
+      const signer = await ethers.getSigner(loanKernel.address);
+      await expect(loanInterestTermsContract.connect(signer).registerConcludeLoan(tokenIds[1])).to.be.revertedWith(
+        'Debtor has not completed repayment yet.'
+      );
 
-      await stopImpersonatingAccount(loanKernelContract.address);
+      await stopImpersonatingAccount(loanKernel.address);
     });
     it('should register conclude loan successfully', async () => {
       const completedRepayment = await loanInterestTermsContract.completedRepayment(tokenIds[0]);
@@ -248,8 +258,7 @@ describe('LoanInterestTermsContract', () => {
   describe('#getInterestRate', async () => {
     it('should unpack interest rate correctly', async () => {
       const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
-      expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()))
-    })
+      expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+    });
   });
-
 });

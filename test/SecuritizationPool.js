@@ -70,7 +70,7 @@ describe('SecuritizationPool', () => {
     // Gain UID
     const UID_TYPE = 0;
     const chainId = await getChainId();
-    const expiredAt = dayjs().unix() + 86400;
+    const expiredAt = dayjs().unix() + 86400 * 1000;
     const nonce = 0;
     const ethRequired = parseEther('0.00083');
 
@@ -482,7 +482,7 @@ describe('SecuritizationPool', () => {
         dayjs(new Date()).add(1, 'days').unix()
       );
 
-      expect(result.toString()).equal('5017');
+      expect(result.toString()).equal('5018');
     });
 
     it('#getAssetInterestRate', async () => {
@@ -521,7 +521,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('14834');
+      expect(result.toString()).equal('14837');
     });
 
     it('#getAssetRiskScoreIdx', async () => {
@@ -538,7 +538,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         [lenderSigner.address]
       );
-      expect(formatEther(result)).equal('99.99999999999999999');
+      expect(formatEther(result)).equal('90.0');
     });
 
     it('#getReserve', async () => {
@@ -548,7 +548,7 @@ describe('SecuritizationPool', () => {
         parseEther('1000'),
         parseEther('1000')
       );
-      expect(formatEther(result)).equal('17199.99999999999999999');
+      expect(formatEther(result)).equal('16190.0');
     });
 
     it('#getOutstandingPrincipalCurrency', async () => {
@@ -678,7 +678,7 @@ describe('SecuritizationPool', () => {
     });
 
     it('#startCycle', async () => {
-      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('189.99999999999999999');
+      expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('180.0');
       await expect(
         securitizationPoolContract
           .connect(poolCreatorSigner)

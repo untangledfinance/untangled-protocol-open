@@ -34,7 +34,7 @@ describe('SecuritizationManager', () => {
     // Gain UID
     const UID_TYPE = 0;
     const chainId = await getChainId();
-    const expiredAt = dayjs().unix() + 86400;
+    const expiredAt = dayjs().unix() + 86400 * 1000;
     const nonce = 0;
     const ethRequired = parseEther('0.00083');
 
