@@ -53,7 +53,6 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenPrice;
         uint256 tokenToBeRedeemed;
         uint256 currencyAmtToBeDistributed;
-        uint256 ONE_TOKEN = 10**uint256(noteToken.decimals());
         if (securitizationPool.sotToken() == address(noteToken)) {
             tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(address(securitizationPool));
 
