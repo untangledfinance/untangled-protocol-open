@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">37.5% </span>
+        <span class="strong">62.5% </span>
         <span class="quiet">Statements</span>
+        <span class='fraction'>5/8</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">37.5% </span>
+        <span class="quiet">Branches</span>
         <span class='fraction'>3/8</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">25% </span>
-        <span class="quiet">Branches</span>
-        <span class='fraction'>2/8</span>
-      </div>
-      <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/1</span>
+        <span class='fraction'>1/1</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">50% </span>
+        <span class="strong">41.67% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>6/12</span>
+        <span class='fraction'>5/12</span>
       </div>
     </div>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line medium'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -172,26 +172,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,20 +254,20 @@ contract NAVCalculation {
         uint32 writeOffAfterCollectionPeriod;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function _calculateAssetValue(</span>
+    function _calculateAssetValue(
         uint256 totalDebtAmt,
         uint256 interestRate,
         uint256 overdue,
         RiskScore memory riskScore,
         Configuration.ASSET_PURPOSE assetPurpose
     ) internal pure returns (uint256) {
-<span class="cstat-no" title="statement not covered" >        uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;</span>
+        uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) interestRate = riskScore.interestRate;</span>
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) interestRate = riskScore.interestRate;
 &nbsp;
         totalDebtAmt = (totalDebtAmt * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
 &nbsp;
-        if (overdue &gt; riskScore.gracePeriod) {
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (overdue &gt; riskScore.gracePeriod) {
             totalDebtAmt =
                 (totalDebtAmt *
                     (UntangledMath.ONE +
@@ -278,7 +278,7 @@ contract NAVCalculation {
                         ))) /
                 UntangledMath.ONE;
 &nbsp;
-            uint256 penaltyRate = (interestRate * riskScore.penaltyRate) / ONE_HUNDRED_PERCENT;
+<span class="cstat-no" title="statement not covered" >            uint256 penaltyRate = (interestRate * riskScore.penaltyRate) / ONE_HUNDRED_PERCENT;</span>
 &nbsp;
             totalDebtAmt =
                 (totalDebtAmt *
@@ -293,7 +293,7 @@ contract NAVCalculation {
 <span class="cstat-no" title="statement not covered" >            if (overdue &gt; riskScore.collectionPeriod) writeOff = riskScore.writeOffAfterCollectionPeriod;</span>
 &nbsp;
             totalDebtAmt = (totalDebtAmt * (ONE_HUNDRED_PERCENT - writeOff)) / ONE_HUNDRED_PERCENT;
-        } else <span class="cstat-no" title="statement not covered" >if (overdue &gt; 0) {</span>
+        } else <span class="missing-if-branch" title="if path not taken" >I</span>if (overdue &gt; 0) {
             totalDebtAmt =
                 (totalDebtAmt *
                     (UntangledMath.ONE +
@@ -316,7 +316,7 @@ contract NAVCalculation {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 17:15:17 GMT+0700 (GMT+07:00)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 18:29:23 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

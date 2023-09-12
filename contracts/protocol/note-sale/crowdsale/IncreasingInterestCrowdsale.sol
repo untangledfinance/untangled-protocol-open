@@ -7,6 +7,9 @@ import './FinalizableCrowdsale.sol';
 /// @author Untangled Team
 abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
     using ConfigHelper for Registry;
+
+    event UpdateInterestRange(uint32 initialInterest, uint32 finalInterest, uint32 timeInterval, uint32 amountChangeEachInterval);
+
     uint32 public initialInterest;
     uint32 public finalInterest;
     uint32 public timeInterval;
@@ -32,6 +35,13 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         finalInterest = _finalInterest;
         timeInterval = _timeInterval;
         amountChangeEachInterval = _amountChangeEachInterval;
+
+        emit UpdateInterestRange(
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval
+        );
     }
 
     function getCurrentInterest() public view returns (uint32) {

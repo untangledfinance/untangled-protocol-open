@@ -20,14 +20,14 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">38.78% </span>
+        <span class="strong">36.73% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>19/49</span>
+        <span class='fraction'>18/49</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">30% </span>
+        <span class="strong">35% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>6/20</span>
+        <span class='fraction'>7/20</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">22.22% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>2/9</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">38.3% </span>
+        <span class="strong">34.04% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>18/47</span>
+        <span class='fraction'>16/47</span>
       </div>
     </div>
   </div>
@@ -209,18 +209,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">4×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
-<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -229,7 +229,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -240,7 +240,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -294,7 +294,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
@@ -304,8 +304,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -356,8 +356,8 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 &nbsp;
     // get current individual asset for SOT tranche
     /// @inheritdoc IDistributionAssessor
-<span class="fstat-no" title="function not covered" >    function getSOTTokenPrice(address pool) public view override returns (uint256) {</span>
-<span class="cstat-no" title="statement not covered" >        require(pool != address(0), "DistributionAssessor: Invalid pool address")</span>;
+    function getSOTTokenPrice(address pool) public view override returns (uint256) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(pool != address(0), "DistributionAssessor: Invalid pool address");
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 &nbsp;
         ERC20 noteToken = ERC20(securitizationPool.sotToken());
@@ -373,18 +373,18 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     }
 &nbsp;
     /// @inheritdoc IDistributionAssessor
-    function calcCorrespondingTotalAssetValue(
+<span class="fstat-no" title="function not covered" >    function calcCorrespondingTotalAssetValue(</span>
         address tokenAddress,
         address investor
     ) external view override returns (uint256) {
-        return _calcCorrespondingAssetValue(tokenAddress, investor);
+<span class="cstat-no" title="statement not covered" >        return _calcCorrespondingAssetValue(tokenAddress, investor);</span>
     }
 &nbsp;
     /// @notice Calculate SOT/JOT asset value belongs to an investor
     /// @param tokenAddress Address of SOT or JOT token
     /// @param investor Investor's wallet
     /// @return The value in pool's underlying currency
-    function calcCorrespondingAssetValue(
+<span class="fstat-no" title="function not covered" >    function calcCorrespondingAssetValue(</span>
         address tokenAddress,
         address investor
     ) external view returns (uint256) {
@@ -439,10 +439,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
     }
 &nbsp;
     /// @inheritdoc IDistributionAssessor
-<span class="fstat-no" title="function not covered" >    function getJOTTokenPrice(</span>
+    function getJOTTokenPrice(
         ISecuritizationPool securitizationPool
     ) public view override returns (uint256) {
-<span class="cstat-no" title="statement not covered" >        require(address(securitizationPool) != address(0), "DistributionAssessor: Invalid pool address")</span>;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(address(securitizationPool) != address(0), "DistributionAssessor: Invalid pool address");
         // require(address(securitizationPool) != address(0), 'pool was not deployed');
         // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         address tokenAddress = securitizationPool.jotToken();
@@ -450,10 +450,10 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
         <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenAddress != address(0), "DistributionAssessor: Invalid note token address");
         // In initial state, SOT price = 1$
-        if (tokenSupply == 0) return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals()-tokenDecimals);
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (tokenSupply == 0) return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals()-tokenDecimals);
         // address pool = address(securitizationPool);
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+<span class="cstat-no" title="statement not covered" >        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();</span>
+<span class="cstat-no" title="statement not covered" >        uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));</span>
 <span class="cstat-no" title="statement not covered" >        return juniorAsset / tokenSupply;</span>
     }
 &nbsp;
@@ -493,7 +493,7 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 17:15:17 GMT+0700 (GMT+07:00)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 18:29:23 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

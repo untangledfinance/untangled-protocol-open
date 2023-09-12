@@ -47,6 +47,8 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
         tokens.push(token);
         isExistingTokens[address(token)] = true;
 
+        emit TokenCreated(_poolAddress, _noteTokenType, _nDecimals, ticker);
+
         return address(token);
     }
 

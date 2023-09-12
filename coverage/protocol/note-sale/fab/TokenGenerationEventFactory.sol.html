@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">56.25% </span>
+        <span class="strong">62.5% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>18/32</span>
+        <span class='fraction'>20/32</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">17.86% </span>
+        <span class="strong">21.43% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>5/28</span>
+        <span class='fraction'>6/28</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">28.57% </span>
+        <span class="strong">71.43% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>2/7</span>
+        <span class='fraction'>5/7</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">64.71% </span>
+        <span class="strong">73.53% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>22/34</span>
+        <span class='fraction'>25/34</span>
       </div>
     </div>
   </div>
@@ -168,13 +168,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">31×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">31×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34×</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -191,28 +191,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-yes">4×</span>
@@ -230,8 +230,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4×</span>
-<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
@@ -275,13 +275,13 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         NORMAL_SALE
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function initialize(Registry _registry) public initializer {</span>
-<span class="cstat-no" title="statement not covered" >        __UntangledBase__init(_msgSender())</span>;
+    function initialize(Registry _registry) public <span class="missing-if-branch" title="else path not taken" >E</span>initializer {
+        __UntangledBase__init(_msgSender());
 &nbsp;
         registry = _registry;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    modifier onlySecuritizationManager() {</span>
+    modifier onlySecuritizationManager() {
         <span class="missing-if-branch" title="else path not taken" >E</span>require(
             _msgSender() == address(registry.getSecuritizationManager()),
             'SecuritizationPool: Only SecuritizationManager'
@@ -296,29 +296,29 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override onlySecuritizationManager returns (address) {
+    ) external override <span class="missing-if-branch" title="else path not taken" >E</span>onlySecuritizationManager returns (address) {
         address _tgeInstance;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST)) {</span>
+        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST)) {
             _tgeInstance = _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.NORMAL_SALE)) {
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (saleType == uint8(SaleType.NORMAL_SALE)) {
             _tgeInstance = _newNormalSale(issuerTokenController, pool, token, currency, longSale);
         }
         else{
-            revert('Unknown sale type');
+<span class="cstat-no" title="statement not covered" >            revert('Unknown sale type')</span>;
         }
 &nbsp;
         return _tgeInstance;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function _newMintedIncreasingInterestSale(</span>
+    function _newMintedIncreasingInterestSale(
         address issuerTokenController,
         address pool,
         address token,
         address currency,
         bool longSale
     ) private returns (address) {
-<span class="cstat-no" title="statement not covered" >        address tgeAddress = deployMinimal(address(registry.getMintedIncreasingInterestTGE()));</span>
+        address tgeAddress = deployMinimal(address(registry.getMintedIncreasingInterestTGE()));
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
 &nbsp;
         tge.initialize(registry, pool, token, currency, longSale);
@@ -373,7 +373,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Sep 11 2023 17:15:17 GMT+0700 (GMT+07:00)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 18:29:23 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>
