@@ -60,14 +60,16 @@ describe('TimedCrowdsale', () => {
     });
 
     it('#extendTime', async () => {
-        const newClosingTime = Math.trunc(Date.now() / 1000);
+        await expect(timedCrowdsale.extendTime(1000)).to.be.revertedWith('TimedCrowdsale: new closing time is before current closing time');
+        const oldClosingTime = await timedCrowdsale.closingTime();
+        const newClosingTime = oldClosingTime.add(2);
         const tx = await timedCrowdsale.extendTime(newClosingTime);
         expect(tx).to.be.emit(timedCrowdsale, 'TimedCrowdsaleExtended');
         expect(await timedCrowdsale.closingTime()).to.be.eq(newClosingTime);
     });
 
     it('#hasClose', async () => {
-        expect(await timedCrowdsale.hasClose()).to.be.false;
+        expect(await timedCrowdsale.hasClosed()).to.be.false;
     });
 
 });
