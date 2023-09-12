@@ -6,16 +6,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { readDotFile, deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deployments.deploy('UntangledSender', {
-    from: deployer,
-    proxy: {
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      execute: {
-        methodName: 'initialize',
-        args: [networks[network.name].router, networks[network.name].linkToken],
+  if (['sepolia', 'ether'].includes(network.name)) {
+    await deployments.deploy('UntangledSender', {
+      from: deployer,
+      proxy: {
+        proxyContract: 'OpenZeppelinTransparentProxy',
+        execute: {
+          methodName: 'initialize',
+          args: [networks[network.name].router, networks[network.name].linkToken],
+        },
       },
-    },
-  });
+    });
+  }
 };
 
 module.exports.dependencies = [];

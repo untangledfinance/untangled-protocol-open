@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">55.56% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/9</span>
+        <span class='fraction'>5/9</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">43.75% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/16</span>
+        <span class='fraction'>7/16</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/2</span>
+        <span class='fraction'>2/2</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">54.55% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/11</span>
+        <span class='fraction'>6/11</span>
       </div>
     </div>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line medium'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -112,24 +112,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -153,16 +153,16 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
     /// @dev Validates that the crowdsale has not already been finalized and that it has either closed or reached the total cap
     /// @param claimRemainToken claim remaining token or not
     /// @param remainTokenRecipient Wallet will receive remaining token
-<span class="fstat-no" title="function not covered" >    function finalize(bool claimRemainToken, address remainTokenRecipient)</span>
+    function finalize(bool claimRemainToken, address remainTokenRecipient)
         public
-        whenNotPaused
-        nonReentrant
-        onlyRole(OWNER_ROLE)
+        <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused
+        <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant
+        <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE)
     {
-<span class="cstat-no" title="statement not covered" >        require(!finalized, 'FinalizableCrowdsale: already finalized')</span>;
-<span class="cstat-no" title="statement not covered" >        require(hasClosed() || totalCapReached(), 'FinalizableCrowdsale: not closed')</span>;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(!finalized, 'FinalizableCrowdsale: already finalized');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(hasClosed() || <span class="branch-1 cbranch-no" title="branch not covered" >totalCapReached()</span>, 'FinalizableCrowdsale: not closed');
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (!isDistributedFully() &amp;&amp; !isLongSale()) {</span>
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (!isDistributedFully() &amp;&amp; !isLongSale()) {
 <span class="cstat-no" title="statement not covered" >            uint256 tokenRemain = 0;</span>
             tokenRemain = _getTokenAmount(getCurrencyRemainAmount());
 &nbsp;
@@ -175,12 +175,12 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
 &nbsp;
         finalized = true;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        _finalization()</span>;
-<span class="cstat-no" title="statement not covered" >        emit CrowdsaleFinalized();</span>
+        _finalization();
+        emit CrowdsaleFinalized();
     }
 &nbsp;
     /// @dev This function is meant to be overridden in derived contracts to implement specific finalization logic
-<span class="fstat-no" title="function not covered" >    function _finalization() internal virtual {</span>
+    function _finalization() internal virtual {
         // solhint-disable-previous-line no-empty-blocks
     }
 }
@@ -190,7 +190,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 21:40:44 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 21:52:17 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

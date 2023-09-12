@@ -4,6 +4,8 @@ const { deployments } = require('hardhat');
 const { parseEther } = ethers.utils;
 
 async function setup() {
+  await deployments.fixture();
+
   let stableCoin;
   let registry;
   let loanAssetTokenContract;
