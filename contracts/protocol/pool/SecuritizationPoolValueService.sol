@@ -159,12 +159,7 @@ contract SecuritizationPoolValueService is
             totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
         }
 
-        return
-            _convertTokenValueToCurrencyAmount(
-                poolAddress,
-                tokenAddress,
-                presentValue < totalDebt ? presentValue : totalDebt
-            );
+        return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
