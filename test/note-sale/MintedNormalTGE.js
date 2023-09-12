@@ -15,7 +15,11 @@ describe('MintedNormalTGE', () => {
     let registry;
     let securitizationPool;
 
+    let snapshotId;
+
     before('create fixture', async () => {
+        snapshotId = await network.provider.send('evm_snapshot');
+
         const [poolTest] = await ethers.getSigners();
         ({
             registry,
@@ -37,6 +41,10 @@ describe('MintedNormalTGE', () => {
         );
     });
 
+    after(async () => {
+        await network.provider.send("evm_revert", [snapshotId]);
+    });
+
     it('Get isLongSale', async () => {
         assert.equal(await mintedNormalTGE.isLongSale(), true);
     });
@@ -53,5 +61,4 @@ describe('MintedNormalTGE', () => {
             Math.trunc(Date.now() / 1000)
         );
     });
-
 });

@@ -14,7 +14,11 @@ describe('TimedCrowdsale', () => {
     let securitizationPool;
     let timedCrowdsale;
 
+    let snapshotId;
+
     before('create fixture', async () => {
+        snapshotId = await network.provider.send('evm_snapshot');
+
         ({
             registry,
             noteTokenFactory
@@ -32,6 +36,10 @@ describe('TimedCrowdsale', () => {
             noteToken.address,
             currencyAddress
         );
+    });
+
+    after(async () => {
+        await network.provider.send("evm_revert", [snapshotId]);
     });
 
     it('#newSaleRoundTime', async () => {
