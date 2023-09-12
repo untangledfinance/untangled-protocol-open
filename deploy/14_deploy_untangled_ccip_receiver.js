@@ -6,7 +6,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { readDotFile, deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deployments.deploy('UntangledBridgeRouter', {
+  let tx = await deployments.deploy('UntangledBridgeRouter', {
     from: deployer,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -28,6 +28,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [networks[network.name].router, untangledBridgeRouter.address],
       },
     },
+    gasLimit: 2000000,
   });
 
   const untangledReceiver = await deployments.get('UntangledReceiver');
@@ -37,6 +38,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     'UntangledBridgeRouter',
     {
       from: deployer,
+      gasLimit: 2000000,
     },
     'grantRole',
     CCIP_RECEIVER_ROLE,
