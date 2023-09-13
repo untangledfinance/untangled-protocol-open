@@ -112,8 +112,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        uint256 nftAssetsLength = nftAssets.length;
-        for (uint256 i = 0; i < nftAssetsLength; i++) {
+        uint256  nftAssetsLength =  nftAssets.length;
+        for (uint256 i = 0; i < nftAssetsLength; i = UntangledMath.uncheckedInc(i)) {
             if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
                 _removeNFTAssetIndex(i);
@@ -154,9 +154,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
-        if (pot == address(this)) {
-            IERC20(underlyingCurrency).approve(pot, type(uint256).max);
-        }
+        // if (pot == address(this)) {
+        //     IERC20(underlyingCurrency).approve(pot, type(uint256).max);
+        // }
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -173,7 +173,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         );
         delete riskScores;
 
-        for (uint256 i = 0; i < _daysPastDuesLength; i++) {
+        for (uint256 i = 0; i < _daysPastDuesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
                 'SecuritizationPool: Risk scores must be sorted'
@@ -202,9 +202,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
         uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i < tokenIdsLength; ++i) {
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
-            IUntangledERC721(tokenAddress).approve(toPoolAddress, tokenIds[i]);
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
     }
@@ -215,13 +214,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds,
         address[] calldata recipients
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
-        uint256 tokenIdsLength = tokenIds.length;
-        require(tokenAddresses.length == tokenIdsLength, 'tokenAddresses length and tokenIds length are not equal');
-        require(
-            tokenAddresses.length == recipients.length,
-            'tokenAddresses length and recipients length are not equal'
-        );
-        for (uint256 i = 0; i < tokenIdsLength; i++) {
+        uint256  tokenIdsLength =  tokenIds.length;
+        require(tokenAddresses.length == tokenIdsLength, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddresses.length == recipients.length, "tokenAddresses length and recipients length are not equal");
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
         }
@@ -233,8 +229,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address from,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i < tokenIdsLength; ++i) {
+        uint256  tokenIdsLength =  tokenIds.length;
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
     }
@@ -262,7 +258,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             tokenAddressesLength == senders.length && senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
-        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
@@ -279,9 +275,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         uint256 tokenAddressesLength = tokenAddresses.length;
-        require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
-        require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
-        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
+        require(tokenAddressesLength == recipients.length, "tokenAddresses length and tokenIds length are not equal");
+        require(tokenAddressesLength == amounts.length, "tokenAddresses length and recipients length are not equal");
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
         }
@@ -289,8 +285,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /// @inheritdoc ISecuritizationPool
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-        uint256 tokenAddressesLength = tokenAddresses.length;
-        for (uint256 i = 0; i < tokenAddressesLength; ++i) {
+         uint256 tokenAddressesLength = tokenAddresses.length;
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
