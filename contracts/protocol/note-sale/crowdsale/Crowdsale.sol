@@ -10,6 +10,8 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 abstract contract Crowdsale is UntangledBase {
     using ConfigHelper for Registry;
 
+    event UpdateTotalCap(uint256 totalCap);
+
     Registry public registry;
 
     // decimal calculating for rate
@@ -68,6 +70,8 @@ abstract contract Crowdsale is UntangledBase {
         require(additionalCap > 0, 'Crowdsale: total cap is 0');
 
         totalCap = additionalCap + totalCap;
+
+        emit UpdateTotalCap(totalCap);
     }
 
     /// @notice Sets the rate variable to the new rate
@@ -188,6 +192,8 @@ abstract contract Crowdsale is UntangledBase {
         require(cap >= currencyRaised, 'Crowdsale: cap is bellow currency raised');
 
         totalCap = cap;
+
+        emit UpdateTotalCap(totalCap);
     }
 
     /// @notice Checks if the total amount of currency raised is greater than or equal to the total cap

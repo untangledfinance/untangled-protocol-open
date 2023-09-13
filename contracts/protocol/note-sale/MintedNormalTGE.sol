@@ -10,6 +10,9 @@ import './crowdsale/FinalizableCrowdsale.sol';
 /// @dev Note sale for JOT
 contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
+    
+    event YieldUpdated(uint256 newYield);
+    event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
 
     bool public longSale;
     uint256 public timeStartEarningInterest;
@@ -37,6 +40,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     /// @dev Sets the yield variable to the specified value
     function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         yield = _yield;
+        emit YieldUpdated(_yield);
     }
 
     function setupLongSale(
@@ -49,6 +53,8 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
             timeStartEarningInterest = _timeStartEarningInterest;
             termLengthInSeconds = _termLengthInSeconds;
             yield = _interestRate;
+            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
+            emit YieldUpdated(yield);
         }
     }
 

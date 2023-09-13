@@ -5,6 +5,9 @@ import '../storage/Registry.sol';
 import '../tokens/ERC20/NoteToken.sol';
 
 abstract contract INoteTokenFactory {
+
+    event TokenCreated(address indexed poolAddress, Configuration.NOTE_TOKEN_TYPE indexed tokenType, uint8 decimals, string ticker);
+
     Registry public registry;
 
     NoteToken[] public tokens;
