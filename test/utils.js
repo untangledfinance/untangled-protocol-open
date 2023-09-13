@@ -75,6 +75,15 @@ const genSalt = () => {
   return new BigNumber(`0x${saltBufferHex}`).toString();
 };
 
+const generateEntryHash = (payer, receiver, fiatAmount, dueDate, salt) => {
+  return utils.keccak256(
+    ethers.utils.solidityPack(
+      ['address', 'address', 'uint256', 'uint256', 'uint256'],
+      [payer, receiver, fiatAmount, dueDate, salt]
+    )
+  );
+};
+
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
@@ -85,4 +94,5 @@ module.exports = {
   interestRateFixedPoint,
   genSalt,
   bitShiftLeft,
+  generateEntryHash,
 };
