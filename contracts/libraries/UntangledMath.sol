@@ -60,4 +60,10 @@ library UntangledMath {
             }
         }
     }
+
+    function uncheckedInc(uint256 x) internal pure returns (uint256 z) {
+        unchecked {
+            z = x + 1;
+        }
+    }
 }
