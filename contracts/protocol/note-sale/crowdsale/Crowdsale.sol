@@ -170,7 +170,7 @@ abstract contract Crowdsale is UntangledBase {
 
     /// @dev Transfers the currency from the payer to the crowdsale contract
     function _claimPayment(address payee, uint256 currencyAmount) internal {
-        IERC20(currency).transferFrom(payee, address(this), currencyAmount);
+        require(IERC20(currency).transferFrom(payee, address(this), currencyAmount), "Fail to transfer currency from payee to contract");
     }
 
     function _getTokenAmount(uint256 currencyAmount) public view returns (uint256) {

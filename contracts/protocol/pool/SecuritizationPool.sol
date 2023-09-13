@@ -242,7 +242,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
         reserve = reserve - amount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-        IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount);
+        require(IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount), 'SecuritizationPool: Transfer failed');
     }
 
     function checkMinFirstLost() public view returns (bool) {
@@ -266,7 +266,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
-            IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]);
+            require(IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]), 'SecuritizationPool: Transfer failed');
             _pushTokenAssetAddress(tokenAddresses[i]);
         }
     }
@@ -282,7 +282,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(tokenAddressesLength == amounts.length, "tokenAddresses length and recipients length are not equal");
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
-            IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
+            require(IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]), 'SecuritizationPool: Transfer failed');
         }
     }
 
@@ -313,7 +313,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         finishRedemptionValidator
     {
         IERC20 currency = IERC20(underlyingCurrency);
-        currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot));
+        require(currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)), 'SecuritizationPool: Transfer failed');
     }
 
     /// @inheritdoc ISecuritizationPool
