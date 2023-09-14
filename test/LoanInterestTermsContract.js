@@ -136,11 +136,15 @@ describe('LoanInterestTermsContract', () => {
         borrowerSigner.address, // for loan 0
         borrowerSigner.address, // for loan 1
         borrowerSigner.address, // for loan 2
+        borrowerSigner.address, // for loan 3
+        borrowerSigner.address, // for loan 4
       ];
 
       const salt = genSalt();
       const salt1 = genSalt();
       const salt2 = genSalt();
+      const salt3 = genSalt();
+      const salt4 = genSalt();
       const riskScore = '50';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
@@ -150,12 +154,20 @@ describe('LoanInterestTermsContract', () => {
         principalAmount.toString(),
         principalAmount.toString(),
         principalAmount.toString(),
+        principalAmount.toString(),
+        principalAmount.toString(),
+        expirationTimestamps,
+        expirationTimestamps,
         expirationTimestamps,
         expirationTimestamps,
         expirationTimestamps,
         salt,
         salt1,
         salt2,
+        salt3,
+        salt4,
+        riskScore,
+        riskScore,
         riskScore,
         riskScore,
         riskScore,
@@ -170,7 +182,7 @@ describe('LoanInterestTermsContract', () => {
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
       const termsContractParameter_1 = packTermsContractParameters({
-        amortizationUnitType: 1,
+        amortizationUnitType: 2,
         gracePeriodInDays: 2,
         principalAmount: principalAmount,
         termLengthUnits: _.ceil(termInDaysLoan * 24),
@@ -178,14 +190,29 @@ describe('LoanInterestTermsContract', () => {
       });
 
       const termsContractParameter_2 = packTermsContractParameters({
-        amortizationUnitType: 1,
+        amortizationUnitType: 3,
         gracePeriodInDays: 2,
         principalAmount: principalAmount,
         termLengthUnits: _.ceil(termInDaysLoan * 24),
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
 
-      const termsContractParameters = [termsContractParameter, termsContractParameter_1, termsContractParameter_2];
+      const termsContractParameter_3 = packTermsContractParameters({
+        amortizationUnitType: 4,
+        gracePeriodInDays: 2,
+        principalAmount: principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+      const termsContractParameter_4 = packTermsContractParameters({
+        amortizationUnitType: 5,
+        gracePeriodInDays: 2,
+        principalAmount: principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter, termsContractParameter_1, termsContractParameter_2, termsContractParameter_3, termsContractParameter_4];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
@@ -255,10 +282,10 @@ describe('LoanInterestTermsContract', () => {
       );
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
-        .repayInBatch([tokenIds[2]], [expectedInterest], stableCoin.address);
+        .repayInBatch([tokenIds[2]], [expectedInterest.add(parseEther('0.01'))], stableCoin.address);
 
       const repaidPrincipalAmounts = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[2]);
-      expect(repaidPrincipalAmounts).equal('0');
+      expect(repaidPrincipalAmounts).equal(parseEther('0.01'));
       const repaidInterestAmounts = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[2]);
       expect(repaidInterestAmounts).equal(expectedInterest, parseEther('0.02'));
       const loanEntry = await loanRegistry.entries(tokenIds[2]);
@@ -298,7 +325,7 @@ describe('LoanInterestTermsContract', () => {
   describe('#isCompletedRepayments', async () => {
     it('should return repayment status of agreementIds', async () => {
       const repaymentStatus = await loanInterestTermsContract.isCompletedRepayments(tokenIds);
-      expect(repaymentStatus).to.deep.equal([true, false, false])
+      expect(repaymentStatus).to.deep.equal([true, false, false, false, false])
     });
   });
   describe('#getValueRepaidToDate', async () => {
