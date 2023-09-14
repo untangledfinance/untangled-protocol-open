@@ -261,4 +261,34 @@ describe('LoanInterestTermsContract', () => {
       expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
     });
   });
+
+  describe('#isCompletedRepayments', async () => {
+    it('should return repayment status of agreementIds', async () => {
+      const repaymentStatus = await loanInterestTermsContract.isCompletedRepayments(tokenIds);
+      expect(repaymentStatus).to.deep.equal([true, false])
+    });
+  });
+  describe('#getValueRepaidToDate', async () => {
+    it('should return current repaid principal and interest amount of an agreementId', async () => {
+      const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
+      const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
+      const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
+      expect(repaidPrincipal).to.equal(expectPrincipalAmount)
+      expect(repaidInterest).to.equal(expectInterestAmount)
+    });
+  });
+  describe('#getMultiExpectedRepaymentValues', async () => {
+    it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
+      const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
+      const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
+      const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
+      const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[1]);
+      const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
+      const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
+      expect(repaidPrincipal).to.equal(expectPrincipalAmount);
+      expect(repaidInterest).to.equal(expectInterestAmount);
+      expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
+      expect(repaidInterest1).to.equal(expectInterestAmount1);
+    });
+  });
 });
