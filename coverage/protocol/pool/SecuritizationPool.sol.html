@@ -22,7 +22,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>96/96</span>
+        <span class='fraction'>95/95</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">57.28% </span>
@@ -37,7 +37,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">99.26% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>135/136</span>
+        <span class='fraction'>134/135</span>
       </div>
     </div>
   </div>
@@ -501,8 +501,7 @@
 456
 457
 458
-459
-460</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+459</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -708,7 +707,6 @@
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
-<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1165,9 +1163,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds
     ) external override <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>notClosingStage <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE) {
         uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i &lt; tokenIdsLength; ++i) {
+        for (uint256 i = 0; i &lt; tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
-            IUntangledERC721(tokenAddress).approve(toPoolAddress, tokenIds[i]);
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
     }
@@ -1196,8 +1193,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address from,
         uint256[] calldata tokenIds
     ) external override <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(ORIGINATOR_ROLE) {
-        uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i &lt; tokenIdsLength; ++i) {
+        uint256  tokenIdsLength =  tokenIds.length;
+        for (uint256 i = 0; i &lt; tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
     }
@@ -1225,7 +1222,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             tokenAddressesLength == senders.length &amp;&amp; senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
-        for (uint256 i = 0; i &lt; tokenAddressesLength; ++i) {
+        for (uint256 i = 0; i &lt; tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             <span class="missing-if-branch" title="else path not taken" >E</span>require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
@@ -1242,9 +1239,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata amounts
     ) external override <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE) {
         uint256 tokenAddressesLength = tokenAddresses.length;
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
-        for (uint256 i = 0; i &lt; tokenAddressesLength; ++i) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenAddressesLength == recipients.length, "tokenAddresses length and tokenIds length are not equal");
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(tokenAddressesLength == amounts.length, "tokenAddresses length and recipients length are not equal");
+        for (uint256 i = 0; i &lt; tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             <span class="missing-if-branch" title="else path not taken" >E</span>require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]);
         }
@@ -1252,8 +1249,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 &nbsp;
     /// @inheritdoc ISecuritizationPool
     function claimERC20Assets(address[] calldata tokenAddresses) external override <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant {
-        uint256 tokenAddressesLength = tokenAddresses.length;
-        for (uint256 i = 0; i &lt; tokenAddressesLength; ++i) {
+         uint256 tokenAddressesLength = tokenAddresses.length;
+        for (uint256 i = 0; i &lt; tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             <span class="missing-if-branch" title="else path not taken" >E</span>require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
@@ -1426,7 +1423,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 22:04:06 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Sep 14 2023 15:20:10 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

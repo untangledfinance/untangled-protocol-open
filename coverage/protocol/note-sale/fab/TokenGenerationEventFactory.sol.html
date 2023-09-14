@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">62.5% </span>
+        <span class="strong">64.71% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>20/32</span>
+        <span class='fraction'>22/34</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">21.43% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>5/7</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">73.53% </span>
+        <span class="strong">69.23% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>25/34</span>
+        <span class='fraction'>27/39</span>
       </div>
     </div>
   </div>
@@ -151,7 +151,19 @@
 106
 107
 108
-109</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -222,6 +234,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -238,6 +252,8 @@
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4×</span>
@@ -249,11 +265,17 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -266,6 +288,7 @@ import '../../../base/UntangledBase.sol';
 import '../../../interfaces/ITokenGenerationEventFactory.sol';
 import '../../../libraries/ConfigHelper.sol';
 import '../../../base/Factory.sol';
+import '../../../libraries/UntangledMath.sol';
 &nbsp;
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
@@ -328,6 +351,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
 &nbsp;
+        emit TokenGenerationEventCreated(tgeAddress);
+&nbsp;
         return tgeAddress;
     }
 &nbsp;
@@ -348,22 +373,30 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
 &nbsp;
+        emit TokenGenerationEventCreated(tgeAddress);
+&nbsp;
         return tgeAddress;
     }
 &nbsp;
 <span class="fstat-no" title="function not covered" >    function pauseUnpauseTge(address tgeAdress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {</span>
 <span class="cstat-no" title="statement not covered" >        require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist')</span>;
 <span class="cstat-no" title="statement not covered" >        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAdress);</span>
-<span class="cstat-no" title="statement not covered" >        if (tge.paused()) <span class="cstat-no" title="statement not covered" >tge.unpause()</span>;</span>
-<span class="cstat-no" title="statement not covered" >        tge.pause()</span>;
+<span class="cstat-no" title="statement not covered" >        if (tge.paused()) {</span>
+<span class="cstat-no" title="statement not covered" >            tge.unpause()</span>;
+        } else {
+<span class="cstat-no" title="statement not covered" >            tge.pause()</span>;
+        }
     }
 &nbsp;
 <span class="fstat-no" title="function not covered" >    function pauseUnpauseAllTges() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {</span>
 <span class="cstat-no" title="statement not covered" >        uint256  tgeAddressesLength =  tgeAddresses.length;</span>
-<span class="cstat-no" title="statement not covered" >        for (uint256 i = 0; i &lt; tgeAddressesLength; i++) {</span>
+<span class="cstat-no" title="statement not covered" >        for (uint256 i = 0; i &lt; tgeAddressesLength; i = UntangledMath.uncheckedInc(i)) {</span>
 <span class="cstat-no" title="statement not covered" >            MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddresses[i]);</span>
-<span class="cstat-no" title="statement not covered" >            if (tge.paused()) <span class="cstat-no" title="statement not covered" >tge.unpause()</span>;</span>
-            else <span class="cstat-no" title="statement not covered" >tge.pause()</span>;
+<span class="cstat-no" title="statement not covered" >            if (tge.paused()) {</span>
+<span class="cstat-no" title="statement not covered" >                tge.unpause()</span>;
+            } else {
+<span class="cstat-no" title="statement not covered" >                tge.pause()</span>;
+            }
         }
     }
 }
@@ -373,7 +406,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 22:04:06 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Sep 14 2023 15:20:10 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>
