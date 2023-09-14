@@ -405,9 +405,10 @@ contract SecuritizationPoolValueService is
         uint256 balancePool = securitizationPool.reserve();
         if (poolValue == 0) return 0;
 
-        uint256 ratioForReserve = balancePool / (poolValue);
-
-        seniorBalance = ratioForReserve * beginningSeniorAsset;
+        // uint256 ratioForReserve = balancePool / (poolValue);
+        // seniorBalance = ratioForReserve * beginningSeniorAsset;
+        // => seniorBalance = balancePool / poolValue * beginningSeniorAsset;
+        seniorBalance = balancePool * beginningSeniorAsset / poolValue;
 
         return seniorBalance;
     }
