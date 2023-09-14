@@ -13,58 +13,26 @@ const { presignedMintMessage } = require('../shared/uid-helper');
 
 const ONE_DAY = 86400 // seconds
 describe('Pool to Pool', () => {
-  let stableCoin;
-  let securitizationManagerContract;
-  let loanKernelContract;
-  let loanRepaymentRouterContract;
-  let loanAssetTokenContract;
-  let loanRegistryContract;
-  let uniqueIdentityContract;
-  let registryContract;
-  let loanInterestTermsContract;
-  let distributionOperatorContract;
-  let distributionTrancheContract;
-  let poolBContract;
-  let securitizationPoolValueService;
-
-  // Wallets
-  let untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer,
-    poolAPot;
-
-  before('create fixture', async () => {
-    // Init wallets
-    [untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot] =
-      await ethers.getSigners();
-
-    // Init contracts
-    ({
-      stableCoin,
-      uniqueIdentityContract,
-      loanAssetTokenContract,
-      loanInterestTermsContract,
-      loanRegistryContract,
-      loanKernelContract,
-      loanRepaymentRouterContract,
-      securitizationManagerContract,
-      distributionOperatorContract,
-      distributionTrancheContract,
-      registryContract,
-      securitizationPoolValueService
-    } = await mainFixture());
-
-    // Create new main pool
-    const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
-    await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
-    const transaction = await securitizationManagerContract
-      .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000');
-    const receipt = await transaction.wait();
-    const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
-
-    poolBContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
-  });
   // investor pool - the pool which invest into another pool (buy JOT/SOT of another pool)
   describe('Pool A invests in pool B', async () => {
+    let stableCoin;
+    let securitizationManagerContract;
+    let loanKernelContract;
+    let loanRepaymentRouterContract;
+    let loanAssetTokenContract;
+    let loanRegistryContract;
+    let uniqueIdentityContract;
+    let registryContract;
+    let loanInterestTermsContract;
+    let distributionOperatorContract;
+    let distributionTrancheContract;
+    let poolBContract;
+    let securitizationPoolValueService;
+
+    // Wallets
+    let untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer,
+      poolAPot;
+
     const stableCoinAmountToBuyJOT = parseEther('1'); // $1
     const stableCoinAmountToBuySOT = parseEther('2'); // $1
     const poolAPotInitialBalance = parseEther('100')
@@ -76,6 +44,36 @@ describe('Pool to Pool', () => {
     let jotAmount;
     let sotAmount;
     before('init sale', async () => {
+      // Init wallets
+      [untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot] =
+        await ethers.getSigners();
+
+      // Init contracts
+      ({
+        stableCoin,
+        uniqueIdentityContract,
+        loanAssetTokenContract,
+        loanInterestTermsContract,
+        loanRegistryContract,
+        loanKernelContract,
+        loanRepaymentRouterContract,
+        securitizationManagerContract,
+        distributionOperatorContract,
+        distributionTrancheContract,
+        registryContract,
+        securitizationPoolValueService
+      } = await mainFixture());
+
+      // Create new main pool
+      const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
+      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      const transaction = await securitizationManagerContract
+        .connect(poolCreatorSigner)
+        .newPoolInstance(stableCoin.address, '100000');
+      const receipt = await transaction.wait();
+      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+      poolBContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
       // Init JOT sale
       const jotCap = '10000000000000000000';
       const isLongSaleTGEJOT = true;
@@ -106,14 +104,13 @@ describe('Pool to Pool', () => {
       mintedIncreasingInterestTGEPoolBContract = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
 
       // Create investor pool
-      const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
       await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolACreator.address);
-      const transaction = await securitizationManagerContract
+      const poolACreationTransaction = await securitizationManagerContract
         .connect(poolACreator)
         .newPoolInstance(stableCoin.address, '100000');
-      const receipt = await transaction.wait();
-      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
-      poolAContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      const poolACreationReceipt = await poolACreationTransaction.wait();
+      const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
+      poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
       await poolAContract.connect(poolACreator).setPot(poolAPot.address)
 
       // Pool A pot gain UID
