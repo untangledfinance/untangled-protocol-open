@@ -39,17 +39,6 @@ contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistr
         return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
-    /// @notice Calculate SOT/JOT asset value belongs to an investor
-    /// @param tokenAddress Address of SOT or JOT token
-    /// @param investor Investor's wallet
-    /// @return The value in pool's underlying currency
-    function calcCorrespondingAssetValue(
-        address tokenAddress,
-        address investor
-    ) external view returns (uint256) {
-        return _calcCorrespondingAssetValue(tokenAddress, investor);
-    }
-
     /// @dev Calculate SOT/JOT asset value belongs to an investor
     /// @param tokenAddress Address of SOT or JOT token
     /// @param investor Investor's wallet
