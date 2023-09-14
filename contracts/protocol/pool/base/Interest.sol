@@ -74,38 +74,6 @@ contract Interest {
         return _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
     }
 
-    // Calculate interest amount Debtor need to pay until current date
-    /// @dev Calculates the interest amount for a current principal amount, considering the previously paid interest amount
-    function _calculateInterestAmountToTimestamp(
-        uint256 _currentPrincipalAmount,
-        uint256 _paidInterestAmount,
-        uint256 _annualInterestRate,
-        uint256 _startTermTimestamp,
-        uint256 _lastRepayTimestamp,
-        uint256 _timestamp
-    ) internal pure returns (uint256) {
-        if (_timestamp <= _startTermTimestamp) {
-            return 0;
-        }
-        uint256 interest = 0;
-        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
-        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
-
-        if (_paidInterestAmount > 0) {
-            // Has made at least 1 repayment
-            interest = _calculateInterestForDuration(
-                _currentPrincipalAmount,
-                _annualInterestRate,
-                elapseTimeFromLastRepay
-            );
-        } else {
-            // Haven't made any repayment
-            interest = _calculateInterestForDuration(_currentPrincipalAmount, _annualInterestRate, elapseTimeFromStart);
-        }
-
-        return interest;
-    }
-
     // Calculate interest amount for a duration with specific Principal amount
     /// @dev Calculates the interest amount for a specified duration with a specific principal amount
     function _calculateInterestForDuration(

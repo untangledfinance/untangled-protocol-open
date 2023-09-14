@@ -233,6 +233,27 @@ describe('LoanInterestTermsContract', () => {
     });
   });
 
+  describe('Get Info', async () => {
+    it('#getValueRepaidToDate', async () => {
+      const result = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
+
+      expect(result.map((x) => formatEther(x))).to.deep.equal(['5.0', '0.256355506673463652']);
+    });
+
+    it('#isCompletedRepayments', async () => {
+      const result = await loanInterestTermsContract.isCompletedRepayments([tokenIds[0]]);
+
+      expect(result).to.deep.equal([true]);
+    });
+
+    it('#getMultiExpectedRepaymentValues', async () => {
+      const nextTime = dayjs(new Date()).add(7, 'days').unix();
+      const result = await loanInterestTermsContract.getMultiExpectedRepaymentValues([agreementID], nextTime);
+
+      expect(result.map((x) => x.map((y) => formatEther(y)))).to.deep.equal([['0.0'], ['0.0']]);
+    });
+  });
+
   describe('#registerConcludeLoan', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
