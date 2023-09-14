@@ -13,7 +13,7 @@ const { presignedMintMessage } = require('../shared/uid-helper');
 const ONE_DAY = 86400 // seconds
 describe('Pool to Pool', () => {
   // investor pool - the pool which invest into another pool (buy JOT/SOT of another pool)
-  describe.skip('Pool A invests in pool B', async () => {
+  describe('Pool A invests in pool B', async () => {
     let stableCoin;
     let securitizationManagerContract;
     let loanKernelContract;
@@ -126,10 +126,11 @@ describe('Pool to Pool', () => {
       await stableCoin.transfer(poolAPot.address, poolAPotInitialBalance); // $100
     })
 
-    it('Pool A pot invests into pool B', async () => {
+    it('Pool A pot invests into pool B for JOT', async () => {
       // Invest into main pool (buy JOT token)
       await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT)
       await securitizationManagerContract.connect(poolAPot).buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT)
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal(poolAPotInitialBalance.sub(stableCoinAmountToBuyJOT).toString());
     });
     it('Pool A originator can transfer JOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -144,6 +145,7 @@ describe('Pool to Pool', () => {
         [poolAPot.address],
         [jotAmount]
       )
+      expect(await jotPoolBContract.balanceOf(poolAContract.address)).equal(jotAmount);
     });
     it('Should include B JOT token value in pool A expected assets', async () => {
       // Check values
@@ -174,6 +176,7 @@ describe('Pool to Pool', () => {
       // Invest into main pool (buy JOT token)
       await stableCoin.connect(poolAPot).approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT)
       await securitizationManagerContract.connect(poolAPot).buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT)
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal(poolAPotInitialBalance.sub(stableCoinAmountToBuySOT).toString());
     });
     it('Pool A originator can transfer SOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -188,6 +191,7 @@ describe('Pool to Pool', () => {
         [poolAPot.address],
         [sotAmount]
       )
+      expect(await sotPoolBContract.balanceOf(poolAContract.address)).equal(sotAmount);
     });
     it('Should include B SOT token value in pool A expected assets', async () => {
       // Check values
