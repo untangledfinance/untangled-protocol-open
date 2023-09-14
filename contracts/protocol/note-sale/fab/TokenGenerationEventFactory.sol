@@ -68,6 +68,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
 
+        emit TokenGenerationEventCreated(tgeAddress);
+
         return tgeAddress;
     }
 
@@ -87,6 +89,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
+
+        emit TokenGenerationEventCreated(tgeAddress);
 
         return tgeAddress;
     }
