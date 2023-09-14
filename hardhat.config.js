@@ -1,3 +1,4 @@
+require('solidity-coverage');
 require('@nomiclabs/hardhat-truffle5');
 require('@nomiclabs/hardhat-web3');
 require('@nomiclabs/hardhat-etherscan');
@@ -7,11 +8,13 @@ require('@openzeppelin/hardhat-upgrades');
 require('@nomiclabs/hardhat-waffle');
 
 require('dotenv').config();
-const MNEMONIC = process.env.MNEMONIC;
+require('./tasks');
+const { networks } = require('./networks');
 
-const accounts = {
-  mnemonic: MNEMONIC ?? 'choice lizard word used slam master witness ill connect cloth nice destroy',
-};
+const MNEMONIC = process.env.MNEMONIC;
+const PRIVATEKEY = process.env.PRIVATEKEY;
+
+const accounts = [PRIVATEKEY];
 module.exports = {
   solidity: {
     compilers: [
@@ -47,7 +50,14 @@ module.exports = {
       blockGasLimit: 12500000,
       saveDeployments: true,
       allowUnlimitedContractSize: false,
-      accounts,
+      accounts: {
+        mnemonic: MNEMONIC,
+      },
+
+      forking: {
+        url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
+        blockNumber: 39993365,
+      },
     },
     celo: {
       saveDeployments: true,
@@ -67,6 +77,7 @@ module.exports = {
       loggingEnabled: true,
       url: `https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161`,
     },
+    ...networks,
   },
   etherscan: {
     // Your API key for Etherscan

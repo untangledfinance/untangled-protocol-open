@@ -5,7 +5,7 @@ import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
-import "../../interfaces/IRequiresUID.sol";
+import '../../interfaces/IRequiresUID.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team

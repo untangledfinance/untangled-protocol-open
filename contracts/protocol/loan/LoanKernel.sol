@@ -67,29 +67,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return issuance;
     }
 
-    /**
-     * Returns the hash of the debt order.
-     */
-    function _getDebtOrderHash(
-        bytes32 agreementId,
-        uint256 principalAmount,
-        uint256 principalTokenIndex,
-        address relayer,
-        uint256 expirationTimestampInSec
-    ) private view returns (bytes32 _debtorMessageHash) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    address(this),
-                    agreementId,
-                    principalAmount,
-                    principalTokenIndex,
-                    relayer,
-                    expirationTimestampInSec
-                )
-            );
-    }
-
     function _getDebtOrderHashes(LoanOrder memory debtOrder) private view returns (bytes32[] memory) {
         uint256 _length = debtOrder.issuance.debtors.length;
         bytes32[] memory orderHashses = new bytes32[](_length);
@@ -145,7 +122,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     ) private {
         // Mint debt tokens and finalize debt agreement
 
-        registry.getLoanAssetToken().mint(creditor, uint256(latTokenId));
+        registry.getLoanAssetToken().safeMint(creditor, uint256(latTokenId));
 
         registry.getLoanRegistry().insert(
             latTokenId,
@@ -257,13 +234,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             revert('Debt does not exsits or Debtor have not completed repayment.');
         }
 
-        bool isTermCompleted = ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
-
-        if (isTermCompleted) {
-            _burnLoanAssetToken(agreementId);
-        } else {
-            revert('Unable to conclude terms contract.');
-        }
+        ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
+        _burnLoanAssetToken(agreementId);
     }
 
     /*********************** */
@@ -295,7 +267,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
         bytes32[] calldata tokenIds // [x]-Loan liability token Id, [x]-Loan liability token Id
     ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
-        require(termsContractParameters.length > 0, 'Loanernel: Invalid Term Contract params');
+        require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
         LoanOrder memory debtOrder = _getLoanOrder(
@@ -306,7 +278,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             salts
         );
 
-        require(debtOrder.issuance.termsContract != address(0x0), 'LoanKernel: Invalid Term Contract.');
         uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
@@ -323,10 +294,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 _getAssetPurposeAndRiskScore(debtOrder.assetPurpose, debtOrder.riskScores[i])
             );
 
-            require(
-                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]),
-                'LoanKernel: Failed to register starting Loan terms.'
-            );
+            ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]);
 
             emit LogDebtOrderFilled(
                 debtOrder.issuance.agreementIds[i],
@@ -357,29 +325,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             );
     }
 
-    /**
-     * Helper function that returns an issuance's hash
-     */
-    function _getAgreementId(
-        address version,
-        address debtor,
-        address termsContract,
-        bytes32 termsContractParameters,
-        uint256 salt
-    ) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(version, debtor, termsContract, termsContractParameters, salt));
-    }
-
-    function _genInputLoanAgreementId(
-        address _version,
-        address _termsContract,
-        address _observerWallet,
-        address _inputSupplierWallet,
-        uint256 _salt
-    ) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_version, _termsContract, _observerWallet, _inputSupplierWallet, _salt));
-    }
-
     function _genLoanAgreementIds(
         address _version,
         address[] memory _debtors,
@@ -394,147 +339,5 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             );
         }
         return agreementIds;
-    }
-
-    /**
-     * Asserts that debt order meets all validity requirements described in
-     * the Kernel specification document.
-     */
-    function _assertDebtOrderValidityInvariants(
-        uint256 principalAmount,
-        uint256 debtorFee,
-        bytes32 debtOrderHash,
-        uint256 expirationTimestampInSec,
-        bytes32 agreementId
-    ) private returns (bool _orderIsValid) {
-        // Validate fee amount
-        // uint totalFees = debtOrder.creditorFee.add(debtOrder.debtorFee);
-
-        // Invariant: debtor is given enough principal to cover at least debtorFees
-        if (principalAmount < debtorFee) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_INVALID_INSUFFICIENT_PRINCIPAL),
-                debtOrderHash,
-                'Principal account must greater than Debtor fee.'
-            );
-            return false;
-        }
-
-        // Invariant: debt order must not be expired
-        // solhint-disable-next-line not-rely-on-time
-        if (expirationTimestampInSec < block.timestamp) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_EXPIRED),
-                debtOrderHash,
-                'Debt Kernel:  Expiration time lesser than current time.'
-            );
-            return false;
-        }
-
-        // Invariant: debt order's issuance must not already be minted as debt token
-        if (registry.getLoanAssetToken().ownerOf(uint256(agreementId)) != address(0)) {
-            emit LogDebtKernelError(
-                uint8(Errors.DEBT_ISSUED),
-                debtOrderHash,
-                "Debt Kernel: Debt Order's Issuance was already minted."
-            );
-            return false;
-        }
-
-        // Invariant: debt order's issuance must not have been cancelled
-        if (issuanceCancelled[agreementId]) {
-            emit LogDebtKernelError(
-                uint8(Errors.ISSUANCE_CANCELLED),
-                debtOrderHash,
-                'Debt Kernel: Issuance is cancelled.'
-            );
-            return false;
-        }
-
-        // Invariant: debt order itself must not have been cancelled
-        if (debtOrderCancelled[debtOrderHash]) {
-            emit LogDebtKernelError(
-                uint8(Errors.ORDER_CANCELLED),
-                debtOrderHash,
-                'Debt Kernel: Debt Order is cancelled.'
-            );
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Helper function for querying an address' balance on a given token.
-     */
-    function _getBalance(address token, address owner) private view returns (uint256 _balance) {
-        // Limit gas to prevent reentrancy.
-        return ERC20(token).balanceOf(owner);
-    }
-
-    /**
-     * Helper function for querying an address' allowance to the 0x transfer proxy.
-     */
-    function _getAllowance(address token, address owner) private view returns (uint256 _allowance) {
-        // Limit gas to prevent reentrancy.
-        return IERC20(token).allowance(owner, address(this));
-    }
-
-    /**
-     * Helper function transfers a specified amount of tokens between two parties
-     * using the token transfer proxy contract.
-     */
-    function _transferTokensFrom(
-        address token,
-        address from,
-        address to,
-        uint256 amount
-    ) private returns (bool success) {
-        return IERC20(token).transferFrom(from, to, amount);
-    }
-
-    // Transfer fee to beneficiaries
-    function _transferFeesToBeneficiaries(
-        address payer,
-        address from,
-        address token,
-        address[5] memory beneficiaries,
-        uint256[5] memory amounts
-    ) private {
-        uint256 amountsLength = amounts.length;
-        for (uint256 i = 0; i < amountsLength; i++) {
-            if (amounts[i] > 0 && beneficiaries[i] != address(0x0)) {
-                _transferTokensFrom(token, from, beneficiaries[i], amounts[i]);
-                emit LogFeeTransfer(payer, token, amounts[i], beneficiaries[i]);
-            }
-        }
-    }
-
-    /**
-     * Assert that the creditor has a sufficient token balance and has
-     * granted the token transfer proxy contract sufficient allowance to suffice for the principal
-     * and creditor fee.
-     */
-    function _assertExternalBalanceAndAllowanceInvariants(
-        address creditor,
-        uint256 principalAmount,
-        address principalToken,
-        bytes32 debtOrderHash
-    ) private returns (bool _isBalanceAndAllowanceSufficient) {
-        uint256 totalCreditorPayment = principalAmount;
-
-        if (
-            _getBalance(principalToken, creditor) < totalCreditorPayment ||
-            _getAllowance(principalToken, creditor) < totalCreditorPayment
-        ) {
-            emit LogDebtKernelError(
-                uint8(Errors.CREDITOR_BALANCE_OR_ALLOWANCE_INSUFFICIENT),
-                debtOrderHash,
-                'Balance of allowance of Creditor is insufficient.'
-            );
-            return false;
-        }
-
-        return true;
     }
 }

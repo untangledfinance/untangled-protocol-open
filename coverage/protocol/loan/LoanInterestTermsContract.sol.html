@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for protocol/loan/LoanInterestTermsContract.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">all files</a> / <a href="index.html">protocol/loan/</a> LoanInterestTermsContract.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">70.11% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>61/87</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">56.06% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>37/66</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">85% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>17/20</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">71.3% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>77/108</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line medium'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20×</span>
+<span class="cline-any cline-yes">18×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">136×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">147×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">147×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">147×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+&nbsp;
+import '../../base/UntangledBase.sol';
+import '../../interfaces/ILoanInterestTermsContract.sol';
+import '../../libraries/UnpackLoanParamtersLib.sol';
+import '../../libraries/UntangledMath.sol';
+import '../../libraries/ConfigHelper.sol';
+&nbsp;
+/// @title LoanKernel
+/// @author Untangled Team
+/// @dev Upload loan and conclude loan
+contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract {
+    using ConfigHelper for Registry;
+&nbsp;
+    uint256 public constant NUM_AMORTIZATION_UNIT_TYPES = 6;
+&nbsp;
+    /// @dev Represents the number of days in a year
+    uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
+    // All time units in seconds
+    /// @dev Represents the number of seconds in a minute
+    uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
+    uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
+    uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
+    uint256 public constant WEEK_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * 7;
+    uint256 public constant MONTH_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * 30;
+    uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
+&nbsp;
+    // To convert an encoded interest rate into its equivalent in percents,
+    // divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
+    //     10,000 =&gt; 1% interest rate
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+&nbsp;
+    // To convert an encoded interest rate into its equivalent multiplier
+    // (for purposes of calculating total interest), divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
+    //     10,000 =&gt; 0.01 interest multiplier
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_MULTIPLIER = INTEREST_RATE_SCALING_FACTOR_PERCENT * 100;
+&nbsp;
+    function initialize(Registry _registry) public <span class="missing-if-branch" title="else path not taken" >E</span>initializer {
+        __UntangledBase__init_unchained(_msgSender());
+&nbsp;
+        registry = _registry;
+    }
+&nbsp;
+    //////////////////////////////
+    // EVENTS                 ///
+    ////////////////////////////
+    event LogInterestTermStart(
+        bytes32 indexed agreementId,
+        address indexed principalToken,
+        uint256 principalAmount,
+        uint256 interestRate,
+        uint256 indexed amortizationUnitType,
+        uint256 termLengthInAmortizationUnits
+    );
+&nbsp;
+    event LogRegisterRepayment(
+        bytes32 agreementId,
+        address payer,
+        address beneficiary,
+        uint256 unitsOfRepayment,
+        address tokenAddress
+    );
+&nbsp;
+    event LogRegisterCompleteTerm(bytes32 agreementId);
+&nbsp;
+    //////////////////////////////
+    // MODIFIERS              ///
+    ////////////////////////////
+    modifier onlyKernel() {
+        require(_msgSender() == address(registry.getLoanKernel()), 'LoanInterestTermsContract: Only for LoanKernel.');
+        _;
+    }
+&nbsp;
+    modifier onlyRouter() {
+        require(
+            _msgSender() == address(registry.getLoanRepaymentRouter()),
+            'LoanInterestTermsContract: Only for Repayment Router.'
+        );
+        _;
+    }
+&nbsp;
+    modifier onlyHaventStartedLoan(bytes32 agreementId) {
+        require(!startedLoan[agreementId], 'LoanInterestTermsContract: Loan has started!');
+        _;
+    }
+&nbsp;
+    function _addRepaidPrincipalAmount(bytes32 agreementId, uint256 repaidAmount) private {
+        repaidPrincipalAmounts[agreementId] += repaidAmount;
+    }
+&nbsp;
+    function _addRepaidInterestAmount(bytes32 agreementId, uint256 repaidAmount) private {
+        repaidInterestAmounts[agreementId] += repaidAmount;
+    }
+&nbsp;
+    function _setCompletedRepayment(bytes32 agreementId) private {
+        completedRepayment[agreementId] = true;
+    }
+&nbsp;
+    // Register to start Loan term for batch of agreement Ids
+    /// @inheritdoc ILoanInterestTermsContract
+    function registerTermStart(bytes32 agreementId)
+        public
+        override
+        <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused
+        onlyKernel
+        onlyHaventStartedLoan(agreementId)
+        returns (bool)
+    {
+        startedLoan[agreementId] = true;
+        return true;
+    }
+&nbsp;
+    /// @inheritdoc ILoanInterestTermsContract
+    function registerConcludeLoan(bytes32 agreementId)
+        external
+        override
+        <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused
+        <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant
+        onlyKernel
+        returns (bool)
+    {
+        require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
+&nbsp;
+        registry.getLoanRegistry().setCompletedLoan(agreementId);
+&nbsp;
+        emit LogRegisterCompleteTerm(agreementId);
+        return true;
+    }
+&nbsp;
+    /// When called, the registerRepayment function records the debtor's
+    ///  repayment, as well as any auxiliary metadata needed by the contract
+    ///  to determine ex post facto the value repaid (e.g. current USD
+    ///  exchange rate)
+    /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
+    /// @param  payer address. The address of the payer.
+    /// @param  beneficiary address. The address of the payment's beneficiary.
+    /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
+    /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
+    /// @inheritdoc ILoanInterestTermsContract
+    function registerRepayment(
+        bytes32 agreementId,
+        address payer,
+        address beneficiary,
+        uint256 unitsOfRepayment,
+        address tokenAddress
+    ) public override onlyRouter returns (uint256 remains) {
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(
+            tokenAddress == loanRegistry.getPrincipalTokenAddress(agreementId),
+            'LoanTermsContract: Invalid token for repayment.'
+        );
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(!loanRegistry.completedLoans(agreementId), 'LoanTermsContract: Completed Loan.');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(startedLoan[agreementId], 'LoanTermsContract: Loan has not started yet.');
+&nbsp;
+        uint256 currentTimestamp = block.timestamp;
+&nbsp;
+        uint256 expectedPrincipal;
+        uint256 expectedInterest;
+        // query total outstanding amounts
+        (expectedPrincipal, expectedInterest) = getExpectedRepaymentValues(agreementId, currentTimestamp);
+        // TODO: Currently only allow Debtor to repay with amount &gt;= expectedInterest of that time
+        // Because, we haven't made any mechanism to manage outstanding interest amounts in the case when Debtor
+        // repaid with amount &lt; expectedInterest (at that moment)
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(unitsOfRepayment &gt;= expectedInterest, 'LoanTermsContract: Expected interest amount is minimum.');
+&nbsp;
+        // exceed expectation, Debtor can pay all at once
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (unitsOfRepayment &gt;= expectedPrincipal + expectedInterest) {
+            _setCompletedRepayment(agreementId);
+            _addRepaidInterestAmount(agreementId, expectedInterest);
+            _addRepaidPrincipalAmount(agreementId, expectedPrincipal);
+            // put the remain to interest
+            remains = unitsOfRepayment - (expectedPrincipal + expectedInterest);
+        } else {
+            // if currently Debtor no need to repay for interest
+<span class="cstat-no" title="statement not covered" >            if (expectedInterest == 0) {</span>
+<span class="cstat-no" title="statement not covered" >                _addRepaidPrincipalAmount(agreementId, unitsOfRepayment)</span>;
+            } else {
+                // if expectedInterest &gt; 0 ( &amp; unitsOfRepayment &gt;= expectedInterest)
+<span class="cstat-no" title="statement not covered" >                _addRepaidInterestAmount(agreementId, expectedInterest)</span>;
+<span class="cstat-no" title="statement not covered" >                if (unitsOfRepayment - expectedInterest &gt; 0) {</span>
+                    // Debtor is not able to fulfill the expectedPrincipal as we already validated from first IF statement
+                    // -&gt; there is no remains for adding to repaidInterestAmount
+<span class="cstat-no" title="statement not covered" >                    _addRepaidPrincipalAmount(agreementId, unitsOfRepayment - expectedInterest)</span>;
+                }
+            }
+        }
+&nbsp;
+        // Update Debt registry record
+        loanRegistry.updateLastRepaymentTimestamp(agreementId, currentTimestamp);
+        // loanRegistry.selfEvaluateCollateralRatio(agreementId);
+&nbsp;
+        // Emit new event
+        emit LogRegisterRepayment(agreementId, payer, beneficiary, unitsOfRepayment, tokenAddress);
+&nbsp;
+        return remains;
+    }
+&nbsp;
+    /// @inheritdoc ILoanInterestTermsContract
+<span class="fstat-no" title="function not covered" >    function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {</span>
+<span class="cstat-no" title="statement not covered" >        return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);</span>
+    }
+&nbsp;
+    /// @inheritdoc ILoanInterestTermsContract
+<span class="fstat-no" title="function not covered" >    function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {</span>
+<span class="cstat-no" title="statement not covered" >        bool[] memory result = new bool[](agreementIds.length);</span>
+<span class="cstat-no" title="statement not covered" >        uint256 aagreementIdsLength = agreementIds.length;</span>
+<span class="cstat-no" title="statement not covered" >        for (uint256 i = 0; i &lt; aagreementIdsLength; i++) {</span>
+            result[i] = completedRepayment[agreementIds[i]];
+        }
+<span class="cstat-no" title="statement not covered" >        return result;</span>
+    }
+&nbsp;
+    /**
+     * Expected repayment value with Amortization of Interest and Principal
+     * (AMORTIZATION) - will be used for repayment from Debtor
+     */
+    /// @inheritdoc ILoanInterestTermsContract
+    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
+        public
+        view
+        override
+        returns (uint256 expectedPrincipal, uint256 expectedInterest)
+    {
+        UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
+&nbsp;
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
+&nbsp;
+        uint256 repaidPrincipalAmount = repaidPrincipalAmounts[agreementId];
+        uint256 repaidInterestAmount = repaidInterestAmounts[agreementId];
+        uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
+&nbsp;
+        bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
+        uint256 manualInterestAmountLoan;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (isManualInterestLoan) {
+            manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
+        }
+&nbsp;
+        (expectedPrincipal, expectedInterest) = _getExpectedRepaymentValuesToTimestamp(
+            params,
+            lastRepaymentTimestamp,
+            timestamp,
+            repaidPrincipalAmount,
+            repaidInterestAmount,
+            isManualInterestLoan,
+            manualInterestAmountLoan
+        );
+    }
+&nbsp;
+    /// @inheritdoc ILoanInterestTermsContract
+<span class="fstat-no" title="function not covered" >    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)</span>
+        public
+        view
+        override
+        returns (uint256[] memory, uint256[] memory)
+    {
+<span class="cstat-no" title="statement not covered" >        uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);</span>
+<span class="cstat-no" title="statement not covered" >        uint256[] memory expectedInterests = new uint256[](agreementIds.length);</span>
+<span class="cstat-no" title="statement not covered" >        uint256 agreementIdsLength = agreementIds.length;</span>
+<span class="cstat-no" title="statement not covered" >        for (uint256 i = 0; i &lt; agreementIdsLength; i++) {</span>
+<span class="cstat-no" title="statement not covered" >            (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(</span>
+                agreementIds[i],
+                timestamp
+            );
+            expectedPrincipals[i] = expectedPrincipal;
+            expectedInterests[i] = expectedInterest;
+        }
+<span class="cstat-no" title="statement not covered" >        return (expectedPrincipals, expectedInterests);</span>
+    }
+&nbsp;
+    /// @inheritdoc ILoanInterestTermsContract
+    function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
+        return _unpackParamsForAgreementID(agreementId).interestRate;
+    }
+&nbsp;
+    /// @param amortizationUnitType AmortizationUnitType enum
+    /// @return the corresponding length of the unit in seconds
+    function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
+        private
+        pure
+        returns (uint256)
+    {
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
+<span class="cstat-no" title="statement not covered" >            return MINUTE_LENGTH_IN_SECONDS;</span>
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {
+            return HOUR_LENGTH_IN_SECONDS;
+        } else <span class="cstat-no" title="statement not covered" >if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.DAYS) {</span>
+<span class="cstat-no" title="statement not covered" >            return DAY_LENGTH_IN_SECONDS;</span>
+        } else <span class="cstat-no" title="statement not covered" >if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.WEEKS) {</span>
+<span class="cstat-no" title="statement not covered" >            return WEEK_LENGTH_IN_SECONDS;</span>
+        } else <span class="cstat-no" title="statement not covered" >if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MONTHS) {</span>
+<span class="cstat-no" title="statement not covered" >            return MONTH_LENGTH_IN_SECONDS;</span>
+        } else <span class="cstat-no" title="statement not covered" >if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.YEARS) {</span>
+<span class="cstat-no" title="statement not covered" >            return YEAR_LENGTH_IN_SECONDS;</span>
+        } else {
+<span class="cstat-no" title="statement not covered" >            revert('Unknown amortization unit type.')</span>;
+        }
+    }
+&nbsp;
+    /**
+     *   Get parameters by Agreement ID (commitment hash)
+     */
+    function _unpackParamsForAgreementID(bytes32 agreementId)
+        private
+        view
+        returns (UnpackLoanParamtersLib.InterestParams memory params)
+    {
+        bytes32 parameters;
+        uint256 issuanceBlockTimestamp = 0;
+        ILoanRegistry loanRegistry = registry.getLoanRegistry();
+        issuanceBlockTimestamp = loanRegistry.getIssuanceBlockTimestamp(agreementId);
+        parameters = loanRegistry.getTermsContractParameters(agreementId);
+        // The principal amount denominated in the aforementioned token.
+        uint256 principalAmount;
+        // The interest rate accrued per amortization unit.
+        uint256 interestRate;
+        // The amortization unit in which the repayments installments schedule is defined.
+        uint256 rawAmortizationUnitType;
+        // The debt's entire term's length, denominated in the aforementioned amortization units
+        uint256 termLengthInAmortizationUnits;
+        uint256 gracePeriodInDays;
+&nbsp;
+        (
+            principalAmount,
+            interestRate,
+            rawAmortizationUnitType,
+            termLengthInAmortizationUnits,
+            gracePeriodInDays
+        ) = UnpackLoanParamtersLib.unpackParametersFromBytes(parameters);
+&nbsp;
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType = UnpackLoanParamtersLib.AmortizationUnitType(
+            rawAmortizationUnitType
+        );
+&nbsp;
+        // Calculate term length base on Amortization Unit and number
+        uint256 termLengthInSeconds = termLengthInAmortizationUnits *
+            _getAmortizationUnitLengthInSeconds(amortizationUnitType);
+&nbsp;
+        return
+            UnpackLoanParamtersLib.InterestParams({
+                principalAmount: principalAmount,
+                interestRate: interestRate,
+                termStartUnixTimestamp: issuanceBlockTimestamp,
+                termEndUnixTimestamp: termLengthInSeconds + issuanceBlockTimestamp,
+                amortizationUnitType: amortizationUnitType,
+                termLengthInAmortizationUnits: termLengthInAmortizationUnits
+            });
+    }
+&nbsp;
+    // Calculate interest amount for a duration with specific Principal amount
+    function _calculateInterestForDuration(
+        uint256 _principalAmount,
+        uint256 _interestRate,
+        uint256 _durationLengthInSec
+    ) private pure returns (uint256) {
+        return
+            (_principalAmount *
+                UntangledMath.rpow(
+                    UntangledMath.ONE +
+                        (_interestRate * (UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) /
+                        YEAR_LENGTH_IN_SECONDS,
+                    _durationLengthInSec,
+                    UntangledMath.ONE
+                )) /
+            UntangledMath.ONE -
+            _principalAmount;
+    }
+&nbsp;
+    /**
+     * Calculate values which Debtor need to pay to conclude current Loan
+     */
+    /// @dev calculates the expected principal and interest amounts that the debtor needs to pay to conclude the current loan
+    /// It takes into account the repayment history, timestamps, and additional parameters specific to manual interest loans
+    function _getExpectedRepaymentValuesToTimestamp(
+        UnpackLoanParamtersLib.InterestParams memory _params,
+        uint256 _lastRepaymentTimestamp, // timestamp of last repayment from debtor
+        uint256 _timestamp,
+        uint256 repaidPrincipalAmount,
+        uint256 repaidInterestAmount,
+        bool isManualInterestLoan,
+        uint256 manualInterestAmountLoan
+    ) private pure returns (uint256 expectedPrinciapal, uint256 expectedInterest) {
+        uint256 outstandingPrincipal = _params.principalAmount - repaidPrincipalAmount;
+&nbsp;
+        expectedPrinciapal = outstandingPrincipal;
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (isManualInterestLoan) {
+            expectedInterest = manualInterestAmountLoan;
+        } else {
+            expectedInterest = _calculateInterestAmountToTimestamp(
+                _params.principalAmount,
+                outstandingPrincipal,
+                repaidInterestAmount,
+                _params.interestRate,
+                _params.termStartUnixTimestamp,
+                _params.termEndUnixTimestamp,
+                _lastRepaymentTimestamp,
+                _timestamp
+            );
+        }
+    }
+&nbsp;
+    // Calculate interest amount Debtor need to pay until current date
+    function _calculateInterestAmountToTimestamp(
+        uint256 _principalAmount,
+        uint256 _currentPrincipalAmount,
+        uint256 _paidInterestAmount,
+        uint256 _annualInterestRate,
+        uint256 _startTermTimestamp,
+        uint256 _endTermTimestamp,
+        uint256 _lastRepayTimestamp,
+        uint256 _timestamp
+    ) private pure returns (uint256) {
+        if (_timestamp &lt;= _startTermTimestamp) {
+            return 0;
+        }
+        uint256 interest = 0;
+        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
+        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
+&nbsp;
+        // If still within the term length
+        if (_timestamp &lt; _endTermTimestamp) {
+            // Have just made new repayment
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (elapseTimeFromLastRepay == 0 &amp;&amp; _paidInterestAmount &gt; 0) {
+                interest = 0;
+            } else {
+                <span class="missing-if-branch" title="if path not taken" >I</span>if (_paidInterestAmount &gt; 0) {
+                    // Has made at least 1 repayment
+                    interest = _calculateInterestForDuration(
+                        _currentPrincipalAmount,
+                        _annualInterestRate,
+                        elapseTimeFromLastRepay
+                    );
+                } else {
+                    // Haven't made any repayment
+                    interest = _calculateInterestForDuration(
+                        _principalAmount,
+                        _annualInterestRate,
+                        elapseTimeFromStart
+                    );
+                }
+            }
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (_timestamp &gt;= _endTermTimestamp) {
+            // If debtor has made at least 1 repayment
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (_paidInterestAmount &gt; 0) {
+                interest = _calculateInterestForDuration(
+                    _currentPrincipalAmount,
+                    _annualInterestRate,
+                    elapseTimeFromLastRepay
+                );
+            } else {
+                interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
+            }
+        } else {
+            interest = 0;
+        }
+        return interest;
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 13 2023 22:41:28 GMT+0700 (Indochina Time)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

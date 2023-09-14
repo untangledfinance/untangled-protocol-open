@@ -53,18 +53,14 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenPrice;
         uint256 tokenToBeRedeemed;
         uint256 currencyAmtToBeDistributed;
-        uint256 ONE_TOKEN = 10 ** uint256(noteToken.decimals());
         if (securitizationPool.sotToken() == address(noteToken)) {
-            tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(
-                address(securitizationPool)
-            );
+            tokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(address(securitizationPool));
 
             tokenToBeRedeemed = Math.min(
-                (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
-                tokenPrice,
+                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) / tokenPrice,
                 tokenAmount
             );
-            currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
+            currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
 
             securitizationPool.increaseLockedDistributeBalance(
                 address(noteToken),
@@ -75,17 +71,15 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
             tranche.redeemToken(address(noteToken), _msgSender(), tokenToBeRedeemed);
         } else if (securitizationPool.jotToken() == address(noteToken)) {
-            tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(
-                securitizationPool
-            );
+            tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(securitizationPool);
 
             tokenToBeRedeemed = Math.min(
-                (IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) * ONE_TOKEN) /
+                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) /
                     tokenPrice,
                 tokenAmount
             );
 
-            currencyAmtToBeDistributed = (tokenToBeRedeemed * tokenPrice) / ONE_TOKEN;
+            currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
 
             securitizationPool.increaseLockedDistributeBalance(
                 address(noteToken),
@@ -155,7 +149,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     }
 
     /// @dev This calls make redeem request and redeem at once
-    function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) public whenNotPaused nonReentrant returns (uint256) {
+    function makeRedeemRequestAndRedeem(
+        address pool,
+        INoteToken noteToken,
+        uint256 tokenAmount
+    ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
@@ -173,19 +171,5 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         securitizationPool.decreaseLockedDistributeBalance(tokenAddress, redeemer, currencyAmount, tokenAmount);
 
         tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
-    }
-
-    function _calculateAmountDistribute(
-        address investor,
-        address tokenAddress,
-        uint256 totalCurrencyToDistribute,
-        uint256 totalSupply,
-        ISecuritizationPool securitizationPool
-    ) internal view returns (uint256) {
-        uint256 currentToken = IERC20(tokenAddress).balanceOf(investor);
-
-        uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
-
-        return ((currentToken - tokenRedeem) * totalCurrencyToDistribute) / totalSupply;
     }
 }

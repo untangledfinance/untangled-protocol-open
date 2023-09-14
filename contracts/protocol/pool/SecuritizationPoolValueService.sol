@@ -20,7 +20,7 @@ contract SecuritizationPoolValueService is
 {
     using ConfigHelper for Registry;
 
-    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
+    uint256 public constant RATE_SCALING_FACTOR = 10**4;
 
     function getPresentValueWithNAVCalculation(
         address poolAddress,
@@ -121,7 +121,7 @@ contract SecuritizationPoolValueService is
         uint256[] calldata tokenIds,
         uint256 timestamp
     ) external view returns (uint256[] memory) {
-        uint256  tokenIdsLength =  tokenIds.length;
+        uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory interestRates = new uint256[](tokenIdsLength);
         for (uint256 i; i < tokenIdsLength; i++) {
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
@@ -156,25 +156,18 @@ contract SecuritizationPoolValueService is
         );
 
         if (timestamp < expirationTimestamp) {
-            totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
-                tokenAddress,
-                poolAddress
-            );
+            totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
         }
 
-        return
-            _convertTokenValueToCurrencyAmount(
-                poolAddress,
-                tokenAddress,
-                presentValue < totalDebt ? presentValue : totalDebt
-            );
+        return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
-    function getExpectedAssetsValue(
-        address poolAddress,
-        uint256 timestamp
-    ) external view returns (uint256 expectedAssetsValue) {
+    function getExpectedAssetsValue(address poolAddress, uint256 timestamp)
+        external
+        view
+        returns (uint256 expectedAssetsValue)
+    {
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
@@ -204,10 +197,11 @@ contract SecuritizationPoolValueService is
         }
     }
 
-    function getAssetRiskScoreIdx(
-        address poolAddress,
-        uint256 overdue
-    ) public view returns (bool hasValidRiskScore, uint256 riskScoreIdx) {
+    function getAssetRiskScoreIdx(address poolAddress, uint256 overdue)
+        public
+        view
+        returns (bool hasValidRiskScore, uint256 riskScoreIdx)
+    {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
         for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
@@ -242,18 +236,20 @@ contract SecuritizationPoolValueService is
         return interestRate;
     }
 
-    function getProbabilityOfDefaultByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
+    function getProbabilityOfDefaultByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+        private
+        view
+        returns (uint32)
+    {
         (, , , , uint32 probabilityOfDefault, , , , , ) = securitizationPool.riskScores(idx);
         return probabilityOfDefault;
     }
 
-    function getLossGivenDefaultByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
+    function getLossGivenDefaultByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+        private
+        view
+        returns (uint32)
+    {
         (, , , , , uint32 lossGivenDefault, , , , ) = securitizationPool.riskScores(idx);
         return lossGivenDefault;
     }
@@ -263,26 +259,29 @@ contract SecuritizationPoolValueService is
         return gracePeriod;
     }
 
-    function getCollectionPeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
+    function getCollectionPeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+        private
+        view
+        returns (uint32)
+    {
         (, , , , , , , uint32 collectionPeriod, , ) = securitizationPool.riskScores(idx);
         return collectionPeriod;
     }
 
-    function getWriteOffAfterGracePeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
+    function getWriteOffAfterGracePeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+        private
+        view
+        returns (uint32)
+    {
         (, , , , , , , , uint32 writeOffAfterGracePeriod, ) = securitizationPool.riskScores(idx);
         return writeOffAfterGracePeriod;
     }
 
-    function getWriteOffAfterCollectionPeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
+    function getWriteOffAfterCollectionPeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+        private
+        view
+        returns (uint32)
+    {
         (, , , , , , , , , uint32 writeOffAfterCollectionPeriod) = securitizationPool.riskScores(idx);
         return writeOffAfterCollectionPeriod;
     }
@@ -315,10 +314,11 @@ contract SecuritizationPoolValueService is
             securitizationPool.paidPrincipalAmountSOTByInvestor(investor);
     }
 
-    function getOutstandingPrincipalCurrencyByInvestors(
-        address pool,
-        address[] calldata investors
-    ) external view returns (uint256) {
+    function getOutstandingPrincipalCurrencyByInvestors(address pool, address[] calldata investors)
+        external
+        view
+        returns (uint256)
+    {
         uint256 result = 0;
         uint256 investorsLength = investors.length;
         for (uint256 i = 0; i < investorsLength; i++) {
@@ -341,7 +341,7 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-//        address currencyAddress = securitizationPool.underlyingCurrency();
+        //        address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
         // use reserve variable instead
         uint256 balancePool = securitizationPool.reserve();
@@ -358,7 +358,7 @@ contract SecuritizationPoolValueService is
         require(sotToken != address(0), 'Invalid sot address');
         uint256 tokenSupply = INoteToken(sotToken).totalSupply();
         uint256 tokenDecimals = INoteToken(sotToken).decimals();
-        return tokenSupply * 10**(ERC20(securitizationPool.underlyingCurrency()).decimals()-tokenDecimals);
+        return tokenSupply * 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
     }
 
     // @notice this function will return 72 in example
@@ -380,13 +380,14 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
-        require(seniorInterestRate < 100 * RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
+        require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
 
-        uint256 seniorDebt = beginningSeniorDebt
-             + (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) / (RATE_SCALING_FACTOR * oneYearInSeconds);
+        uint256 seniorDebt = beginningSeniorDebt +
+            (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) /
+            (RATE_SCALING_FACTOR * oneYearInSeconds);
         return seniorDebt;
     }
 
@@ -475,9 +476,9 @@ contract SecuritizationPoolValueService is
     /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
         uint256 rateSenior = this.getSeniorRatio(poolAddress);
-        require(rateSenior < 100*RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
+        require(rateSenior < 100 * RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
 
-        return 100*RATE_SCALING_FACTOR - rateSenior;
+        return 100 * RATE_SCALING_FACTOR - rateSenior;
     }
 
     function getSeniorRatio(address poolAddress) external view returns (uint256) {

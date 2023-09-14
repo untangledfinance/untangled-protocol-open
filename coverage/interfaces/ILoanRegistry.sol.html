@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for interfaces/ILoanRegistry.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">interfaces/</a> ILoanRegistry.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>0/0</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>0/0</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>0/0</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>0/0</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+&nbsp;
+import '../storage/Registry.sol';
+&nbsp;
+abstract contract ILoanRegistry {
+    Registry public registry;
+&nbsp;
+    // loan -&gt; debtors
+    struct LoanEntry {
+        address loanTermContract;
+        address debtor;
+        address principalTokenAddress;
+        bytes32 termsParam; // actually inside this param was already included P token address
+        uint256 salt;
+        uint256 issuanceBlockTimestamp;
+        uint256 lastRepayTimestamp;
+        uint256 expirationTimestamp;
+        uint8 riskScore;
+        Configuration.ASSET_PURPOSE assetPurpose;
+    }
+&nbsp;
+    mapping(bytes32 =&gt; LoanEntry) public entries;
+&nbsp;
+    mapping(bytes32 =&gt; bool) public manualInterestLoan;
+    mapping(bytes32 =&gt; uint256) public manualInterestAmountLoan;
+&nbsp;
+    mapping(bytes32 =&gt; bool) public completedLoans;
+&nbsp;
+    function initialize(Registry _registry) public virtual;
+&nbsp;
+    /**
+     * Record new External Loan to blockchain
+     */
+    function insert(
+        bytes32 tokenId,
+        address termContract,
+        address debtor,
+        bytes32 termsContractParameter,
+        address pTokenAddress,
+        uint256 _salt,
+        uint256 expirationTimestampInSecs,
+        uint8[] calldata assetPurposeAndRiskScore
+    ) external virtual returns (bool);
+&nbsp;
+    /// @notice retrieves the debtor's address for a given loan
+    function getLoanDebtor(bytes32 tokenId) public view virtual returns (address);
+&nbsp;
+    /// @notice retrieves the term contract parameters for a given loan
+    function getLoanTermParams(bytes32 tokenId) public view virtual returns (bytes32);
+&nbsp;
+    /// @notice retrieves the principal token address for a given loan agreement ID
+    function getPrincipalTokenAddress(bytes32 agreementId) public view virtual returns (address);
+&nbsp;
+    /// @notice retrieves the debtor's address for a given loan agreement ID
+    function getDebtor(bytes32 agreementId) public view virtual returns (address);
+&nbsp;
+    /// @notice retrieves the term contract address for a given loan agreement ID
+    function getTermContract(bytes32 agreementId) public view virtual returns (address);
+&nbsp;
+    /// @notice retrieves the risk score for a given loan agreement ID
+    function getRiskScore(bytes32 agreementId) public view virtual returns (uint8);
+&nbsp;
+    /// @notice retrieves the asset purpose for a given loan agreement ID
+    function getAssetPurpose(bytes32 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
+&nbsp;
+    /// @notice retrieves the timestamp of the block at which a debt agreement was issued
+    function getIssuanceBlockTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
+&nbsp;
+    /// @notice retrieves the timestamp of the last repayment made for a given loan agreement ID
+    function getLastRepaymentTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
+&nbsp;
+    /// @notice retrieves the terms contract parameters for a given loan agreement ID
+    function getTermsContractParameters(bytes32 agreementId) public view virtual returns (bytes32);
+&nbsp;
+    /// @notice retrieves the expiration timestamp for a given loan agreement ID
+    function getExpirationTimestamp(bytes32 agreementId) public view virtual returns (uint256);
+&nbsp;
+    /// @notice updates the timestamp of the last repayment made for a given loan agreement ID
+    function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp) public virtual;
+&nbsp;
+    /// @notice retrieves information about the principal payment for a given loan agreement ID
+    /// @dev Get principal payment info before start doing repayment
+    function principalPaymentInfo(bytes32 agreementId)
+        public
+        view
+        virtual
+        returns (address pTokenAddress, uint256 pAmount);
+    /// @notice marks a loan agreement as completed by setting the completedLoans mapping entry to true for a given agreement ID
+    function setCompletedLoan(bytes32 agreementId) public virtual;
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 13 2023 22:41:28 GMT+0700 (Indochina Time)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>
