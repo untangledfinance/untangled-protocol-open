@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
+import '../../libraries/UntangledMath.sol';
 
 /// @title LoanKernel
 /// @author Untangled Team
@@ -70,7 +70,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     function _getDebtOrderHashes(LoanOrder memory debtOrder) private view returns (bytes32[] memory) {
         uint256 _length = debtOrder.issuance.debtors.length;
         bytes32[] memory orderHashses = new bytes32[](_length);
-        for (uint256 i = 0; i < _length; i++) {
+        for (uint256 i = 0; i < _length; i = UntangledMath.uncheckedInc(i)) {
             orderHashses[i] = _getDebtOrderHash(
                 debtOrder.issuance.agreementIds[i],
                 debtOrder.principalAmounts[i],
@@ -145,7 +145,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (address[] memory)
     {
         address[] memory debtors = new address[](_length);
-        for (uint256 i = 5; i < (5 + _length); i++) {
+        for (uint256 i = 5; i < (5 + _length); i = UntangledMath.uncheckedInc(i)) {
             debtors[i - 5] = _orderAddresses[i];
         }
         return debtors;
@@ -158,7 +158,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory principalAmounts = new uint256[](_length);
-        for (uint256 i = 2; i < (2 + _length); i++) {
+        for (uint256 i = 2; i < (2 + _length); i = UntangledMath.uncheckedInc(i)) {
             principalAmounts[i - 2] = _orderValues[i];
         }
         return principalAmounts;
@@ -170,7 +170,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory expirationTimestamps = new uint256[](_length);
-        for (uint256 i = 2 + _length; i < (2 + _length * 2); i++) {
+        for (uint256 i = 2 + _length; i < (2 + _length * 2); i = UntangledMath.uncheckedInc(i)) {
             expirationTimestamps[i - 2 - _length] = _orderValues[i];
         }
         return expirationTimestamps;
@@ -182,7 +182,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint256[] memory)
     {
         uint256[] memory salts = new uint256[](_length);
-        for (uint256 i = 2 + _length * 2; i < (2 + _length * 3); i++) {
+        for (uint256 i = 2 + _length * 2; i < (2 + _length * 3); i = UntangledMath.uncheckedInc(i)) {
             salts[i - 2 - _length * 2] = _orderValues[i];
         }
         return salts;
@@ -194,7 +194,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         returns (uint8[] memory)
     {
         uint8[] memory riskScores = new uint8[](_length);
-        for (uint256 i = 2 + _length * 3; i < (2 + _length * 4); i++) {
+        for (uint256 i = 2 + _length * 3; i < (2 + _length * 4); i = UntangledMath.uncheckedInc(i)) {
             riskScores[i - 2 - _length * 3] = uint8(_orderValues[i]);
         }
         return riskScores;
@@ -248,7 +248,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address termContract
     ) external whenNotPaused nonReentrant {
         uint256 creditorsLength = creditors.length;
-        for (uint256 i = 0; i < creditorsLength; i++) {
+        for (uint256 i = 0; i < creditorsLength; i = UntangledMath.uncheckedInc(i)) {
             concludeLoan(creditors[i], agreementIds[i], termContract);
         }
     }
@@ -279,7 +279,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         );
 
         uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i++) {
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
 
             _issueDebtAgreements(
@@ -333,7 +333,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256[] memory _salts
     ) private pure returns (bytes32[] memory) {
         bytes32[] memory agreementIds = new bytes32[](_salts.length);
-        for (uint256 i = 0; i < (0 + _salts.length); i++) {
+        for (uint256 i = 0; i < (0 + _salts.length); i = UntangledMath.uncheckedInc(i)) {
             agreementIds[i] = keccak256(
                 abi.encodePacked(_version, _debtors[i], _termsContract, _termsContractParameters[i], _salts[i])
             );
