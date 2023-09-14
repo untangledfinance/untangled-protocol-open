@@ -245,6 +245,25 @@ describe('LoanInterestTermsContract', () => {
       const loanEntry = await loanRegistry.entries(tokenIds[0]);
       expect(loanEntry.lastRepayTimestamp).equal(timestampNextBlock);
     });
+    it('should execute part of repayment amount successfully', async () => {
+      await time.increase(YEAR_LENGTH_IN_SECONDS);
+      const now = await time.latest();
+      const timestampNextBlock = now + 1;
+      const { expectedInterest } = await loanInterestTermsContract.getExpectedRepaymentValues(
+        tokenIds[2],
+        timestampNextBlock
+      );
+      await loanRepaymentRouter
+        .connect(untangledAdminSigner)
+        .repayInBatch([tokenIds[2]], [expectedInterest], stableCoin.address);
+
+      const repaidPrincipalAmounts = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[2]);
+      expect(repaidPrincipalAmounts).equal('0');
+      const repaidInterestAmounts = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[2]);
+      expect(repaidInterestAmounts).equal(expectedInterest, parseEther('0.02'));
+      const loanEntry = await loanRegistry.entries(tokenIds[2]);
+      expect(loanEntry.lastRepayTimestamp).equal(timestampNextBlock);
+    });
   });
 
   describe('#registerConcludeLoan', () => {
