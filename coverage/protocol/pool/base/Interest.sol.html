@@ -22,22 +22,22 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">0% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/14</span>
+        <span class='fraction'>0/7</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">0% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/6</span>
+        <span class='fraction'>0/2</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">0% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/5</span>
+        <span class='fraction'>0/4</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">0% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/16</span>
+        <span class='fraction'>0/7</span>
       </div>
     </div>
   </div>
@@ -139,39 +139,7 @@
 94
 95
 96
-97
-98
-99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+97</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,38 +211,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -375,38 +311,6 @@ contract Interest {
 <span class="cstat-no" title="statement not covered" >        return _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);</span>
     }
 &nbsp;
-    // Calculate interest amount Debtor need to pay until current date
-    /// @dev Calculates the interest amount for a current principal amount, considering the previously paid interest amount
-<span class="fstat-no" title="function not covered" >    function _calculateInterestAmountToTimestamp(</span>
-        uint256 _currentPrincipalAmount,
-        uint256 _paidInterestAmount,
-        uint256 _annualInterestRate,
-        uint256 _startTermTimestamp,
-        uint256 _lastRepayTimestamp,
-        uint256 _timestamp
-    ) internal pure returns (uint256) {
-<span class="cstat-no" title="statement not covered" >        if (_timestamp &lt;= _startTermTimestamp) {</span>
-<span class="cstat-no" title="statement not covered" >            return 0;</span>
-        }
-<span class="cstat-no" title="statement not covered" >        uint256 interest = 0;</span>
-<span class="cstat-no" title="statement not covered" >        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;</span>
-<span class="cstat-no" title="statement not covered" >        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        if (_paidInterestAmount &gt; 0) {</span>
-            // Has made at least 1 repayment
-            interest = _calculateInterestForDuration(
-                _currentPrincipalAmount,
-                _annualInterestRate,
-                elapseTimeFromLastRepay
-            );
-        } else {
-            // Haven't made any repayment
-            interest = _calculateInterestForDuration(_currentPrincipalAmount, _annualInterestRate, elapseTimeFromStart);
-        }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        return interest;</span>
-    }
-&nbsp;
     // Calculate interest amount for a duration with specific Principal amount
     /// @dev Calculates the interest amount for a specified duration with a specific principal amount
 <span class="fstat-no" title="function not covered" >    function _calculateInterestForDuration(</span>
@@ -433,7 +337,7 @@ contract Interest {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Sep 14 2023 23:29:10 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Sep 15 2023 23:09:55 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

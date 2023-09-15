@@ -6,6 +6,8 @@ import '../storage/Registry.sol';
 abstract contract ITokenGenerationEventFactory {
     Registry public registry;
 
+    event TokenGenerationEventCreated(address indexed tgeInstance);
+
     address[] public tgeAddresses;
 
     mapping(address => bool) public isExistingTge;

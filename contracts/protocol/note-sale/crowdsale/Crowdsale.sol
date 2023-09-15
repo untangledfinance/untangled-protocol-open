@@ -173,13 +173,13 @@ abstract contract Crowdsale is UntangledBase {
         require(IERC20(currency).transferFrom(payee, address(this), currencyAmount), "Fail to transfer currency from payee to contract");
     }
 
-    function _getTokenAmount(uint256 currencyAmount) public view returns (uint256) {
-        require(rate > 0, 'Crowdsale: rate is 0');
-        uint256 TEN = 10;
-        return
-            (currencyAmount * rate * TEN**ERC20(token).decimals()) /
-            (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
-    }
+    // function getTokenAmount(uint256 currencyAmount) public view returns (uint256) {
+    //     require(rate > 0, 'Crowdsale: rate is 0');
+    //     uint256 TEN = 10;
+    //     return
+    //         (currencyAmount * rate * TEN**ERC20(token).decimals()) /
+    //         (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
+    // }
 
     /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
