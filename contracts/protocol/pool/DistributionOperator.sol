@@ -122,11 +122,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     /// @param redeemer Redeemer wallet address
     /// @param pool Pool address which issued note token
     /// @param tokenAddress Note token address
-    function redeem(
+    function _redeem(
         address redeemer,
         address pool,
         address tokenAddress
-    ) public whenNotPaused nonReentrant returns (uint256) {
+    ) private whenNotPaused nonReentrant returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
@@ -155,7 +155,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
-        uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
+        uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
     }
 
