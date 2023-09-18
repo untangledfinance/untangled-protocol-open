@@ -5,7 +5,8 @@ import '../../../base/UntangledBase.sol';
 import '../../../interfaces/ISecuritizationPool.sol';
 import '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 abstract contract Crowdsale is UntangledBase {
     using ConfigHelper for Registry;
@@ -53,6 +54,8 @@ abstract contract Crowdsale is UntangledBase {
         token = _token;
         currency = _currency;
     }
+
+
 
     modifier securitizationPoolRestricted() {
         require(_msgSender() == pool, 'Crowdsale: Caller must be pool');
@@ -177,8 +180,8 @@ abstract contract Crowdsale is UntangledBase {
         require(rate > 0, 'Crowdsale: rate is 0');
         uint256 TEN = 10;
         return
-            (currencyAmount * rate * TEN**ERC20(token).decimals()) /
-            (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
+            (currencyAmount * rate * TEN**IERC20Metadata(token).decimals()) /
+            (RATE_SCALING_FACTOR * TEN**IERC20Metadata(currency).decimals());
     }
 
     /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
