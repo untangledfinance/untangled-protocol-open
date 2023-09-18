@@ -27,7 +27,29 @@ describe('NoteTokenFactory', () => {
 
     const [deployer] = await ethers.getSigners();
     await registry.setSecuritizationManager(deployer.address);
-
-    const tx = await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
+    await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
   });
+
+  it('#pauseUnpauseToken', async () => {
+    const pool = await SecuritizationPool.new();
+    const tx = await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
+
+    const tokenAddress = tx.logs.find(x => x.event == 'TokenCreated').args.token;
+    
+    await expect(noteTokenFactory.pauseUnpauseToken(tokenAddress)).to.not.be.reverted;
+  });
+
+  it('#pauseAllToken', async () => {
+    const pool = await SecuritizationPool.new();
+    await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
+    await expect(noteTokenFactory.pauseAllTokens()).to.not.be.reverted;
+  });
+
+
+  it('#unPauseAllTokens', async () => {
+    const pool = await SecuritizationPool.new();
+    await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
+    await expect(noteTokenFactory.unPauseAllTokens()).to.not.be.reverted;
+  });
+  
 });

@@ -262,6 +262,33 @@ describe('LoanKernel', () => {
     });
   });
 
+  describe('Loan registry', async () => {
+    it('#getLoanDebtor', async () => {
+      const result = await loanRegistry.getLoanDebtor(tokenIds[0]);
+
+      expect(result).equal(borrowerSigner.address);
+    });
+
+    it('#getLoanTermParams', async () => {
+      const result = await loanRegistry.getLoanTermParams(tokenIds[0]);
+
+      expect(result).equal('0x00000000000000000000003a9800c35010000000000000000000000f00200000');
+    });
+
+    it('#getDebtor', async () => {
+      const result = await loanRegistry.getDebtor(tokenIds[0]);
+
+      expect(result).equal(borrowerSigner.address);
+    });
+
+    it('#principalPaymentInfo', async () => {
+      const result = await loanRegistry.principalPaymentInfo(tokenIds[0]);
+
+      expect(result.pTokenAddress).equal(stableCoin.address);
+      expect(result.pAmount.toNumber()).equal(0);
+    });
+  });
+
   describe('#concludeLoan', async () => {
     it('No one than LoanKernel contract can burn', async () => {
       await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(

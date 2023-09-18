@@ -5,5 +5,7 @@ module.exports = {
     'test/TestUniqueIdentity.sol',
     'protocol/note-sale/crowdsale/mock',
     'protocol/ccip',
+    'external',
+    'base/UpgradableProxy.sol',
   ],
 };

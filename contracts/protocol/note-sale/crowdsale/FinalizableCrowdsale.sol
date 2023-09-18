@@ -25,7 +25,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
 
         if (!isDistributedFully() && !isLongSale()) {
             uint256 tokenRemain = 0;
-            tokenRemain = _getTokenAmount(getCurrencyRemainAmount());
+            tokenRemain = getTokenAmount(getCurrencyRemainAmount());
 
             if (claimRemainToken) {
                 _processPurchase(remainTokenRecipient, tokenRemain);

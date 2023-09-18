@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import "../external/ERC1155PresetPauserUpgradeable.sol";
-import "../interfaces/IUniqueIdentity.sol";
-
+import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
+import '../external/ERC1155PresetPauserUpgradeable.sol';
+import '../interfaces/IUniqueIdentity.sol';
 
 /**
  * @title UniqueIdentity
@@ -14,7 +13,7 @@ import "../interfaces/IUniqueIdentity.sol";
  */
 
 contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
-    bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
+    bytes32 public constant SIGNER_ROLE = keccak256('SIGNER_ROLE');
 
     uint256 public constant ID_TYPE_0 = 0; // non-US individual
     uint256 public constant ID_TYPE_1 = 1; // US accredited individual
@@ -36,7 +35,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     mapping(uint256 => bool) public supportedUIDTypes;
 
     function initialize(address owner, string memory uri) public initializer {
-        require(owner != address(0), "Owner address cannot be empty");
+        require(owner != address(0), 'Owner address cannot be empty');
 
         __ERC1155PresetPauser_init(owner, uri);
         __UniqueIdentity_init(owner);
@@ -54,7 +53,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     }
 
     function setSupportedUIDTypes(uint256[] calldata ids, bool[] calldata values) public onlyAdmin {
-        require(ids.length == values.length, "accounts and ids length mismatch");
+        require(ids.length == values.length, 'accounts and ids length mismatch');
         for (uint256 i = 0; i < ids.length; ++i) {
             supportedUIDTypes[ids[i]] = values[i];
         }
@@ -62,31 +61,25 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
 
     /**
      * @dev Gets the token name.
-   * @return string representing the token name
-   */
+     * @return string representing the token name
+     */
     function name() public pure returns (string memory) {
-        return "Unique Identity";
+        return 'Unique Identity';
     }
 
     /**
      * @dev Gets the token symbol.
-   * @return string representing the token symbol
-   */
+     * @return string representing the token symbol
+     */
     function symbol() public pure returns (string memory) {
-        return "UID";
+        return 'UID';
     }
 
     function mint(
         uint256 id,
         uint256 expiresAt,
         bytes calldata signature
-    )
-    public
-    payable
-    override
-    onlySigner(_msgSender(), id, expiresAt, signature)
-    incrementNonce(_msgSender())
-    {
+    ) public payable override onlySigner(_msgSender(), id, expiresAt, signature) incrementNonce(_msgSender()) {
         _mintTo(_msgSender(), id);
     }
 
@@ -95,23 +88,17 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         uint256 id,
         uint256 expiresAt,
         bytes calldata signature
-    )
-    public
-    payable
-    override
-    onlySignerMintTo(recipient, id, expiresAt, signature)
-    incrementNonce(_msgSender())
-    {
-        require(balanceOf(_msgSender(), id) == 0, "msgSender already owns UID");
+    ) public payable override onlySignerMintTo(recipient, id, expiresAt, signature) incrementNonce(_msgSender()) {
+        require(balanceOf(_msgSender(), id) == 0, 'msgSender already owns UID');
         _mintTo(recipient, id);
     }
 
     function _mintTo(address mintToAddress, uint256 id) private {
-        require(msg.value >= MINT_COST_PER_TOKEN, "Token mint requires 0.00083 ETH");
-        require(supportedUIDTypes[id] == true, "Token id not supported");
-        require(balanceOf(mintToAddress, id) == 0, "Balance before mint must be 0");
+        require(msg.value >= MINT_COST_PER_TOKEN, 'Token mint requires 0.00083 ETH');
+        require(supportedUIDTypes[id] == true, 'Token id not supported');
+        require(balanceOf(mintToAddress, id) == 0, 'Balance before mint must be 0');
 
-        _mint(mintToAddress, id, 1, "");
+        _mint(mintToAddress, id, 1, '');
     }
 
     function burn(
@@ -123,7 +110,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         _burn(account, id, 1);
 
         uint256 accountBalance = balanceOf(account, id);
-        require(accountBalance == 0, "Balance after burn must be 0");
+        require(accountBalance == 0, 'Balance after burn must be 0');
     }
 
     function _beforeTokenTransfer(
@@ -136,7 +123,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     ) internal override(ERC1155PresetPauserUpgradeable) {
         require(
             (from == address(0) && to != address(0)) || (from != address(0) && to == address(0)),
-            "Only mint or burn transfers are allowed"
+            'Only mint or burn transfers are allowed'
         );
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
@@ -147,16 +134,13 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         uint256 expiresAt,
         bytes calldata signature
     ) {
-        require(block.timestamp < expiresAt, "Signature has expired");
+        require(block.timestamp < expiresAt, 'Signature has expired');
 
         bytes32 hash = keccak256(
             abi.encodePacked(account, id, expiresAt, address(this), nonces[account], block.chainid)
         );
         bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
-        require(
-            hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)),
-            "Invalid signer"
-        );
+        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
         _;
     }
 
@@ -166,7 +150,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         uint256 expiresAt,
         bytes calldata signature
     ) {
-        require(block.timestamp < expiresAt, "Signature has expired");
+        require(block.timestamp < expiresAt, 'Signature has expired');
 
         bytes32 hash = keccak256(
             abi.encodePacked(
@@ -181,10 +165,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         );
 
         bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
-        require(
-            hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)),
-            "Invalid signer"
-        );
+        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
         _;
     }
 
