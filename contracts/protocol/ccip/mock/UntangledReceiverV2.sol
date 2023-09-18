@@ -42,12 +42,14 @@ contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPRece
 
     function supportsInterface(bytes4 interfaceId)
         public
-        pure
-        override(AccessControlUpgradeable, CCIPReceiverUpgradeable)
+        view
+        virtual
+        override(UntangledBase, CCIPReceiverUpgradeable)
         returns (bool)
     {
         return
             interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
-            interfaceId == type(IERC165Upgradeable).interfaceId;
+            CCIPReceiverUpgradeable.supportsInterface(interfaceId) ||
+            UntangledBase.supportsInterface(interfaceId);
     }
 }

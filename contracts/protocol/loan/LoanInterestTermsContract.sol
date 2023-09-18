@@ -205,7 +205,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
         uint256 aagreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < aagreementIdsLength; UntangledMath.uncheckedInc(i)) {
+        for (uint256 i = 0; i < aagreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
@@ -416,7 +416,12 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         }
         uint256 interest = 0;
         uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
-        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
+
+        // check _timestamp > _startTermTimestamp, above
+        uint256 elapseTimeFromStart;
+        unchecked {
+            elapseTimeFromStart = _timestamp - _startTermTimestamp;
+        }
 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
@@ -451,9 +456,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             } else {
                 interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
             }
-        } else {
-            interest = 0;
-        }
+        } 
+        // else {
+        //     interest = 0;
+        // }
         return interest;
     }
 }

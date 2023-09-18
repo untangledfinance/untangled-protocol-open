@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 
 import '../libraries/Configuration.sol';
 
@@ -19,7 +19,7 @@ abstract contract UntangledBase is
     Initializable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    AccessControlUpgradeable
+    AccessControlEnumerableUpgradeable
 {
     bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
@@ -46,5 +46,9 @@ abstract contract UntangledBase is
 
     function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return AccessControlEnumerableUpgradeable.supportsInterface(interfaceId);
     }
 }

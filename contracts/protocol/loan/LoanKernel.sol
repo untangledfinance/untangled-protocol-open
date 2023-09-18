@@ -231,7 +231,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         require(termContract != address(0), 'Invalid terms contract.');
 
         if (!_assertDebtExisting(agreementId) || !_assertCompletedRepayment(agreementId)) {
-            revert('Debt does not exsits or Debtor have not completed repayment.');
+            revert('Debt does not exists or Debtor have not completed repayment.');
         }
 
         ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId);
