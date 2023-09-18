@@ -31,23 +31,6 @@ describe('SecuritizationManager', () => {
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
 
-    // Gain UID
-    const UID_TYPE = 0;
-    const chainId = await getChainId();
-    const expiredAt = dayjs().unix() + 86400 * 1000;
-    const nonce = 0;
-    const ethRequired = parseEther('0.00083');
-
-    const uidMintMessage = presignedMintMessage(
-      lenderSigner.address,
-      UID_TYPE,
-      expiredAt,
-      uniqueIdentity.address,
-      nonce,
-      chainId
-    );
-    const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-    await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
   });
 
   it('should emit RoleGranted event with an address', async function () {
@@ -157,7 +140,30 @@ describe('SecuritizationManager', () => {
       expect(isExistingTGEs).equal(true);
     });
 
+    it('Can not buy token if not has valid UUID', async () => {
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith('Unauthorized. Must have correct UID');
+    });
     it('Should pause pool', async () => {
+      // Gain UID
+      const UID_TYPE = 0;
+      const chainId = await getChainId();
+      const expiredAt = dayjs().unix() + 86400 * 1000;
+      const nonce = 0;
+      const ethRequired = parseEther('0.00083');
+
+      const uidMintMessage = presignedMintMessage(
+        lenderSigner.address,
+        UID_TYPE,
+        expiredAt,
+        uniqueIdentity.address,
+        nonce,
+        chainId
+      );
+      const signature = await untangledAdminSigner.signMessage(uidMintMessage);
+      await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
       await securitizationManager.pausePool(securitizationPoolContract.address);
 
