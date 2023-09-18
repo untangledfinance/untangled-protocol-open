@@ -10,6 +10,9 @@ import './base/LongSaleInterest.sol';
 contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 
+    event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
+    event YieldUpdated(uint256 newYield);
+
     bool public longSale;
     uint256 public timeStartEarningInterest;
     uint256 public termLengthInSeconds;
@@ -36,18 +39,22 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     /// @dev Sets the yield variable to the specified value
     function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
+        emit YieldUpdated(_yield);
     }
 
     function setupLongSale(
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused nonReentrant securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
             termLengthInSeconds = _termLengthInSeconds;
             yield = _interestRate;
+
+            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
+            emit YieldUpdated(yield);
         }
     }
 

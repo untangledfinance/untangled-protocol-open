@@ -255,14 +255,14 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function pauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i++) {
+        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
             pools[i].pause();
         }
     }
 
     function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i++) {
+        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
             pools[i].unpause();
         }
     }

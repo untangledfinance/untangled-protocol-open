@@ -100,7 +100,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address tokenAddress
     ) external override whenNotPaused nonReentrant returns (bool) {
         uint256 agreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i++) {
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 _assertRepaymentRequest(agreementIds[i], _msgSender(), amounts[i], tokenAddress),
                 'LoanRepaymentRouter: Invalid repayment request'

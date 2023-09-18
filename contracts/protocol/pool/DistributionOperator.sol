@@ -100,7 +100,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         uint256 redeemersLength = redeemers.length;
 
-        for (uint256 i = 0; i < redeemersLength; ++i) {
+        for (uint256 i = 0; i < redeemersLength; i = UntangledMath.uncheckedInc(i)) {
             uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemers[i]);
             uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, redeemers[i]);
             if (currencyLocked > 0) {

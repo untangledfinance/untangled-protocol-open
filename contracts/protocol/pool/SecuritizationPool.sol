@@ -32,6 +32,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         pot = address(this);
         IERC20(_currency).approve(pot, type(uint256).max);
+
         registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
 
         state = CycleState.INITIATED;
@@ -150,7 +151,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage onlyRole(OWNER_ROLE) {
+    function setPot(address _pot) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
@@ -321,7 +322,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address _tgeAddress,
         address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteType
-    ) external override whenNotPaused nonReentrant onlySecuritizationManager onlyIssuingTokenStage {
+    ) external override whenNotPaused onlySecuritizationManager onlyIssuingTokenStage {
         require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
@@ -398,7 +399,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address investor,
         uint256 currency,
         uint256 token
-    ) external override whenNotPaused nonReentrant onlyDistributionOperator {
+    ) external override whenNotPaused onlyDistributionOperator {
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
 
@@ -413,7 +414,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlyLoanRepaymentRouter
     {
         reserve = reserve + amount;
@@ -450,7 +450,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlySecuritizationManager
     {
         reserve = reserve + currencyAmount;

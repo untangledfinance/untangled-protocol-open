@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol'
 import '../../../interfaces/ISecuritizationPool.sol';
 import '../../../interfaces/IUntangledERC721.sol';
 import '../../../libraries/ConfigHelper.sol';
+import '../../../libraries/UntangledMath.sol';
 
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility
@@ -80,7 +81,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         Configuration.ASSET_PURPOSE assetPurpose = Configuration.ASSET_PURPOSE(
             riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1]
         );
-        for (uint256 i = 0; i < _fiatAmount.length; ++i) {
+        for (uint256 i = 0; i < _fiatAmount.length; i = UntangledMath.uncheckedInc(i)) {
             _createAIT(
                 addressPayerAndReceiver[i],
                 addressPayerAndReceiver[i + _fiatAmount.length],
@@ -98,7 +99,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256 tokenIdsLength = tokenIds.length;
         require(tokenIdsLength == payAmounts.length, 'Length miss match');
 
-        for (uint256 i = 0; i < tokenIdsLength; ++i) {
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(!isPaid(tokenIds[i]), 'AIT: Invoice is already paid');
 
             InvoiceMetaData storage metadata = entries[bytes32(tokenIds[i])];

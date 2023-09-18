@@ -38,7 +38,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     }
 
     /// @dev Sets the yield variable to the specified value
-    function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
         emit YieldUpdated(_yield);
     }
@@ -47,7 +47,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused nonReentrant securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;

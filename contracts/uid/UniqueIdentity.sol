@@ -189,7 +189,9 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     }
 
     modifier incrementNonce(address account) {
-        nonces[account] += 1;
+        unchecked {
+            nonces[account] += 1;             
+        }
         _;
     }
 }

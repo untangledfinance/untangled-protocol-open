@@ -51,11 +51,11 @@ contract UntangledReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiv
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
+        override(AccessControlUpgradeable, CCIPReceiverUpgradeable)
         returns (bool)
     {
         return
-            AccessControlEnumerableUpgradeable.supportsInterface(interfaceId) ||
+            AccessControlUpgradeable.supportsInterface(interfaceId) ||
             CCIPReceiverUpgradeable.supportsInterface(interfaceId);
     }
 }

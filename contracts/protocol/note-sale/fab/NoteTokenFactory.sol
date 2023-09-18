@@ -64,14 +64,14 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
 
     function pauseAllTokens() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tokensLength = tokens.length; 
-        for (uint256 i = 0; i < tokensLength; i++) {
+        for (uint256 i = 0; i < tokensLength; i = UntangledMath.uncheckedInc(i)) {
             if (!tokens[i].paused()) tokens[i].pause();
         }
     }
 
     function unPauseAllTokens() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tokensLength = tokens.length; 
-        for (uint256 i = 0; i < tokensLength; i++) {
+        for (uint256 i = 0; i < tokensLength; i = UntangledMath.uncheckedInc(i)) {
             if (tokens[i].paused()) tokens[i].unpause();
         }
     }

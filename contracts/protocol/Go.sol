@@ -83,7 +83,7 @@ contract Go is IGo, AccessControlEnumerableUpgradeable {
       return true;
     }
 
-    for (uint256 i = 0; i < onlyIdTypes.length; ++i) {
+    for (uint256 i = 0; i < onlyIdTypes.length; i = UntangledMath.uncheckedInc(i)) {
       uint256 idType = onlyIdTypes[i];
 
       uint256 accountIdBalance = uniqueIdentity.balanceOf(account, idType);
@@ -116,7 +116,7 @@ contract Go is IGo, AccessControlEnumerableUpgradeable {
   function getAllIdTypes() public view returns (uint256[] memory) {
     // create a dynamic array and copy the fixed array over so we return a dynamic array
     uint256[] memory _allIdTypes = new uint256[](allIdTypes.length);
-    for (uint256 i = 0; i < allIdTypes.length; i++) {
+    for (uint256 i = 0; i < allIdTypes.length; i = UntangledMath.uncheckedInc(i)) {
       _allIdTypes[i] = allIdTypes[i];
     }
 

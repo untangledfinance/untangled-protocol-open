@@ -77,7 +77,7 @@ contract SecuritizationPoolValueService is
     ) external view returns (uint256[] memory) {
         uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory balances = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        for (uint256 i; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             balances[i] = getExpectedAssetValue(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return balances;
@@ -123,7 +123,7 @@ contract SecuritizationPoolValueService is
     ) external view returns (uint256[] memory) {
         uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory interestRates = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
+        for (uint256 i; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return interestRates;
@@ -171,13 +171,13 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); ++i) {
+        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
             (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
             expectedAssetsValue =
                 expectedAssetsValue +
                 getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
         }
-        for (uint256 i = 0; i < securitizationPool.getTokenAssetAddressesLength(); ++i) {
+        for (uint256 i = 0; i < securitizationPool.getTokenAssetAddressesLength(); i = UntangledMath.uncheckedInc(i)) {
             address tokenAddress = securitizationPool.tokenAssetAddresses(i);
             INoteToken notesToken = INoteToken(tokenAddress);
             if (notesToken.balanceOf(poolAddress) > 0) {
@@ -204,7 +204,7 @@ contract SecuritizationPoolValueService is
     {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
-        for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
+        for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx = UntangledMath.uncheckedInc(riskScoreIdx)) {
             uint32 daysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx);
             if (overdue < daysPastDue) return (false, 0);
             else if (riskScoreIdx == riskScoresLength - 1) {
@@ -321,7 +321,7 @@ contract SecuritizationPoolValueService is
     {
         uint256 result = 0;
         uint256 investorsLength = investors.length;
-        for (uint256 i = 0; i < investorsLength; i++) {
+        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
             result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
         }
         return result;

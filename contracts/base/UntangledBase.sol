@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 
 import '../libraries/Configuration.sol';
 
@@ -19,7 +19,7 @@ abstract contract UntangledBase is
     Initializable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlUpgradeable
 {
     bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
@@ -30,7 +30,7 @@ abstract contract UntangledBase is
     function __UntangledBase__init_unchained(address owner) internal onlyInitializing {
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
-        __AccessControlEnumerable_init_unchained();
+        __AccessControl_init_unchained();
 
         if (owner == address(0)) owner = _msgSender();
 

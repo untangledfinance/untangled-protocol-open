@@ -43,7 +43,7 @@ contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPRece
     function supportsInterface(bytes4 interfaceId)
         public
         pure
-        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
+        override(AccessControlUpgradeable, CCIPReceiverUpgradeable)
         returns (bool)
     {
         return

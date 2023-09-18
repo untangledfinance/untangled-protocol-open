@@ -47,7 +47,7 @@ abstract contract TimedCrowdsale is Crowdsale {
     }
 
     /// @notice Updates the closing time with the new closing time
-    function extendTime(uint256 newClosingTime) external whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function extendTime(uint256 newClosingTime) external whenNotPaused onlyRole(OWNER_ROLE) {
         require(newClosingTime > closingTime, 'TimedCrowdsale: new closing time is before current closing time');
 
         emit TimedCrowdsaleExtended(closingTime, newClosingTime);
@@ -74,7 +74,7 @@ abstract contract TimedCrowdsale is Crowdsale {
     }
 
     /// @dev Sets the isEnableTimeLimit variable to the specified value
-    function setUsingTimeLimit(bool usingTimeLimit) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function setUsingTimeLimit(bool usingTimeLimit) public whenNotPaused onlyRole(OWNER_ROLE) {
         isEnableTimeLimit = usingTimeLimit;
         emit UpdateUsingTimeLimit(usingTimeLimit);
     }

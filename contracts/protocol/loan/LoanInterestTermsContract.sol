@@ -205,7 +205,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
         uint256 aagreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < aagreementIdsLength; i++) {
+        for (uint256 i = 0; i < aagreementIdsLength; UntangledMath.uncheckedInc(i)) {
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
@@ -257,7 +257,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
         uint256 agreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i++) {
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
                 agreementIds[i],
                 timestamp
