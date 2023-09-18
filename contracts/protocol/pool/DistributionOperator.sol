@@ -74,8 +74,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             tokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(securitizationPool);
 
             tokenToBeRedeemed = Math.min(
-                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) /
-                    tokenPrice,
+                IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) / tokenPrice,
                 tokenAmount
             );
 
@@ -92,41 +91,16 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         }
     }
 
-    function redeemBatch(
-        address[] calldata redeemers,
-        address pool,
-        address tokenAddress
-    ) external whenNotPaused nonReentrant {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        uint256 redeemersLength = redeemers.length;
-
-        for (uint256 i = 0; i < redeemersLength; ++i) {
-            uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemers[i]);
-            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, redeemers[i]);
-            if (currencyLocked > 0) {
-                _redeem(
-                    redeemers[i],
-                    pool,
-                    tokenAddress,
-                    tokenRedeem,
-                    currencyLocked,
-                    registry.getDistributionTranche(),
-                    securitizationPool
-                );
-            }
-        }
-    }
-
     /// @notice Redeem SOT/JOT token and receive an amount of currency
     /// @dev Fulfill redeem request created
     /// @param redeemer Redeemer wallet address
     /// @param pool Pool address which issued note token
     /// @param tokenAddress Note token address
-    function redeem(
+    function _redeem(
         address redeemer,
         address pool,
         address tokenAddress
-    ) public whenNotPaused nonReentrant returns (uint256) {
+    ) private whenNotPaused nonReentrant returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
@@ -155,8 +129,20 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount
     ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
-        uint256 currencyLocked = redeem(_msgSender(), pool, address(noteToken));
+        uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
+    }
+
+    function makeRedeemRequestAndRedeemBatch(
+        address[] calldata pools,
+        INoteToken[] calldata noteTokens,
+        uint256[] calldata tokenAmounts
+    ) public whenNotPaused {
+        address redeemer = _msgSender();
+        for (uint256 i = 0; i < pools.length; ++i) {
+            _makeRedeemRequest(noteTokens[i], tokenAmounts[i]);
+            _redeem(redeemer, pools[i], address(noteTokens[i]));
+        }
     }
 
     function _redeem(

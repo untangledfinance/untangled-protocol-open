@@ -24,7 +24,7 @@ contract LoanAssetToken is IUntangledERC721 {
         registry = _registry;
 
         _setupRole(MINTER_ROLE, address(registry.getLoanKernel()));
-        renounceRole(MINTER_ROLE, _msgSender());
+        _revokeRole(MINTER_ROLE, _msgSender());
     }
 
     function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)

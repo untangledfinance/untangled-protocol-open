@@ -316,16 +316,6 @@ describe('Distribution', () => {
 
       expect(formatEther(await jotToken.balanceOf(lenderSigner.address))).equal('90.0');
     });
-
-    it('#redeemBatch', async () => {
-      await distributionOperator.redeemBatch(
-        [lenderSigner.address],
-        securitizationPoolContract.address,
-        jotToken.address
-      );
-
-      expect(formatEther(await jotToken.balanceOf(lenderSigner.address))).equal('90.0');
-    });
   });
 
   let expirationTimestamps;
