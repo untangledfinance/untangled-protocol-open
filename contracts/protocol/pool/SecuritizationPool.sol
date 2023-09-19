@@ -269,11 +269,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
+            _pushTokenAssetAddress(tokenAddresses[i]);
             require(
                 IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
                 'SecuritizationPool: Transfer failed'
             );
-            _pushTokenAssetAddress(tokenAddresses[i]);
         }
     }
 
@@ -353,21 +353,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32 _interestRateForSOT,
         uint64 _timeStartEarningInterest
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
-        if (tgeAddress != address(0)) {
-            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
-            MintedIncreasingInterestTGE(tgeAddress).setupLongSale(
-                _interestRateForSOT,
-                _termLengthInSeconds,
-                _timeStartEarningInterest
-            );
-        }
-        if (secondTGEAddress != address(0)) {
-            require(
-                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
-                'SecuritizationPool: second sale is still on going'
-            );
-        }
         require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
         openingBlockTimestamp = _timeStartEarningInterest;
@@ -379,6 +364,22 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
 
         state = CycleState.OPEN;
+
+        if (tgeAddress != address(0)) {
+            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
+            require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
+            mintedTokenGenrationEvent.setupLongSale(
+                _interestRateForSOT,
+                _termLengthInSeconds,
+                _timeStartEarningInterest
+            );
+        }
+        if (secondTGEAddress != address(0)) {
+            require(
+                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
+                'SecuritizationPool: second sale is still on going'
+            );
+        }
     }
 
     /// @inheritdoc ISecuritizationPool
