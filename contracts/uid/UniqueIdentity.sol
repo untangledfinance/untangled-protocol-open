@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
 import '../external/ERC1155PresetPauserUpgradeable.sol';
 import '../interfaces/IUniqueIdentity.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 /**
  * @title UniqueIdentity
@@ -172,5 +173,14 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     modifier incrementNonce(address account) {
         nonces[account] += 1;
         _;
+    }
+
+    // unlock
+    function unlockWrongToken(address token, address receiver) public onlyAdmin {
+        if (token == address(0)) {
+            payable(receiver).transfer(address(this).balance);
+        } else {
+            IERC20(token).transfer(receiver, IERC20(token).balanceOf(address(this)));
+        }
     }
 }
