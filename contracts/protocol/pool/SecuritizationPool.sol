@@ -153,9 +153,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
-        // if (pot == address(this)) {
-        //     IERC20(underlyingCurrency).approve(pot, type(uint256).max);
-        // }
+        if (pot == address(this)) {
+            require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
+        }
     }
 
     /// @inheritdoc ISecuritizationPool
