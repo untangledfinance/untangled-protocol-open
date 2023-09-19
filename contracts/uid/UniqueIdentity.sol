@@ -95,7 +95,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
 
     function _mintTo(address mintToAddress, uint256 id) private {
         require(msg.value >= MINT_COST_PER_TOKEN, 'Token mint requires 0.00083 ETH');
-        require(supportedUIDTypes[id] == true, 'Token id not supported');
+        require(supportedUIDTypes[id], 'Token id not supported');
         require(balanceOf(mintToAddress, id) == 0, 'Balance before mint must be 0');
 
         _mint(mintToAddress, id, 1, '');
