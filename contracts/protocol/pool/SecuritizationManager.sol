@@ -103,12 +103,16 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         require(address(noteTokenFactory) != address(0), 'Note Token Factory was not registered');
         require(address(registry.getTokenGenerationEventFactory()) != address(0), 'TGE Factory was not registered');
-        address sotToken = noteTokenFactory.createToken(
+
+        poolToSOT[address(pool)] = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
             saleTypeAndDecimal[1],
             ticker
         );
+        address sotToken = poolToSOT[address(pool)];
+        require(sotToken != address(0), 'SOT token must be created');
+
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
             address(pool),
@@ -121,7 +125,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
         pool.injectTGEAddress(tgeAddress, sotToken, Configuration.NOTE_TOKEN_TYPE.SENIOR);
 
-        poolToSOT[address(pool)] = sotToken;
         isExistingTGEs[tgeAddress] = true;
 
         emit NewTGECreated(tgeAddress);
@@ -192,12 +195,16 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         string memory ticker
     ) public whenNotPaused nonReentrant onlyManager(pool) onlyPoolExisted(pool) doesJOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
-        address jotToken = noteTokenFactory.createToken(
+        poolToJOT[address(pool)] = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.JUNIOR,
             saleTypeAndDecimal[1],
             ticker
         );
+
+        address jotToken = poolToJOT[address(pool)];
+        require(jotToken != address(0), 'JOT token must be created');
+
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
             address(pool),
@@ -210,7 +217,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
         pool.injectTGEAddress(tgeAddress, jotToken, Configuration.NOTE_TOKEN_TYPE.JUNIOR);
 
-        poolToJOT[address(pool)] = jotToken;
         isExistingTGEs[tgeAddress] = true;
 
         emit NewTGECreated(tgeAddress);
