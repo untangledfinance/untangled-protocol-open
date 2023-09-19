@@ -16,5 +16,5 @@ interface IDistributionTranche {
         address noteToken,
         address usr,
         uint256 tokenAmount
-    ) external returns (bool);
+    ) external;
 }
