@@ -51,9 +51,9 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
 
         // solhint-disable-next-line not-rely-on-time
         uint256 elapsedTime = block.timestamp - openingTime;
-        uint256 numberInterval = elapsedTime / timeInterval;
-
-        uint32 currentInterest = uint32(amountChangeEachInterval * numberInterval + initialInterest);
+        // uint256 numberInterval = elapsedTime / timeInterval;
+        // uint32 currentInterest = uint32(amountChangeEachInterval * numberInterval + initialInterest);
+        uint32 currentInterest = uint32(amountChangeEachInterval * elapsedTime / timeInterval + initialInterest);
 
         if (currentInterest > finalInterest) {
             return finalInterest;
