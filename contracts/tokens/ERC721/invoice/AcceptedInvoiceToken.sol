@@ -60,9 +60,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         address from,
         address to,
         uint256 amount
-    ) private returns (bool success) {
+    ) private {
         if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPool(to).pot();
-        return IERC20(token).transferFrom(from, to, amount);
+        require(IERC20(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
     }
 
     function createBatch(
