@@ -461,14 +461,6 @@ describe('Distribution', () => {
       expect(formatEther(result)).equal('90.0');
     });
 
-    it('#calcCorrespondingAssetValue(address,address)', async () => {
-      const result = await distributionAssessor['calcCorrespondingAssetValue(address,address)'](
-        sotToken.address,
-        lenderSigner.address
-      );
-      expect(formatEther(result)).equal('0.0');
-    });
-
     it('#calcCorrespondingAssetValue(address,address[])', async () => {
       const result = await distributionAssessor['calcCorrespondingAssetValue(address,address[])'](sotToken.address, [
         lenderSigner.address,
