@@ -415,8 +415,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             return 0;
         }
         uint256 interest = 0;
-        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
-        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
+
+        // dangerous-strict-equalities
+        uint256 elapseTimeFromLastRepay = _timestamp < _lastRepayTimestamp ? 0 : (_timestamp - _lastRepayTimestamp);
+        uint256 elapseTimeFromStart = _timestamp < _startTermTimestamp ? 0 : (_timestamp - _startTermTimestamp);
 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
@@ -454,6 +456,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         } else {
             interest = 0;
         }
+        
         return interest;
     }
 }
