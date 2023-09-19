@@ -31,7 +31,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         registry = _registry;
 
         pot = address(this);
-        IERC20(_currency).approve(pot, type(uint256).max);
+        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Currency approval failed');
         registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
 
         state = CycleState.INITIATED;
