@@ -22,6 +22,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
     {
         require(!finalized, 'FinalizableCrowdsale: already finalized');
         require(hasClosed() || totalCapReached(), 'FinalizableCrowdsale: not closed');
+        finalized = true;
 
         if (!isDistributedFully() && !isLongSale()) {
             uint256 tokenRemain = 0;
@@ -33,8 +34,6 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
                 _ejectTokens(tokenRemain);
             }
         }
-
-        finalized = true;
 
         _finalization();
         emit CrowdsaleFinalized();
