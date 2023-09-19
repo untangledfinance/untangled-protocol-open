@@ -25,6 +25,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32 _minFirstLossCushion
     ) public override initializer {
         require(_minFirstLossCushion < 100 * RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
+        require(_currency != address(0), 'SecuritizationPool: Invalid currency');
         __UntangledBase__init(_msgSender());
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
