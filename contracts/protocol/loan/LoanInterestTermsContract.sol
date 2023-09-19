@@ -354,17 +354,11 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _durationLengthInSec
     ) private pure returns (uint256) {
 
-        // https://www.wolframalpha.com/input?i=1+%2B+a+%281+%2F+b+%2F+c%29+%2F+d
-        // 1 + interestRate * (1 / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) / YEAR_LENGTH_IN_SECONDS
-        // 1 + a * (1 / b / c) / d
-        // = (a + bcd) / bcd
-
+        // x = 10 ** 27 + IR * (10 ** 27 / 10 ** 4 / 100) / YLIR
         uint256 x = UntangledMath.ONE +
                         (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
                         YEAR_LENGTH_IN_SECONDS;
-        // uint256 bcd = INTEREST_RATE_SCALING_FACTOR_PERCENT * YEAR_LENGTH_IN_SECONDS * 100;
-        // uint256 x = (_interestRate + bcd) / bcd;
-
+        
         return
             (_principalAmount *
                 UntangledMath.rpow(x,
