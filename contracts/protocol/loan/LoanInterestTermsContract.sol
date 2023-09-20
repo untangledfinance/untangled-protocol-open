@@ -353,12 +353,15 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _interestRate,
         uint256 _durationLengthInSec
     ) private pure returns (uint256) {
+
+        // x = 10 ** 27 + IR * (10 ** 27 / 10 ** 4 / 100) / YLIR
+        uint256 x = UntangledMath.ONE +
+                        (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
+                        YEAR_LENGTH_IN_SECONDS;
+        
         return
             (_principalAmount *
-                UntangledMath.rpow(
-                    UntangledMath.ONE +
-                        (_interestRate * (UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) /
-                        YEAR_LENGTH_IN_SECONDS,
+                UntangledMath.rpow(x,
                     _durationLengthInSec,
                     UntangledMath.ONE
                 )) /
@@ -415,8 +418,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             return 0;
         }
         uint256 interest = 0;
-        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
-        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
+
+        // dangerous-strict-equalities
+        uint256 elapseTimeFromLastRepay = _timestamp < _lastRepayTimestamp ? 0 : (_timestamp - _lastRepayTimestamp);
+        uint256 elapseTimeFromStart = _timestamp < _startTermTimestamp ? 0 : (_timestamp - _startTermTimestamp);
 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
@@ -454,6 +459,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         } else {
             interest = 0;
         }
+        
         return interest;
     }
 }

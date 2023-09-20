@@ -14,6 +14,8 @@ contract NoteToken is INoteToken {
         address _poolAddress,
         uint8 _noteTokenType
     ) ERC20PresetMinterPauser(name, symbol) {
+        require(_poolAddress != address(0), 'NoteToken: Invalid pool address');
+
         _d = _decimals;
         poolAddress = _poolAddress;
         noteTokenType = _noteTokenType;

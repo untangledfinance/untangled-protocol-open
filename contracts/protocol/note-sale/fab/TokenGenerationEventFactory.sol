@@ -36,7 +36,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override onlySecuritizationManager returns (address) {
+    ) external override nonReentrant onlySecuritizationManager returns (address) {
         if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST)) {
             return _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
         } else if (saleType == uint8(SaleType.NORMAL_SALE)) {
