@@ -8,7 +8,7 @@ interface IERCProxy {
 }
 
 abstract contract Proxy is IERCProxy {
-    function delegatedFwd(address implementation) internal {
+    function delegatedFwd(address implementation_) internal {
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
@@ -17,7 +17,7 @@ abstract contract Proxy is IERCProxy {
 
             // Call the implementation.
             // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            let result := delegatecall(gas(), implementation_, 0, calldatasize(), 0, 0)
 
             // Copy the returned data.
             returndatacopy(0, 0, returndatasize())
@@ -48,7 +48,7 @@ contract UpgradableProxy is Proxy {
     bytes32 constant IMPLEMENTATION_SLOT = keccak256("matic.network.proxy.implementation");
     bytes32 constant OWNER_SLOT = keccak256("matic.network.proxy.owner");
 
-    constructor(address _proxyTo) public {
+    constructor(address _proxyTo) {
         setProxyOwner(msg.sender);
         setImplementation(_proxyTo);
     }

@@ -25,12 +25,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32 _minFirstLossCushion
     ) public override initializer {
         require(_minFirstLossCushion < 100 * RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
+        require(_currency != address(0), 'SecuritizationPool: Invalid currency');
         __UntangledBase__init(_msgSender());
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
 
         pot = address(this);
-        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Invalid currency');
+        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Currency approval failed');
         registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
 
         state = CycleState.INITIATED;
@@ -153,9 +154,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
-        // if (pot == address(this)) {
-        //     IERC20(underlyingCurrency).approve(pot, type(uint256).max);
-        // }
+        if (pot == address(this)) {
+            require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
+        }
     }
 
     /// @inheritdoc ISecuritizationPool

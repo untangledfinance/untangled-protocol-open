@@ -65,22 +65,22 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     }
 
     /// @notice Setup a new round sale for note token
-    /// @param openingTime Define when the sale should start
-    /// @param closingTime Define when the sale should end
-    /// @param cap Target amount of raised currency
+    /// @param openingTime_ Define when the sale should start
+    /// @param closingTime_ Define when the sale should end
+    /// @param cap_ Target amount of raised currency
     function startNewRoundSale(
-        uint256 openingTime,
-        uint256 closingTime,
-        uint256 rate,
-        uint256 cap
+        uint256 openingTime_,
+        uint256 closingTime_,
+        uint256 rate_,
+        uint256 cap_
     ) external whenNotPaused nonReentrant {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedIncreasingInterestTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 
         // call inner function for each extension
-        _newSaleRound(rate);
-        newSaleRoundTime(openingTime, closingTime);
-        _setTotalCap(cap);
+        _newSaleRound(rate_);
+        newSaleRoundTime(openingTime_, closingTime_);
+        _setTotalCap(cap_);
     }
 
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
