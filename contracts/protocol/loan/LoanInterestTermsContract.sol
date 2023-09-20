@@ -231,7 +231,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
 
         bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
-        uint256 manualInterestAmountLoan;
+        uint256 manualInterestAmountLoan = 0;
         if (isManualInterestLoan) {
             manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
         }
