@@ -88,15 +88,20 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         uint256 id,
         uint256 expiresAt,
         bytes calldata signature
-    ) public payable override onlySignerMintTo(recipient, id, expiresAt, signature) incrementNonce(_msgSender()) {
-        require(balanceOf(_msgSender(), id) == 0, 'msgSender already owns UID');
+    )
+    public
+    payable
+    override
+    onlySignerMintTo(recipient, id, expiresAt, signature)
+    incrementNonce(_msgSender())
+    {
         _mintTo(recipient, id);
     }
 
     function _mintTo(address mintToAddress, uint256 id) private {
-        require(msg.value >= MINT_COST_PER_TOKEN, 'Token mint requires 0.00083 ETH');
-        require(supportedUIDTypes[id] == true, 'Token id not supported');
-        require(balanceOf(mintToAddress, id) == 0, 'Balance before mint must be 0');
+        require(msg.value >= MINT_COST_PER_TOKEN, "Token mint requires 0.00083 ETH");
+        require(supportedUIDTypes[id], "Token id not supported");
+        require(balanceOf(mintToAddress, id) == 0, "Balance before mint must be 0");
 
         _mint(mintToAddress, id, 1, '');
     }
@@ -170,7 +175,9 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     }
 
     modifier incrementNonce(address account) {
-        nonces[account] += 1;
+        unchecked {
+            nonces[account] += 1;            
+        }
         _;
     }
 }
