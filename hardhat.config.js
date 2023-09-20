@@ -96,7 +96,9 @@ module.exports = {
   },
   mocha: {
     timeout: 200000,
+    // parallel: true
   },
+  // configureYulOptimizer: true,
   paths: {
     sources: './contracts',
     tests: './test',

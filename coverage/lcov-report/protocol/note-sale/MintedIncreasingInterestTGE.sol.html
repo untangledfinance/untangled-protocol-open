@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">93.75% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>12/12</span>
+        <span class='fraction'>15/16</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">42.86% </span>
+        <span class="strong">41.67% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>12/28</span>
+        <span class='fraction'>10/24</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">87.5% </span>
+        <span class="strong">88.89% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>7/8</span>
+        <span class='fraction'>8/9</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">94.44% </span>
+        <span class="strong">90.91% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>17/18</span>
+        <span class='fraction'>20/22</span>
       </div>
     </div>
   </div>
@@ -134,7 +134,29 @@
 89
 90
 91
-92</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -172,6 +194,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -182,6 +205,9 @@
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -223,18 +249,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 &nbsp;
+import '../../base/UntangledBase.sol';
 import './crowdsale/IncreasingInterestCrowdsale.sol';
+import '../../interfaces/IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
 &nbsp;
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
 /// @dev Note sale for SOT - auction
-contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInterest {
+contract MintedIncreasingInterestTGE is 
+    IMintedTGE, 
+    UntangledBase, 
+    IncreasingInterestCrowdsale, 
+    LongSaleInterest {
+&nbsp;
     using ConfigHelper for Registry;
 &nbsp;
     bool public longSale;
@@ -263,18 +300,22 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     /// @dev Sets the yield variable to the specified value
 <span class="fstat-no" title="function not covered" >    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {</span>
         yield = _yield;
+<span class="cstat-no" title="statement not covered" >        emit YieldUpdated(_yield);</span>
     }
 &nbsp;
     function setupLongSale(
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>securitizationPoolRestricted {
+    ) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>securitizationPoolRestricted {
         <span class="missing-if-branch" title="else path not taken" >E</span>if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
             termLengthInSeconds = _termLengthInSeconds;
             yield = _interestRate;
+&nbsp;
+            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
+            emit YieldUpdated(yield);
         }
     }
 &nbsp;
@@ -300,7 +341,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant {
+    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused {
         <span class="missing-if-branch" title="else path not taken" >E</span>require(<span class="branch-0 cbranch-no" title="branch not covered" >hasRole(OWNER_ROLE, _msgSender())</span> || _msgSender() == address(registry.getSecuritizationManager()), "MintedIncreasingInterestTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 &nbsp;
@@ -315,6 +356,10 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         <span class="missing-if-branch" title="else path not taken" >E</span>require(hasClosed() || <span class="branch-1 cbranch-no" title="branch not covered" >totalCapReached()</span>, 'MintedIncreasingInterestTGE: Previous round not closed');
         <span class="missing-if-branch" title="else path not taken" >E</span>require(timeInterval &gt; 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');
     }
+&nbsp;
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
+    }
 }
 &nbsp;</pre></td></tr>
 </table></pre>
@@ -322,7 +367,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 16:33:14 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

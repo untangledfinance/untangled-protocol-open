@@ -5,6 +5,7 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.
 import '../external/ERC1155PresetPauserUpgradeable.sol';
 import '../interfaces/IUniqueIdentity.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../libraries/UntangledMath.sol';
 
 /**
  * @title UniqueIdentity
@@ -55,7 +56,9 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
 
     function setSupportedUIDTypes(uint256[] calldata ids, bool[] calldata values) public onlyAdmin {
         require(ids.length == values.length, 'accounts and ids length mismatch');
-        for (uint256 i = 0; i < ids.length; ++i) {
+
+        uint256 idsLength = ids.length;
+        for (uint256 i = 0; i < idsLength; i = UntangledMath.uncheckedInc(i)) {
             supportedUIDTypes[ids[i]] = values[i];
         }
     }

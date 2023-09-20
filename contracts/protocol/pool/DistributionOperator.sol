@@ -100,7 +100,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address redeemer,
         address pool,
         address tokenAddress
-    ) private whenNotPaused nonReentrant returns (uint256) {
+    ) private whenNotPaused returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
@@ -127,7 +127,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address pool,
         INoteToken noteToken,
         uint256 tokenAmount
-    ) public whenNotPaused returns (uint256) {
+    ) public whenNotPaused nonReentrant returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
         return currencyLocked;
@@ -137,9 +137,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address[] calldata pools,
         INoteToken[] calldata noteTokens,
         uint256[] calldata tokenAmounts
-    ) public whenNotPaused {
+    ) public whenNotPaused nonReentrant {
         address redeemer = _msgSender();
-        for (uint256 i = 0; i < pools.length; ++i) {
+        uint256 poolsLength = pools.length;
+        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
             _makeRedeemRequest(noteTokens[i], tokenAmounts[i]);
             _redeem(redeemer, pools[i], address(noteTokens[i]));
         }

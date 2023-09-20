@@ -20,14 +20,14 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">90.91% </span>
+        <span class="strong">88.57% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>30/33</span>
+        <span class='fraction'>31/35</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">50% </span>
+        <span class="strong">46.3% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>25/50</span>
+        <span class='fraction'>25/54</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">93.33% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>14/15</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">92.11% </span>
+        <span class="strong">90% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>35/38</span>
+        <span class='fraction'>36/40</span>
       </div>
     </div>
   </div>
@@ -229,7 +229,11 @@
 184
 185
 186
-187</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+187
+188
+189
+190
+191</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -264,19 +268,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">53×</span>
-<span class="cline-any cline-yes">53×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">53×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -284,6 +289,8 @@
 <span class="cline-any cline-yes">53×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">25×</span>
 <span class="cline-any cline-yes">25×</span>
@@ -410,6 +417,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -422,6 +430,7 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.
 import '../external/ERC1155PresetPauserUpgradeable.sol';
 import '../interfaces/IUniqueIdentity.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../libraries/UntangledMath.sol';
 &nbsp;
 /**
  * @title UniqueIdentity
@@ -472,7 +481,9 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
 &nbsp;
     function setSupportedUIDTypes(uint256[] calldata ids, bool[] calldata values) public <span class="missing-if-branch" title="else path not taken" >E</span>onlyAdmin {
         <span class="missing-if-branch" title="else path not taken" >E</span>require(ids.length == values.length, 'accounts and ids length mismatch');
-        for (uint256 i = 0; i &lt; ids.length; ++i) {
+&nbsp;
+        uint256 idsLength = ids.length;
+        for (uint256 i = 0; i &lt; idsLength; i = UntangledMath.uncheckedInc(i)) {
             supportedUIDTypes[ids[i]] = values[i];
         }
     }
@@ -593,11 +604,12 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     }
 &nbsp;
     // unlock
-<span class="fstat-no" title="function not covered" >    function unlockWrongToken(address token, address receiver) public onlyAdmin {</span>
+<span class="fstat-no" title="function not covered" >    function unlockWrongToken(address token) public onlyAdmin {</span>
 <span class="cstat-no" title="statement not covered" >        if (token == address(0)) {</span>
-<span class="cstat-no" title="statement not covered" >            payable(receiver).transfer(address(this).balance)</span>;
+<span class="cstat-no" title="statement not covered" >            (bool success, ) = payable(_msgSender()).call { value: IERC20(token).balanceOf(address(this)) } ("");</span>
+<span class="cstat-no" title="statement not covered" >            require(success, "Transfer failed.")</span>;
         } else {
-<span class="cstat-no" title="statement not covered" >            IERC20(token).transfer(receiver, IERC20(token).balanceOf(address(this)))</span>;
+<span class="cstat-no" title="statement not covered" >            require(IERC20(token).transfer(_msgSender(), IERC20(token).balanceOf(address(this))), "Transfer failed.")</span>;
         }
     }
 }
@@ -607,7 +619,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 16:33:14 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../prettify.js"></script>

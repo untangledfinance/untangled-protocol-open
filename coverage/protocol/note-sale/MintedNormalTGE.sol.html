@@ -22,22 +22,22 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>14/14</span>
+        <span class='fraction'>15/15</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">50% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>14/28</span>
+        <span class='fraction'>11/22</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>8/8</span>
+        <span class='fraction'>9/9</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>20/20</span>
+        <span class='fraction'>21/21</span>
       </div>
     </div>
   </div>
@@ -137,9 +137,9 @@
 92
 93
 94
-95</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+95
+96
+97</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -231,22 +231,24 @@
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 &nbsp;
 import './base/LongSaleInterest.sol';
 import "../../libraries/ConfigHelper.sol";
 import './crowdsale/FinalizableCrowdsale.sol';
+import '../../interfaces/IMintedTGE.sol';
 &nbsp;
 /// @title MintedNormalTGE
 /// @author Untangled Team
 /// @dev Note sale for JOT
-contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
+contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
     
-    event YieldUpdated(uint256 newYield);
-    event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
-&nbsp;
     bool public longSale;
     uint256 public timeStartEarningInterest;
     uint256 public termLengthInSeconds;
@@ -271,7 +273,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     }
 &nbsp;
     /// @dev Sets the yield variable to the specified value
-    function setYield(uint256 _yield) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE) {
+    function setYield(uint256 _yield) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE) {
         yield = _yield;
         emit YieldUpdated(_yield);
     }
@@ -280,7 +282,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>securitizationPoolRestricted {
+    ) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>securitizationPoolRestricted {
         <span class="missing-if-branch" title="else path not taken" >E</span>if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
@@ -310,7 +312,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 closingTime,
         uint256 rate,
         uint256 cap
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant {
+    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused {
         <span class="missing-if-branch" title="else path not taken" >E</span>require(<span class="branch-0 cbranch-no" title="branch not covered" >hasRole(OWNER_ROLE, _msgSender())</span> || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 &nbsp;
@@ -324,6 +326,10 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     function _preValidateNewSaleRound() internal view {
         <span class="missing-if-branch" title="else path not taken" >E</span>require(hasClosed() || <span class="branch-1 cbranch-no" title="branch not covered" >totalCapReached()</span>, 'MintedIncreasingInterestTGE: Previous round not closed');
     }
+&nbsp;
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
+    }
 }
 &nbsp;</pre></td></tr>
 </table></pre>
@@ -331,7 +337,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 16:33:14 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>
