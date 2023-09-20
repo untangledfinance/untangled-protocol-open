@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import '../../../base/UntangledBase.sol';
 import '../../../interfaces/INoteTokenFactory.sol';
 import '../../../libraries/ConfigHelper.sol';
+import '../../../libraries/UntangledMath.sol';
 
 contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
     using ConfigHelper for Registry;
@@ -47,7 +48,13 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
         tokens.push(token);
         isExistingTokens[address(token)] = true;
 
-        emit TokenCreated(_poolAddress, _noteTokenType, _nDecimals, ticker);
+        emit TokenCreated(
+            address(token),
+            _poolAddress, 
+            _noteTokenType,
+            _nDecimals,
+            ticker
+        );
 
         return address(token);
     }
@@ -64,14 +71,14 @@ contract NoteTokenFactory is UntangledBase, INoteTokenFactory {
 
     function pauseAllTokens() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tokensLength = tokens.length; 
-        for (uint256 i = 0; i < tokensLength; i++) {
+        for (uint256 i = 0; i < tokensLength; i = UntangledMath.uncheckedInc(i)) {
             if (!tokens[i].paused()) tokens[i].pause();
         }
     }
 
     function unPauseAllTokens() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 tokensLength = tokens.length; 
-        for (uint256 i = 0; i < tokensLength; i++) {
+        for (uint256 i = 0; i < tokensLength; i = UntangledMath.uncheckedInc(i)) {
             if (tokens[i].paused()) tokens[i].unpause();
         }
     }

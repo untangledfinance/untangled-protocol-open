@@ -1,7 +1,8 @@
-const { artifacts } = require('hardhat');
+const { artifacts, ethers } = require('hardhat');
 const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber, providers } = require('ethers');
+const { keccak256 } = require('@ethersproject/keccak256');
 
 const SecuritizationPool = artifacts.require('SecuritizationPool');
 const NoteToken = artifacts.require('NoteToken');
@@ -63,6 +64,35 @@ describe('TimedCrowdsaleMock', () => {
     const tx = await timedCrowdsale.extendTime(newClosingTime);
     expect(tx).to.be.emit(timedCrowdsale, 'TimedCrowdsaleExtended');
     expect(await timedCrowdsale.closingTime()).to.be.eq(newClosingTime);
+  });
+
+  it('#addFunding', async () => {
+    const totalCap = await timedCrowdsale.totalCap();
+    await timedCrowdsale.addFunding(1000);
+
+    const newTotalCap = await timedCrowdsale.totalCap();
+    expect(1000).to.be.eq(newTotalCap.sub(totalCap));
+  });
+
+  it('#getCurrencyRemainAmount', async () => {
+    // no raise ...
+    await timedCrowdsale.addFunding(1000);
+    expect(await timedCrowdsale.getCurrencyRemainAmount()).to.be.eq(2000);
+  });
+
+  it('#getTokenRemainAmount', async () => {
+    const totalToken = await timedCrowdsale.getTokenRemainAmount();
+    expect(totalToken).to.be.eq(0);
+  });
+
+  it('#totalCapReached', async () => {
+    const totalCapReached = await timedCrowdsale.totalCapReached();
+    expect(totalCapReached).to.be.false;
+  });
+
+  it('#getTokenAmount', async () => {
+    // default is 0
+    expect(await timedCrowdsale.getTokenAmount(1000)).to.be.eq(0);
   });
 
   it('#hasClose', async () => {

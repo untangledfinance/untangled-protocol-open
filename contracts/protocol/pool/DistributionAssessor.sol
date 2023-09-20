@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import './base/Interest.sol';
 
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
@@ -10,7 +9,7 @@ import '../../interfaces/INoteToken.sol';
 /// @title DistributionAssessor
 /// @author Untangled Team
 /// @notice Calculate values in a pool
-contract DistributionAssessor is Interest, SecuritizationPoolServiceBase, IDistributionAssessor {
+contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
 
     // get current individual asset for SOT tranche

@@ -60,13 +60,19 @@ abstract contract Crowdsale is UntangledBase {
     }
 
     modifier smpRestricted() {
-        require(_msgSender() == address(registry.getSecuritizationManager()), 'Crowdsale: Caller must be pool');
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()),
+            'Crowdsale: Caller must be securitization manager'
+        );
         _;
     }
 
     /// @notice add funding amount to be added to the total cap
     function addFunding(uint256 additionalCap) public nonReentrant whenNotPaused {
-        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: caller must be owner or pool");
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'Crowdsale: caller must be owner or pool'
+        );
         require(additionalCap > 0, 'Crowdsale: total cap is 0');
 
         totalCap = additionalCap + totalCap;
@@ -81,7 +87,6 @@ abstract contract Crowdsale is UntangledBase {
         hasStarted = true;
         rate = newRate;
     }
-
 
     /// @notice  Allows users to buy note token
     /// @param payee pay for purchase
@@ -170,20 +175,23 @@ abstract contract Crowdsale is UntangledBase {
 
     /// @dev Transfers the currency from the payer to the crowdsale contract
     function _claimPayment(address payee, uint256 currencyAmount) internal {
-        IERC20(currency).transferFrom(payee, address(this), currencyAmount);
+        require(
+            IERC20(currency).transferFrom(payee, address(this), currencyAmount),
+            'Fail to transfer currency from payee to contract'
+        );
     }
 
-    function _getTokenAmount(uint256 currencyAmount) public view returns (uint256) {
-        require(rate > 0, 'Crowdsale: rate is 0');
-        uint256 TEN = 10;
-        return
-            (currencyAmount * rate * TEN**ERC20(token).decimals()) /
-            (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
-    }
+    // function getTokenAmount(uint256 currencyAmount) public view returns (uint256) {
+    //     require(rate > 0, 'Crowdsale: rate is 0');
+    //     uint256 TEN = 10;
+    //     return
+    //         (currencyAmount * rate * TEN**ERC20(token).decimals()) /
+    //         (RATE_SCALING_FACTOR * TEN**ERC20(currency).decimals());
+    // }
 
     /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
-        require(IERC20(currency).transfer(beneficiary, currencyAmount), "Fail to transfer currency to Beneficiary");
+        require(IERC20(currency).transfer(beneficiary, currencyAmount), 'Fail to transfer currency to Beneficiary');
     }
 
     /// @dev Sets the total cap to the specified amount

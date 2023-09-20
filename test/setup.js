@@ -22,6 +22,7 @@ async function setup() {
   let distributionAssessor;
   let distributionOperator;
   let distributionTranche;
+  let acceptedInvoiceToken;
 
   const [untangledAdminSigner] = await ethers.getSigners();
 
@@ -80,6 +81,17 @@ async function setup() {
 
   await registry.setLoanAssetToken(loanAssetTokenContract.address);
 
+  const AcceptedInvoiceToken = await ethers.getContractFactory('AcceptedInvoiceToken');
+  acceptedInvoiceToken = await upgrades.deployProxy(
+    AcceptedInvoiceToken,
+    [registry.address, 'TEST', 'TST', 'test.com'],
+    {
+      initializer: 'initialize(address,string,string,string)',
+    }
+  );
+
+  await registry.setAcceptedInvoiceToken(acceptedInvoiceToken.address);
+
   const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
   const securitizationPoolImpl = await SecuritizationPool.deploy();
   const MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE');
@@ -101,6 +113,7 @@ async function setup() {
     stableCoin,
     registry,
     loanAssetTokenContract,
+    acceptedInvoiceToken,
     loanInterestTermsContract,
     loanRegistry,
     loanKernel,

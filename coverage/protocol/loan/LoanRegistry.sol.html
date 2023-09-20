@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">73.68% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>14/19</span>
+        <span class='fraction'>19/19</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">50% </span>
@@ -30,18 +30,18 @@
         <span class='fraction'>11/22</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">77.78% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>14/18</span>
+        <span class='fraction'>18/18</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">74.07% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>20/27</span>
+        <span class='fraction'>27/27</span>
       </div>
     </div>
   </div>
-  <div class='status-line medium'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -211,8 +211,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">38×</span>
-<span class="cline-any cline-yes">38×</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-yes">53×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -261,13 +261,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -277,7 +277,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -300,12 +300,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">368×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">232×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -313,7 +313,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">367×</span>
+<span class="cline-any cline-yes">368×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -339,9 +339,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -413,14 +413,14 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     }
 &nbsp;
     /// @inheritdoc ILoanRegistry
-<span class="fstat-no" title="function not covered" >    function getLoanDebtor(bytes32 tokenId) public view override returns (address) {</span>
-<span class="cstat-no" title="statement not covered" >        return entries[tokenId].debtor;</span>
+    function getLoanDebtor(bytes32 tokenId) public view override returns (address) {
+        return entries[tokenId].debtor;
     }
 &nbsp;
     /// @inheritdoc ILoanRegistry
-<span class="fstat-no" title="function not covered" >    function getLoanTermParams(bytes32 tokenId) public view override returns (bytes32) {</span>
-<span class="cstat-no" title="statement not covered" >        LoanEntry memory entry = entries[tokenId];</span>
-<span class="cstat-no" title="statement not covered" >        return entry.termsParam;</span>
+    function getLoanTermParams(bytes32 tokenId) public view override returns (bytes32) {
+        LoanEntry memory entry = entries[tokenId];
+        return entry.termsParam;
     }
 &nbsp;
     /// @inheritdoc ILoanRegistry
@@ -429,8 +429,8 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     }
 &nbsp;
     /// @inheritdoc ILoanRegistry
-<span class="fstat-no" title="function not covered" >    function getDebtor(bytes32 agreementId) public view override returns (address) {</span>
-<span class="cstat-no" title="statement not covered" >        return entries[agreementId].debtor;</span>
+    function getDebtor(bytes32 agreementId) public view override returns (address) {
+        return entries[agreementId].debtor;
     }
 &nbsp;
     /// @inheritdoc ILoanRegistry
@@ -486,13 +486,13 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     }
 &nbsp;
     /// @dev Get principal payment info before start doing repayment
-<span class="fstat-no" title="function not covered" >    function principalPaymentInfo(bytes32 agreementId)</span>
+    function principalPaymentInfo(bytes32 agreementId)
         public
         view
         override
         returns (address pTokenAddress, uint256 pAmount)
     {
-<span class="cstat-no" title="statement not covered" >        LoanEntry memory entry = entries[agreementId];</span>
+        LoanEntry memory entry = entries[agreementId];
         pTokenAddress = entry.principalTokenAddress;
         pAmount = 0; // @TODO
     }
@@ -508,7 +508,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Sep 12 2023 22:04:06 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Sep 15 2023 23:15:04 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

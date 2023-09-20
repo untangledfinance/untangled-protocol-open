@@ -14,7 +14,7 @@ import '../../../libraries/ConfigHelper.sol';
 contract AcceptedInvoiceToken is IUntangledERC721 {
     using ConfigHelper for Registry;
 
-    bytes32 public constant INVOICE_CREATOR_ROLE = keccak256("INVOICE_CREATOR_ROLE");
+    bytes32 public constant INVOICE_CREATOR_ROLE = keccak256('INVOICE_CREATOR_ROLE');
 
     struct InvoiceMetaData {
         address payer;
@@ -74,18 +74,13 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256[] calldata salt,
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
-        
-        require(
-            hasRole(INVOICE_CREATOR_ROLE, _msgSender()),
-            'not permission to create token'
-        );
+        require(hasRole(INVOICE_CREATOR_ROLE, _msgSender()), 'not permission to create token');
         // fail to cached the array length due to stack too deep
         // uint256 fiatAmountLength = _fiatAmount.length;
         Configuration.ASSET_PURPOSE assetPurpose = Configuration.ASSET_PURPOSE(
-            riskScoreIdxsAndAssetPurpose[_fiatAmount.length- 1]
+            riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1]
         );
-        for (uint256 i = 0; i <_fiatAmount.length; ++i) {            
-            
+        for (uint256 i = 0; i < _fiatAmount.length; ++i) {
             _createAIT(
                 addressPayerAndReceiver[i],
                 addressPayerAndReceiver[i + _fiatAmount.length],
@@ -117,7 +112,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
                 fiatAmountRemain = metadata.fiatAmount - metadata.paidAmount - payAmounts[i];
             }
 
-            _transferTokensFrom(metadata.fiatTokenAddress, msg.sender, ownerOf(tokenIds[i]), payAmounts[i]);
+            address receiver = ownerOf(tokenIds[i]);
+
+            _transferTokensFrom(metadata.fiatTokenAddress, msg.sender, receiver, payAmounts[i]);
 
             if (fiatAmountRemain == 0) {
                 metadata.paidAmount += payAmounts[i];
@@ -126,7 +123,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
                 metadata.paidAmount += payAmounts[i];
             }
 
-            emit LogRepayment(tokenIds[i], msg.sender, ownerOf(tokenIds[i]), payAmounts[i], metadata.fiatTokenAddress);
+            emit LogRepayment(tokenIds[i], msg.sender, receiver, payAmounts[i], metadata.fiatTokenAddress);
         }
 
         emit LogRepayments(tokenIds, msg.sender, payAmounts);

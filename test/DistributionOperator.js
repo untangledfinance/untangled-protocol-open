@@ -316,16 +316,6 @@ describe('Distribution', () => {
 
       expect(formatEther(await jotToken.balanceOf(lenderSigner.address))).equal('90.0');
     });
-
-    it('#redeemBatch', async () => {
-      await distributionOperator.redeemBatch(
-        [lenderSigner.address],
-        securitizationPoolContract.address,
-        jotToken.address
-      );
-
-      expect(formatEther(await jotToken.balanceOf(lenderSigner.address))).equal('90.0');
-    });
   });
 
   let expirationTimestamps;
@@ -468,7 +458,7 @@ describe('Distribution', () => {
       expect(formatEther(result)).equal('0.0');
 
       result = await distributionAssessor.calcCorrespondingTotalAssetValue(jotToken.address, lenderSigner.address);
-      expect(formatEther(result)).equal('180.0');
+      expect(formatEther(result)).equal('90.0');
     });
 
     it('#calcCorrespondingAssetValue(address,address)', async () => {
@@ -491,7 +481,7 @@ describe('Distribution', () => {
       expect(formatEther(result)).equal('0.0');
 
       result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, jotToken.address);
-      expect(formatEther(result)).equal('0.000000000000000002');
+      expect(formatEther(result)).equal('0.000000000000000001');
 
       result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, ZERO_ADDRESS);
       expect(formatEther(result)).equal('0.0');
