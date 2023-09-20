@@ -22,7 +22,7 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         uint32 _finalInterest,
         uint32 _timeInterval,
         uint32 _amountChangeEachInterval
-    ) public whenNotPaused nonReentrant {
+    ) public whenNotPaused {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "IncreasingInterestCrowdsale: Caller must be owner or pool");
         require(!hasStarted, 'IncreasingInterestCrowdsale: sale already started');
         require(

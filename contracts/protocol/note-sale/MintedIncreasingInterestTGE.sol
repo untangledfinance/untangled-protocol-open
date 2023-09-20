@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import '../../base/UntangledBase.sol';
 import './crowdsale/IncreasingInterestCrowdsale.sol';
+import '../../interfaces/IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
 
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
 /// @dev Note sale for SOT - auction
-contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInterest {
+contract MintedIncreasingInterestTGE is 
+    IMintedTGE, 
+    UntangledBase, 
+    IncreasingInterestCrowdsale, 
+    LongSaleInterest {
+
     using ConfigHelper for Registry;
 
     bool public longSale;
@@ -36,18 +43,22 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     /// @dev Sets the yield variable to the specified value
     function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
+        emit YieldUpdated(_yield);
     }
 
     function setupLongSale(
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused nonReentrant securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
             termLengthInSeconds = _termLengthInSeconds;
             yield = _interestRate;
+
+            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
+            emit YieldUpdated(yield);
         }
     }
 
@@ -73,7 +84,7 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused nonReentrant {
+    ) external whenNotPaused {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedIncreasingInterestTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 
@@ -87,5 +98,9 @@ contract MintedIncreasingInterestTGE is IncreasingInterestCrowdsale, LongSaleInt
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
         require(timeInterval > 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');
+    }
+
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
     }
 }

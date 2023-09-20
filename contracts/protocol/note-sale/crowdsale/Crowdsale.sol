@@ -5,9 +5,10 @@ import '../../../base/UntangledBase.sol';
 import '../../../interfaces/ISecuritizationPool.sol';
 import '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
+import '../../../interfaces/ICrowdSale.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
-abstract contract Crowdsale is UntangledBase {
+abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
 
     event UpdateTotalCap(uint256 totalCap);
@@ -30,14 +31,15 @@ abstract contract Crowdsale is UntangledBase {
     bool public hasStarted;
 
     /// @dev Amount of currency raised
-    uint256 public currencyRaised;
+    uint256 internal _currencyRaised;
+    
     /// @dev Amount of token raised
     uint256 public tokenRaised;
 
     /// @dev Target raised currency amount
     uint256 public totalCap;
 
-    mapping(address => uint256) public currencyRaisedByInvestor;
+    mapping(address => uint256) public _currencyRaisedByInvestor;
 
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
@@ -65,6 +67,10 @@ abstract contract Crowdsale is UntangledBase {
             'Crowdsale: Caller must be securitization manager'
         );
         _;
+    }
+
+    function currencyRaisedByInvestor(address investor) public view returns(uint256) {
+        return _currencyRaisedByInvestor[investor];
     }
 
     /// @notice add funding amount to be added to the total cap
@@ -96,14 +102,14 @@ abstract contract Crowdsale is UntangledBase {
         address payee,
         address beneficiary,
         uint256 currencyAmount
-    ) external whenNotPaused nonReentrant smpRestricted returns (uint256) {
+    ) public whenNotPaused nonReentrant smpRestricted virtual returns (uint256) {
         uint256 tokenAmount = getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
 
         // update state
-        currencyRaised += currencyAmount;
-        currencyRaisedByInvestor[beneficiary] += currencyAmount;
+        _currencyRaised += currencyAmount;
+        _currencyRaisedByInvestor[beneficiary] += currencyAmount;
 
         tokenRaised += tokenAmount;
 
@@ -118,7 +124,7 @@ abstract contract Crowdsale is UntangledBase {
 
     /// @notice Check if the total amount of currency raised is equal to the total cap
     function isDistributedFully() public view returns (bool) {
-        return currencyRaised == totalCap;
+        return _currencyRaised == totalCap;
     }
 
     /// @notice Retrieves the remaining token balance held by the crowdsale contract
@@ -128,7 +134,7 @@ abstract contract Crowdsale is UntangledBase {
 
     /// @notice Calculates the remaining amount of currency available for purchase
     function getCurrencyRemainAmount() public view virtual returns (uint256) {
-        return totalCap - currencyRaised;
+        return totalCap - _currencyRaised;
     }
 
     /// @notice Determines whether the current sale round is a long sale
@@ -197,7 +203,7 @@ abstract contract Crowdsale is UntangledBase {
     /// @dev Sets the total cap to the specified amount
     function _setTotalCap(uint256 cap) internal {
         require(cap > 0, 'Crowdsale: cap is 0');
-        require(cap >= currencyRaised, 'Crowdsale: cap is bellow currency raised');
+        require(cap >= _currencyRaised, 'Crowdsale: cap is bellow currency raised');
 
         totalCap = cap;
 
@@ -206,11 +212,15 @@ abstract contract Crowdsale is UntangledBase {
 
     /// @notice Checks if the total amount of currency raised is greater than or equal to the total cap
     function totalCapReached() public view returns (bool) {
-        return currencyRaised >= totalCap;
+        return _currencyRaised >= totalCap;
     }
 
     /// @notice Checks if the sum of the current currency raised and the specified currency amount is less than or equal to the total cap
     function isUnderTotalCap(uint256 currencyAmount) public view returns (bool) {
-        return currencyRaised + currencyAmount <= totalCap;
+        return _currencyRaised + currencyAmount <= totalCap;
+    }
+
+    function currencyRaised() public view virtual override returns (uint256) {
+        return _currencyRaised;
     }
 }

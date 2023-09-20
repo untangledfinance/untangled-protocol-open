@@ -4,16 +4,14 @@ pragma solidity ^0.8.0;
 import './base/LongSaleInterest.sol';
 import "../../libraries/ConfigHelper.sol";
 import './crowdsale/FinalizableCrowdsale.sol';
+import '../../interfaces/IMintedTGE.sol';
 
 /// @title MintedNormalTGE
 /// @author Untangled Team
 /// @dev Note sale for JOT
-contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
+contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
     
-    event YieldUpdated(uint256 newYield);
-    event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
-
     bool public longSale;
     uint256 public timeStartEarningInterest;
     uint256 public termLengthInSeconds;
@@ -38,7 +36,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     }
 
     /// @dev Sets the yield variable to the specified value
-    function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
         emit YieldUpdated(_yield);
     }
@@ -47,7 +45,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused nonReentrant securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
@@ -77,7 +75,7 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         uint256 closingTime,
         uint256 rate,
         uint256 cap
-    ) external whenNotPaused nonReentrant {
+    ) external whenNotPaused {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 
@@ -90,5 +88,9 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
+    }
+
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
     }
 }
