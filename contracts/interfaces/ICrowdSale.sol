@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-abstract contract ICrowdSale {
-    mapping(address => uint256) public currencyRaisedByInvestor;
+interface ICrowdSale {
+    function currencyRaisedByInvestor(address investor) external view returns (uint256);
 
-    uint256 public currencyRaised;
+    function currencyRaised() external view returns (uint256);
+
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) external returns (uint256);
 }
