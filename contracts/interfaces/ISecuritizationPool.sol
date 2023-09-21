@@ -218,4 +218,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     function onBuyNoteToken(
         uint256 currencyAmount
     ) external virtual;
+
+
+    uint256[22] private __gap; 
 }

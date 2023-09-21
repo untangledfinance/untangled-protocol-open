@@ -78,4 +78,6 @@ abstract contract TimedCrowdsale is Crowdsale {
         isEnableTimeLimit = usingTimeLimit;
         emit UpdateUsingTimeLimit(usingTimeLimit);
     }
+
+    uint256[47] private __gap;
 }

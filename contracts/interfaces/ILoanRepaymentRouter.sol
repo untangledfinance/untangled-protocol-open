@@ -36,4 +36,6 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
         uint256[] calldata amounts,
         address tokenAddress
     ) external virtual returns (bool);
+
+    uint256[49] private __gap;
 }

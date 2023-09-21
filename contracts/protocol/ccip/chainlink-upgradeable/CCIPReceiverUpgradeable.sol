@@ -60,4 +60,7 @@ abstract contract CCIPReceiverUpgradeable is Initializable, IAny2EVMMessageRecei
         if (msg.sender != address(i_router)) revert InvalidRouter(msg.sender);
         _;
     }
+
+    // deployed ...
+    // uint256[49] private __gap;
 }

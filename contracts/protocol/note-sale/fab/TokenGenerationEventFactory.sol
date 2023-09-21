@@ -111,4 +111,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
             }
         }
     }
+
+    uint256[50] private __gap;
 }

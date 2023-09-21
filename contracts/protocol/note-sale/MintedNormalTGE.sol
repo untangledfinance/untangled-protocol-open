@@ -93,4 +93,6 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
         return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
     }
+
+    uint256[45] private __gap;
 }

@@ -158,4 +158,6 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
     }
+
+    uint256[50] private __gap;
 }

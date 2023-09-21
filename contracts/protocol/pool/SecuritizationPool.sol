@@ -154,7 +154,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(!hasRole(OWNER_ROLE, _pot));
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
-        if (pot == address(this)) {
+        if (_pot == address(this)) {
             require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
         }
     }
@@ -352,7 +352,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address _tgeAddress,
         address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteType
-    ) external override whenNotPaused nonReentrant onlySecuritizationManager onlyIssuingTokenStage {
+    ) external override whenNotPaused onlySecuritizationManager onlyIssuingTokenStage {
         require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
@@ -430,7 +430,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address investor,
         uint256 currency,
         uint256 token
-    ) external override whenNotPaused nonReentrant onlyDistributionOperator {
+    ) external override whenNotPaused onlyDistributionOperator {
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
 
@@ -445,7 +445,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlyLoanRepaymentRouter
     {
         reserve = reserve + amount;
@@ -484,9 +483,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlySecuritizationManager
     {
         reserve = reserve + currencyAmount;
     }
+
+    uint256[50] private __gap;
 }

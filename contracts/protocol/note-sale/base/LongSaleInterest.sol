@@ -28,4 +28,6 @@ contract LongSaleInterest {
     /// @dev represents the scaling factor for the purchase price calculation
     uint256 public constant PURCHASE_PRICE_SCALING_FACTOR = 10**4;
 
+
+    uint256[50] private __gap;
 }

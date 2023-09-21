@@ -349,4 +349,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         }
         return agreementIds;
     }
+
+    uint256[50] private __gap;
 }

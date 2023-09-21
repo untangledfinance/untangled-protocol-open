@@ -16,4 +16,6 @@ abstract contract ISecuritizationManager {
     mapping(address => bool) public isExistingTGEs;
 
     bytes32 public constant POOL_CREATOR = keccak256('POOL_CREATOR');
+
+    uint256[44] private __gap;
 }

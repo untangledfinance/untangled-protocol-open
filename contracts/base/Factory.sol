@@ -14,4 +14,6 @@ abstract contract Factory {
         }
         return proxy;
     }
+
+    uint256[50] private __gap;
 }

@@ -461,4 +461,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         
         return interest;
     }
+
+    uint256[50] private __gap;
 }

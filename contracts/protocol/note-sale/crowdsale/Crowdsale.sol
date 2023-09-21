@@ -223,4 +223,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     function currencyRaised() public view virtual override returns (uint256) {
         return _currencyRaised;
     }
+
+
+    uint256[40] private __gap;
 }

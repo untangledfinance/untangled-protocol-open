@@ -14,4 +14,6 @@ contract SecuritizationPoolServiceBase is UntangledBase {
 
         registry = _registry;
     }
+
+    uint256[49] private __gap;
 }

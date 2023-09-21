@@ -86,4 +86,6 @@ contract NAVCalculation {
             totalDebtAmt -
             ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
     }
+
+    uint256[50] private __gap;
 }

@@ -150,4 +150,6 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
+
+    uint256[50] private __gap;
 }

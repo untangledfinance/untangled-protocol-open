@@ -108,4 +108,6 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
             IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) -
             securitizationPool.totalLockedDistributeBalance();
     }
+
+    uint256[50] private __gap;
 }

@@ -37,4 +37,6 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
     ) external whenNotPaused onlyOperator {
         require(IERC20(noteToken).transferFrom(usr, address(this), tokenAmount), 'DistributionTranche: token-transfer-failed');
     }
+
+    uint256[50] private __gap;
 }
