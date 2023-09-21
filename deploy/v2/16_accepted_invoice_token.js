@@ -1,5 +1,6 @@
 const { getChainId } = require('hardhat');
 const { networks } = require('../../networks');
+const { deployProxy } = require('../../utils/deployHelper');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
@@ -7,18 +8,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const registry = await deployments.get('Registry');
 
-  await deployments.deploy('SecuritizationManager', {
-    from: deployer,
-    proxy: {
-      proxyContract: 'OpenZeppelinTransparentProxy',
-      execute: {
-        methodName: 'initialize',
-        args: [registry.address],
-      },
-    },
-    skipIfAlreadyDeployed: true,
-    log: true,
-  });
+  const loanAssetTokenProxy = await deployProxy(
+    { getNamedAccounts, deployments },
+    'AcceptedInvoiceToken',
+    [registry.address, 'Accepted Invoice Token', 'AIT', ''],
+    'initialize(address,string,string,string)'
+  );
 };
 
 module.exports.dependencies = ['registry'];
