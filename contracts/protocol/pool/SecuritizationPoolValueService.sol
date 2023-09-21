@@ -380,7 +380,6 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
-        require(seniorInterestRate < RATE_SCALING_FACTOR, 'securitizationPool.interestRateSOT>100');
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
