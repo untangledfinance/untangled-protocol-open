@@ -239,8 +239,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
         reserve = reserve - amount;
+
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
@@ -411,7 +412,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address investor,
         uint256 currency,
         uint256 token
-    ) external override whenNotPaused nonReentrant onlyDistributionOperator {
+    ) external override whenNotPaused onlyDistributionOperator {
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
 
@@ -426,7 +427,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlyLoanRepaymentRouter
     {
         reserve = reserve + amount;
@@ -451,6 +451,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
         reserve = reserve - currencyAmount;
+
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
