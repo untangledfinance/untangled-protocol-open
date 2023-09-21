@@ -30,13 +30,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
 
-        pot = address(this);
-        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Currency approval failed');
-        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
-
         state = CycleState.INITIATED;
         underlyingCurrency = _currency;
         minFirstLossCushion = _minFirstLossCushion;
+
+        pot = address(this);
+        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Currency approval failed');
+        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
     }
 
     modifier onlyIssuingTokenStage() {
@@ -204,6 +204,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256 tokenIdsLength = tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
+        }
+
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
     }
@@ -220,8 +223,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             tokenAddresses.length == recipients.length,
             'tokenAddresses length and recipients length are not equal'
         );
+
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddresses[i], tokenIds[i]), 'SecuritizationPool: Asset does not exist');
+        }
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
         }
     }
@@ -231,7 +237,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address tokenAddress,
         address from,
         uint256[] calldata tokenIds
-    ) external override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+    ) external override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
         uint256 tokenIdsLength = tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
@@ -258,18 +264,26 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata tokenAddresses,
         address[] calldata senders,
         uint256[] calldata amounts
-    ) external override whenNotPaused nonReentrant notClosingStage onlyRole(ORIGINATOR_ROLE) {
+    ) external override whenNotPaused notClosingStage onlyRole(ORIGINATOR_ROLE) {
         uint256 tokenAddressesLength = tokenAddresses.length;
         require(
             tokenAddressesLength == senders.length && senders.length == amounts.length,
             'SecuritizationPool: Params length are not equal'
         );
+
+        // check
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
+        }
+
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             _pushTokenAssetAddress(tokenAddresses[i]);
+        }
+
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
                 'SecuritizationPool: Transfer failed'
@@ -298,15 +312,20 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     /// @inheritdoc ISecuritizationPool
     function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
         uint256 tokenAddressesLength = tokenAddresses.length;
+        
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
+
             require(
                 IERC20(tokenAddresses[i]).balanceOf(address(this)) > 0,
                 'SecuritizationPool: Token balance is zero'
             );
+        }
+
+        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             _pushTokenAssetAddress(tokenAddresses[i]);
         }
     }
@@ -447,10 +466,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (sotToken == notesToken) {
             paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
         }
+        reserve = reserve - currencyAmount;
+        
         if (tokenAmount > 0) {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
-        reserve = reserve - currencyAmount;
+
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
