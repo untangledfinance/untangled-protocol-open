@@ -205,7 +205,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
         uint256 aagreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < aagreementIdsLength; i++) {
+        for (uint256 i = 0; i < aagreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
@@ -231,7 +231,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
 
         bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
-        uint256 manualInterestAmountLoan;
+        uint256 manualInterestAmountLoan = 0;
         if (isManualInterestLoan) {
             manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
         }
@@ -257,7 +257,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
         uint256 agreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i++) {
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
                 agreementIds[i],
                 timestamp
@@ -426,7 +426,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
             // Have just made new repayment
-            if (elapseTimeFromLastRepay == 0 && _paidInterestAmount > 0) {
+            if (
+                _timestamp <= _lastRepayTimestamp && _paidInterestAmount > 0) {
                 interest = 0;
             } else {
                 if (_paidInterestAmount > 0) {
@@ -445,7 +446,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
                     );
                 }
             }
-        } else if (_timestamp >= _endTermTimestamp) {
+        } else {
             // If debtor has made at least 1 repayment
             if (_paidInterestAmount > 0) {
                 interest = _calculateInterestForDuration(
@@ -456,8 +457,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             } else {
                 interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
             }
-        } else {
-            interest = 0;
         }
         
         return interest;
