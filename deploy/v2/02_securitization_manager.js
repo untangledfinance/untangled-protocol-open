@@ -1,5 +1,4 @@
 const { getChainId } = require('hardhat');
-const { deployProxy } = require('../../utils/deployHelper');
 const { networks } = require('../../networks');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {

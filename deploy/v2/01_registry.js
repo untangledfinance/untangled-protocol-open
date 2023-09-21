@@ -1,5 +1,4 @@
 const { getChainId } = require('hardhat');
-const { deployProxy } = require('../../utils/deployHelper');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -14,6 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [],
       },
     },
+    log: true,
   });
 };
 
