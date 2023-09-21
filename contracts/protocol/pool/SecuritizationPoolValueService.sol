@@ -459,7 +459,7 @@ contract SecuritizationPoolValueService is
     /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
         uint256 rateSenior = this.getSeniorRatio(poolAddress);
-        require(rateSenior < 100 * RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
+        require(rateSenior <= 100 * RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
 
         return 100 * RATE_SCALING_FACTOR - rateSenior;
     }
