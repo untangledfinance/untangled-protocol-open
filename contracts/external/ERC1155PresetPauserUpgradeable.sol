@@ -118,7 +118,6 @@ contract ERC1155PresetPauserUpgradeable is
     super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
   }
 
-  uint256[50] private __gap;
 
   function isAdmin() public view returns (bool) {
     return hasRole(OWNER_ROLE, _msgSender());
@@ -128,4 +127,6 @@ contract ERC1155PresetPauserUpgradeable is
     require(isAdmin(), "Must have admin role to perform this action");
     _;
   }
+
+  uint256[50] private __gap;
 }

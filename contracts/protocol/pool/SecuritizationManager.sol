@@ -272,4 +272,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
             pools[i].unpause();
         }
     }
+
+    uint256[49] private __gap;
 }

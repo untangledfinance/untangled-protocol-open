@@ -21,4 +21,6 @@ abstract contract ITokenGenerationEventFactory {
         uint8 saleType,
         bool longSale
     ) external virtual returns (address);
+
+    uint256[47] private __gap;
 }

@@ -47,4 +47,6 @@ abstract contract UntangledBase is
     function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
+
+    uint256[50] private __gap;
 }

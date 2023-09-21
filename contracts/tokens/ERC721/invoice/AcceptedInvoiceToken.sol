@@ -210,4 +210,6 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     );
 
     event LogRepayments(uint256[] _tokenIds, address _payer, uint256[] _amounts);
+
+    uint256[49] private __gap;
 }

@@ -78,4 +78,6 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         super._preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
         require(timeInterval > 0, 'IncreasingInterestCrowdsale: time interval not set');
     }
+
+    uint256[45] private __gap;
 }

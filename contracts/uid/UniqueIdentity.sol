@@ -184,4 +184,6 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
             require(IERC20(token).transfer(_msgSender(), IERC20(token).balanceOf(address(this))), "Transfer failed.");
         }
     }
+
+    uint256[48] private __gap;
 }

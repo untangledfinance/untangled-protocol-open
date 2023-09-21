@@ -66,4 +66,6 @@ contract LoanAssetToken is IUntangledERC721 {
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
         expectedRepaymentValue = principalAmount + interestAmount;
     }
+
+    uint256[50] private __gap;
 }

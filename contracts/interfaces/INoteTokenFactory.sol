@@ -30,4 +30,6 @@ abstract contract INoteTokenFactory {
         uint8 _nDecimals,
         string calldata ticker
     ) external virtual returns (address);
+
+    uint256[47] private __gap;
 }

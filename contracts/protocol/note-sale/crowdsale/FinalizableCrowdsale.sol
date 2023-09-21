@@ -43,4 +43,6 @@ abstract contract FinalizableCrowdsale is IFinalizableCrowdsale, TimedCrowdsale 
     function _finalization() internal virtual {
         // solhint-disable-previous-line no-empty-blocks
     }
+
+    uint256[49] private __gap;
 }

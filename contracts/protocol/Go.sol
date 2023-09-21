@@ -135,4 +135,6 @@ contract Go is IGo, AccessControlEnumerableUpgradeable {
   function initZapperRole() external onlyAdmin {
     _setRoleAdmin(ZAPPER_ROLE, OWNER_ROLE);
   }
+
+  uint256[48] private __gap;
 }

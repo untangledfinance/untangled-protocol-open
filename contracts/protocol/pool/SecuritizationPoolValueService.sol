@@ -496,4 +496,6 @@ contract SecuritizationPoolValueService is
         uint256 seniorBalance = this.getSeniorBalance(poolAddress);
         return senorDebt + seniorBalance;
     }
+
+    uint256[50] private __gap;
 }

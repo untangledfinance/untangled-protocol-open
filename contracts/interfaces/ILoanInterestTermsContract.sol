@@ -68,4 +68,6 @@ abstract contract ILoanInterestTermsContract {
     /// @notice the interest rate for a given loan agreement
     /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
     function getInterestRate(bytes32 agreementId) public view virtual returns (uint256);
+
+    uint256[46] private __gap;
 }

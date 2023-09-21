@@ -49,4 +49,6 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
 
     /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
+
+    uint256[49] private __gap;
 }

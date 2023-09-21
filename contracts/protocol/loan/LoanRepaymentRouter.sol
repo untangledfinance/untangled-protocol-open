@@ -113,4 +113,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         emit LogRepayments(agreementIds, _msgSender(), amounts);
         return true;
     }
+
+    uint256[50] private __gap;
 }
