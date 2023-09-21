@@ -4,7 +4,7 @@ const { deployments } = require('hardhat');
 const { parseEther } = ethers.utils;
 
 async function setup() {
-  await deployments.fixture();
+  await deployments.fixture(['all']);
 
   let stableCoin;
   let registry;
@@ -79,8 +79,6 @@ async function setup() {
     initializer: 'initialize(address,string,string,string)',
   });
 
-  await registry.setLoanAssetToken(loanAssetTokenContract.address);
-
   const AcceptedInvoiceToken = await ethers.getContractFactory('AcceptedInvoiceToken');
   acceptedInvoiceToken = await upgrades.deployProxy(
     AcceptedInvoiceToken,
@@ -90,6 +88,7 @@ async function setup() {
     }
   );
 
+  await registry.setLoanAssetToken(loanAssetTokenContract.address);
   await registry.setAcceptedInvoiceToken(acceptedInvoiceToken.address);
 
   const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');

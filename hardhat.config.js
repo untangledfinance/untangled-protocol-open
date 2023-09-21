@@ -54,22 +54,26 @@ module.exports = {
         mnemonic: MNEMONIC,
       },
 
-      forking: {
-        url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
-        blockNumber: 39993365,
-      },
+      // forking: {
+      //   url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
+      //   blockNumber: 39993365,
+      // },
     },
     celo: {
       saveDeployments: true,
       accounts,
       loggingEnabled: true,
       url: `https://forno.celo.org`,
+      cusdToken: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
+      usdcToken: '0xef4229c8c3250c675f21bcefa42f58efbff6002a',
     },
     alfajores: {
       saveDeployments: true,
       accounts: accounts,
       loggingEnabled: true,
       url: `https://alfajores-forno.celo-testnet.org`,
+      cusdToken: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
+      usdcToken: '',
     },
     rinkeby: {
       saveDeployments: true,
