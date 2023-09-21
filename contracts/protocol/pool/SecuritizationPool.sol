@@ -486,6 +486,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         onlySecuritizationManager
     {
         reserve = reserve + currencyAmount;
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
     }
 
     uint256[50] private __gap;
