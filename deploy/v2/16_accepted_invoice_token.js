@@ -16,8 +16,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [registry.address],
       },
     },
+    skipIfAlreadyDeployed: true,
+    log: true,
   });
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'securitization_manager'];
+module.exports.tags = ['mainnet', 'accepted_invoice_token'];

@@ -16,6 +16,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [registry.address],
       },
     },
+    skipIfAlreadyDeployed: true,
+    log: true,
   });
 };
 

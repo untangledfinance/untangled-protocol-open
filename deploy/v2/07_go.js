@@ -5,19 +5,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const registry = await deployments.get('Registry');
+  const uniqueIdentity = await deployments.get('UniqueIdentity');
 
-  await deployments.deploy('SecuritizationManager', {
+  await deployments.deploy('Go', {
     from: deployer,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
       execute: {
         methodName: 'initialize',
-        args: [registry.address],
+        args: [deployer, uniqueIdentity.address],
       },
     },
+    skipIfAlreadyDeployed: true,
+    log: true,
   });
 };
 
-module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'securitization_manager'];
+module.exports.dependencies = ['registry', 'unique_identity'];
+module.exports.tags = ['mainnet', 'go'];

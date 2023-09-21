@@ -13,6 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [],
       },
     },
+    skipIfAlreadyDeployed: true,
     log: true,
   });
 };

@@ -7,7 +7,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const registry = await deployments.get('Registry');
 
-  await deployments.deploy('SecuritizationManager', {
+  await deployments.deploy('SecuritizationPoolValueService', {
     from: deployer,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -16,8 +16,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [registry.address],
       },
     },
+    skipIfAlreadyDeployed: true,
+    log: true,
   });
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'securitization_manager'];
+module.exports.tags = ['mainnet', 'securitization_pool_value_service'];
