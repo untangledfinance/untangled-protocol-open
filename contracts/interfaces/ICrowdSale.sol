@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 interface ICrowdSale {
     function currencyRaisedByInvestor(address investor) external view returns (uint256);
