@@ -16,8 +16,8 @@ describe('TimedCrowdsaleMock', () => {
     const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     const NoteToken = await ethers.getContractFactory('NoteToken');
 
-    securitizationPool = await SecuritizationPool.new();
-    const noteToken = await NoteToken.new('Test', 'TST', 18, securitizationPool.address, 1);
+    securitizationPool = await SecuritizationPool.deploy();
+    const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
     const currencyAddress = await securitizationPool.underlyingCurrency();
 
     const TimedCrowdsaleMock = await ethers.getContractFactory('TimedCrowdsaleMock');

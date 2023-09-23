@@ -1,6 +1,6 @@
 const { ethers, getChainId } = require('hardhat');
 const { expect } = require('../shared/expect.js');
-const { mainFixture } = require('../shared/fixtures');
+const { setup } = require('../setup.js');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
@@ -60,7 +60,7 @@ describe('Pool to Pool', () => {
         distributionTrancheContract,
         registryContract,
         securitizationPoolValueService,
-      } = await mainFixture());
+      } = await setup());
 
       // Create new main pool
       const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
@@ -342,7 +342,7 @@ describe('Pool to Pool', () => {
         distributionAssessorContract,
         registryContract,
         securitizationPoolValueService,
-      } = await mainFixture());
+      } = await setup());
 
       // Get constants
       const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
