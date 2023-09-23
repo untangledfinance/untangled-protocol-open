@@ -2,7 +2,7 @@ const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
-const { expect } = require('./shared/expect.js');
+const { expect } = require('chai');
 
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther } = ethers.utils;

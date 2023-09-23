@@ -4,7 +4,7 @@ const { BigNumber } = require('ethers');
 const dayjs = require('dayjs');
 const { parseEther, formatEther } = ethers.utils;
 
-const { expect } = require('./shared/expect.js');
+const { expect } = require('chai');
 const { setup } = require('./setup.js');
 const { unlimitedAllowance } = require('./utils.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
@@ -30,7 +30,6 @@ describe('SecuritizationManager', () => {
     ({ stableCoin, securitizationManager, uniqueIdentity } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
-
   });
 
   it('should emit RoleGranted event with an address', async function () {

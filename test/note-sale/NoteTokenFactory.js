@@ -3,12 +3,6 @@ const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber } = require('ethers');
 
-const SecuritizationPool = artifacts.require('SecuritizationPool');
-const MintedNormalTGE = artifacts.require('MintedNormalTGE');
-const NoteToken = artifacts.require('NoteToken');
-const NoteTokenFactory = artifacts.require('NoteTokenFactory');
-const Registry = artifacts.require('Registry');
-
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
 describe('NoteTokenFactory', () => {
@@ -16,6 +10,12 @@ describe('NoteTokenFactory', () => {
   let noteTokenFactory;
 
   before('create fixture', async () => {
+    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+    const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
+    const NoteToken = await ethers.getContractFactory('NoteToken');
+    const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
+    const Registry = await ethers.getContractFactory('Registry');
+
     registry = await Registry.new();
     await registry.initialize();
     noteTokenFactory = await NoteTokenFactory.new();
@@ -34,8 +34,8 @@ describe('NoteTokenFactory', () => {
     const pool = await SecuritizationPool.new();
     const tx = await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
 
-    const tokenAddress = tx.logs.find(x => x.event == 'TokenCreated').args.token;
-    
+    const tokenAddress = tx.logs.find((x) => x.event == 'TokenCreated').args.token;
+
     await expect(noteTokenFactory.pauseUnpauseToken(tokenAddress)).to.not.be.reverted;
   });
 
@@ -45,11 +45,9 @@ describe('NoteTokenFactory', () => {
     await expect(noteTokenFactory.pauseAllTokens()).to.not.be.reverted;
   });
 
-
   it('#unPauseAllTokens', async () => {
     const pool = await SecuritizationPool.new();
     await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
     await expect(noteTokenFactory.unPauseAllTokens()).to.not.be.reverted;
   });
-  
 });

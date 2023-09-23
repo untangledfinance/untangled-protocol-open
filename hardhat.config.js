@@ -1,11 +1,10 @@
 require('solidity-coverage');
-require('@nomiclabs/hardhat-truffle5');
 require('@nomiclabs/hardhat-web3');
-require('@nomiclabs/hardhat-etherscan');
+require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
 require('hardhat-deploy');
 require('@openzeppelin/hardhat-upgrades');
-require('@nomiclabs/hardhat-waffle');
+require('@nomicfoundation/hardhat-chai-matchers');
 
 require('dotenv').config();
 require('./tasks');

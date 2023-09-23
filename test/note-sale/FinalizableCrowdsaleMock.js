@@ -4,9 +4,6 @@ const { expect, assert } = require('chai');
 const { BigNumber, providers } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
 
-const SecuritizationPool = artifacts.require('SecuritizationPool');
-const NoteToken = artifacts.require('NoteToken');
-
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
 describe('FinalizableCrowdsaleMock', () => {
@@ -17,7 +14,9 @@ describe('FinalizableCrowdsaleMock', () => {
   before('create fixture', async () => {
     ({ registry, noteTokenFactory } = await setup());
 
+    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     securitizationPool = await SecuritizationPool.new();
+    const NoteToken = await ethers.getContractFactory('NoteToken');
     const noteToken = await NoteToken.new('Test', 'TST', 18, securitizationPool.address, 1);
     const currencyAddress = await securitizationPool.underlyingCurrency();
 
@@ -37,8 +36,8 @@ describe('FinalizableCrowdsaleMock', () => {
   });
 
   it('#finalize', async () => {
-    const [ signer ] = await ethers.getSigners();
-    await finalizableCrowdSale.grantRole(keccak256(Buffer.from("OWNER_ROLE")), signer.address);
+    const [signer] = await ethers.getSigners();
+    await finalizableCrowdSale.grantRole(keccak256(Buffer.from('OWNER_ROLE')), signer.address);
 
     await finalizableCrowdSale.connect(signer).finalize(false, signer.address);
   });
