@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">83.33% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>5/6</span>
+        <span class='fraction'>2/2</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">50% </span>
@@ -30,14 +30,14 @@
         <span class='fraction'>1/2</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">83.33% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>5/6</span>
+        <span class='fraction'>2/2</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">88.89% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>8/9</span>
+        <span class='fraction'>5/5</span>
       </div>
     </div>
   </div>
@@ -70,28 +70,7 @@
 25
 26
 27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+28</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -107,84 +86,42 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20×</span>
+<span class="cline-any cline-yes">20×</span>
+<span class="cline-any cline-yes">20×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">102×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 &nbsp;
-import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
 import '../../interfaces/INoteToken.sol';
 &nbsp;
 /// @title NoteToken
 /// @author Untangled Team
 /// @dev Template for SOT/JOT token
-contract NoteToken is INoteToken, ERC20PresetMinterPauser {
-    address internal immutable _poolAddress;
-    uint8 internal immutable _noteTokenType;
-    uint8 internal immutable _decimals;
-&nbsp;
+contract NoteToken is INoteToken {
     constructor(
         string memory name,
         string memory symbol,
-        uint8 decimalsOfToken,
-        address poolAddressOfToken,
-        uint8 typeOfToken
+        uint8 _decimals,
+        address _poolAddress,
+        uint8 _noteTokenType
     ) ERC20PresetMinterPauser(name, symbol) {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(poolAddressOfToken != address(0), 'NoteToken: Invalid pool address');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_poolAddress != address(0), 'NoteToken: Invalid pool address');
 &nbsp;
-        _decimals = decimalsOfToken;
-        _poolAddress = poolAddressOfToken;
-        _noteTokenType = typeOfToken;
+        _d = _decimals;
+        poolAddress = _poolAddress;
+        noteTokenType = _noteTokenType;
     }
 &nbsp;
-    function poolAddress() external view returns (address) {
-        return _poolAddress;
-    }
-&nbsp;
-    function noteTokenType() external view returns (uint8) {
-        return _noteTokenType;
-    }
-&nbsp;
-    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {
-        return _decimals;
-    }
-&nbsp;
-<span class="fstat-no" title="function not covered" >    function burn(uint256 amount) public override(ERC20Burnable, INoteToken) {</span>
-<span class="cstat-no" title="statement not covered" >        return ERC20Burnable.burn(amount);</span>
-    }
-&nbsp;
-    function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauser) {
-        return ERC20PresetMinterPauser.mint(receiver, amount);
+    function decimals() public view override returns (uint8) {
+        return _d;
     }
 }
 &nbsp;</pre></td></tr>
@@ -193,7 +130,7 @@ contract NoteToken is INoteToken, ERC20PresetMinterPauser {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:21:21 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>
