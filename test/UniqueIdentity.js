@@ -2,10 +2,9 @@ const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
-const { expect } = require('./shared/expect.js');
+const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { arrayify } = require('@ethersproject/bytes');
-
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String, keccak256, solidityPack } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');

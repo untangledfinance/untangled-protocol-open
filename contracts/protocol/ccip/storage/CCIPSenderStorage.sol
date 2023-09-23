@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {ICommandData, MessageType} from '../ICommandData.sol';
 import {IRouterClient} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
-import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol';
+import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol';
 import {ICommandData} from '../ICommandData.sol';
 
 abstract contract CCIPSenderStorage {

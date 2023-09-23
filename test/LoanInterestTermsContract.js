@@ -13,7 +13,6 @@ const {
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
 const _ = require('lodash');
-const { admin } = require('@openzeppelin/truffle-upgrades');
 const {
   time,
   impersonateAccount,
@@ -212,7 +211,13 @@ describe('LoanInterestTermsContract', () => {
         interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
       });
 
-      const termsContractParameters = [termsContractParameter, termsContractParameter_1, termsContractParameter_2, termsContractParameter_3, termsContractParameter_4];
+      const termsContractParameters = [
+        termsContractParameter,
+        termsContractParameter_1,
+        termsContractParameter_2,
+        termsContractParameter_3,
+        termsContractParameter_4,
+      ];
 
       const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
@@ -346,7 +351,7 @@ describe('LoanInterestTermsContract', () => {
   describe('#isCompletedRepayments', async () => {
     it('should return repayment status of agreementIds', async () => {
       const repaymentStatus = await loanInterestTermsContract.isCompletedRepayments(tokenIds);
-      expect(repaymentStatus).to.deep.equal([true, false, false, false, false])
+      expect(repaymentStatus).to.deep.equal([true, false, false, false, false]);
     });
   });
   describe('#getValueRepaidToDate', async () => {
@@ -354,8 +359,8 @@ describe('LoanInterestTermsContract', () => {
       const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
       const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
       const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
-      expect(repaidPrincipal).to.equal(expectPrincipalAmount)
-      expect(repaidInterest).to.equal(expectInterestAmount)
+      expect(repaidPrincipal).to.equal(expectPrincipalAmount);
+      expect(repaidInterest).to.equal(expectInterestAmount);
     });
   });
   describe('#getMultiExpectedRepaymentValues', async () => {
