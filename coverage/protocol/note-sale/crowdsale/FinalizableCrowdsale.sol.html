@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">55.56% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>5/9</span>
+        <span class='fraction'>0/10</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">43.75% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>7/16</span>
+        <span class='fraction'>0/14</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>2/2</span>
+        <span class='fraction'>0/3</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">54.55% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>6/11</span>
+        <span class='fraction'>0/12</span>
       </div>
     </div>
   </div>
-  <div class='status-line medium'></div>
+  <div class='status-line low'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -89,7 +89,9 @@
 44
 45
 46
-47</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+47
+48
+49</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -102,32 +104,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3×</span>
-<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -136,32 +140,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 &nbsp;
+import '../../../interfaces/IFinalizableCrowdsale.sol';
 import './TimedCrowdsale.sol';
 &nbsp;
 /// @title FinalizableCrowdsale
 /// @author Untangled Team
 /// @dev An abstract contract define finalize function for sale
-abstract contract FinalizableCrowdsale is TimedCrowdsale {
-    bool public finalized;
+abstract contract FinalizableCrowdsale is IFinalizableCrowdsale, TimedCrowdsale {
+    
+    bool internal _finalized;
 &nbsp;
-    event CrowdsaleFinalized();
+<span class="fstat-no" title="function not covered" >    function finalized() public view virtual override returns (bool) {</span>
+<span class="cstat-no" title="statement not covered" >        return _finalized;</span>
+    }
 &nbsp;
     /// @dev Validates that the crowdsale has not already been finalized and that it has either closed or reached the total cap
     /// @param claimRemainToken claim remaining token or not
     /// @param remainTokenRecipient Wallet will receive remaining token
-    function finalize(bool claimRemainToken, address remainTokenRecipient)
-        public
-        <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused
-        <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant
-        <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(OWNER_ROLE)
+<span class="fstat-no" title="function not covered" >    function finalize(bool claimRemainToken, address remainTokenRecipient) public whenNotPaused onlyRole(OWNER_ROLE)</span>
     {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(!finalized, 'FinalizableCrowdsale: already finalized');
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(hasClosed() || <span class="branch-1 cbranch-no" title="branch not covered" >totalCapReached()</span>, 'FinalizableCrowdsale: not closed');
-        finalized = true;
+<span class="cstat-no" title="statement not covered" >        require(!finalized(), 'FinalizableCrowdsale: already finalized')</span>;
+<span class="cstat-no" title="statement not covered" >        require(hasClosed() || totalCapReached(), 'FinalizableCrowdsale: not closed')</span>;
+        _finalized = true;
 &nbsp;
-        <span class="missing-if-branch" title="if path not taken" >I</span>if (!isDistributedFully() &amp;&amp; !isLongSale()) {
+<span class="cstat-no" title="statement not covered" >        if (!isDistributedFully() &amp;&amp; !isLongSale()) {</span>
 <span class="cstat-no" title="statement not covered" >            uint256 tokenRemain = 0;</span>
             tokenRemain = getTokenAmount(getCurrencyRemainAmount());
 &nbsp;
@@ -172,14 +176,16 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
             }
         }
 &nbsp;
-        _finalization();
-        emit CrowdsaleFinalized();
+<span class="cstat-no" title="statement not covered" >        _finalization()</span>;
+<span class="cstat-no" title="statement not covered" >        emit CrowdsaleFinalized();</span>
     }
 &nbsp;
     /// @dev This function is meant to be overridden in derived contracts to implement specific finalization logic
-    function _finalization() internal virtual {
+<span class="fstat-no" title="function not covered" >    function _finalization() internal virtual {</span>
         // solhint-disable-previous-line no-empty-blocks
     }
+&nbsp;
+    uint256[49] private __gap;
 }
 &nbsp;</pre></td></tr>
 </table></pre>
@@ -187,7 +193,7 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

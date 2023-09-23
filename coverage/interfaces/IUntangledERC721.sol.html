@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>4/4</span>
+        <span class='fraction'>0/4</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">62.5% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>5/8</span>
+        <span class='fraction'>0/8</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>4/4</span>
+        <span class='fraction'>0/4</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>4/4</span>
+        <span class='fraction'>0/4</span>
       </div>
     </div>
   </div>
-  <div class='status-line high'></div>
+  <div class='status-line low'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -95,7 +95,9 @@
 50
 51
 52
-53</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+53
+54
+55</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -109,7 +111,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">223×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -117,15 +119,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">223×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -148,7 +152,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 &nbsp;
 import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
 import '../storage/Registry.sol';
@@ -156,28 +160,28 @@ import '../storage/Registry.sol';
 abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
     Registry public registry;
 &nbsp;
-    function __UntangledERC721__init(
+<span class="fstat-no" title="function not covered" >    function __UntangledERC721__init(</span>
         string memory name,
         string memory symbol,
         string memory baseTokenURI
-    ) internal <span class="missing-if-branch" title="else path not taken" >E</span>onlyInitializing {
-        __UntangledERC721__init_unchained(name, symbol, baseTokenURI);
+    ) internal onlyInitializing {
+<span class="cstat-no" title="statement not covered" >        __UntangledERC721__init_unchained(name, symbol, baseTokenURI)</span>;
     }
 &nbsp;
-    function __UntangledERC721__init_unchained(
+<span class="fstat-no" title="function not covered" >    function __UntangledERC721__init_unchained(</span>
         string memory name,
         string memory symbol,
         string memory baseTokenURI
-    ) internal <span class="missing-if-branch" title="else path not taken" >E</span>onlyInitializing {
-        __ERC721PresetMinterPauserAutoId_init_unchained(name, symbol, baseTokenURI);
+    ) internal onlyInitializing {
+<span class="cstat-no" title="statement not covered" >        __ERC721PresetMinterPauserAutoId_init_unchained(name, symbol, baseTokenURI)</span>;
     }
 &nbsp;
-    function mint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
-        _mint(to, tokenId);
+<span class="fstat-no" title="function not covered" >    function mint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {</span>
+<span class="cstat-no" title="statement not covered" >        _mint(to, tokenId)</span>;
     }
 &nbsp;
-    function safeMint(address to, uint256 tokenId) public virtual <span class="missing-if-branch" title="else path not taken" >E</span>onlyRole(MINTER_ROLE) {
-        _safeMint(to, tokenId);
+<span class="fstat-no" title="function not covered" >    function safeMint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {</span>
+<span class="cstat-no" title="statement not covered" >        _safeMint(to, tokenId)</span>;
     }
 &nbsp;
     /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
@@ -198,6 +202,8 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
 &nbsp;
     /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
+&nbsp;
+    uint256[49] private __gap;
 }
 &nbsp;</pre></td></tr>
 </table></pre>
@@ -205,7 +211,7 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../prettify.js"></script>

@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>5/5</span>
+        <span class='fraction'>0/5</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">50% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>9/18</span>
+        <span class='fraction'>0/18</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>3/3</span>
+        <span class='fraction'>0/3</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">0% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>6/6</span>
+        <span class='fraction'>0/6</span>
       </div>
     </div>
   </div>
-  <div class='status-line high'></div>
+  <div class='status-line low'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -83,7 +83,9 @@
 38
 39
 40
-41</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+41
+42
+43</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -96,8 +98,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14×</span>
-<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -108,23 +110,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 &nbsp;
 import './base/SecuritizationPoolServiceBase.sol';
 &nbsp;
@@ -135,33 +139,35 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTranche {
     using ConfigHelper for Registry;
 &nbsp;
-    modifier onlyOperator() {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(_msgSender() == address(registry.getDistributionOperator()), 'DistributionTranche: Only Operator');
+<span class="fstat-no" title="function not covered" >    modifier onlyOperator() {</span>
+<span class="cstat-no" title="statement not covered" >        require(_msgSender() == address(registry.getDistributionOperator()), 'DistributionTranche: Only Operator')</span>;
         _;
     }
 &nbsp;
     /// @inheritdoc IDistributionTranche
-    function redeem(
+<span class="fstat-no" title="function not covered" >    function redeem(</span>
         address usr,
         address pool,
         address notesToken,
         uint256 currencyAmount,
         uint256 tokenAmount
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>nonReentrant <span class="missing-if-branch" title="else path not taken" >E</span>onlyOperator {
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (tokenAmount &gt; 0) {
-            <span class="missing-if-branch" title="else path not taken" >E</span>require(IERC20(notesToken).transfer(pool, tokenAmount), 'DistributionTranche: token-transfer-failed');
+    ) external whenNotPaused nonReentrant onlyOperator {
+<span class="cstat-no" title="statement not covered" >        if (tokenAmount &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >            require(IERC20(notesToken).transfer(pool, tokenAmount), 'DistributionTranche: token-transfer-failed')</span>;
         }
-        ISecuritizationPool(pool).redeem(usr, notesToken, currencyAmount, tokenAmount);
+<span class="cstat-no" title="statement not covered" >        ISecuritizationPool(pool).redeem(usr, notesToken, currencyAmount, tokenAmount)</span>;
     }
 &nbsp;
     /// @inheritdoc IDistributionTranche
-    function redeemToken(
+<span class="fstat-no" title="function not covered" >    function redeemToken(</span>
         address noteToken,
         address usr,
         uint256 tokenAmount
-    ) external <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused <span class="missing-if-branch" title="else path not taken" >E</span>onlyOperator {
-        <span class="missing-if-branch" title="else path not taken" >E</span>require(IERC20(noteToken).transferFrom(usr, address(this), tokenAmount), 'DistributionTranche: token-transfer-failed');
+    ) external whenNotPaused onlyOperator {
+<span class="cstat-no" title="statement not covered" >        require(IERC20(noteToken).transferFrom(usr, address(this), tokenAmount), 'DistributionTranche: token-transfer-failed')</span>;
     }
+&nbsp;
+    uint256[50] private __gap;
 }
 &nbsp;</pre></td></tr>
 </table></pre>
@@ -169,7 +175,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Sep 20 2023 00:13:50 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

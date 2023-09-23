@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { expect } = require('./shared/expect.js');
+const { expect } = require('chai');
 const { BigNumber } = require('ethers');
 const {
   genSalt,
