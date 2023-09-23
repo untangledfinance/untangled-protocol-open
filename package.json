@@ -9,7 +9,8 @@
     "slither": "bash ./scripts/static_analysis.sh",
     "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles ./test/",
     "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "local-node": "hardhat node --no-deploy"
   },
   "author": "Untangled Finance Ltd",
   "license": "MIT",
