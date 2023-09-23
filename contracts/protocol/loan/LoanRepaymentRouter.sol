@@ -36,14 +36,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
             return false;
         }
 
-        // Check payer has sufficient balance and has granted router sufficient allowance.
-        if (
-            IERC20(_tokenAddress).balanceOf(_payer) < _amount ||
-            IERC20(_tokenAddress).allowance(_payer, address(this)) < _amount
-        ) {
-            emit LogError(uint8(Errors.PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT), _agreementId);
-            return false;
-        }
         return true;
     }
 
