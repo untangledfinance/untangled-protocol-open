@@ -15,12 +15,13 @@ describe('MintedNormalTGE', () => {
     ({ registry, noteTokenFactory } = await setup());
     const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
+    const NoteToken = await ethers.getContractFactory('NoteToken');
 
-    mintedNormalTGE = await MintedNormalTGE.new();
-    securitizationPool = await SecuritizationPool.new();
+    mintedNormalTGE = await MintedNormalTGE.deploy();
+    securitizationPool = await SecuritizationPool.deploy();
     const currencyAddress = await securitizationPool.underlyingCurrency();
     const longSale = true;
-    const noteToken = await NoteToken.new('Test', 'TST', 18, securitizationPool.address, 1);
+    const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
 
     await mintedNormalTGE.initialize(registry.address, poolTest.address, noteToken.address, currencyAddress, longSale);
   });
