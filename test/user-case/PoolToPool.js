@@ -1,5 +1,5 @@
 const { ethers, getChainId } = require('hardhat');
-const { expect } = require('../shared/expect.js');
+const { expect } = require('chai');
 const { setup } = require('../setup.js');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
@@ -15,16 +15,16 @@ describe('Pool to Pool', () => {
   // investor pool - the pool which invest into another pool (buy JOT/SOT of another pool)
   describe('Pool A invests in pool B', async () => {
     let stableCoin;
-    let securitizationManagerContract;
-    let loanKernelContract;
-    let loanRepaymentRouterContract;
+    let securitizationManager;
+    let loanKernel;
+    let loanRepaymentRouter;
     let loanAssetTokenContract;
-    let loanRegistryContract;
-    let uniqueIdentityContract;
-    let registryContract;
+    let loanRegistry;
+    let uniqueIdentity;
+    let registry;
     let loanInterestTermsContract;
-    let distributionOperatorContract;
-    let distributionTrancheContract;
+    let distributionOperator;
+    let distributionTranche;
     let poolBContract;
     let securitizationPoolValueService;
 
@@ -49,23 +49,23 @@ describe('Pool to Pool', () => {
       // Init contracts
       ({
         stableCoin,
-        uniqueIdentityContract,
+        uniqueIdentity,
         loanAssetTokenContract,
         loanInterestTermsContract,
-        loanRegistryContract,
-        loanKernelContract,
-        loanRepaymentRouterContract,
-        securitizationManagerContract,
-        distributionOperatorContract,
-        distributionTrancheContract,
-        registryContract,
+        loanRegistry,
+        loanKernel,
+        loanRepaymentRouter,
+        securitizationManager,
+        distributionOperator,
+        distributionTranche,
+        registry,
         securitizationPoolValueService,
       } = await setup());
 
       // Create new main pool
-      const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
-      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
-      const transaction = await securitizationManagerContract
+      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      const transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .newPoolInstance(stableCoin.address, '100000');
       const receipt = await transaction.wait();
@@ -76,7 +76,7 @@ describe('Pool to Pool', () => {
       const jotCap = '10000000000000000000';
       const isLongSaleTGEJOT = true;
       const now = dayjs().unix();
-      const setUpTGEJOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForJOT(
+      const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
         poolCreatorSigner.address,
         poolBContract.address,
         [1, 2],
@@ -96,7 +96,7 @@ describe('Pool to Pool', () => {
       // Init SOT sale
       const sotCap = '10000000000000000000';
       const isLongSaleTGESOT = true;
-      const setUpTGESOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForSOT(
+      const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
         poolCreatorSigner.address,
         poolBContract.address,
         [0, 2],
@@ -121,8 +121,8 @@ describe('Pool to Pool', () => {
       );
 
       // Create investor pool
-      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolACreator.address);
-      const poolACreationTransaction = await securitizationManagerContract
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolACreator.address);
+      const poolACreationTransaction = await securitizationManager
         .connect(poolACreator)
         .newPoolInstance(stableCoin.address, '100000');
       const poolACreationReceipt = await poolACreationTransaction.wait();
@@ -140,12 +140,12 @@ describe('Pool to Pool', () => {
         poolAPot.address,
         UID_TYPE,
         expiredAt,
-        uniqueIdentityContract.address,
+        uniqueIdentity.address,
         nonce,
         chainId
       );
       const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-      await uniqueIdentityContract.connect(poolAPot).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+      await uniqueIdentity.connect(poolAPot).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
 
       // Faucet stable coin to investorPoolPot
       await stableCoin.transfer(poolAPot.address, poolAPotInitialBalance); // $100
@@ -154,7 +154,7 @@ describe('Pool to Pool', () => {
     it('Pool A pot invests into pool B for JOT', async () => {
       // Invest into main pool (buy JOT token)
       await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
       expect(await stableCoin.balanceOf(poolAPot.address)).equal(
@@ -196,8 +196,8 @@ describe('Pool to Pool', () => {
     it('Pool A pot can make JOT redeem request to pool B', async () => {
       // Redeem
       const investorPoolPotJotBalance = await jotPoolBContract.balanceOf(poolAPot.address);
-      await jotPoolBContract.connect(poolAPot).approve(distributionTrancheContract.address, investorPoolPotJotBalance);
-      await distributionOperatorContract
+      await jotPoolBContract.connect(poolAPot).approve(distributionTranche.address, investorPoolPotJotBalance);
+      await distributionOperator
         .connect(poolAPot)
         .makeRedeemRequestAndRedeem(poolBContract.address, jotPoolBContract.address, '100');
       const investorPoolPotJotBalanceAfterRedeem = await jotPoolBContract.balanceOf(poolAPot.address);
@@ -211,7 +211,7 @@ describe('Pool to Pool', () => {
       await stableCoin
         .connect(poolAPot)
         .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
       expect(await stableCoin.balanceOf(poolAPot.address)).equal(
@@ -253,8 +253,8 @@ describe('Pool to Pool', () => {
     it('Pool A pot can make SOT redeem request to pool B', async () => {
       // Redeem
       const investorPoolPotSotBalance = await sotPoolBContract.balanceOf(poolAPot.address);
-      await sotPoolBContract.connect(poolAPot).approve(distributionTrancheContract.address, investorPoolPotSotBalance);
-      await distributionOperatorContract
+      await sotPoolBContract.connect(poolAPot).approve(distributionTranche.address, investorPoolPotSotBalance);
+      await distributionOperator
         .connect(poolAPot)
         .makeRedeemRequestAndRedeem(poolBContract.address, sotPoolBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
@@ -266,16 +266,16 @@ describe('Pool to Pool', () => {
 
   describe('Pool A invests in pool B, pool B invests in pool C', async () => {
     let stableCoin;
-    let securitizationManagerContract;
-    let loanKernelContract;
-    let loanRepaymentRouterContract;
+    let securitizationManager;
+    let loanKernel;
+    let loanRepaymentRouter;
     let loanAssetTokenContract;
-    let loanRegistryContract;
-    let uniqueIdentityContract;
-    let registryContract;
+    let loanRegistry;
+    let uniqueIdentity;
+    let registry;
     let loanInterestTermsContract;
-    let distributionOperatorContract;
-    let distributionTrancheContract;
+    let distributionOperator;
+    let distributionTranche;
     let distributionAssessorContract;
     let securitizationPoolValueService;
 
@@ -330,26 +330,26 @@ describe('Pool to Pool', () => {
       // Init contracts
       ({
         stableCoin,
-        uniqueIdentityContract,
+        uniqueIdentity,
         loanAssetTokenContract,
         loanInterestTermsContract,
-        loanRegistryContract,
-        loanKernelContract,
-        loanRepaymentRouterContract,
-        securitizationManagerContract,
-        distributionOperatorContract,
-        distributionTrancheContract,
+        loanRegistry,
+        loanKernel,
+        loanRepaymentRouter,
+        securitizationManager,
+        distributionOperator,
+        distributionTranche,
         distributionAssessorContract,
-        registryContract,
+        registry,
         securitizationPoolValueService,
       } = await setup());
 
       // Get constants
-      const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
+      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
 
       // Create pool C
-      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCCreatorSigner.address);
-      const poolCCreationTransaction = await securitizationManagerContract
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCCreatorSigner.address);
+      const poolCCreationTransaction = await securitizationManager
         .connect(poolCCreatorSigner)
         .newPoolInstance(stableCoin.address, '100000');
       const poolCCreationReceipt = await poolCCreationTransaction.wait();
@@ -363,21 +363,19 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool C
       const jotCapPoolC = '10000000000000000000';
       const isLongSaleTGEJOTPoolC = true;
-      const setUpTGEJOTTransactionPoolC = await securitizationManagerContract
-        .connect(poolCCreatorSigner)
-        .setUpTGEForJOT(
-          poolCCreatorSigner.address,
-          poolCContract.address,
-          [1, 2],
-          isLongSaleTGEJOTPoolC,
-          {
-            openingTime: NOW,
-            closingTime: NOW + ONE_DAY,
-            rate: 10000,
-            cap: jotCapPoolC,
-          },
-          'Ticker'
-        );
+      const setUpTGEJOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForJOT(
+        poolCCreatorSigner.address,
+        poolCContract.address,
+        [1, 2],
+        isLongSaleTGEJOTPoolC,
+        {
+          openingTime: NOW,
+          closingTime: NOW + ONE_DAY,
+          rate: 10000,
+          cap: jotCapPoolC,
+        },
+        'Ticker'
+      );
       const setUpTGEJOTPoolCReceipt = await setUpTGEJOTTransactionPoolC.wait();
       const [jotTGEPoolCAddress] = setUpTGEJOTPoolCReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedNormalTGEPoolCContract = await ethers.getContractAt('MintedNormalTGE', jotTGEPoolCAddress);
@@ -385,25 +383,23 @@ describe('Pool to Pool', () => {
       // Init SOT sale pool C
       const sotCapPoolC = '10000000000000000000';
       const isLongSaleTGESOTPoolC = true;
-      const setUpTGESOTTransactionPoolC = await securitizationManagerContract
-        .connect(poolCCreatorSigner)
-        .setUpTGEForSOT(
-          poolCCreatorSigner.address,
-          poolCContract.address,
-          [0, 2],
-          isLongSaleTGESOTPoolC,
-          10000,
-          90000,
-          86400,
-          10000,
-          {
-            openingTime: NOW,
-            closingTime: NOW + 2 * ONE_DAY,
-            rate: 10000,
-            cap: sotCapPoolC,
-          },
-          'Ticker'
-        );
+      const setUpTGESOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForSOT(
+        poolCCreatorSigner.address,
+        poolCContract.address,
+        [0, 2],
+        isLongSaleTGESOTPoolC,
+        10000,
+        90000,
+        86400,
+        10000,
+        {
+          openingTime: NOW,
+          closingTime: NOW + 2 * ONE_DAY,
+          rate: 10000,
+          cap: sotCapPoolC,
+        },
+        'Ticker'
+      );
       const setUpTGESOTPoolCReceipt = await setUpTGESOTTransactionPoolC.wait();
       const [sotTGEPoolCAddress] = setUpTGESOTPoolCReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedIncreasingInterestTGEPoolCContract = await ethers.getContractAt(
@@ -414,8 +410,8 @@ describe('Pool to Pool', () => {
       sotCContract = await ethers.getContractAt('NoteToken', sotPoolCAddress);
 
       // Create pool B
-      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolBCreatorSigner.address);
-      const transaction = await securitizationManagerContract
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolBCreatorSigner.address);
+      const transaction = await securitizationManager
         .connect(poolBCreatorSigner)
         .newPoolInstance(stableCoin.address, '100000');
       const receipt = await transaction.wait();
@@ -429,21 +425,19 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool B
       const jotCapPoolB = '10000000000000000000';
       const isLongSaleTGEJOTPoolB = true;
-      const setUpTGEJOTTransactionPoolB = await securitizationManagerContract
-        .connect(poolBCreatorSigner)
-        .setUpTGEForJOT(
-          poolBCreatorSigner.address,
-          poolBContract.address,
-          [1, 2],
-          isLongSaleTGEJOTPoolB,
-          {
-            openingTime: NOW,
-            closingTime: NOW + ONE_DAY,
-            rate: 10000,
-            cap: jotCapPoolB,
-          },
-          'Ticker'
-        );
+      const setUpTGEJOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForJOT(
+        poolBCreatorSigner.address,
+        poolBContract.address,
+        [1, 2],
+        isLongSaleTGEJOTPoolB,
+        {
+          openingTime: NOW,
+          closingTime: NOW + ONE_DAY,
+          rate: 10000,
+          cap: jotCapPoolB,
+        },
+        'Ticker'
+      );
       const setUpTGEJOTPoolBReceipt = await setUpTGEJOTTransactionPoolB.wait();
       const [jotTGEPoolBAddress] = setUpTGEJOTPoolBReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedNormalTGEPoolBContract = await ethers.getContractAt('MintedNormalTGE', jotTGEPoolBAddress);
@@ -451,25 +445,23 @@ describe('Pool to Pool', () => {
       // Init SOT sale pool B
       const sotCapPoolB = '10000000000000000000';
       const isLongSaleTGESOTPoolB = true;
-      const setUpTGESOTTransactionPoolB = await securitizationManagerContract
-        .connect(poolBCreatorSigner)
-        .setUpTGEForSOT(
-          poolBCreatorSigner.address,
-          poolBContract.address,
-          [0, 2],
-          isLongSaleTGESOTPoolB,
-          10000,
-          90000,
-          86400,
-          10000,
-          {
-            openingTime: NOW,
-            closingTime: NOW + 2 * ONE_DAY,
-            rate: 10000,
-            cap: sotCapPoolB,
-          },
-          'Ticker'
-        );
+      const setUpTGESOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForSOT(
+        poolBCreatorSigner.address,
+        poolBContract.address,
+        [0, 2],
+        isLongSaleTGESOTPoolB,
+        10000,
+        90000,
+        86400,
+        10000,
+        {
+          openingTime: NOW,
+          closingTime: NOW + 2 * ONE_DAY,
+          rate: 10000,
+          cap: sotCapPoolB,
+        },
+        'Ticker'
+      );
       const setUpTGESOTPoolBReceipt = await setUpTGESOTTransactionPoolB.wait();
       const [sotTGEPoolBAddress] = setUpTGESOTPoolBReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedIncreasingInterestTGEPoolBContract = await ethers.getContractAt(
@@ -480,8 +472,8 @@ describe('Pool to Pool', () => {
       sotBContract = await ethers.getContractAt('NoteToken', sotPoolBAddress);
 
       // Create pool A
-      await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolACreatorSigner.address);
-      const poolACreationTransaction = await securitizationManagerContract
+      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolACreatorSigner.address);
+      const poolACreationTransaction = await securitizationManager
         .connect(poolACreatorSigner)
         .newPoolInstance(stableCoin.address, '100000');
       const poolACreationReceipt = await poolACreationTransaction.wait();
@@ -498,12 +490,12 @@ describe('Pool to Pool', () => {
         poolAPotSigner.address,
         UID_TYPE,
         SIGNATURE_EXPIRE_TIME,
-        uniqueIdentityContract.address,
+        uniqueIdentity.address,
         nonce,
         chainId
       );
       const signaturePotA = await untangledAdminSigner.signMessage(uidMintMessagePotA);
-      await uniqueIdentityContract
+      await uniqueIdentity
         .connect(poolAPotSigner)
         .mint(UID_TYPE, SIGNATURE_EXPIRE_TIME, signaturePotA, { value: ethRequired });
 
@@ -512,12 +504,12 @@ describe('Pool to Pool', () => {
         poolBPotSigner.address,
         UID_TYPE,
         SIGNATURE_EXPIRE_TIME,
-        uniqueIdentityContract.address,
+        uniqueIdentity.address,
         nonce,
         chainId
       );
       const signaturePotB = await untangledAdminSigner.signMessage(uidMintMessagePotB);
-      await uniqueIdentityContract
+      await uniqueIdentity
         .connect(poolBPotSigner)
         .mint(UID_TYPE, SIGNATURE_EXPIRE_TIME, signaturePotB, { value: ethRequired });
 
@@ -530,7 +522,7 @@ describe('Pool to Pool', () => {
       await stableCoin
         .connect(poolAPotSigner)
         .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(poolAPotSigner)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
       expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal(
@@ -542,7 +534,7 @@ describe('Pool to Pool', () => {
       await stableCoin
         .connect(poolBPotSigner)
         .approve(mintedIncreasingInterestTGEPoolCContract.address, stableCoinAmountToBuyCSOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(poolBPotSigner)
         .buyTokens(mintedIncreasingInterestTGEPoolCContract.address, stableCoinAmountToBuyCSOT);
       expect(await stableCoin.balanceOf(poolBPotSigner.address)).equal(
@@ -615,9 +607,9 @@ describe('Pool to Pool', () => {
     it('Pool B pot can make SOT redeem request to pool C', async () => {
       // Redeem
       const sotBalance = await sotCContract.balanceOf(poolBPotSigner.address);
-      await sotCContract.connect(poolBPotSigner).approve(distributionTrancheContract.address, sotBalance);
+      await sotCContract.connect(poolBPotSigner).approve(distributionTranche.address, sotBalance);
 
-      await distributionOperatorContract
+      await distributionOperator
         .connect(poolBPotSigner)
         .makeRedeemRequestAndRedeem(poolCContract.address, sotCContract.address, sotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotCContract.balanceOf(poolBPotSigner.address);
@@ -629,11 +621,9 @@ describe('Pool to Pool', () => {
     it('Pool A pot can make SOT redeem request to pool B', async () => {
       // Redeem
       const investorPoolPotSotBalance = await sotBContract.balanceOf(poolAPotSigner.address);
-      await sotBContract
-        .connect(poolAPotSigner)
-        .approve(distributionTrancheContract.address, investorPoolPotSotBalance);
+      await sotBContract.connect(poolAPotSigner).approve(distributionTranche.address, investorPoolPotSotBalance);
 
-      await distributionOperatorContract
+      await distributionOperator
         .connect(poolAPotSigner)
         .makeRedeemRequestAndRedeem(poolBContract.address, sotBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotBContract.balanceOf(poolAPotSigner.address);

@@ -5,27 +5,15 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
-const { mainFixture } = require('../shared/fixtures.js');
+const { setup } = require('../setup');
 const { presignedMintMessage } = require('../shared/uid-helper');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
 describe('MinFirstLoss', () => {
   let stableCoin;
-  let securitizationManagerContract;
-  let loanKernelContract;
-  let loanRepaymentRouterContract;
-  let loanAssetTokenContract;
-  let loanRegistryContract;
-  let uniqueIdentityContract;
-  let registryContract;
-  let loanInterestTermsContract;
-  let distributionOperatorContract;
-  let distributionTrancheContract;
-  let mintedIncreasingInterestTGEContract;
-  let mintedNormalTGEContract;
-  let securitizationPoolValueService;
-  let securitizationPoolContract;
+  let securitizationManager;
+  let uniqueIdentity;
   let jotContract;
   let sotContract;
 
@@ -54,25 +42,12 @@ describe('MinFirstLoss', () => {
     ] = await ethers.getSigners();
 
     // Init contracts
-    ({
-      stableCoin,
-      uniqueIdentityContract,
-      loanAssetTokenContract,
-      loanInterestTermsContract,
-      loanRegistryContract,
-      loanKernelContract,
-      loanRepaymentRouterContract,
-      securitizationManagerContract,
-      distributionOperatorContract,
-      distributionTrancheContract,
-      registryContract,
-      securitizationPoolValueService,
-    } = await mainFixture());
+    ({ stableCoin, uniqueIdentity, securitizationManager } = await setup());
 
-    const POOL_CREATOR_ROLE = await securitizationManagerContract.POOL_CREATOR();
-    await securitizationManagerContract.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
+    await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
     // Create new pool
-    const transaction = await securitizationManagerContract
+    const transaction = await securitizationManager
       .connect(poolCreatorSigner)
       .newPoolInstance(stableCoin.address, '100000');
     const receipt = await transaction.wait();
@@ -88,7 +63,7 @@ describe('MinFirstLoss', () => {
     const jotCap = parseEther('1000'); // $1000
     const isLongSaleTGEJOT = true;
     const now = dayjs().unix();
-    const setUpTGEJOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForJOT(
+    const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
       [1, 2],
@@ -110,7 +85,7 @@ describe('MinFirstLoss', () => {
     // Init SOT sale
     const sotCap = parseEther('1000'); // $1000
     const isLongSaleTGESOT = true;
-    const setUpTGESOTTransaction = await securitizationManagerContract.connect(poolCreatorSigner).setUpTGEForSOT(
+    const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
       [0, 2],
@@ -143,12 +118,12 @@ describe('MinFirstLoss', () => {
       lenderSigner.address,
       UID_TYPE,
       expiredAt,
-      uniqueIdentityContract.address,
+      uniqueIdentity.address,
       nonce,
       chainId
     );
     const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-    await uniqueIdentityContract.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+    await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
 
     // Faucet stable coin to lender/investor
     await stableCoin.transfer(lenderSigner.address, parseEther('10000')); // $10k
@@ -162,7 +137,7 @@ describe('MinFirstLoss', () => {
         .approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
 
       await expect(
-        securitizationManagerContract
+        securitizationManager
           .connect(lenderSigner)
           .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
       ).to.be.revertedWith('MinFirstLoss is not satisfied');
@@ -170,14 +145,14 @@ describe('MinFirstLoss', () => {
     it('should revert if try to buy SOT with amount violates min first loss', async () => {
       // Lender buys JOT Token
       await stableCoin.connect(lenderSigner).approve(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT);
       // Lender try to buy SOT with amount violates min first loss
       const amountToBuySOT = stableCoinAmountToBuySOT.add(parseEther('1'));
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGEContract.address, amountToBuySOT);
       await expect(
-        securitizationManagerContract
+        securitizationManager
           .connect(lenderSigner)
           .buyTokens(mintedIncreasingInterestTGEContract.address, amountToBuySOT)
       ).to.be.revertedWith('MinFirstLoss is not satisfied');
@@ -187,7 +162,7 @@ describe('MinFirstLoss', () => {
       await stableCoin
         .connect(lenderSigner)
         .approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
-      await securitizationManagerContract
+      await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
     });
