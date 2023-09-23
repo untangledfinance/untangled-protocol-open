@@ -17,6 +17,17 @@ abstract contract TimedCrowdsale is Crowdsale {
     event UpdateUsingTimeLimit(bool isEnableTimeLimit);
     event UpdateSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime);
 
+    function __TimedCrowdsale__init(
+        Registry _registry,
+        address _pool,
+        address _token,
+        address _currency
+    ) internal onlyInitializing {
+        __Crowdsale__init(_registry, _pool, _token, _currency);
+
+        isEnableTimeLimit = true;
+    }
+
     modifier onlyWhileOpen() {
         require(isOpen() || isLongSale(), 'TimedCrowdsale: not open');
         _;
