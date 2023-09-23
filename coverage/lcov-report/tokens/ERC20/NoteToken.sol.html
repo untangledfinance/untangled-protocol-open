@@ -20,28 +20,28 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">83.33% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/6</span>
+        <span class='fraction'>5/6</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">50% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/2</span>
+        <span class='fraction'>1/2</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">83.33% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/6</span>
+        <span class='fraction'>5/6</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">88.89% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/9</span>
+        <span class='fraction'>8/9</span>
       </div>
     </div>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -112,31 +112,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
@@ -153,38 +153,38 @@ contract NoteToken is INoteToken, ERC20PresetMinterPauser {
     uint8 internal immutable _noteTokenType;
     uint8 internal immutable _decimals;
 &nbsp;
-<span class="fstat-no" title="function not covered" >    constructor(</span>
+    constructor(
         string memory name,
         string memory symbol,
         uint8 decimalsOfToken,
         address poolAddressOfToken,
         uint8 typeOfToken
     ) ERC20PresetMinterPauser(name, symbol) {
-<span class="cstat-no" title="statement not covered" >        require(poolAddressOfToken != address(0), 'NoteToken: Invalid pool address')</span>;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(poolAddressOfToken != address(0), 'NoteToken: Invalid pool address');
 &nbsp;
         _decimals = decimalsOfToken;
         _poolAddress = poolAddressOfToken;
         _noteTokenType = typeOfToken;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function poolAddress() external view returns (address) {</span>
-<span class="cstat-no" title="statement not covered" >        return _poolAddress;</span>
+    function poolAddress() external view returns (address) {
+        return _poolAddress;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function noteTokenType() external view returns (uint8) {</span>
-<span class="cstat-no" title="statement not covered" >        return _noteTokenType;</span>
+    function noteTokenType() external view returns (uint8) {
+        return _noteTokenType;
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {</span>
-<span class="cstat-no" title="statement not covered" >        return _decimals;</span>
+    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {
+        return _decimals;
     }
 &nbsp;
 <span class="fstat-no" title="function not covered" >    function burn(uint256 amount) public override(ERC20Burnable, INoteToken) {</span>
 <span class="cstat-no" title="statement not covered" >        return ERC20Burnable.burn(amount);</span>
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauser) {</span>
-<span class="cstat-no" title="statement not covered" >        return ERC20PresetMinterPauser.mint(receiver, amount);</span>
+    function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauser) {
+        return ERC20PresetMinterPauser.mint(receiver, amount);
     }
 }
 &nbsp;</pre></td></tr>
@@ -193,7 +193,7 @@ contract NoteToken is INoteToken, ERC20PresetMinterPauser {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:21:21 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../prettify.js"></script>

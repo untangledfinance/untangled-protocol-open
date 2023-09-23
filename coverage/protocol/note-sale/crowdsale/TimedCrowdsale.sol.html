@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">42.86% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/14</span>
+        <span class='fraction'>6/14</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">17.65% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/34</span>
+        <span class='fraction'>6/34</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">28.57% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/7</span>
+        <span class='fraction'>2/7</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">40.91% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/22</span>
+        <span class='fraction'>9/22</span>
       </div>
     </div>
   </div>
@@ -171,7 +171,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -184,21 +184,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -252,9 +252,9 @@ abstract contract TimedCrowdsale is Crowdsale {
 <span class="cstat-no" title="statement not covered" >        return block.timestamp &gt;= openingTime &amp;&amp; block.timestamp &lt;= closingTime;</span>
     }
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function hasClosed() public view returns (bool) {</span>
+    function hasClosed() public view returns (bool) {
         // solhint-disable-next-line not-rely-on-time
-<span class="cstat-no" title="statement not covered" >        return block.timestamp &gt; closingTime;</span>
+        return block.timestamp &gt; closingTime;
     }
 &nbsp;
     /// @notice Updates the closing time with the new closing time
@@ -266,22 +266,22 @@ abstract contract TimedCrowdsale is Crowdsale {
     }
 &nbsp;
     /// @notice Updates the opening time and closing time accordingly
-<span class="fstat-no" title="function not covered" >    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused {</span>
-<span class="cstat-no" title="statement not covered" >        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: Caller must be owner or pool")</span>;
-<span class="cstat-no" title="statement not covered" >        require(newClosingTime &gt;= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time')</span>;
+    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public <span class="missing-if-branch" title="else path not taken" >E</span>whenNotPaused {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(<span class="branch-0 cbranch-no" title="branch not covered" >hasRole(OWNER_ROLE, _msgSender())</span> || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: Caller must be owner or pool");
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(newClosingTime &gt;= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time');
         // not accept opening time in the past
-<span class="cstat-no" title="statement not covered" >        if (newOpeningTime &lt; block.timestamp) {</span>
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (newOpeningTime &lt; block.timestamp) {
             newOpeningTime = block.timestamp;
         }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        if (newClosingTime &lt;= newOpeningTime) {</span>
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (newClosingTime &lt;= newOpeningTime) {
             newClosingTime = newOpeningTime + 1;
         }
 &nbsp;
         openingTime = newOpeningTime;
         closingTime = newClosingTime;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        emit UpdateSaleRoundTime(newOpeningTime, newClosingTime);</span>
+        emit UpdateSaleRoundTime(newOpeningTime, newClosingTime);
     }
 &nbsp;
     /// @dev Sets the isEnableTimeLimit variable to the specified value
@@ -298,7 +298,7 @@ abstract contract TimedCrowdsale is Crowdsale {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:21:21 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

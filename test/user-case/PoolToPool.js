@@ -1,5 +1,5 @@
 const { ethers, getChainId } = require('hardhat');
-const { expect } = require('.chai');
+const { expect } = require('../shared/expect.js');
 const { mainFixture } = require('../shared/fixtures');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');

@@ -4,9 +4,6 @@ const { expect, assert } = require('chai');
 const { BigNumber, providers } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
 
-const SecuritizationPool = artifacts.require('SecuritizationPool');
-const NoteToken = artifacts.require('NoteToken');
-
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
 describe('TimedCrowdsaleMock', () => {
@@ -16,6 +13,8 @@ describe('TimedCrowdsaleMock', () => {
 
   before('create fixture', async () => {
     ({ registry, noteTokenFactory } = await setup());
+    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+    const NoteToken = await ethers.getContractFactory('NoteToken');
 
     securitizationPool = await SecuritizationPool.new();
     const noteToken = await NoteToken.new('Test', 'TST', 18, securitizationPool.address, 1);

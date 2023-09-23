@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/8</span>
+        <span class='fraction'>8/8</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -30,18 +30,18 @@
         <span class='fraction'>0/0</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/3</span>
+        <span class='fraction'>3/3</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/8</span>
+        <span class='fraction'>8/8</span>
       </div>
     </div>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -158,7 +158,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">140×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -176,25 +176,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -214,7 +211,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
@@ -244,14 +244,14 @@ library UnpackLoanParamtersLib {
      *
      * Notice: * uint256 (a) reinterprets a as 256-bit unsigned integer. As long as 256 bit = 32 bytes
      */
-<span class="fstat-no" title="function not covered" >    function _bitShiftRight(bytes32 value, uint256 amount) internal pure returns (uint256) {</span>
-<span class="cstat-no" title="statement not covered" >        return uint256(value) / 2**amount;</span>
+    function _bitShiftRight(bytes32 value, uint256 amount) internal pure returns (uint256) {
+        return uint256(value) / 2**amount;
     }
 &nbsp;
     /**
      * Unpack parameters from packed bytes32 data
      */
-<span class="fstat-no" title="function not covered" >    function _unpackLoanTermsParametersFromBytes(bytes32 parameters)</span>
+    function _unpackLoanTermsParametersFromBytes(bytes32 parameters)
         internal
         pure
         returns (
@@ -263,22 +263,22 @@ library UnpackLoanParamtersLib {
         )
     {
         // The subsequent 12 bytes of the parameters encode the PRINCIPAL AMOUNT.
-<span class="cstat-no" title="statement not covered" >        bytes32 principalAmountShifted = parameters &amp;</span>
+        bytes32 principalAmountShifted = parameters &amp;
             0x00ffffffffffffffffffffffff00000000000000000000000000000000000000;
         // The subsequent 3 bytes of the parameters encode the INTEREST RATE.
-<span class="cstat-no" title="statement not covered" >        bytes32 interestRateShifted = parameters &amp; 0x00000000000000000000000000ffffff00000000000000000000000000000000;</span>
+        bytes32 interestRateShifted = parameters &amp; 0x00000000000000000000000000ffffff00000000000000000000000000000000;
         // The subsequent 4 bits (half byte) encode the AMORTIZATION UNIT TYPE code.
-<span class="cstat-no" title="statement not covered" >        bytes32 amortizationUnitTypeShifted = parameters &amp;</span>
+        bytes32 amortizationUnitTypeShifted = parameters &amp;
             0x00000000000000000000000000000000f0000000000000000000000000000000;
         // The subsequent 12 bytes encode the term length, as denominated in
         // the encoded amortization unit.
-<span class="cstat-no" title="statement not covered" >        bytes32 termLengthInAmortizationUnitsShifted = parameters &amp;</span>
+        bytes32 termLengthInAmortizationUnitsShifted = parameters &amp;
             0x000000000000000000000000000000000ffffffffffffffffffffffff0000000;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        bytes32 gracePeriodInDaysShifted = parameters &amp;</span>
+        bytes32 gracePeriodInDaysShifted = parameters &amp;
             0x000000000000000000000000000000000000000000000000000000000ff00000;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >        return (</span>
+        return (
             _bitShiftRight(principalAmountShifted, 152),
             _bitShiftRight(interestRateShifted, 128),
             _bitShiftRight(amortizationUnitTypeShifted, 124),
@@ -290,7 +290,7 @@ library UnpackLoanParamtersLib {
     /**
      * Unpack data from hex string which including informations about Loan
      */
-<span class="fstat-no" title="function not covered" >    function unpackParametersFromBytes(bytes32 parameters)</span>
+    function unpackParametersFromBytes(bytes32 parameters)
         internal
         pure
         returns (
@@ -301,7 +301,7 @@ library UnpackLoanParamtersLib {
             uint256 _gracePeriodInDays
         )
     {
-<span class="cstat-no" title="statement not covered" >        return _unpackLoanTermsParametersFromBytes(parameters);</span>
+        return _unpackLoanTermsParametersFromBytes(parameters);
     }
 }
 &nbsp;</pre></td></tr>
@@ -310,7 +310,7 @@ library UnpackLoanParamtersLib {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:10:16 GMT+0700 (Indochina Time)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Sep 23 2023 16:21:21 GMT+0700 (Indochina Time)
 </div>
 </div>
 <script src="../prettify.js"></script>

@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
-const { expect } = require('.chai');
+const { expect } = require('chai');
 
 const { parseEther, defaultAbiCoder } = ethers.utils;
 
