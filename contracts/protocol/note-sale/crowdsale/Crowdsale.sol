@@ -165,6 +165,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         require(beneficiary != address(0), 'Crowdsale: beneficiary is zero address');
         //        require(currencyAmount != 0, "currency amount is 0");
         require(tokenAmount != 0, 'Crowdsale: token amount is 0');
+        require(hasStarted, 'Crowdsale: sale not started');
         require(isUnderTotalCap(currencyAmount), 'Crowdsale: cap exceeded');
     }
 
