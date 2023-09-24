@@ -242,6 +242,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
+        if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
+           openingBlockTimestamp = uint64(block.timestamp);
+        }
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -288,6 +291,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
                 'SecuritizationPool: Transfer failed'
             );
+        }
+        if (openingBlockTimestamp == 0) {  // If openingBlockTimestamp is not set
+            openingBlockTimestamp = uint64(block.timestamp);
         }
     }
 
@@ -374,7 +380,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
         require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
-        openingBlockTimestamp = _timeStartEarningInterest;
         termLengthInSeconds = _termLengthInSeconds;
 
         principalAmountSOT = _principalAmountForSOT;
