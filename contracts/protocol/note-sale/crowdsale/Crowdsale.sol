@@ -138,6 +138,14 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         return _currencyRaised == totalCap;
     }
 
+    /// @notice Catch event redeem token
+    /// @param currencyAmount amount of currency investor want to redeem
+    function onRedeem(
+        uint256 currencyAmount
+    ) public smpRestricted virtual {
+        _currencyRaised -= currencyAmount;
+    }
+
     /// @notice Retrieves the remaining token balance held by the crowdsale contract
     function getTokenRemainAmount() public view returns (uint256) {
         return IERC20(token).balanceOf(address(this));

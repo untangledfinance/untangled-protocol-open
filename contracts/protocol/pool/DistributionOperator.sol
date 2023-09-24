@@ -115,6 +115,13 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
                 registry.getDistributionTranche(),
                 securitizationPool
             );
+            address tge;
+            if (securitizationPool.sotToken() == tokenAddress) {
+                tge = securitizationPool.tgeAddress();
+            } else if (securitizationPool.jotToken() == tokenAddress) {
+                tge = securitizationPool.secondTGEAddress();
+            }
+            Crowdsale(tge).onRedeem(currencyLocked);
         }
 
         emit TokensRedeemed(redeemer, tokenAddress, currencyLocked, tokenRedeem);
