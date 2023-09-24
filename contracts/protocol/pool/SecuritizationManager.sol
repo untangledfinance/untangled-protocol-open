@@ -164,6 +164,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
     /// @param issuerTokenController who acts as owner of note sale
     /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param initialJOTAmount Minimum amount of JOT raised in currency before SOT can start
     /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
     /// @param longSale Define this sale is long sale. Default true
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
@@ -171,6 +172,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function setUpTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,
+        uint256 initialJOTAmount,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         NewRoundSaleParam memory saleParam,
@@ -180,6 +182,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setHasStarted(true);
+        tge.setInitialAmountJOT(initialJOTAmount);
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool

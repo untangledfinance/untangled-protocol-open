@@ -17,6 +17,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     uint256 public termLengthInSeconds;
     uint256 public interestRate;
     uint256 public yield;
+    uint256 public initialJOTAmount;
 
     function initialize(
         Registry _registry,
@@ -83,6 +84,16 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         _newSaleRound(rate_);
         newSaleRoundTime(openingTime_, closingTime_);
         _setTotalCap(cap_);
+    }
+
+    /// @notice Setup initial amount currency raised for JOT condition
+    /// @param _initialAmountJOT Expected minimum amount of JOT before SOT start
+    function setInitialAmountJOT(
+        uint256 _initialAmountJOT
+    ) external whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
+        require(initialJOTAmount < totalCap, "MintedNormalTGE: Initial JOT amount must be less than total cap");
+        initialJOTAmount = _initialAmountJOT;
     }
 
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
