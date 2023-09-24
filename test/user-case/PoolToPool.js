@@ -76,9 +76,11 @@ describe('Pool to Pool', () => {
       const jotCap = '10000000000000000000';
       const isLongSaleTGEJOT = true;
       const now = dayjs().unix();
+      const initialJOTAmount = parseEther('1')
       const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
         poolCreatorSigner.address,
         poolBContract.address,
+        initialJOTAmount,
         [1, 2],
         isLongSaleTGEJOT,
         {
@@ -208,6 +210,12 @@ describe('Pool to Pool', () => {
 
     it('Pool A pot invests into pool B for SOT', async () => {
       // Invest into main pool (buy JOT token)
+      await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
+      await securitizationManager
+        .connect(poolAPot)
+        .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
+      const value =await mintedIncreasingInterestTGEPoolBContract.hasStarted();
+      // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPot)
         .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
@@ -215,7 +223,7 @@ describe('Pool to Pool', () => {
         .connect(poolAPot)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
       expect(await stableCoin.balanceOf(poolAPot.address)).equal(
-        poolAPotInitialBalance.sub(stableCoinAmountToBuySOT).toString()
+        poolAPotInitialBalance.sub(stableCoinAmountToBuySOT).sub(stableCoinAmountToBuyJOT).toString()
       );
     });
     it('Pool A originator can transfer SOT from pool A pot to pool A', async () => {
@@ -259,7 +267,7 @@ describe('Pool to Pool', () => {
         .makeRedeemRequestAndRedeem(poolBContract.address, sotPoolBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(poolAPotInitialBalance);
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(poolAPotInitialBalance.sub(stableCoinAmountToBuyJOT));
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
   });
@@ -363,9 +371,11 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool C
       const jotCapPoolC = '10000000000000000000';
       const isLongSaleTGEJOTPoolC = true;
+      const initialJOTAmount = parseEther('1');
       const setUpTGEJOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForJOT(
         poolCCreatorSigner.address,
         poolCContract.address,
+        initialJOTAmount,
         [1, 2],
         isLongSaleTGEJOTPoolC,
         {
@@ -425,9 +435,11 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool B
       const jotCapPoolB = '10000000000000000000';
       const isLongSaleTGEJOTPoolB = true;
+      const initialJOTAmountPoolB = parseEther('1');
       const setUpTGEJOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForJOT(
         poolBCreatorSigner.address,
         poolBContract.address,
+        initialJOTAmountPoolB
         [1, 2],
         isLongSaleTGEJOTPoolB,
         {
