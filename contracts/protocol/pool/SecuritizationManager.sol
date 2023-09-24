@@ -241,7 +241,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialJOTAmount()) {
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
-                address sotTGEAddress = ISecuritizationPool(tge.pool()).secondTGEAddress();
+                address sotTGEAddress = ISecuritizationPool(tge.pool()).tgeAddress();
                 if (sotTGEAddress != address(0)) {
                     Crowdsale(sotTGEAddress).setHasStarted(true);
                 }
