@@ -142,7 +142,8 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     /// @param currencyAmount amount of currency investor want to redeem
     function onRedeem(
         uint256 currencyAmount
-    ) public smpRestricted virtual {
+    ) public virtual {
+        require(_msgSender() == address(registry.getDistributionOperator()), "Crowdsale: Caller must be distribution operator");
         _currencyRaised -= currencyAmount;
     }
 
