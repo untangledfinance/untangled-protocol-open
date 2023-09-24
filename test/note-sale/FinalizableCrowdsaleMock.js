@@ -3,6 +3,7 @@ const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber, providers } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
+const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
@@ -36,8 +37,9 @@ describe('FinalizableCrowdsaleMock', () => {
   });
 
   it('#finalize', async () => {
-    const [signer] = await ethers.getSigners();
-    await finalizableCrowdSale.grantRole(keccak256(Buffer.from('OWNER_ROLE')), signer.address);
+    await impersonateAccount(securitizationPool.address);
+    await setBalance(securitizationPool.address, ethers.utils.parseEther('1'));
+    const signer = await ethers.getSigner(securitizationPool.address);
 
     await finalizableCrowdSale.connect(signer).finalize(false, signer.address);
   });
