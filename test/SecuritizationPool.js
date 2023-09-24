@@ -245,6 +245,7 @@ describe('SecuritizationPool', () => {
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
+      const initialJOTAmount = parseEther('1');
       const prefixOfNoteTokenSaleName = 'JOT_';
 
       // JOT only has SaleType.NORMAL_SALE
@@ -253,6 +254,7 @@ describe('SecuritizationPool', () => {
         .setUpTGEForJOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          initialJOTAmount,
           [SaleType.NORMAL_SALE, tokenDecimals],
           true,
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
@@ -272,6 +274,11 @@ describe('SecuritizationPool', () => {
     });
 
     it('Should buy tokens successfully', async () => {
+      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('20'));
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
 
       await securitizationManager
@@ -279,9 +286,9 @@ describe('SecuritizationPool', () => {
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
-      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('880.0');
 
-      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('120.0');
 
       await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
       await securitizationManager
@@ -318,13 +325,13 @@ describe('SecuritizationPool', () => {
     it('#getJuniorAsset', async () => {
       const result = await securitizationPoolValueService.getJuniorAsset(securitizationPoolContract.address);
 
-      expect(formatEther(result)).equal('100.0');
+      expect(formatEther(result)).equal('120.0');
     });
 
     it('#getJuniorRatio', async () => {
       const result = await securitizationPoolValueService.getJuniorRatio(securitizationPoolContract.address);
 
-      expect(result.toNumber() / RATE_SCALING_FACTOR).equal(99.5);
+      expect(result.toNumber() / RATE_SCALING_FACTOR).equal(54.5455);
     });
   });
 
@@ -548,14 +555,14 @@ describe('SecuritizationPool', () => {
         parseEther('1000'),
         parseEther('1000')
       );
-      expect(formatEther(result)).equal('16190.0');
+      expect(formatEther(result)).equal('15210.0');
     });
 
     it('#getOutstandingPrincipalCurrency', async () => {
       const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
         securitizationPoolContract.address
       );
-      expect(formatEther(result)).equal('100.0');
+      expect(formatEther(result)).equal('90.0');
     });
   });
 
@@ -672,7 +679,7 @@ describe('SecuritizationPool', () => {
 
       // Force burn to test
       await jotToken.connect(lenderSigner).burn(parseEther('100'));
-      expect(formatEther(await jotToken.totalSupply())).equal('0.0');
+      expect(formatEther(await jotToken.totalSupply())).equal('20.0');
 
       await securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address);
     });
