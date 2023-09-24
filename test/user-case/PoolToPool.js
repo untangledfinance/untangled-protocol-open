@@ -13,7 +13,7 @@ const { presignedMintMessage } = require('../shared/uid-helper');
 const ONE_DAY = 86400; // seconds
 describe('Pool to Pool', () => {
   // investor pool - the pool which invest into another pool (buy JOT/SOT of another pool)
-  describe.skip('Pool A invests in pool B', async () => {
+  describe('Pool A invests in pool B', async () => {
     let stableCoin;
     let securitizationManager;
     let loanKernel;
