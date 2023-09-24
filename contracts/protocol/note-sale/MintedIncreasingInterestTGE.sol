@@ -100,8 +100,13 @@ contract MintedIncreasingInterestTGE is
         require(timeInterval > 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');
     }
 
-    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
-        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256 tokenAmount) {
+        tokenAmount = Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
+        if (_currencyRaised >= totalCap) {
+            if (!this.finalized()) {
+                this.finalize(false, pool);
+            }
+        }
     }
 
     uint256[45] private __gap;

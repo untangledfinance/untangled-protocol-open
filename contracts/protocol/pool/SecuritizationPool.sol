@@ -378,22 +378,23 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         termLengthInSeconds = _termLengthInSeconds;
 
         principalAmountSOT = _principalAmountForSOT;
-        if (interestRateSOT == 0) {
-            interestRateSOT = _interestRateForSOT;
-        }
 
         state = CycleState.OPEN;
 
         if (tgeAddress != address(0)) {
             MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
+            if (!mintedTokenGenrationEvent.finalized()) {
+                mintedTokenGenrationEvent.finalize(false, pot);
+            }
             mintedTokenGenrationEvent.setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
             );
+            interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
         }
         if (secondTGEAddress != address(0)) {
+            FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
             require(
                 MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
