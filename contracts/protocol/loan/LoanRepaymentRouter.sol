@@ -23,12 +23,9 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     /// the amount is greater than zero, and the debt agreement exists
     function _assertRepaymentRequest(
         bytes32 _agreementId,
-        address _payer,
-        uint256 _amount,
         address _tokenAddress
     ) private returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
-        require(_amount > 0, 'Amount must greater than 0.');
 
         // Ensure agreement exists.
         if (registry.getLoanAssetToken().ownerOf(uint256(_agreementId)) == address(0)) {
@@ -94,7 +91,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         uint256 agreementIdsLength = agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(
-                _assertRepaymentRequest(agreementIds[i], _msgSender(), amounts[i], tokenAddress),
+                _assertRepaymentRequest(agreementIds[i], tokenAddress),
                 'LoanRepaymentRouter: Invalid repayment request'
             );
             require(
