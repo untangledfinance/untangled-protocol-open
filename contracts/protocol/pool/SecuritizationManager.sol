@@ -179,6 +179,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+        tge.setHasStarted(true);
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool

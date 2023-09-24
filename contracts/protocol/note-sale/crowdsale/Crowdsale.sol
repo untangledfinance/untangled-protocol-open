@@ -12,6 +12,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
 
     event UpdateTotalCap(uint256 totalCap);
+    event SetHasStarted(bool hasStarted);
 
     Registry public registry;
 
@@ -86,11 +87,21 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         emit UpdateTotalCap(totalCap);
     }
 
+    /// @notice Set hasStarted variable
+    function setHasStarted(bool _hasStarted) public {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'Crowdsale: caller must be owner or manager'
+        );
+        hasStarted = _hasStarted;
+
+        emit SetHasStarted(hasStarted);
+    }
+
     /// @notice Sets the rate variable to the new rate
     function _newSaleRound(uint256 newRate) internal {
         require(!hasStarted, 'Crowdsale: Sale round overflow');
 
-        hasStarted = true;
         rate = newRate;
     }
 
