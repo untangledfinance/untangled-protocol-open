@@ -11,8 +11,9 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
     using ConfigHelper for Registry;
 
     enum SaleType {
-        MINTED_INCREASING_INTEREST,
-        NORMAL_SALE
+        MINTED_INCREASING_INTEREST_SOT,
+        NORMAL_SALE_JOT,
+        NORMAL_SALE_SOT
     }
 
     function initialize(Registry _registry) public initializer {
@@ -37,9 +38,11 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         uint8 saleType,
         bool longSale
     ) external override nonReentrant onlySecuritizationManager returns (address) {
-        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST)) {
+        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             return _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.NORMAL_SALE)) {
+        } else if (saleType == uint8(SaleType.NORMAL_SALE_JOT)) {
+            return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
+        } else if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
         } else{
             revert('Unknown sale type');

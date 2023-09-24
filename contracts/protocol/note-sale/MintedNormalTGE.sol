@@ -19,6 +19,8 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     uint256 public yield;
     uint256 public initialJOTAmount;
 
+    uint32 public pickedInterest;
+
     function initialize(
         Registry _registry,
         address _pool,
@@ -99,6 +101,12 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
+    }
+
+    function _finalization() internal override {
+        super._finalization();
+
+        pickedInterest = uint32(interestRate);
     }
 
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
