@@ -273,22 +273,30 @@ describe('Distribution', () => {
       jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
     });
 
+    it('Should buy tokens failed if buy sot first', async () => {
+      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+    });
+
     it('Should buy tokens successfully', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
 
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
-      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
 
-      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
-
-      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager
-        .connect(lenderSigner)
-        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
 
       const sotValue = await distributionAssessor.calcCorrespondingTotalAssetValue(
         sotToken.address,
@@ -455,7 +463,7 @@ describe('Distribution', () => {
   describe('#Distribution Accessor', async () => {
     it('#calcCorrespondingTotalAssetValue', async () => {
       let result = await distributionAssessor.calcCorrespondingTotalAssetValue(sotToken.address, lenderSigner.address);
-      expect(formatEther(result)).equal('0.0');
+      expect(formatEther(result)).equal('90.0');
 
       result = await distributionAssessor.calcCorrespondingTotalAssetValue(jotToken.address, lenderSigner.address);
       expect(formatEther(result)).equal('90.0');
@@ -465,12 +473,12 @@ describe('Distribution', () => {
       const result = await distributionAssessor['calcCorrespondingAssetValue(address,address[])'](sotToken.address, [
         lenderSigner.address,
       ]);
-      expect(result.map((x) => formatEther(x))).to.deep.equal(['0.0']);
+      expect(result.map((x) => formatEther(x))).to.deep.equal(['90.0']);
     });
 
     it('#calcTokenPrice', async () => {
       let result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, sotToken.address);
-      expect(formatEther(result)).equal('0.0');
+      expect(formatEther(result)).equal('0.000000000000000001');
 
       result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, jotToken.address);
       expect(formatEther(result)).equal('0.000000000000000001');
