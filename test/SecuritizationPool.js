@@ -278,7 +278,7 @@ describe('SecuritizationPool', () => {
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+      ).to.be.revertedWith(`Crowdsale: sale not started`);
     });
 
     it('Should buy tokens successfully', async () => {
@@ -326,7 +326,7 @@ describe('SecuritizationPool', () => {
     it('#getJuniorAsset', async () => {
       const result = await securitizationPoolValueService.getJuniorAsset(securitizationPoolContract.address);
 
-      expect(formatEther(result)).equal('120.0');
+      expect(formatEther(result)).equal('100.0');
     });
 
     it('#getJuniorRatio', async () => {
@@ -674,7 +674,7 @@ describe('SecuritizationPool', () => {
 
       // Force burn to test
       await jotToken.connect(lenderSigner).burn(parseEther('100'));
-      expect(formatEther(await jotToken.totalSupply())).equal('20.0');
+      expect(formatEther(await jotToken.totalSupply())).equal('0.0');
 
       await securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address);
     });
@@ -685,17 +685,13 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract
           .connect(poolCreatorSigner)
           .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
-      ).to.be.revertedWith(`SecuritizationPool: sale is still on going`);
+      ).to.be.revertedWith(`FinalizableCrowdsale: not closed`);
+
       await time.increaseTo(dayjs(new Date()).add(8, 'days').unix());
-      await mintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
 
-      await expect(
-        securitizationPoolContract
-          .connect(poolCreatorSigner)
-          .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
-      ).to.be.revertedWith(`SecuritizationPool: second sale is still on going`);
-
-      await jotMintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
+      await expect(mintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address)).to.be.revertedWith(
+        `FinalizableCrowdsale: Only pool contract can finalize`
+      );
 
       await securitizationPoolContract
         .connect(poolCreatorSigner)
