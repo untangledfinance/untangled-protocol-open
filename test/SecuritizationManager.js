@@ -175,15 +175,10 @@ describe('SecuritizationManager', () => {
       await securitizationManager.unpausePool(securitizationPoolContract.address);
     });
 
-    it('Should buy tokens successfully', async () => {
-      await securitizationManager
-        .connect(lenderSigner)
-        .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
-
-      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
-      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
-
-      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
+    it('Should buy tokens failed if buy sot first', async () => {
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
     });
   });
 
@@ -254,7 +249,16 @@ describe('SecuritizationManager', () => {
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
 
-      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+      let stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
+
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
+
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+
+      stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
       expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
 
       expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
