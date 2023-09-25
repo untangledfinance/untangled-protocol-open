@@ -239,10 +239,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint256[] calldata tokenIds
     ) external override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
         uint256 tokenIdsLength = tokenIds.length;
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
+            IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
+        }
         uint256 expectedAssetsValue = 0;
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
             expectedAssetsValue =
                 expectedAssetsValue +
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
