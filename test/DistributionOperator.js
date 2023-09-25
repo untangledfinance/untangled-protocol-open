@@ -248,6 +248,7 @@ describe('Distribution', () => {
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
       const prefixOfNoteTokenSaleName = 'JOT_';
+      const initialJotAmount = parseEther('100');
 
       // JOT only has SaleType.NORMAL_SALE
       const transaction = await securitizationManager
@@ -255,6 +256,7 @@ describe('Distribution', () => {
         .setUpTGEForJOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          initialJotAmount,
           [SaleType.NORMAL_SALE, tokenDecimals],
           true,
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
@@ -278,7 +280,7 @@ describe('Distribution', () => {
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+      ).to.be.revertedWith(`Crowdsale: sale not started`);
     });
 
     it('Should buy tokens successfully', async () => {

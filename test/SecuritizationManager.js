@@ -144,7 +144,7 @@ describe('SecuritizationManager', () => {
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
       ).to.be.revertedWith('Unauthorized. Must have correct UID');
     });
-    it('Should pause pool', async () => {
+    it('Register UID', async () => {
       // Gain UID
       const UID_TYPE = 0;
       const chainId = await getChainId();
@@ -164,21 +164,12 @@ describe('SecuritizationManager', () => {
       await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
 
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager.pausePool(securitizationPoolContract.address);
-
-      await expect(
-        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`Pausable: paused`);
-    });
-
-    it('Should un-pause pool', async () => {
-      await securitizationManager.unpausePool(securitizationPoolContract.address);
     });
 
     it('Should buy tokens failed if buy sot first', async () => {
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+      ).to.be.revertedWith(`Crowdsale: sale not started`);
     });
   });
 
@@ -194,6 +185,7 @@ describe('SecuritizationManager', () => {
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
       const prefixOfNoteTokenSaleName = 'JOT_';
+      const initialJotAmount = parseEther('100');
 
       // JOT only has SaleType.NORMAL_SALE
       const transaction = await securitizationManager
@@ -201,6 +193,7 @@ describe('SecuritizationManager', () => {
         .setUpTGEForJOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          initialJotAmount,
           [SaleType.NORMAL_SALE, tokenDecimals],
           true,
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
@@ -262,6 +255,18 @@ describe('SecuritizationManager', () => {
       expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
 
       expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
+    });
+
+    it('Should pause pool', async () => {
+      await securitizationManager.pausePool(securitizationPoolContract.address);
+
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`Pausable: paused`);
+    });
+
+    it('Should un-pause pool', async () => {
+      await securitizationManager.unpausePool(securitizationPoolContract.address);
     });
   });
 });
