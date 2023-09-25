@@ -8,8 +8,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
-    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
-
+    uint256 public constant RATE_SCALING_FACTOR = 10**4;
 
     address public tgeAddress;
     address public secondTGEAddress;
@@ -156,9 +155,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256[] calldata amounts
     ) external virtual;
 
-    /// @notice claims ERC20 assets and adds them to the token asset addresses array
-    function claimERC20Assets(address[] calldata tokenAddresses) external virtual;
-
     /// @notice transfers the remaining cash to a specified recipient wallet
     function claimCashRemain(address recipientWallet) external virtual;
 
@@ -189,9 +185,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     ) external virtual;
 
     /// @dev trigger update asset value repaid
-    function increaseTotalAssetRepaidCurrency(
-        uint256 amount
-    ) external virtual;
+    function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual;
 
     /// @notice decreases the locked distribution balance for a specific investor
     function decreaseLockedDistributeBalance(
@@ -210,15 +204,10 @@ abstract contract ISecuritizationPool is UntangledBase {
     ) external virtual;
 
     /// @notice allows the originator to withdraw from reserve
-    function withdraw(
-        uint256 amount
-    ) public virtual;
+    function withdraw(uint256 amount) public virtual;
 
     /// @dev trigger update reserve when buy note token action happens
-    function onBuyNoteToken(
-        uint256 currencyAmount
-    ) external virtual;
+    function onBuyNoteToken(uint256 currencyAmount) external virtual;
 
-
-    uint256[22] private __gap; 
+    uint256[22] private __gap;
 }

@@ -645,12 +645,6 @@ describe('SecuritizationPool', () => {
       expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('89.0');
     });
 
-    it('#claimERC20Assets', async () => {
-      await securitizationPoolContract.connect(poolCreatorSigner).claimERC20Assets([sotToken.address]);
-
-      expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('89.0');
-    });
-
     it('#claimCashRemain', async () => {
       expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('0.0');
       expect(formatEther(await sotToken.totalSupply())).equal('90.0');

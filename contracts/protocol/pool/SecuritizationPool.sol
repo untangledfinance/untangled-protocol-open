@@ -309,27 +309,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function claimERC20Assets(address[] calldata tokenAddresses) external override whenNotPaused nonReentrant {
-        uint256 tokenAddressesLength = tokenAddresses.length;
-        
-        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
-            require(
-                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
-                'SecuritizationPool: unknown-token-address'
-            );
-
-            require(
-                IERC20(tokenAddresses[i]).balanceOf(address(this)) > 0,
-                'SecuritizationPool: Token balance is zero'
-            );
-        }
-
-        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
-            _pushTokenAssetAddress(tokenAddresses[i]);
-        }
-    }
-
     // After closed pool and redeem all not -> get remain cash to recipient wallet
     /// @inheritdoc ISecuritizationPool
     function claimCashRemain(address recipientWallet)
@@ -441,12 +420,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     // Increase by value
     /// @inheritdoc ISecuritizationPool
-    function increaseTotalAssetRepaidCurrency(uint256 amount)
-        external
-        override
-        whenNotPaused
-        onlyLoanRepaymentRouter
-    {
+    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused onlyLoanRepaymentRouter {
         reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
     }
@@ -466,7 +440,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
         }
         reserve = reserve - currencyAmount;
-        
+
         if (tokenAmount > 0) {
             ERC20Burnable(notesToken).burn(tokenAmount);
         }
@@ -479,12 +453,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function onBuyNoteToken(uint256 currencyAmount)
-        external
-        override
-        whenNotPaused
-        onlySecuritizationManager
-    {
+    function onBuyNoteToken(uint256 currencyAmount) external override whenNotPaused onlySecuritizationManager {
         reserve = reserve + currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
     }
