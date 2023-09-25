@@ -182,7 +182,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setHasStarted(true);
-        tge.setInitialAmountJOT(initialJOTAmount);
+        tge.setInitialAmount(initialJOTAmount);
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool
@@ -239,7 +239,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
 
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
-            if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialJOTAmount()) {
+            if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
                 address sotTGEAddress = ISecuritizationPool(tge.pool()).tgeAddress();
                 if (sotTGEAddress != address(0)) {
