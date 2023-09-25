@@ -271,22 +271,28 @@ describe('SecuritizationPool', () => {
       jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
     });
 
-    it('Should buy tokens successfully', async () => {
+    it('Should buy tokens failed if buy sot first', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await expect(
+        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+    });
+
+    it('Should buy tokens successfully', async () => {
+      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager
+        .connect(lenderSigner)
+        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
 
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
-      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('900.0');
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
 
-      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('100.0');
-
-      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager
-        .connect(lenderSigner)
-        .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
     });
   });
 
@@ -324,7 +330,7 @@ describe('SecuritizationPool', () => {
     it('#getJuniorRatio', async () => {
       const result = await securitizationPoolValueService.getJuniorRatio(securitizationPoolContract.address);
 
-      expect(result.toNumber() / RATE_SCALING_FACTOR).equal(99.5);
+      expect(result.toNumber() / RATE_SCALING_FACTOR).equal(50);
     });
   });
 
@@ -548,7 +554,7 @@ describe('SecuritizationPool', () => {
         parseEther('1000'),
         parseEther('1000')
       );
-      expect(formatEther(result)).equal('16190.0');
+      expect(formatEther(result)).equal('15190.0');
     });
 
     it('#getOutstandingPrincipalCurrency', async () => {

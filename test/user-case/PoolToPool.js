@@ -208,15 +208,19 @@ describe('Pool to Pool', () => {
 
     it('Pool A pot invests into pool B for SOT', async () => {
       // Invest into main pool (buy JOT token)
+      await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
+      await securitizationManager
+        .connect(poolAPot)
+        .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
+
+      // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPot)
         .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
-      expect(await stableCoin.balanceOf(poolAPot.address)).equal(
-        poolAPotInitialBalance.sub(stableCoinAmountToBuySOT).toString()
-      );
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal('97000000000000000000');
     });
     it('Pool A originator can transfer SOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -259,7 +263,7 @@ describe('Pool to Pool', () => {
         .makeRedeemRequestAndRedeem(poolBContract.address, sotPoolBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(poolAPotInitialBalance);
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal('99000000000000000000');
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
   });
@@ -519,18 +523,28 @@ describe('Pool to Pool', () => {
 
     it('Pool A pot invests into pool B for SOT', async () => {
       // Invest into main pool (buy JOT token)
+      await stableCoin.connect(poolAPotSigner).approve(mintedNormalTGEPoolBContract.address, parseEther('1'));
+      await securitizationManager
+        .connect(poolAPotSigner)
+        .buyTokens(mintedNormalTGEPoolBContract.address, parseEther('1'));
+
+      // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPotSigner)
         .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
       await securitizationManager
         .connect(poolAPotSigner)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
-      expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal(
-        poolAPotInitialBalance.sub(stableCoinAmountToBuyBSOT).toString()
-      );
+      expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal('97000000000000000000');
       expect(await sotBContract.balanceOf(poolAPotSigner.address)).equal('200');
     });
     it('Pool B pot invests into pool C for SOT', async () => {
+      // Invest into main pool (buy JOT token)
+      await stableCoin.connect(poolBPotSigner).approve(mintedNormalTGEPoolCContract.address, parseEther('1'));
+      await securitizationManager
+        .connect(poolBPotSigner)
+        .buyTokens(mintedNormalTGEPoolCContract.address, parseEther('1'));
+
       await stableCoin
         .connect(poolBPotSigner)
         .approve(mintedIncreasingInterestTGEPoolCContract.address, stableCoinAmountToBuyCSOT);
@@ -628,7 +642,7 @@ describe('Pool to Pool', () => {
         .makeRedeemRequestAndRedeem(poolBContract.address, sotBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotBContract.balanceOf(poolAPotSigner.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPotSigner.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).closeTo(poolAPotInitialBalance, parseEther('0.01'));
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).closeTo('99000000000000000000', parseEther('0.01'));
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
   });
