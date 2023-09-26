@@ -31,4 +31,13 @@ interface ISecuritizationPoolValueService {
         uint256 tokenId,
         uint256 timestamp
     ) external view returns (uint256);
+
+    /// @notice calculates the expected value of an ERC20 asset in the securitization pool at a given timestamp
+    function getExpectedERC20AssetValue(
+        address poolAddress,
+        address assetPoolAddress,
+        address tokenAddress,
+        uint256 interestRate,
+        uint256 timestamp
+    ) external view returns (uint256);
 }

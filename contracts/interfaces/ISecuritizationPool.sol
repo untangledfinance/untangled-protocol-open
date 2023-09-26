@@ -23,6 +23,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     uint64 public termLengthInSeconds;
 
     uint256 public reserve; // Money in pool
+    uint256 public amountOwedToOriginator; // Money owed to originator
     uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
     uint256 public totalLockedDistributeBalance;
