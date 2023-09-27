@@ -5,6 +5,7 @@ import '../storage/Registry.sol';
 import '../base/UntangledBase.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
+    event Withdraw(address originatorAddress, uint256 amount);
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');

@@ -271,6 +271,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
             'SecuritizationPool: Transfer failed'
         );
+        emit Withdraw(_msgSender(), amount);
     }
 
     function checkMinFirstLost() public view returns (bool) {
