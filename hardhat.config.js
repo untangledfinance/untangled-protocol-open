@@ -80,6 +80,15 @@ module.exports = {
       loggingEnabled: true,
       url: `https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161`,
     },
+    goerli: {
+      saveDeployments: true,
+      accounts: accounts,
+      loggingEnabled: true,
+      url: `https://ethereum-goerli.publicnode.com`,
+      chainId: 5,
+      cusdToken: '',
+      usdcToken: '',
+    },
     ...networks,
   },
   etherscan: {
