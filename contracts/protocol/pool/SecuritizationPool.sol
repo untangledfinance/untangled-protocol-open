@@ -210,7 +210,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
-    }
+}
 
     /// @inheritdoc ISecuritizationPool
     function withdrawAssets(
@@ -251,6 +251,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
         }
         amountOwedToOriginator += expectedAssetsValue;
+        if (firstAssetTimestamp == 0) {
+            firstAssetTimestamp = block.timestamp;
+        }
         if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
            openingBlockTimestamp = uint64(block.timestamp);
         }

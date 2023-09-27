@@ -20,6 +20,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     //CycleState
     CycleState public state;
 
+    uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
