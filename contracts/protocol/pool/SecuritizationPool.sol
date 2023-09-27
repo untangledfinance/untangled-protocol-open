@@ -301,25 +301,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             );
         }
 
-        uint256 expectedAssetsValue = 0;
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-
-        for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
-            INoteToken notesToken = INoteToken(tokenAddresses[i]);
-            expectedAssetsValue += poolService.getExpectedERC20AssetValue(
-                address(this),
-                notesToken.poolAddress(),
-                tokenAddresses[i],
-                Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) ==
-                Configuration.NOTE_TOKEN_TYPE.SENIOR
-                    ? ISecuritizationPool(notesToken.poolAddress()).interestRateSOT()
-                    : 0,
-                block.timestamp
-            );
-        }
-
-        amountOwedToOriginator += expectedAssetsValue;
-
         if (openingBlockTimestamp == 0) {  // If openingBlockTimestamp is not set
             openingBlockTimestamp = uint64(block.timestamp);
         }
