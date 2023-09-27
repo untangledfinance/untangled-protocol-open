@@ -335,15 +335,21 @@ contract SecuritizationPoolValueService is
         return crowdsale.currencyRaised() - securitizationPool.paidPrincipalAmountSOT();
     }
 
+    function getNAVAssetValue(address poolAddress, uint256 timestamp) external view returns (uint256) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
+        return this.getExpectedAssetsValue(poolAddress, timestamp) - securitizationPool.amountOwedToOriginator();
+    }
+
     function getPoolValue(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+        uint256 nAVpoolValue = this.getNAVAssetValue(poolAddress, currentTimestamp);
 
         // use reserve variable instead
         uint256 balancePool = securitizationPool.reserve();
-        uint256 poolValue = balancePool + nAVpoolValue - securitizationPool.amountOwedToOriginator();
+        uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;
     }
@@ -366,8 +372,7 @@ contract SecuritizationPoolValueService is
         // require(poolValue > 0, 'Pool value is 0');
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
         uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
-
+        uint256 nAVpoolValue = this.getNAVAssetValue(poolAddress, currentTimestamp);
         return (beginningSeniorAsset * nAVpoolValue) / poolValue;
     }
 
