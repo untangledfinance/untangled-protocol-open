@@ -87,6 +87,13 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return poolAddress;
     }
 
+    /// @inheritdoc ISecuritizationManager
+    function registerPot(address pot) external override whenNotPaused {
+        require(isExistingPools[_msgSender()], "SecuritizationManager: Only SecuritizationPool");
+        require(potToPool[pot] == address(0), "SecuritizationManager: pot used for another pool");
+        potToPool[pot] = _msgSender();
+    }
+
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool
     /// @param issuerTokenController who acts as owner of note sale
     /// @param pool SecuritizationPool address where this sale belongs to
@@ -248,7 +255,11 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
             }
         }
 
-        ISecuritizationPool(tge.pool()).onBuyNoteToken(currencyAmount);
+        ISecuritizationPool(tge.pool()).increaseReserve(currencyAmount);
+        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+        if (poolOfPot != address(0)) {
+            ISecuritizationPool(poolOfPot).decreaseReserve(currencyAmount);
+        }
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
     }
 

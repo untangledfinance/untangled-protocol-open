@@ -157,6 +157,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (_pot == address(this)) {
             require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
         }
+        registry.getSecuritizationManager().registerPot(pot);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -468,8 +469,22 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function onBuyNoteToken(uint256 currencyAmount) external override whenNotPaused onlySecuritizationManager {
+    function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
         reserve = reserve + currencyAmount;
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function decreaseReserve(
+        uint256 currencyAmount
+    ) external override whenNotPaused {
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
+        reserve = reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
     }
 

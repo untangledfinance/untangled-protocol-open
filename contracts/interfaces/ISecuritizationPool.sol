@@ -208,7 +208,10 @@ abstract contract ISecuritizationPool is UntangledBase {
     function withdraw(uint256 amount) public virtual;
 
     /// @dev trigger update reserve when buy note token action happens
-    function onBuyNoteToken(uint256 currencyAmount) external virtual;
+    function increaseReserve(uint256 currencyAmount) external virtual;
+
+    /// @dev trigger update reserve
+    function decreaseReserve(uint256 currencyAmount) external virtual;
 
     uint256[22] private __gap;
 }

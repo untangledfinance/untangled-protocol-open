@@ -137,6 +137,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
+        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+        if (poolOfPot != address(0)) {
+            ISecuritizationPool(poolOfPot).increaseReserve(currencyLocked);
+        }
         return currencyLocked;
     }
 
