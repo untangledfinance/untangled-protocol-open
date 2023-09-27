@@ -258,7 +258,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /// @inheritdoc ISecuritizationPool
     function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
-        reserve = reserve - amount;
+        uint256 _amountOwedToOriginator = amountOwedToOriginator;
+        if (amount <= _amountOwedToOriginator) {
+            amountOwedToOriginator = _amountOwedToOriginator - amount;
+        } else {
+            uint256 _remaining = amount - _amountOwedToOriginator;
+            amountOwedToOriginator = 0;
+            reserve = reserve - _remaining;
+        }
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
