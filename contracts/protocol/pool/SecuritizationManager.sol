@@ -6,6 +6,7 @@ import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../interfaces/IRequiresUID.sol';
+import '../note-sale/fab/TokenGenerationEventFactory.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -164,7 +165,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     ) public {
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-        tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        uint8 saleType = saleTypeAndDecimal[0];
+        if (saleType == uint8(TokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
+            tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
