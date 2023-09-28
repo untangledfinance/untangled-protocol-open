@@ -252,7 +252,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
         amountOwedToOriginator += expectedAssetsValue;
         if (firstAssetTimestamp == 0) {
-            firstAssetTimestamp = block.timestamp;
+            firstAssetTimestamp = uint64(block.timestamp);
+            _setUpOpeningBlockTimestamp();
         }
         if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
            openingBlockTimestamp = uint64(block.timestamp);
@@ -497,6 +498,27 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
         reserve = reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function setUpOpeningBlockTimestamp() public override whenNotPaused {
+        require( _msgSender() == tgeAddress, "SecuritizationPool: Only tge address");
+        _setUpOpeningBlockTimestamp();
+    }
+
+    /// @dev Set the opening block timestamp
+    function _setUpOpeningBlockTimestamp() private {
+        if (tgeAddress == address(0)) return;
+        uint64 _firstNoteTokenMintedTimestamp = ICrowdSale(tgeAddress).firstNoteTokenMintedTimestamp();
+        uint64 _firstAssetTimestamp = firstAssetTimestamp;
+        if (_firstNoteTokenMintedTimestamp > 0 && _firstAssetTimestamp > 0) {
+            // Pick the later
+            if (_firstAssetTimestamp > _firstNoteTokenMintedTimestamp) {
+                openingBlockTimestamp = _firstAssetTimestamp;
+            } else {
+                openingBlockTimestamp = _firstNoteTokenMintedTimestamp;
+            }
+        }
     }
 
     uint256[50] private __gap;

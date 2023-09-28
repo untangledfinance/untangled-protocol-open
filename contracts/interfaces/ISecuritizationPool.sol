@@ -215,5 +215,8 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @dev trigger update reserve
     function decreaseReserve(uint256 currencyAmount) external virtual;
 
+    /// @dev Trigger set up opening block timestamp
+    function setUpOpeningBlockTimestamp() external virtual;
+
     uint256[22] private __gap;
 }
