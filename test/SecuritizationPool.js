@@ -582,6 +582,12 @@ describe('SecuritizationPool', () => {
           .connect(poolCreatorSigner)
           .exportAssets(stableCoin.address, secondSecuritizationPool.address, [tokenIds[1]])
       ).to.be.revertedWith(`SecuritizationPool: Asset does not exist`);
+
+      // await expect(
+      //   securitizationPoolContract
+      //     .connect(poolCreatorSigner)
+      //     .exportAssets(stableCoin.address, secondSecuritizationPool.address, [tokenIds[1]])
+      // ).to.be.revertedWithCustomError(securitizationPoolContract, `SecuritizationPoolAssetNotExisted`);
     });
 
     it('#setPot', async () => {
