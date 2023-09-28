@@ -266,10 +266,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (amount <= _amountOwedToOriginator) {
             amountOwedToOriginator = _amountOwedToOriginator - amount;
         } else {
-            uint256 _remaining = amount - _amountOwedToOriginator;
             amountOwedToOriginator = 0;
-            reserve = reserve - _remaining;
         }
+        reserve = reserve - amount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
