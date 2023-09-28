@@ -30,6 +30,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     // How many token units a buyer gets per currency.
     uint256 public rate; // support by RATE_SCALING_FACTOR decimal numbers
     bool public hasStarted;
+    uint64 public firstNoteTokenMintedTimestamp; // Timestamp at which the first asset is collected to pool
 
     /// @dev Amount of currency raised
     uint256 internal _currencyRaised;
@@ -188,7 +189,15 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Mints and delivers tokens to the beneficiary
     function _deliverTokens(address beneficiary, uint256 tokenAmount) internal {
-        INoteToken(token).mint(beneficiary, tokenAmount);
+        INoteToken noteToken = INoteToken(token);
+        if (
+            noteToken.noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.SENIOR) &&
+            noteToken.totalSupply() == 0
+        ) {
+            firstNoteTokenMintedTimestamp = uint64(block.timestamp);
+            ISecuritizationPool(pool).setUpOpeningBlockTimestamp();
+        }
+        noteToken.mint(beneficiary, tokenAmount);
     }
 
     /// @dev Burns and delivers tokens to the beneficiary
