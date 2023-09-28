@@ -367,6 +367,9 @@ contract SecuritizationPoolValueService is
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+        if (nAVpoolValue > poolValue) {
+            return beginningSeniorAsset;
+        }
         return (beginningSeniorAsset * nAVpoolValue) / poolValue;
     }
 
@@ -389,24 +392,7 @@ contract SecuritizationPoolValueService is
 
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
-
-        uint256 seniorBalance;
-
-        uint256 poolValue;
-        poolValue = this.getPoolValue(poolAddress);
-        // currency balance of pool Address
-        uint256 balancePool = securitizationPool.reserve();
-        if (poolValue == 0) return 0;
-
-        // uint256 ratioForReserve = balancePool / (poolValue);
-        // seniorBalance = ratioForReserve * beginningSeniorAsset;
-        // => seniorBalance = balancePool / poolValue * beginningSeniorAsset;
-        seniorBalance = balancePool * beginningSeniorAsset / poolValue;
-
-        return seniorBalance;
+        return this.getBeginningSeniorAsset(poolAddress) - this.getBeginningSeniorDebt(poolAddress);
     }
 
     function getReserve(
