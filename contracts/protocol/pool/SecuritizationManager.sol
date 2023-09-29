@@ -58,6 +58,10 @@ contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequir
         _;
     }
 
+    function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        factoryAdmin = _factoryAdmin;
+    }
+
     function getPoolsLength() public view returns (uint256) {
         return pools.length;
     }
