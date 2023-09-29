@@ -43,7 +43,7 @@ async function setup() {
   securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
   const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
-  noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address]);
+  noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address, factoryAdmin.address]);
   const TokenGenerationEventFactory = await ethers.getContractFactory('TokenGenerationEventFactory');
   tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [
     registry.address,
@@ -105,11 +105,14 @@ async function setup() {
   const mintedIncreasingInterestTGEImpl = await MintedIncreasingInterestTGE.deploy();
   const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
   const mintedNormalTGEImpl = await MintedNormalTGE.deploy();
+  const NoteToken = await ethers.getContractFactory('NoteToken');
+  const noteTokenImpl = await NoteToken.deploy();
 
   await registry.setSecuritizationPool(securitizationPoolImpl.address);
   await registry.setSecuritizationManager(securitizationManager.address);
   await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGEImpl.address);
   await registry.setMintedNormalTGE(mintedNormalTGEImpl.address);
+  await registry.setNoteToken(noteTokenImpl.address);
 
   await registry.setNoteTokenFactory(noteTokenFactory.address);
   await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);

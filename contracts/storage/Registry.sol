@@ -40,6 +40,10 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY), newAddress);
     }
 
+    function setNoteToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN), newAddress);
+    }
+
     function setTokenGenerationEventFactory(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.TOKEN_GENERATION_EVENT_FACTORY), newAddress);
     }
