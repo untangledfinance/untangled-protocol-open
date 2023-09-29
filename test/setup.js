@@ -45,7 +45,10 @@ async function setup() {
   const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
   noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address]);
   const TokenGenerationEventFactory = await ethers.getContractFactory('TokenGenerationEventFactory');
-  tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [registry.address]);
+  tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [
+    registry.address,
+    factoryAdmin.address,
+  ]);
 
   const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
   uniqueIdentity = await upgrades.deployProxy(UniqueIdentity, [untangledAdminSigner.address, '']);

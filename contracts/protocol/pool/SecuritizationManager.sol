@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
+import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../interfaces/IRequiresUID.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
-contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequiresUID {
+contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
     uint256[] public allowedUIDTypes;
-    address public factoryAdmin;
 
     struct NewRoundSaleParam {
         uint256 openingTime;
@@ -24,9 +23,9 @@ contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequir
 
     function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
+        __Factory__init(_factoryAdmin);
 
         registry = _registry;
-        factoryAdmin = _factoryAdmin;
     }
 
     event NewTGECreated(address instanceAddress);
@@ -59,15 +58,11 @@ contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequir
     }
 
     function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        factoryAdmin = _factoryAdmin;
+        _setFactoryAdmin(_factoryAdmin);
     }
 
     function getPoolsLength() public view returns (uint256) {
         return pools.length;
-    }
-
-    function getSelector(string memory _func) internal pure returns (bytes4) {
-        return bytes4(keccak256(bytes(_func)));
     }
 
     /// @notice Creates a new securitization pool
@@ -90,13 +85,7 @@ contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequir
             minFirstLossCushion
         );
 
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            poolImplAddress,
-            factoryAdmin,
-            _initialData
-        );
-
-        address poolAddress = address(proxy);
+        address poolAddress = _deployInstance(poolImplAddress, _initialData);
 
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
 
