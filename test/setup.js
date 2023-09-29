@@ -33,8 +33,9 @@ async function setup() {
   const Registry = await ethers.getContractFactory('Registry');
   registry = await upgrades.deployProxy(Registry, []);
 
-  const FactoryAdmin = await ethers.getContractFactory('FactoryAdmin');
-  factoryAdmin = await upgrades.deployProxy(FactoryAdmin, []);
+  const admin = await upgrades.admin.getInstance();
+
+  factoryAdmin = await ethers.getContractAt('ProxyAdmin', admin.address);
 
   const SecuritizationManager = await ethers.getContractFactory('SecuritizationManager');
   securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address, factoryAdmin.address]);

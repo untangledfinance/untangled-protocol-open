@@ -4,14 +4,13 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
-import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../interfaces/IRequiresUID.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
-contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
+contract SecuritizationManager is UntangledBase, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
     uint256[] public allowedUIDTypes;
     address public factoryAdmin;
@@ -79,10 +78,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         returns (address)
     {
         address poolImplAddress = address(registry.getSecuritizationPool());
-        // address poolAddress = deployMinimal(poolImplAddress);
 
-        // ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-        // poolInstance.initialize(registry, currency, minFirstLossCushion);
         bytes memory _initialData = abi.encodeWithSelector(
             getSelector('initialize(address,address,uint32)'),
             registry,
