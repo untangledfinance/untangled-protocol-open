@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '../note-sale/MintedIncreasingInterestTGE.sol';
 import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
@@ -13,6 +14,7 @@ import '../../interfaces/IRequiresUID.sol';
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
     uint256[] public allowedUIDTypes;
+    address public factoryAdmin;
 
     struct NewRoundSaleParam {
         uint256 openingTime;
@@ -21,10 +23,11 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint256 cap;
     }
 
-    function initialize(Registry _registry) public initializer {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
 
         registry = _registry;
+        factoryAdmin = _factoryAdmin;
     }
 
     event NewTGECreated(address instanceAddress);
@@ -60,6 +63,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return pools.length;
     }
 
+    function getSelector(string memory _func) internal pure returns (bytes4) {
+        return bytes4(keccak256(bytes(_func)));
+    }
+
     /// @notice Creates a new securitization pool
     /// @param currency The main currency used in this new pool. Ex: cUSD's address
     /// @param minFirstLossCushion Define the minimum JOT ratio in pool
@@ -72,10 +79,27 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         returns (address)
     {
         address poolImplAddress = address(registry.getSecuritizationPool());
-        address poolAddress = deployMinimal(poolImplAddress);
+        // address poolAddress = deployMinimal(poolImplAddress);
+
+        // ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
+        // poolInstance.initialize(registry, currency, minFirstLossCushion);
+        bytes memory _initialData = abi.encodeWithSelector(
+            getSelector('initialize(address,address,uint32)'),
+            registry,
+            currency,
+            minFirstLossCushion
+        );
+
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            poolImplAddress,
+            factoryAdmin,
+            _initialData
+        );
+
+        address poolAddress = address(proxy);
 
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-        poolInstance.initialize(registry, currency, minFirstLossCushion);
+
         poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
         poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 

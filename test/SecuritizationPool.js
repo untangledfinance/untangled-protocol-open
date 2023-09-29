@@ -43,6 +43,7 @@ describe('SecuritizationPool', () => {
   let mintedIncreasingInterestTGE;
   let jotMintedIncreasingInterestTGE;
   let securitizationPoolValueService;
+  let factoryAdmin;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
@@ -61,6 +62,7 @@ describe('SecuritizationPool', () => {
       distributionOperator,
       distributionTranche,
       securitizationPoolValueService,
+      factoryAdmin,
     } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
@@ -718,4 +720,26 @@ describe('SecuritizationPool', () => {
       expect(tokens).to.deep.equal([sotToken.address]);
     });
   });
+
+  // describe('Upgradeables', async () => {
+  //   it('Should upgrade to new Implementation successfully', async () => {
+  //     const Logic = await ethers.getContractFactory('SecuritizationPoolV2');
+  //     const logic = await Logic.deploy();
+
+  //     const test = await logic.greeting();
+  //     console.log(test);
+
+  //     // Update new logic
+  //     await factoryAdmin.connect(untangledAdminSigner).upgrade(securitizationPoolContract.address, logic.address);
+
+  //     const tokens = await securitizationPoolContract.getTokenAssetAddresses();
+
+  //     console.log(tokens);
+
+  //     expect(tokens).to.deep.equal([sotToken.address]);
+  //     const result = await securitizationPoolContract.greeting();
+
+  //     expect(result).to.be.eq('Hello world');
+  //   });
+  // });
 });
