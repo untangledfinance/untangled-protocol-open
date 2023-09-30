@@ -1,5 +1,5 @@
 const { getChainId } = require('hardhat');
-const { networks } = require('../../networks');
+const { registrySet } = require('../utils');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
@@ -20,7 +20,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     skipIfAlreadyDeployed: true,
     log: true,
   });
+
+  const contracts = ['NoteTokenFactory'];
+
+  await registrySet(contracts);
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'note_factory'];
+module.exports.tags = ['migration_mumbai', 'note_factory_mumbai_migration'];
