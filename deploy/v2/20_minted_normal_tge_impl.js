@@ -7,7 +7,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await deployments.deploy('MintedNormalTGE', {
     from: deployer,
-    skipIfAlreadyDeployed: true,
     args: [],
     log: true,
   });
