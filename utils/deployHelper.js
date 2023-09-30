@@ -1,9 +1,10 @@
-const deployProxy = async (hre, contractName, initParams, initSignature) => {
+const deployProxy = async (hre, contractName, initParams, initSignature, contractSpecificName) => {
   const { getNamedAccounts, deployments } = hre;
   const { deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const contractImpl = await deploy(`${contractName}Impl`, {
+  const specificName = contractSpecificName || contractName;
+  const contractImpl = await deploy(`${specificName}Impl`, {
     contract: contractName,
     skipIfAlreadyDeployed: true,
     from: deployer,
@@ -11,7 +12,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
     log: true,
   });
 
-  const contractProxy = await deploy(`${contractName}Proxy`, {
+  const contractProxy = await deploy(`${specificName}Proxy`, {
     contract: 'UpgradableProxy',
     skipIfAlreadyDeployed: true,
     from: deployer,
@@ -22,16 +23,16 @@ const deployProxy = async (hre, contractName, initParams, initSignature) => {
   if (contractProxy.newlyDeployed) {
     const contract = contractImpl;
     contract.address = contractProxy.address;
-    await save(contractName, contract);
-    await execute(contractName, { from: deployer, log: true }, initSignature || 'initialize', ...initParams);
+    await save(specificName, contract);
+    await execute(specificName, { from: deployer, log: true }, initSignature || 'initialize', ...initParams);
   } else if (contractImpl.newlyDeployed) {
-    await execute(`${contractName}Proxy`, { from: deployer, log: true }, 'updateImplementation', contractImpl.address);
+    await execute(`${specificName}Proxy`, { from: deployer, log: true }, 'updateImplementation', contractImpl.address);
     const contract = contractImpl;
     contract.address = contractProxy.address;
-    await save(contractName, contract);
+    await save(specificName, contract);
   }
 
-  return contractProxy
+  return contractProxy;
 };
 
 module.exports = {
