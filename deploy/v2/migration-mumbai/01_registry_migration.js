@@ -1,16 +1,17 @@
 const { getChainId } = require('hardhat');
-const { networks } = require('../../networks');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, execute, get } = deployments;
+  const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deployments.deploy('SecuritizationPool', {
+  await deployments.deploy('Registry', {
     from: deployer,
-    args: [],
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+    },
     log: true,
   });
 };
 
 module.exports.dependencies = [];
-module.exports.tags = ['mainnet', 'securitization_pool_impl'];
+module.exports.tags = ['migration_mumbai', 'registry_mumbai_migration'];
