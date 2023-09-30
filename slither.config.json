@@ -1,14 +1,12 @@
 {
-  "detectors_to_exclude": "naming-convention|solc-version",
+  "detectors_to_exclude": "naming-convention,solc-version,unimplemented-functions,too-many-digits,assembly",
   "exclude_informational": false,
   "exclude_low": false,
   "exclude_medium": false,
   "exclude_high": false,
   "disable_color": false,
-  "filter_paths": "@openzeppelin/contracts|contracts/itf|contracts/mocks",
-  "ignore_compile": true,
   "legacy_ast": false,
   "buidler_cache_directory": "cache",
   "hardhat_artifacts_directory": "artifacts",
-  "solc_remaps": "@openzeppelin/contracts=node_modules/@openzeppelin/contracts"
+  "filter_paths": "node_modules"
 }

@@ -12,7 +12,7 @@ if docker images | awk '{print $1}' | grep -q "^$IMAGE_NAME$"; then
 fi
 
 # Build Docker image
-DOCKER_CLI_HINTS=false docker build -t $IMAGE_NAME -f Dockerfiles/slither.Dockerfile .
+DOCKER_CLI_HINTS=false docker build --no-cache -t $IMAGE_NAME -f Dockerfiles/slither.Dockerfile .
 
 # Run Docker with cleanup option
 docker run -it --rm $IMAGE_NAME .
