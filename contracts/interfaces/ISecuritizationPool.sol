@@ -5,6 +5,7 @@ import '../storage/Registry.sol';
 import '../base/UntangledBase.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
+    event Withdraw(address originatorAddress, uint256 amount);
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
@@ -19,10 +20,12 @@ abstract contract ISecuritizationPool is UntangledBase {
     //CycleState
     CycleState public state;
 
+    uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
     uint256 public reserve; // Money in pool
+    uint256 public amountOwedToOriginator; // Money owed to originator
     uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
     uint256 public totalLockedDistributeBalance;
@@ -207,7 +210,13 @@ abstract contract ISecuritizationPool is UntangledBase {
     function withdraw(uint256 amount) public virtual;
 
     /// @dev trigger update reserve when buy note token action happens
-    function onBuyNoteToken(uint256 currencyAmount) external virtual;
+    function increaseReserve(uint256 currencyAmount) external virtual;
+
+    /// @dev trigger update reserve
+    function decreaseReserve(uint256 currencyAmount) external virtual;
+
+    /// @dev Trigger set up opening block timestamp
+    function setUpOpeningBlockTimestamp() external virtual;
 
     uint256[22] private __gap;
 }

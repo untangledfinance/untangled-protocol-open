@@ -157,6 +157,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (_pot == address(this)) {
             require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
         }
+        registry.getSecuritizationManager().registerPot(pot);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -209,7 +210,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
-    }
+}
 
     /// @inheritdoc ISecuritizationPool
     function withdrawAssets(
@@ -242,16 +243,38 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
+        uint256 expectedAssetsValue = 0;
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
+            expectedAssetsValue =
+                expectedAssetsValue +
+                poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
+        }
+        amountOwedToOriginator += expectedAssetsValue;
+        if (firstAssetTimestamp == 0) {
+            firstAssetTimestamp = uint64(block.timestamp);
+            _setUpOpeningBlockTimestamp();
+        }
+        if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
+           openingBlockTimestamp = uint64(block.timestamp);
+        }
     }
 
     /// @inheritdoc ISecuritizationPool
     function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+        uint256 _amountOwedToOriginator = amountOwedToOriginator;
+        if (amount <= _amountOwedToOriginator) {
+            amountOwedToOriginator = _amountOwedToOriginator - amount;
+        } else {
+            amountOwedToOriginator = 0;
+        }
         reserve = reserve - amount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
             'SecuritizationPool: Transfer failed'
         );
+        emit Withdraw(_msgSender(), amount);
     }
 
     function checkMinFirstLost() public view returns (bool) {
@@ -288,6 +311,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
                 'SecuritizationPool: Transfer failed'
             );
+        }
+
+        if (openingBlockTimestamp == 0) {  // If openingBlockTimestamp is not set
+            openingBlockTimestamp = uint64(block.timestamp);
         }
     }
 
@@ -353,26 +380,26 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
         require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
-        openingBlockTimestamp = _timeStartEarningInterest;
         termLengthInSeconds = _termLengthInSeconds;
 
         principalAmountSOT = _principalAmountForSOT;
-        if (interestRateSOT == 0) {
-            interestRateSOT = _interestRateForSOT;
-        }
 
         state = CycleState.OPEN;
 
         if (tgeAddress != address(0)) {
             MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            require(mintedTokenGenrationEvent.finalized(), 'SecuritizationPool: sale is still on going');
+            if (!mintedTokenGenrationEvent.finalized()) {
+                mintedTokenGenrationEvent.finalize(false, pot);
+            }
             mintedTokenGenrationEvent.setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
             );
+            interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
         }
         if (secondTGEAddress != address(0)) {
+            FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
             require(
                 MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
@@ -453,9 +480,44 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function onBuyNoteToken(uint256 currencyAmount) external override whenNotPaused onlySecuritizationManager {
+    function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
         reserve = reserve + currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function decreaseReserve(
+        uint256 currencyAmount
+    ) external override whenNotPaused {
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
+        reserve = reserve - currencyAmount;
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function setUpOpeningBlockTimestamp() public override whenNotPaused {
+        require( _msgSender() == tgeAddress, "SecuritizationPool: Only tge address");
+        _setUpOpeningBlockTimestamp();
+    }
+
+    /// @dev Set the opening block timestamp
+    function _setUpOpeningBlockTimestamp() private {
+        if (tgeAddress == address(0)) return;
+        uint64 _firstNoteTokenMintedTimestamp = ICrowdSale(tgeAddress).firstNoteTokenMintedTimestamp();
+        uint64 _firstAssetTimestamp = firstAssetTimestamp;
+        if (_firstNoteTokenMintedTimestamp > 0 && _firstAssetTimestamp > 0) {
+            // Pick the later
+            if (_firstAssetTimestamp > _firstNoteTokenMintedTimestamp) {
+                openingBlockTimestamp = _firstAssetTimestamp;
+            } else {
+                openingBlockTimestamp = _firstNoteTokenMintedTimestamp;
+            }
+        }
     }
 
     uint256[50] private __gap;

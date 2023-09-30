@@ -63,9 +63,12 @@ describe('MinFirstLoss', () => {
     const jotCap = parseEther('1000'); // $1000
     const isLongSaleTGEJOT = true;
     const now = dayjs().unix();
+    const initialJotAmount = stableCoinAmountToBuyJOT;
+
     const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
+      initialJotAmount,
       [1, 2],
       isLongSaleTGEJOT,
       {
@@ -140,7 +143,7 @@ describe('MinFirstLoss', () => {
         securitizationManager
           .connect(lenderSigner)
           .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
-      ).to.be.revertedWith('MinFirstLoss is not satisfied');
+      ).to.be.revertedWith('Crowdsale: sale not started');
     });
     it('should revert if try to buy SOT with amount violates min first loss', async () => {
       // Lender buys JOT Token

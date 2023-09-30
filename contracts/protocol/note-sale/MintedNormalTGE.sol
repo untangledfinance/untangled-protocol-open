@@ -11,12 +11,15 @@ import '../../interfaces/IMintedTGE.sol';
 /// @dev Note sale for JOT
 contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
-    
+
     bool public longSale;
     uint256 public timeStartEarningInterest;
     uint256 public termLengthInSeconds;
     uint256 public interestRate;
     uint256 public yield;
+    uint256 public initialAmount;
+
+    uint32 public pickedInterest;
 
     function initialize(
         Registry _registry,
@@ -85,9 +88,25 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         _setTotalCap(cap_);
     }
 
+    /// @notice Setup initial amount currency raised for JOT condition
+    /// @param _initialAmount Expected minimum amount of JOT before SOT start
+    function setInitialAmount(
+        uint256 _initialAmount
+    ) external whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
+        require(initialAmount < totalCap, "MintedNormalTGE: Initial JOT amount must be less than total cap");
+        initialAmount = _initialAmount;
+    }
+
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
+    }
+
+    function _finalization() internal override {
+        super._finalization();
+
+        pickedInterest = uint32(interestRate);
     }
 
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {

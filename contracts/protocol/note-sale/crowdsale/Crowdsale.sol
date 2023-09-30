@@ -12,6 +12,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
 
     event UpdateTotalCap(uint256 totalCap);
+    event SetHasStarted(bool hasStarted);
 
     Registry public registry;
 
@@ -29,6 +30,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     // How many token units a buyer gets per currency.
     uint256 public rate; // support by RATE_SCALING_FACTOR decimal numbers
     bool public hasStarted;
+    uint64 public firstNoteTokenMintedTimestamp; // Timestamp at which the first asset is collected to pool
 
     /// @dev Amount of currency raised
     uint256 internal _currencyRaised;
@@ -86,11 +88,21 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         emit UpdateTotalCap(totalCap);
     }
 
+    /// @notice Set hasStarted variable
+    function setHasStarted(bool _hasStarted) public {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'Crowdsale: caller must be owner or manager'
+        );
+        hasStarted = _hasStarted;
+
+        emit SetHasStarted(hasStarted);
+    }
+
     /// @notice Sets the rate variable to the new rate
     function _newSaleRound(uint256 newRate) internal {
         require(!hasStarted, 'Crowdsale: Sale round overflow');
 
-        hasStarted = true;
         rate = newRate;
     }
 
@@ -127,6 +139,15 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         return _currencyRaised == totalCap;
     }
 
+    /// @notice Catch event redeem token
+    /// @param currencyAmount amount of currency investor want to redeem
+    function onRedeem(
+        uint256 currencyAmount
+    ) public virtual {
+        require(_msgSender() == address(registry.getDistributionOperator()), "Crowdsale: Caller must be distribution operator");
+        _currencyRaised -= currencyAmount;
+    }
+
     /// @notice Retrieves the remaining token balance held by the crowdsale contract
     function getTokenRemainAmount() public view returns (uint256) {
         return IERC20(token).balanceOf(address(this));
@@ -154,6 +175,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         require(beneficiary != address(0), 'Crowdsale: beneficiary is zero address');
         //        require(currencyAmount != 0, "currency amount is 0");
         require(tokenAmount != 0, 'Crowdsale: token amount is 0');
+        require(hasStarted, 'Crowdsale: sale not started');
         require(isUnderTotalCap(currencyAmount), 'Crowdsale: cap exceeded');
     }
 
@@ -167,7 +189,15 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Mints and delivers tokens to the beneficiary
     function _deliverTokens(address beneficiary, uint256 tokenAmount) internal {
-        INoteToken(token).mint(beneficiary, tokenAmount);
+        INoteToken noteToken = INoteToken(token);
+        if (
+            noteToken.noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.SENIOR) &&
+            noteToken.totalSupply() == 0
+        ) {
+            firstNoteTokenMintedTimestamp = uint64(block.timestamp);
+            ISecuritizationPool(pool).setUpOpeningBlockTimestamp();
+        }
+        noteToken.mint(beneficiary, tokenAmount);
     }
 
     /// @dev Burns and delivers tokens to the beneficiary

@@ -67,7 +67,6 @@ abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
         super._finalization();
 
         pickedInterest = getCurrentInterest();
-        ISecuritizationPool(pool).setInterestRateForSOT(pickedInterest);
     }
 
     function _preValidatePurchase(

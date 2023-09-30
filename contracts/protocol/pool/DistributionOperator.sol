@@ -115,6 +115,13 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
                 registry.getDistributionTranche(),
                 securitizationPool
             );
+            address tge;
+            if (securitizationPool.sotToken() == tokenAddress) {
+                tge = securitizationPool.tgeAddress();
+            } else if (securitizationPool.jotToken() == tokenAddress) {
+                tge = securitizationPool.secondTGEAddress();
+            }
+            Crowdsale(tge).onRedeem(currencyLocked);
         }
 
         emit TokensRedeemed(redeemer, tokenAddress, currencyLocked, tokenRedeem);
@@ -130,6 +137,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     ) public whenNotPaused returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
+        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+        if (poolOfPot != address(0)) {
+            ISecuritizationPool(poolOfPot).increaseReserve(currencyLocked);
+        }
         return currencyLocked;
     }
 

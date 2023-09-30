@@ -341,11 +341,9 @@ contract SecuritizationPoolValueService is
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
 
-        //        address currencyAddress = securitizationPool.underlyingCurrency();
-        // currency balance of pool Address
         // use reserve variable instead
         uint256 balancePool = securitizationPool.reserve();
-        uint256 poolValue = balancePool + nAVpoolValue;
+        uint256 poolValue = balancePool + nAVpoolValue - securitizationPool.amountOwedToOriginator();
 
         return poolValue;
     }
@@ -369,7 +367,9 @@ contract SecuritizationPoolValueService is
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
-
+        if (nAVpoolValue > poolValue) {
+            return beginningSeniorAsset;
+        }
         return (beginningSeniorAsset * nAVpoolValue) / poolValue;
     }
 

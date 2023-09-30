@@ -29,21 +29,23 @@ describe('Pool to Pool', () => {
     let securitizationPoolValueService;
 
     // Wallets
-    let untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot;
+    let untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot, anonymousInvestorSigner;
 
     const stableCoinAmountToBuyJOT = parseEther('1'); // $1
     const stableCoinAmountToBuySOT = parseEther('2'); // $1
     const poolAPotInitialBalance = parseEther('100');
     let poolAContract;
     let mintedNormalTGEPoolBContract;
+    let mintedNormalTGEPoolAContract;
     let mintedIncreasingInterestTGEPoolBContract;
+    let mintedIncreasingInterestTGEPoolAContract;
     let jotPoolBContract;
     let sotPoolBContract;
     let jotAmount;
     let sotAmount;
     before('init sale', async () => {
       // Init wallets
-      [untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot] =
+      [untangledAdminSigner, poolCreatorSigner, poolACreator, borrowerSigner, lenderSigner, relayer, poolAPot, anonymousInvestorSigner] =
         await ethers.getSigners();
 
       // Init contracts
@@ -76,9 +78,11 @@ describe('Pool to Pool', () => {
       const jotCap = '10000000000000000000';
       const isLongSaleTGEJOT = true;
       const now = dayjs().unix();
+      const initialJOTAmount = parseEther('1')
       const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
         poolCreatorSigner.address,
         poolBContract.address,
+        initialJOTAmount,
         [1, 2],
         isLongSaleTGEJOT,
         {
@@ -130,12 +134,82 @@ describe('Pool to Pool', () => {
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
       await poolAContract.connect(poolACreator).setPot(poolAPot.address);
 
+      // Init JOT sale PoolA
+      const jotCapPoolA = '10000000000000000000';
+      const isLongSaleTGEJOTPoolA = true;
+      const nowPoolA = dayjs().unix();
+      const initialJOTAmountPoolA = parseEther('1')
+      const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForJOT(
+        poolACreator.address,
+        poolAContract.address,
+        initialJOTAmountPoolA,
+        [1, 2],
+        isLongSaleTGEJOTPoolA,
+        {
+          openingTime: nowPoolA,
+          closingTime: nowPoolA + ONE_DAY,
+          rate: 10000,
+          cap: jotCapPoolA,
+        },
+        'Ticker'
+      );
+      const setUpTGEJOTReceiptPoolA = await setUpTGEJOTTransactionPoolA.wait();
+      const [jotTGEAddressPoolA] = setUpTGEJOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
+      mintedNormalTGEPoolAContract = await ethers.getContractAt('MintedNormalTGE', jotTGEAddressPoolA);
+
+      // Init SOT Pool A sale
+      const sotCapPoolA = '10000000000000000000';
+      const isLongSaleTGESOTPoolA = true;
+      const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForSOT(
+        poolACreator.address,
+        poolAContract.address,
+        [0, 2],
+        isLongSaleTGESOTPoolA,
+        10000,
+        90000,
+        86400,
+        10000,
+        {
+          openingTime: now,
+          closingTime: now + 2 * ONE_DAY,
+          rate: 10000,
+          cap: sotCapPoolA,
+        },
+        'Ticker'
+      );
+      const setUpTGESOTReceiptPoolA = await setUpTGESOTTransactionPoolA.wait();
+      const [sotTGEAddressPoolA] = setUpTGESOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
+      mintedIncreasingInterestTGEPoolAContract = await ethers.getContractAt(
+        'MintedIncreasingInterestTGE',
+        sotTGEAddressPoolA
+      );
+
+      // Anonymous investor gain UID
+      const chainId = await getChainId();
+      const SIGNATURE_EXPIRE_TIME = now + ONE_DAY;
+      const UID_TYPE_ANONYMOUS_INVESTOR = 0;
+      let nonce = 0;
+      const ethRequired = parseEther('0.00083');
+      const uidMintMessageAnonymousInvestor = presignedMintMessage(
+        anonymousInvestorSigner.address,
+        UID_TYPE_ANONYMOUS_INVESTOR,
+        SIGNATURE_EXPIRE_TIME,
+        uniqueIdentity.address,
+        nonce,
+        chainId
+      );
+      const signatureForAnonymousInvestor = await untangledAdminSigner.signMessage(uidMintMessageAnonymousInvestor);
+      await uniqueIdentity
+        .connect(anonymousInvestorSigner)
+        .mint(UID_TYPE_ANONYMOUS_INVESTOR, SIGNATURE_EXPIRE_TIME, signatureForAnonymousInvestor, { value: ethRequired });
+      await stableCoin.connect(untangledAdminSigner).transfer(anonymousInvestorSigner.address, parseEther('1'));
+      await stableCoin.connect(anonymousInvestorSigner).approve(mintedNormalTGEPoolAContract.address, parseEther('1'));
+      await securitizationManager.connect(anonymousInvestorSigner).buyTokens(mintedNormalTGEPoolAContract.address, parseEther('1'));
+
+
       // Pool A pot gain UID
       const UID_TYPE = 0;
-      const chainId = await getChainId();
       const expiredAt = now + ONE_DAY;
-      const nonce = 0;
-      const ethRequired = parseEther('0.00083');
       const uidMintMessage = presignedMintMessage(
         poolAPot.address,
         UID_TYPE,
@@ -148,7 +222,7 @@ describe('Pool to Pool', () => {
       await uniqueIdentity.connect(poolAPot).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
 
       // Faucet stable coin to investorPoolPot
-      await stableCoin.transfer(poolAPot.address, poolAPotInitialBalance); // $100
+      // await stableCoin.transfer(poolAPot.address, poolAPotInitialBalance); // $100
     });
 
     it('Pool A pot invests into pool B for JOT', async () => {
@@ -157,9 +231,7 @@ describe('Pool to Pool', () => {
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
-      expect(await stableCoin.balanceOf(poolAPot.address)).equal(
-        poolAPotInitialBalance.sub(stableCoinAmountToBuyJOT).toString()
-      );
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal( '0');
     });
     it('Pool A originator can transfer JOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -202,17 +274,20 @@ describe('Pool to Pool', () => {
         .makeRedeemRequestAndRedeem(poolBContract.address, jotPoolBContract.address, '100');
       const investorPoolPotJotBalanceAfterRedeem = await jotPoolBContract.balanceOf(poolAPot.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(poolAPotInitialBalance);
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(parseEther('1'));
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
 
     it('Pool A pot invests into pool B for SOT', async () => {
+      await stableCoin.connect(untangledAdminSigner).transfer(anonymousInvestorSigner.address, parseEther('2'));
+      await stableCoin.connect(anonymousInvestorSigner).approve(mintedNormalTGEPoolAContract.address, parseEther('2'));
+      await securitizationManager.connect(anonymousInvestorSigner).buyTokens(mintedNormalTGEPoolAContract.address, parseEther('2'));
       // Invest into main pool (buy JOT token)
       await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
-
+      const value =await mintedIncreasingInterestTGEPoolBContract.hasStarted();
       // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPot)
@@ -220,7 +295,7 @@ describe('Pool to Pool', () => {
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
-      expect(await stableCoin.balanceOf(poolAPot.address)).equal('97000000000000000000');
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal('0') ;
     });
     it('Pool A originator can transfer SOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -263,7 +338,7 @@ describe('Pool to Pool', () => {
         .makeRedeemRequestAndRedeem(poolBContract.address, sotPoolBContract.address, investorPoolPotSotBalance);
       const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal('99000000000000000000');
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(stableCoinAmountToBuySOT);
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
   });
@@ -280,18 +355,22 @@ describe('Pool to Pool', () => {
     let loanInterestTermsContract;
     let distributionOperator;
     let distributionTranche;
-    let distributionAssessorContract;
+    let distributionAssessor;
     let securitizationPoolValueService;
 
     let poolAContract;
     let poolBContract;
     let poolCContract;
+    let mintedNormalTGEPoolAContract;
+    let mintedIncreasingInterestTGEPoolAContract;
     let mintedNormalTGEPoolBContract;
     let mintedIncreasingInterestTGEPoolBContract;
     let mintedNormalTGEPoolCContract;
     let mintedIncreasingInterestTGEPoolCContract;
     let sotBContract;
     let sotCContract;
+    let jotBContract;
+    let jotCContract;
     let sotAmountABuyFromB; // Currency amount
     let sotAmountBBuyFromC; // Currency amount
 
@@ -306,10 +385,11 @@ describe('Pool to Pool', () => {
       relayer,
       poolAPotSigner,
       poolBPotSigner,
-      poolCPotSigner;
+      poolCPotSigner,
+      anonymousInvestorSigner;
 
-    const stableCoinAmountToBuyBSOT = parseEther('2'); // $2
-    const stableCoinAmountToBuyCSOT = parseEther('1'); // $1
+    const stableCoinAmountToBuyBJOT = parseEther('2'); // $2
+    const stableCoinAmountToBuyCJOT = parseEther('1'); // $1
     const poolAPotInitialBalance = parseEther('100');
     const expectSOTAmountABuyFromB = '200';
     const expectSOTAmountBBuyFromC = '100';
@@ -329,6 +409,7 @@ describe('Pool to Pool', () => {
         poolAPotSigner,
         poolBPotSigner,
         poolCPotSigner,
+        anonymousInvestorSigner,
       ] = await ethers.getSigners();
 
       // Init contracts
@@ -343,7 +424,7 @@ describe('Pool to Pool', () => {
         securitizationManager,
         distributionOperator,
         distributionTranche,
-        distributionAssessorContract,
+        distributionAssessor,
         registry,
         securitizationPoolValueService,
       } = await setup());
@@ -367,9 +448,11 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool C
       const jotCapPoolC = '10000000000000000000';
       const isLongSaleTGEJOTPoolC = true;
+      const initialJOTAmountPoolC = parseEther('1');
       const setUpTGEJOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForJOT(
         poolCCreatorSigner.address,
         poolCContract.address,
+        initialJOTAmountPoolC,
         [1, 2],
         isLongSaleTGEJOTPoolC,
         {
@@ -383,6 +466,8 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTPoolCReceipt = await setUpTGEJOTTransactionPoolC.wait();
       const [jotTGEPoolCAddress] = setUpTGEJOTPoolCReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedNormalTGEPoolCContract = await ethers.getContractAt('MintedNormalTGE', jotTGEPoolCAddress);
+      const jotPoolCAddress = await poolCContract.jotToken();
+      jotCContract = await ethers.getContractAt('NoteToken', jotPoolCAddress);
 
       // Init SOT sale pool C
       const sotCapPoolC = '10000000000000000000';
@@ -429,9 +514,11 @@ describe('Pool to Pool', () => {
       // Init JOT sale pool B
       const jotCapPoolB = '10000000000000000000';
       const isLongSaleTGEJOTPoolB = true;
+      const initialJOTAmountPoolB = parseEther('1');
       const setUpTGEJOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForJOT(
         poolBCreatorSigner.address,
         poolBContract.address,
+        initialJOTAmountPoolB,
         [1, 2],
         isLongSaleTGEJOTPoolB,
         {
@@ -445,6 +532,8 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTPoolBReceipt = await setUpTGEJOTTransactionPoolB.wait();
       const [jotTGEPoolBAddress] = setUpTGEJOTPoolBReceipt.events.find((e) => e.event == 'NewTGECreated').args;
       mintedNormalTGEPoolBContract = await ethers.getContractAt('MintedNormalTGE', jotTGEPoolBAddress);
+      const jotPoolBAddress = await poolBContract.jotToken();
+      jotBContract = await ethers.getContractAt('NoteToken', jotPoolBAddress);
 
       // Init SOT sale pool B
       const sotCapPoolB = '10000000000000000000';
@@ -485,11 +574,73 @@ describe('Pool to Pool', () => {
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
       await poolAContract.connect(poolACreatorSigner).setPot(poolAPotSigner.address);
 
-      // Pool A pot gain UID
+      // Init JOT sale PoolA
+      const jotCapPoolA = '10000000000000000000';
+      const isLongSaleTGEJOTPoolA = true;
+      const initialJOTAmountPoolA = parseEther('1')
+      const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForJOT(
+        poolACreatorSigner.address,
+        poolAContract.address,
+        initialJOTAmountPoolA,
+        [1, 2],
+        isLongSaleTGEJOTPoolA,
+        {
+          openingTime: NOW,
+          closingTime: NOW + ONE_DAY,
+          rate: 10000,
+          cap: jotCapPoolA,
+        },
+        'Ticker'
+      );
+      const setUpTGEJOTReceiptPoolA = await setUpTGEJOTTransactionPoolA.wait();
+      const [jotTGEAddressPoolA] = setUpTGEJOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
+      mintedNormalTGEPoolAContract = await ethers.getContractAt('MintedNormalTGE', jotTGEAddressPoolA);
+
+      // Init SOT Pool A sale
+      const sotCapPoolA = '10000000000000000000';
+      const isLongSaleTGESOTPoolA = true;
+      const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForSOT(
+        poolACreatorSigner.address,
+        poolAContract.address,
+        [0, 2],
+        isLongSaleTGESOTPoolA,
+        10000,
+        90000,
+        86400,
+        10000,
+        {
+          openingTime: NOW,
+          closingTime: NOW + 2 * ONE_DAY,
+          rate: 10000,
+          cap: sotCapPoolA,
+        },
+        'Ticker'
+      );
+
+      // Anonymous investor gain UID
+      const UID_TYPE_ANONYMOUS_INVESTOR = 0;
       const SIGNATURE_EXPIRE_TIME = NOW + ONE_DAY;
+      const ethRequired = parseEther('0.00083');
+      const uidMintMessageAnonymousInvestor = presignedMintMessage(
+        anonymousInvestorSigner.address,
+        UID_TYPE_ANONYMOUS_INVESTOR,
+        SIGNATURE_EXPIRE_TIME,
+        uniqueIdentity.address,
+        0,
+        chainId
+      );
+      const signatureForAnonymousInvestor = await untangledAdminSigner.signMessage(uidMintMessageAnonymousInvestor);
+      await uniqueIdentity
+        .connect(anonymousInvestorSigner)
+        .mint(UID_TYPE_ANONYMOUS_INVESTOR, SIGNATURE_EXPIRE_TIME, signatureForAnonymousInvestor, { value: ethRequired });
+      await stableCoin.connect(untangledAdminSigner).transfer(anonymousInvestorSigner.address, parseEther('2'));
+      await stableCoin.connect(anonymousInvestorSigner).approve(mintedNormalTGEPoolAContract.address, parseEther('2'));
+      await securitizationManager.connect(anonymousInvestorSigner).buyTokens(mintedNormalTGEPoolAContract.address, parseEther('2'));
+
+
+      // Pool A pot gain UID
       const UID_TYPE = 0;
       const nonce = 0;
-      const ethRequired = parseEther('0.00083');
       const uidMintMessagePotA = presignedMintMessage(
         poolAPotSigner.address,
         UID_TYPE,
@@ -518,131 +669,119 @@ describe('Pool to Pool', () => {
         .mint(UID_TYPE, SIGNATURE_EXPIRE_TIME, signaturePotB, { value: ethRequired });
 
       // Faucet stable coin to investorPoolPot
-      await stableCoin.transfer(poolAPotSigner.address, poolAPotInitialBalance); // $100
+      // await stableCoin.transfer(poolAPotSigner.address, poolAPotInitialBalance); // $100
     });
 
-    it('Pool A pot invests into pool B for SOT', async () => {
+    it('Pool A pot invests into pool B for JOT', async () => {
       // Invest into main pool (buy JOT token)
-      await stableCoin.connect(poolAPotSigner).approve(mintedNormalTGEPoolBContract.address, parseEther('1'));
-      await securitizationManager
-        .connect(poolAPotSigner)
-        .buyTokens(mintedNormalTGEPoolBContract.address, parseEther('1'));
-
-      // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPotSigner)
-        .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
+        .approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyBJOT);
       await securitizationManager
         .connect(poolAPotSigner)
-        .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuyBSOT);
-      expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal('97000000000000000000');
-      expect(await sotBContract.balanceOf(poolAPotSigner.address)).equal('200');
+        .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyBJOT);
+      expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal('0');
+      expect(await jotBContract.balanceOf(poolAPotSigner.address)).equal('200');
     });
-    it('Pool B pot invests into pool C for SOT', async () => {
-      // Invest into main pool (buy JOT token)
-      await stableCoin.connect(poolBPotSigner).approve(mintedNormalTGEPoolCContract.address, parseEther('1'));
-      await securitizationManager
-        .connect(poolBPotSigner)
-        .buyTokens(mintedNormalTGEPoolCContract.address, parseEther('1'));
-
+    it('Pool B pot invests into pool C for JOT', async () => {
       await stableCoin
         .connect(poolBPotSigner)
-        .approve(mintedIncreasingInterestTGEPoolCContract.address, stableCoinAmountToBuyCSOT);
+        .approve(mintedNormalTGEPoolCContract.address, stableCoinAmountToBuyCJOT);
       await securitizationManager
         .connect(poolBPotSigner)
-        .buyTokens(mintedIncreasingInterestTGEPoolCContract.address, stableCoinAmountToBuyCSOT);
+        .buyTokens(mintedNormalTGEPoolCContract.address, stableCoinAmountToBuyCJOT);
       expect(await stableCoin.balanceOf(poolBPotSigner.address)).equal(
-        stableCoinAmountToBuyBSOT.sub(stableCoinAmountToBuyCSOT)
+        stableCoinAmountToBuyBJOT.sub(stableCoinAmountToBuyCJOT)
       );
-      expect(await sotCContract.balanceOf(poolBPotSigner.address)).equal('100');
+      expect(await jotCContract.balanceOf(poolBPotSigner.address)).equal('100');
     });
-    it('Pool A originator can transfer B-SOT from pool A pot to pool A', async () => {
+    it('Pool A originator can transfer B-JOT from pool A pot to pool A', async () => {
       // Transfer to pool
-      sotAmountABuyFromB = await sotBContract.balanceOf(poolAPotSigner.address);
+      sotAmountABuyFromB = await jotBContract.balanceOf(poolAPotSigner.address);
       const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
       await poolAContract.connect(poolACreatorSigner).grantRole(ORIGINATOR_ROLE, poolAOriginatorSigner.address);
-      await sotBContract.connect(poolAPotSigner).approve(poolAContract.address, sotAmountABuyFromB);
+      await jotBContract.connect(poolAPotSigner).approve(poolAContract.address, sotAmountABuyFromB);
       await poolAContract
         .connect(poolAOriginatorSigner)
-        .collectERC20Assets([sotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
-      expect(await sotBContract.balanceOf(poolAContract.address)).equal(sotAmountABuyFromB);
+        .collectERC20Assets([jotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
+      expect(await jotBContract.balanceOf(poolAContract.address)).equal(sotAmountABuyFromB);
     });
-    it('Pool B originator can transfer C-SOT from pool B pot to pool B', async () => {
+    it('Pool B originator can transfer C-JOT from pool B pot to pool B', async () => {
       // Transfer to pool
-      sotAmountBBuyFromC = await sotCContract.balanceOf(poolBPotSigner.address);
+      sotAmountBBuyFromC = await jotCContract.balanceOf(poolBPotSigner.address);
       const ORIGINATOR_ROLE = await poolBContract.ORIGINATOR_ROLE();
       await poolBContract.connect(poolBCreatorSigner).grantRole(ORIGINATOR_ROLE, poolBOriginatorSigner.address);
-      await sotCContract.connect(poolBPotSigner).approve(poolBContract.address, sotAmountBBuyFromC);
+      await jotCContract.connect(poolBPotSigner).approve(poolBContract.address, sotAmountBBuyFromC);
       await poolBContract
         .connect(poolBOriginatorSigner)
-        .collectERC20Assets([sotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
-      expect(await sotCContract.balanceOf(poolBContract.address)).equal(sotAmountBBuyFromC);
+        .collectERC20Assets([jotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
+      expect(await jotCContract.balanceOf(poolBContract.address)).equal(sotAmountBBuyFromC);
     });
-    it('Should include B-SOT token value in pool A expected assets', async () => {
+    it('Should include B-JOT token value in pool A expected assets', async () => {
       // Check values
       const chainTime = await time.latest();
       const expectAssetValue = await securitizationPoolValueService.getExpectedAssetsValue(
         poolAContract.address,
         chainTime
       );
-      expect(expectAssetValue).closeTo(stableCoinAmountToBuyBSOT, parseEther('0.01'));
+      expect(expectAssetValue).closeTo(stableCoinAmountToBuyBJOT, parseEther('0.01'));
       // SOT address was added to tokenAssetAddresses variables
       const tokenERC20AssetAddress = await poolAContract.tokenAssetAddresses(0);
-      expect(tokenERC20AssetAddress).equal(sotBContract.address);
+      expect(tokenERC20AssetAddress).equal(jotBContract.address);
     });
-    it('Should include C-SOT token value in pool B expected assets', async () => {
+    it('Should include C-JOT token value in pool B expected assets', async () => {
       // Check values
       const chainTime = await time.latest();
       // SOT address was added to tokenAssetAddresses variables
       const tokenERC20AssetAddress = await poolBContract.tokenAssetAddresses(0);
-      expect(tokenERC20AssetAddress).equal(sotCContract.address);
+      expect(tokenERC20AssetAddress).equal(jotCContract.address);
       const expectAssetValue = await securitizationPoolValueService.getExpectedAssetsValue(
         poolBContract.address,
         chainTime
       );
-      expect(expectAssetValue).equal(stableCoinAmountToBuyCSOT);
+      expect(expectAssetValue).equal(stableCoinAmountToBuyCJOT);
     });
-    it('Pool A owner can claim B-SOT Token from pool A to pool A pot', async () => {
+    it('Pool A owner can claim B-JOT Token from pool A to pool A pot', async () => {
       // Claim back to investor pot wallet
       await poolAContract
         .connect(poolACreatorSigner)
-        .withdrawERC20Assets([sotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
-      const sotBalance = await sotBContract.balanceOf(poolAPotSigner.address);
+        .withdrawERC20Assets([jotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
+      const sotBalance = await jotBContract.balanceOf(poolAPotSigner.address);
       expect(sotBalance).equal(expectSOTAmountABuyFromB);
     });
-    it('Pool B owner can claim C-SOT Token from pool B to pool B pot', async () => {
+    it('Pool B owner can claim C-JOT Token from pool B to pool B pot', async () => {
       // Claim back to investor pot wallet
       await poolBContract
         .connect(poolBCreatorSigner)
-        .withdrawERC20Assets([sotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
-      const sotBalance = await sotCContract.balanceOf(poolBPotSigner.address);
+        .withdrawERC20Assets([jotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
+      const sotBalance = await jotCContract.balanceOf(poolBPotSigner.address);
       expect(sotBalance).equal(expectSOTAmountBBuyFromC);
     });
-    it('Pool B pot can make SOT redeem request to pool C', async () => {
+    it('Pool B pot can make JOT redeem request to pool C', async () => {
       // Redeem
-      const sotBalance = await sotCContract.balanceOf(poolBPotSigner.address);
-      await sotCContract.connect(poolBPotSigner).approve(distributionTranche.address, sotBalance);
+      const jotBalance = await jotCContract.balanceOf(poolBPotSigner.address);
+      await jotCContract.connect(poolBPotSigner).approve(distributionTranche.address, jotBalance);
 
       await distributionOperator
         .connect(poolBPotSigner)
-        .makeRedeemRequestAndRedeem(poolCContract.address, sotCContract.address, sotBalance);
-      const investorPoolPotJotBalanceAfterRedeem = await sotCContract.balanceOf(poolBPotSigner.address);
+        .makeRedeemRequestAndRedeem(poolCContract.address, jotCContract.address, jotBalance);
+      const investorPoolPotJotBalanceAfterRedeem = await jotCContract.balanceOf(poolBPotSigner.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolBPotSigner.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(stableCoinAmountToBuyBSOT);
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(stableCoinAmountToBuyBJOT);
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
 
-    it('Pool A pot can make SOT redeem request to pool B', async () => {
+    it('Pool A pot can make JOT redeem request to pool B', async () => {
       // Redeem
-      const investorPoolPotSotBalance = await sotBContract.balanceOf(poolAPotSigner.address);
-      await sotBContract.connect(poolAPotSigner).approve(distributionTranche.address, investorPoolPotSotBalance);
+      const investorPoolPotJotBalance = await jotBContract.balanceOf(poolAPotSigner.address);
+      await jotBContract.connect(poolAPotSigner).approve(distributionTranche.address, investorPoolPotJotBalance);
 
       await distributionOperator
         .connect(poolAPotSigner)
-        .makeRedeemRequestAndRedeem(poolBContract.address, sotBContract.address, investorPoolPotSotBalance);
-      const investorPoolPotJotBalanceAfterRedeem = await sotBContract.balanceOf(poolAPotSigner.address);
+        .makeRedeemRequestAndRedeem(poolBContract.address, jotBContract.address, investorPoolPotJotBalance);
+      const investorPoolPotJotBalanceAfterRedeem = await jotBContract.balanceOf(poolAPotSigner.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPotSigner.address);
-      expect(investorPoolPotStableCoinBalanceAfterRedeem).closeTo('99000000000000000000', parseEther('0.01'));
+      expect(investorPoolPotStableCoinBalanceAfterRedeem).closeTo(stableCoinAmountToBuyBJOT, parseEther('0.01'));
       expect(investorPoolPotJotBalanceAfterRedeem).equal('0');
     });
   });

@@ -245,6 +245,7 @@ describe('SecuritizationPool', () => {
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
+      const initialJOTAmount = parseEther('1');
       const prefixOfNoteTokenSaleName = 'JOT_';
 
       // JOT only has SaleType.NORMAL_SALE
@@ -253,6 +254,7 @@ describe('SecuritizationPool', () => {
         .setUpTGEForJOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          initialJOTAmount,
           [SaleType.NORMAL_SALE, tokenDecimals],
           true,
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
@@ -276,7 +278,7 @@ describe('SecuritizationPool', () => {
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`MinFirstLoss is not satisfied`);
+      ).to.be.revertedWith(`Crowdsale: sale not started`);
     });
 
     it('Should buy tokens successfully', async () => {
@@ -561,7 +563,7 @@ describe('SecuritizationPool', () => {
       const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
         securitizationPoolContract.address
       );
-      expect(formatEther(result)).equal('100.0');
+      expect(formatEther(result)).equal('90.0');
     });
   });
 
@@ -683,17 +685,13 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract
           .connect(poolCreatorSigner)
           .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
-      ).to.be.revertedWith(`SecuritizationPool: sale is still on going`);
+      ).to.be.revertedWith(`FinalizableCrowdsale: not closed`);
+
       await time.increaseTo(dayjs(new Date()).add(8, 'days').unix());
-      await mintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
 
-      await expect(
-        securitizationPoolContract
-          .connect(poolCreatorSigner)
-          .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
-      ).to.be.revertedWith(`SecuritizationPool: second sale is still on going`);
-
-      await jotMintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address);
+      await expect(mintedIncreasingInterestTGE.finalize(false, untangledAdminSigner.address)).to.be.revertedWith(
+        `FinalizableCrowdsale: Only pool contract can finalize`
+      );
 
       await securitizationPoolContract
         .connect(poolCreatorSigner)

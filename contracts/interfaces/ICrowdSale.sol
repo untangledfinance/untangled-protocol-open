@@ -6,5 +6,7 @@ interface ICrowdSale {
 
     function currencyRaised() external view returns (uint256);
 
+    function firstNoteTokenMintedTimestamp() external view returns (uint64);
+
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) external returns (uint256);
 }

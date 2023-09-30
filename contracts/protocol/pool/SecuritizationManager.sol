@@ -6,6 +6,7 @@ import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../interfaces/IRequiresUID.sol';
+import '../note-sale/fab/TokenGenerationEventFactory.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -87,6 +88,13 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return poolAddress;
     }
 
+    /// @inheritdoc ISecuritizationManager
+    function registerPot(address pot) external override whenNotPaused {
+        require(isExistingPools[_msgSender()], "SecuritizationManager: Only SecuritizationPool");
+        require(potToPool[pot] == address(0), "SecuritizationManager: pot used for another pool");
+        potToPool[pot] = _msgSender();
+    }
+
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool
     /// @param issuerTokenController who acts as owner of note sale
     /// @param pool SecuritizationPool address where this sale belongs to
@@ -157,13 +165,17 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     ) public {
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-        tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        uint8 saleType = saleTypeAndDecimal[0];
+        if (saleType == uint8(TokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
+            tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+        }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
     }
 
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
     /// @param issuerTokenController who acts as owner of note sale
     /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param initialJOTAmount Minimum amount of JOT raised in currency before SOT can start
     /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
     /// @param longSale Define this sale is long sale. Default true
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
@@ -171,6 +183,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function setUpTGEForJOT(
         address issuerTokenController,
         ISecuritizationPool pool,
+        uint256 initialJOTAmount,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         NewRoundSaleParam memory saleParam,
@@ -179,6 +192,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address tgeAddress = initialTGEForJOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+        tge.setHasStarted(true);
+        tge.setInitialAmount(initialJOTAmount);
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool
@@ -234,7 +249,21 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
 
-        ISecuritizationPool(tge.pool()).onBuyNoteToken(currencyAmount);
+        if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
+            if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
+                // Currency Raised For JOT > initialJOTAmount => SOT sale start
+                address sotTGEAddress = ISecuritizationPool(tge.pool()).tgeAddress();
+                if (sotTGEAddress != address(0)) {
+                    Crowdsale(sotTGEAddress).setHasStarted(true);
+                }
+            }
+        }
+
+        ISecuritizationPool(tge.pool()).increaseReserve(currencyAmount);
+        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+        if (poolOfPot != address(0)) {
+            ISecuritizationPool(poolOfPot).decreaseReserve(currencyAmount);
+        }
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
     }
 
