@@ -1,4 +1,4 @@
-const { artifacts } = require('hardhat');
+const { upgrades } = require('hardhat');
 const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber } = require('ethers');
@@ -11,6 +11,7 @@ describe('NoteTokenFactory', () => {
   let SecuritizationPool;
 
   before('create fixture', async () => {
+    await setup();
     SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
     const NoteToken = await ethers.getContractFactory('NoteToken');
@@ -20,7 +21,11 @@ describe('NoteTokenFactory', () => {
     registry = await Registry.deploy();
     await registry.initialize();
     noteTokenFactory = await NoteTokenFactory.deploy();
-    await noteTokenFactory.initialize(registry.address);
+    const noteTokenImpl = await NoteToken.deploy();
+    await registry.setNoteToken(noteTokenImpl.address);
+
+    const admin = await upgrades.admin.getInstance();
+    await noteTokenFactory.initialize(registry.address, admin.address);
   });
 
   it('#createToken', async () => {

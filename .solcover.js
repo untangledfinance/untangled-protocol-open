@@ -7,5 +7,6 @@ module.exports = {
     'protocol/ccip',
     'external',
     'base/UpgradableProxy.sol',
+    'protocol/pool/mock',
   ],
 };

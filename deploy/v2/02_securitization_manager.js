@@ -6,6 +6,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
 
   const registry = await deployments.get('Registry');
+  const proxyAdmin = await get('DefaultProxyAdmin');
 
   await deployments.deploy('SecuritizationManager', {
     from: deployer,
@@ -13,7 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       proxyContract: 'OpenZeppelinTransparentProxy',
       execute: {
         methodName: 'initialize',
-        args: [registry.address],
+        args: [registry.address, proxyAdmin.address],
       },
     },
     skipIfAlreadyDeployed: true,

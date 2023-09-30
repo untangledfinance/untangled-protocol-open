@@ -23,6 +23,7 @@ async function setup() {
   let distributionOperator;
   let distributionTranche;
   let acceptedInvoiceToken;
+  let factoryAdmin;
 
   const [untangledAdminSigner] = await ethers.getSigners();
 
@@ -32,15 +33,22 @@ async function setup() {
   const Registry = await ethers.getContractFactory('Registry');
   registry = await upgrades.deployProxy(Registry, []);
 
+  const admin = await upgrades.admin.getInstance();
+
+  factoryAdmin = await ethers.getContractAt('ProxyAdmin', admin.address);
+
   const SecuritizationManager = await ethers.getContractFactory('SecuritizationManager');
-  securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address]);
+  securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address, factoryAdmin.address]);
   const SecuritizationPoolValueService = await ethers.getContractFactory('SecuritizationPoolValueService');
   securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
   const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
-  noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address]);
+  noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [registry.address, factoryAdmin.address]);
   const TokenGenerationEventFactory = await ethers.getContractFactory('TokenGenerationEventFactory');
-  tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [registry.address]);
+  tokenGenerationEventFactory = await upgrades.deployProxy(TokenGenerationEventFactory, [
+    registry.address,
+    factoryAdmin.address,
+  ]);
 
   const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
   uniqueIdentity = await upgrades.deployProxy(UniqueIdentity, [untangledAdminSigner.address, '']);
@@ -97,11 +105,14 @@ async function setup() {
   const mintedIncreasingInterestTGEImpl = await MintedIncreasingInterestTGE.deploy();
   const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
   const mintedNormalTGEImpl = await MintedNormalTGE.deploy();
+  const NoteToken = await ethers.getContractFactory('NoteToken');
+  const noteTokenImpl = await NoteToken.deploy();
 
   await registry.setSecuritizationPool(securitizationPoolImpl.address);
   await registry.setSecuritizationManager(securitizationManager.address);
   await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGEImpl.address);
   await registry.setMintedNormalTGE(mintedNormalTGEImpl.address);
+  await registry.setNoteToken(noteTokenImpl.address);
 
   await registry.setNoteTokenFactory(noteTokenFactory.address);
   await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
@@ -127,6 +138,7 @@ async function setup() {
     distributionOperator,
     distributionAssessor,
     distributionTranche,
+    factoryAdmin,
   };
 }
 

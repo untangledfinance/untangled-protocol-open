@@ -21,7 +21,9 @@ describe('MintedNormalTGE', () => {
     securitizationPool = await SecuritizationPool.deploy();
     const currencyAddress = await securitizationPool.underlyingCurrency();
     const longSale = true;
-    const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
+    const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, securitizationPool.address, 1], {
+      initializer: 'initialize(string,string,uint8,address,uint8)',
+    });
 
     await mintedNormalTGE.initialize(registry.address, poolTest.address, noteToken.address, currencyAddress, longSale);
   });

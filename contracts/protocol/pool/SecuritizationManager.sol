@@ -22,8 +22,9 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint256 cap;
     }
 
-    function initialize(Registry _registry) public initializer {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
+        __Factory__init(_factoryAdmin);
 
         registry = _registry;
     }
@@ -57,6 +58,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         _;
     }
 
+    function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setFactoryAdmin(_factoryAdmin);
+    }
+
     function getPoolsLength() public view returns (uint256) {
         return pools.length;
     }
@@ -73,10 +78,18 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         returns (address)
     {
         address poolImplAddress = address(registry.getSecuritizationPool());
-        address poolAddress = deployMinimal(poolImplAddress);
+
+        bytes memory _initialData = abi.encodeWithSelector(
+            getSelector('initialize(address,address,uint32)'),
+            registry,
+            currency,
+            minFirstLossCushion
+        );
+
+        address poolAddress = _deployInstance(poolImplAddress, _initialData);
 
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-        poolInstance.initialize(registry, currency, minFirstLossCushion);
+
         poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
         poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 

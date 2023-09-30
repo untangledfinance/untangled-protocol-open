@@ -1,4 +1,4 @@
-const { artifacts, ethers } = require('hardhat');
+const { artifacts, ethers, upgrades } = require('hardhat');
 const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber, providers } = require('ethers');
@@ -13,27 +13,19 @@ describe('FinalizableCrowdsaleMock', () => {
   let finalizableCrowdSale;
 
   before('create fixture', async () => {
-    ({ registry, noteTokenFactory } = await setup());
+    ({ registry } = await setup());
 
     const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     securitizationPool = await SecuritizationPool.deploy();
     const NoteToken = await ethers.getContractFactory('NoteToken');
-    const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
+    const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, securitizationPool.address, 1], {
+      initializer: 'initialize(string,string,uint8,address,uint8)',
+    });
     const currencyAddress = await securitizationPool.underlyingCurrency();
 
     const finalizableCrowdsaleMock = await ethers.getContractFactory('FinalizableCrowdsaleMock');
     finalizableCrowdSale = await finalizableCrowdsaleMock.deploy();
     finalizableCrowdSale.initialize(registry.address, securitizationPool.address, noteToken.address, currencyAddress);
-
-    // ({ registry, noteTokenFactory } = await setup());
-
-    // securitizationPool = await SecuritizationPool.deploy();
-    // const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
-    // const currencyAddress = await securitizationPool.underlyingCurrency();
-
-    // const TimedCrowdsaleMock = await ethers.getContractFactory('TimedCrowdsaleMock');
-    // timedCrowdsale = await TimedCrowdsaleMock.deploy();
-    // timedCrowdsale.initialize(registry.address, securitizationPool.address, noteToken.address, currencyAddress);
   });
 
   it('#finalize', async () => {

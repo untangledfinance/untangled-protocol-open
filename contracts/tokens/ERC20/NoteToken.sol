@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/presets/ERC20PresetMinterPauserUpgradeable.sol';
 import '../../interfaces/INoteToken.sol';
 
 /// @title NoteToken
 /// @author Untangled Team
 /// @dev Template for SOT/JOT token
-contract NoteToken is INoteToken, ERC20PresetMinterPauser {
-    address internal immutable _poolAddress;
-    uint8 internal immutable _noteTokenType;
-    uint8 internal immutable _decimals;
+contract NoteToken is INoteToken, ERC20PresetMinterPauserUpgradeable {
+    address internal _poolAddress;
+    uint8 internal _noteTokenType;
+    uint8 internal _decimals;
 
-    constructor(
+    function initialize(
         string memory name,
         string memory symbol,
         uint8 decimalsOfToken,
         address poolAddressOfToken,
         uint8 typeOfToken
-    ) ERC20PresetMinterPauser(name, symbol) {
+    ) public initializer {
+        __ERC20PresetMinterPauser_init(name, symbol);
         require(poolAddressOfToken != address(0), 'NoteToken: Invalid pool address');
 
         _decimals = decimalsOfToken;
@@ -34,15 +35,15 @@ contract NoteToken is INoteToken, ERC20PresetMinterPauser {
         return _noteTokenType;
     }
 
-    function decimals() public view override(ERC20, IERC20Metadata) returns (uint8) {
+    function decimals() public view override(ERC20Upgradeable, IERC20MetadataUpgradeable) returns (uint8) {
         return _decimals;
     }
 
-    function burn(uint256 amount) public override(ERC20Burnable, INoteToken) {
-        return ERC20Burnable.burn(amount);
+    function burn(uint256 amount) public override(ERC20BurnableUpgradeable, INoteToken) {
+        return ERC20BurnableUpgradeable.burn(amount);
     }
 
-    function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauser) {
-        return ERC20PresetMinterPauser.mint(receiver, amount);
+    function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauserUpgradeable) {
+        return ERC20PresetMinterPauserUpgradeable.mint(receiver, amount);
     }
 }

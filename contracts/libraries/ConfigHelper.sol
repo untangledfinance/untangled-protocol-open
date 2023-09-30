@@ -20,7 +20,7 @@ import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
 import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
-import "../interfaces/IGo.sol";
+import '../interfaces/IGo.sol';
 
 /**
  * @title ConfigHelper
@@ -43,6 +43,10 @@ library ConfigHelper {
 
     function getNoteTokenFactory(Registry registry) internal view returns (INoteTokenFactory) {
         return INoteTokenFactory(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY));
+    }
+
+    function getNoteToken(Registry registry) internal view returns (INoteToken) {
+        return INoteToken(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN));
     }
 
     function getTokenGenerationEventFactory(Registry registry) internal view returns (ITokenGenerationEventFactory) {
@@ -108,10 +112,7 @@ library ConfigHelper {
     }
 
     function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
-        return
-        MintedNormalTGE(
-            getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
-        );
+        return MintedNormalTGE(getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE));
     }
 
     function getGo(Registry registry) internal view returns (IGo) {
