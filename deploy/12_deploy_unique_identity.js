@@ -5,9 +5,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
 
   //deploy UniqueIdentity
-  const uniqueIdentityProxy = await deployProxy({ getNamedAccounts, deployments }, 'UniqueIdentity', [
-    deployer, ''
-  ]);
+  const uniqueIdentityProxy = await deployProxy({ getNamedAccounts, deployments }, 'UniqueIdentity', [deployer, '']);
   if (uniqueIdentityProxy.newlyDeployed) {
     await execute(
       'UniqueIdentity',
@@ -18,19 +16,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
   }
 
-  const goProxy = await deployProxy({ getNamedAccounts, deployments }, 'Go', [
-    deployer, uniqueIdentityProxy.address
-  ]);
+  const goProxy = await deployProxy({ getNamedAccounts, deployments }, 'Go', [deployer, uniqueIdentityProxy.address]);
   if (goProxy.newlyDeployed) {
-    await execute(
-      'Registry',
-      { from: deployer, log: true },
-      'setGo',
-      goProxy.address
-    );
+    await execute('Registry', { from: deployer, log: true }, 'setGo', goProxy.address);
   }
-
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['unique_identity', 'core'];
+module.exports.tags = ['unique_identity_v1', 'core'];
