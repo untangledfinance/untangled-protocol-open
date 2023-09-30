@@ -74,6 +74,14 @@ module.exports = {
       cusdToken: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
       usdcToken: '',
     },
+    alfajores_v2: {
+      saveDeployments: true,
+      accounts: accounts,
+      loggingEnabled: true,
+      url: `https://alfajores-forno.celo-testnet.org`,
+      cusdToken: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
+      usdcToken: '',
+    },
     rinkeby: {
       saveDeployments: true,
       accounts,
