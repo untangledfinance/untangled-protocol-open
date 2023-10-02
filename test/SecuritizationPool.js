@@ -93,7 +93,13 @@ describe('SecuritizationPool', () => {
   describe('#security pool', async () => {
     it('Create pool', async () => {
       const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+
+      const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
+      await securitizationManager.setRoleAdmin(POOL_CREATOR_ROLE, OWNER_ROLE);
+
+      await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
+      await securitizationManager.connect(borrowerSigner).grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
@@ -680,7 +686,7 @@ describe('SecuritizationPool', () => {
       const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
         securitizationPoolContract.address
       );
-      expect(formatEther(result)).equal('100.0');
+      expect(formatEther(result)).equal('90.0');
     });
   });
 

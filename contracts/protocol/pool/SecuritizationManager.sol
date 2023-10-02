@@ -25,6 +25,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
+        _setRoleAdmin(POOL_CREATOR, OWNER_ROLE);
 
         registry = _registry;
     }
@@ -103,8 +104,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     /// @inheritdoc ISecuritizationManager
     function registerPot(address pot) external override whenNotPaused {
-        require(isExistingPools[_msgSender()], "SecuritizationManager: Only SecuritizationPool");
-        require(potToPool[pot] == address(0), "SecuritizationManager: pot used for another pool");
+        require(isExistingPools[_msgSender()], 'SecuritizationManager: Only SecuritizationPool');
+        require(potToPool[pot] == address(0), 'SecuritizationManager: pot used for another pool');
         potToPool[pot] = _msgSender();
     }
 
