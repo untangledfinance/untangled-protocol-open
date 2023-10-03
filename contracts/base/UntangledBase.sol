@@ -40,6 +40,10 @@ abstract contract UntangledBase is
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
     }
 
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setRoleAdmin(role, adminRole);
+    }
+
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
