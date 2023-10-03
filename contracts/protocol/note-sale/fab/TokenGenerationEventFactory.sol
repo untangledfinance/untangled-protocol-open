@@ -47,7 +47,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
             return _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
         } else if (saleType == uint8(SaleType.NORMAL_SALE_JOT)) {
             return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
+        } else if (saleType == uint8(SaleType.NORMAL_SALE_SOT)) {
             return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
         } else {
             revert('Unknown sale type');
