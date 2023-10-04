@@ -65,6 +65,7 @@ module.exports = {
       url: `https://forno.celo.org`,
       cusdToken: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
       usdcToken: '0xef4229c8c3250c675f21bcefa42f58efbff6002a',
+      kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
     },
     alfajores: {
       saveDeployments: true,
@@ -73,6 +74,7 @@ module.exports = {
       url: `https://alfajores-forno.celo-testnet.org`,
       cusdToken: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
       usdcToken: '',
+      kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
     },
     alfajores_v2: {
       saveDeployments: true,
@@ -81,6 +83,7 @@ module.exports = {
       url: `https://alfajores-forno.celo-testnet.org`,
       cusdToken: '0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1',
       usdcToken: '',
+      kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
     },
     rinkeby: {
       saveDeployments: true,
