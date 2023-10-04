@@ -34,7 +34,7 @@ const networks = {
     bnmToken: '0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05', // LINK/SEPOLIA-ETH
   },
   mumbai: {
-    url: 'https://rpc.ankr.com/polygon_mumbai',
+    url: 'https://polygon-mumbai-bor.publicnode.com',
     gasPrice: undefined,
     // blockGasLimit: 100000000429720,
     accounts: PRIVATEKEY !== undefined ? [PRIVATEKEY] : [],

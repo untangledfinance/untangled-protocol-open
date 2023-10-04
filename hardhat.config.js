@@ -55,7 +55,7 @@ module.exports = {
 
       // forking: {
       //   url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
-      //   blockNumber: 39993365,
+      //   blockNumber: 40820043,
       // },
     },
     celo: {
