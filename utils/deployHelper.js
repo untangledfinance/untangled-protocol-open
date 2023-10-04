@@ -4,7 +4,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature, contrac
   const { deployer } = await getNamedAccounts();
 
   const specificName = contractSpecificName || contractName;
-  const contractImpl = await deploy(`${specificName}Impl`, {
+  const contractImpl = await deploy(`${specificName}_Implementation`, {
     contract: contractName,
     skipIfAlreadyDeployed: true,
     from: deployer,
@@ -12,7 +12,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature, contrac
     log: true,
   });
 
-  const contractProxy = await deploy(`${specificName}Proxy`, {
+  const contractProxy = await deploy(`${specificName}_Proxy`, {
     contract: 'UpgradableProxy',
     skipIfAlreadyDeployed: true,
     from: deployer,
