@@ -34,13 +34,13 @@ const networks = {
     bnmToken: '0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05', // LINK/SEPOLIA-ETH
   },
   mumbai: {
-    url: 'https://polygon-mumbai-bor.publicnode.com',
+    url: 'https://polygon-mumbai.blockpi.network/v1/rpc/public',
     gasPrice: undefined,
     // blockGasLimit: 100000000429720,
     accounts: PRIVATEKEY !== undefined ? [PRIVATEKEY] : [],
     // verifyApiKey: "THIS HAS NOT BEEN SET",
     chainId: 80001,
-    confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
+    // confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
     nativeCurrencySymbol: 'MATIC',
 
     // https://docs.chain.link/ccip/supported-networks/
