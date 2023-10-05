@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
 import './Configuration.sol';
@@ -19,19 +19,15 @@ import '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
 import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
-import '../tokens/ERC1155/CollateralManagementToken.sol';
-import '../protocol/cma/SupplyChainManagementProgram.sol';
-import '../protocol/loan/inventory/InventoryCollateralizer.sol';
-import '../protocol/loan/inventory/InventoryInterestTermsContract.sol';
-import '../protocol/loan/inventory/InventoryLoanKernel.sol';
-import '../protocol/loan/inventory/InventoryLoanRegistry.sol';
-import '../protocol/loan/inventory/InventoryLoanRepaymentRouter.sol';
-import '../protocol/loan/invoice/InvoiceCollateralizer.sol';
-import '../protocol/loan/invoice/InvoiceDebtRegistry.sol';
-import '../protocol/loan/invoice/InvoiceFinanceInterestTermsContract.sol';
-import '../protocol/loan/invoice/InvoiceLoanKernel.sol';
-import '../protocol/loan/invoice/InvoiceLoanRepaymentRouter.sol';
+import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
+import '../interfaces/IGo.sol';
 
+/**
+ * @title ConfigHelper
+ * @notice A convenience library for getting easy access to other contracts and constants within the
+ *  protocol, through the use of the Registry contract
+ * @author Untangled Team
+ */
 library ConfigHelper {
     function getAddress(Registry registry, Configuration.CONTRACT_TYPE contractType) internal view returns (address) {
         return registry.getAddress(uint8(contractType));
@@ -47,6 +43,10 @@ library ConfigHelper {
 
     function getNoteTokenFactory(Registry registry) internal view returns (INoteTokenFactory) {
         return INoteTokenFactory(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY));
+    }
+
+    function getNoteToken(Registry registry) internal view returns (INoteToken) {
+        return INoteToken(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN));
     }
 
     function getTokenGenerationEventFactory(Registry registry) internal view returns (ITokenGenerationEventFactory) {
@@ -112,57 +112,10 @@ library ConfigHelper {
     }
 
     function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
-        return
-        MintedNormalTGE(
-            getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE)
-        );
+        return MintedNormalTGE(getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE));
     }
 
-    function getCollateralManagementToken(Registry registry) internal view returns (CollateralManagementToken) {
-        return CollateralManagementToken(getAddress(registry, Configuration.CONTRACT_TYPE.COLLATERAL_MANAGEMENT_TOKEN));
-    }
-
-    function getSupplyChainManagementProgram(Registry registry) internal view returns (SupplyChainManagementProgram) {
-        return SupplyChainManagementProgram(getAddress(registry, Configuration.CONTRACT_TYPE.SUPPLY_CHAIN_MANAGEMENT_PROGRAM));
-    }
-
-    function getInventoryLoanRegistry(Registry registry) internal view returns (InventoryLoanRegistry) {
-        return InventoryLoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_LOAN_REGISTRY));
-    }
-
-    function getInventoryCollateralizer(Registry registry) internal view returns (InventoryCollateralizer) {
-        return InventoryCollateralizer(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_COLLATERALIZER));
-    }
-
-    function getInventoryInterestTermsContract(Registry registry) internal view returns (InventoryInterestTermsContract) {
-        return InventoryInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_INTEREST_TERMS_CONTRACT));
-    }
-
-    function getInventoryLoanKernel(Registry registry) internal view returns (InventoryLoanKernel) {
-        return InventoryLoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_LOAN_KERNEL));
-    }
-
-    function getInventoryLoanRepaymentRouter(Registry registry) internal view returns (InventoryLoanRepaymentRouter) {
-        return InventoryLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.INVENTORY_LOAN_REPAYMENT_ROUTER));
-    }
-
-    function getInvoiceDebtRegistry(Registry registry) internal view returns (InvoiceDebtRegistry) {
-        return InvoiceDebtRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_DEBT_REGISTRY));
-    }
-
-    function getInvoiceCollateralizer(Registry registry) internal view returns (InvoiceCollateralizer) {
-        return InvoiceCollateralizer(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_COLLATERALIZER));
-    }
-
-    function getInvoiceFinanceInterestTermsContract(Registry registry) internal view returns (InvoiceFinanceInterestTermsContract) {
-        return InvoiceFinanceInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_FINANCE_INTEREST_TERMS_CONTRACT));
-    }
-
-    function getInvoiceLoanKernel(Registry registry) internal view returns (InvoiceLoanKernel) {
-        return InvoiceLoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_KERNEL));
-    }
-
-    function getInvoiceLoanRepaymentRouter(Registry registry) internal view returns (InvoiceLoanRepaymentRouter) {
-        return InvoiceLoanRepaymentRouter(getAddress(registry, Configuration.CONTRACT_TYPE.INVOICE_LOAN_REPAYMENT_ROUTER));
+    function getGo(Registry registry) internal view returns (IGo) {
+        return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
 }

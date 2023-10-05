@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
 
@@ -43,43 +43,49 @@ abstract contract ILoanRegistry {
         uint8[] calldata assetPurposeAndRiskScore
     ) external virtual returns (bool);
 
+    /// @notice retrieves the debtor's address for a given loan
     function getLoanDebtor(bytes32 tokenId) public view virtual returns (address);
 
+    /// @notice retrieves the term contract parameters for a given loan
     function getLoanTermParams(bytes32 tokenId) public view virtual returns (bytes32);
 
+    /// @notice retrieves the principal token address for a given loan agreement ID
     function getPrincipalTokenAddress(bytes32 agreementId) public view virtual returns (address);
 
+    /// @notice retrieves the debtor's address for a given loan agreement ID
     function getDebtor(bytes32 agreementId) public view virtual returns (address);
 
+    /// @notice retrieves the term contract address for a given loan agreement ID
     function getTermContract(bytes32 agreementId) public view virtual returns (address);
 
+    /// @notice retrieves the risk score for a given loan agreement ID
     function getRiskScore(bytes32 agreementId) public view virtual returns (uint8);
 
+    /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(bytes32 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
 
-    /**
-     * Returns the timestamp of the block at which a debt agreement was issued.
-     */
+    /// @notice retrieves the timestamp of the block at which a debt agreement was issued
     function getIssuanceBlockTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
 
+    /// @notice retrieves the timestamp of the last repayment made for a given loan agreement ID
     function getLastRepaymentTimestamp(bytes32 agreementId) public view virtual returns (uint256 timestamp);
 
-    /**
-     * Returns the terms contract parameters of a given issuance
-     */
+    /// @notice retrieves the terms contract parameters for a given loan agreement ID
     function getTermsContractParameters(bytes32 agreementId) public view virtual returns (bytes32);
 
+    /// @notice retrieves the expiration timestamp for a given loan agreement ID
     function getExpirationTimestamp(bytes32 agreementId) public view virtual returns (uint256);
 
-    // Update timestamp of the last repayment from Debtor
+    /// @notice updates the timestamp of the last repayment made for a given loan agreement ID
     function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp) public virtual;
 
+    /// @notice retrieves information about the principal payment for a given loan agreement ID
     /// @dev Get principal payment info before start doing repayment
     function principalPaymentInfo(bytes32 agreementId)
         public
         view
         virtual
         returns (address pTokenAddress, uint256 pAmount);
-
+    /// @notice marks a loan agreement as completed by setting the completedLoans mapping entry to true for a given agreement ID
     function setCompletedLoan(bytes32 agreementId) public virtual;
 }

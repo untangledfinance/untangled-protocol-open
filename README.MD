@@ -52,3 +52,13 @@ For interactions or contract deployments on public testnets / mainnet, create a 
 ```
 yarn deploy --tags [..] --network [..]
 ```
+
+`truffle migrate --reset --compile-all --network development`
+
+## To run Slither, in project folder run 
+
+`slither .`
+
+## To create checklist 
+
+`slither . --checklist --markdown-root https://github.com/untangledfinance/untangled-protocol-open/blob/a57c20d7e2a04b26655fec9bb099db70bb053088/`

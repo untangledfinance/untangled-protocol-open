@@ -1,0 +1,13 @@
+.DS_Store
+
+node_modules
+coverage
+coverage.json
+
+# vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets

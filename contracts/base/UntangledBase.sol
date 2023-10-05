@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
@@ -9,6 +9,12 @@ import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 
 import '../libraries/Configuration.sol';
 
+/**
+ * @title Untangled's SecuritizationPool contract
+ * @notice Abstract contract that serves as a base contract for other contracts in the Untangled system.
+ *  It provides functionalities for contract initialization, pausing, and access control.
+ * @author Untangled Team
+ */
 abstract contract UntangledBase is
     Initializable,
     PausableUpgradeable,
@@ -34,6 +40,10 @@ abstract contract UntangledBase is
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
     }
 
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setRoleAdmin(role, adminRole);
+    }
+
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
@@ -41,4 +51,6 @@ abstract contract UntangledBase is
     function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
+
+    uint256[50] private __gap;
 }

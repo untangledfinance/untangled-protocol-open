@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import './base/LongSaleInterest.sol';
 import "../../libraries/ConfigHelper.sol";
 import './crowdsale/FinalizableCrowdsale.sol';
+import '../../interfaces/IMintedTGE.sol';
 
-contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
+/// @title MintedNormalTGE
+/// @author Untangled Team
+/// @dev Note sale for JOT
+contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 
     bool public longSale;
@@ -13,6 +17,9 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
     uint256 public termLengthInSeconds;
     uint256 public interestRate;
     uint256 public yield;
+    uint256 public initialAmount;
+
+    uint32 public pickedInterest;
 
     function initialize(
         Registry _registry,
@@ -26,65 +33,85 @@ contract MintedNormalTGE is FinalizableCrowdsale, LongSaleInterest {
         longSale = _longSale;
     }
 
+    /// @inheritdoc Crowdsale
     function isLongSale() public view override returns (bool) {
         return longSale;
     }
 
-    function setYield(uint256 _yield) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    /// @dev Sets the yield variable to the specified value
+    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
         yield = _yield;
+        emit YieldUpdated(_yield);
     }
 
     function setupLongSale(
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused nonReentrant securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
             termLengthInSeconds = _termLengthInSeconds;
             yield = _interestRate;
+            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
+            emit YieldUpdated(yield);
         }
     }
 
-    function getLongSaleTokenPrice(uint256 timestamp) public view returns (uint256) {
-        if (!finalized) return (RATE_SCALING_FACTOR**2) / rate;
-        else if (
-            Configuration.NOTE_TOKEN_TYPE(INoteToken(token).noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.JUNIOR
-        ) {
-            address sotTgeAddress = ISecuritizationPool(pool).tgeAddress();
-            if (sotTgeAddress != address(0) && !FinalizableCrowdsale(sotTgeAddress).finalized())
-                return (RATE_SCALING_FACTOR**2) / rate;
-            return registry.getDistributionAssessor().calcTokenPrice(pool, token);
-        } else {
-            require(
-                timeStartEarningInterest != 0,
-                'MintedIncreasingInterestTGE: timeStartEarningInterest need to be setup'
-            );
-            return getPurchasePrice(interestRate, yield, timestamp - timeStartEarningInterest, termLengthInSeconds);
-        }
+    function getTokenPrice() public view returns (uint256) {
+        return registry.getDistributionAssessor().getJOTTokenPrice(
+            ISecuritizationPool(pool)
+        );
     }
 
-    function getLongSaleTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return
-            _getTokenAmount((currencyAmount * PURCHASE_PRICE_SCALING_FACTOR) / getLongSaleTokenPrice(block.timestamp));
+    function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
+        return currencyAmount / getTokenPrice();
     }
 
+    /// @notice Setup a new round sale for note token
+    /// @param openingTime_ Define when the sale should start
+    /// @param closingTime_ Define when the sale should end
+    /// @param cap_ Target amount of raised currency
     function startNewRoundSale(
-        uint256 openingTime,
-        uint256 closingTime,
-        uint256 rate,
-        uint256 cap
-    ) external whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+        uint256 openingTime_,
+        uint256 closingTime_,
+        uint256 rate_,
+        uint256 cap_
+    ) external whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
         _preValidateNewSaleRound();
 
         // call inner function for each extension
-        _newSaleRound(rate);
-        newSaleRoundTime(openingTime, closingTime);
-        _setTotalCap(cap);
+        _newSaleRound(rate_);
+        newSaleRoundTime(openingTime_, closingTime_);
+        _setTotalCap(cap_);
     }
 
+    /// @notice Setup initial amount currency raised for JOT condition
+    /// @param _initialAmount Expected minimum amount of JOT before SOT start
+    function setInitialAmount(
+        uint256 _initialAmount
+    ) external whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
+        require(initialAmount < totalCap, "MintedNormalTGE: Initial JOT amount must be less than total cap");
+        initialAmount = _initialAmount;
+    }
+
+    /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
     function _preValidateNewSaleRound() internal view {
         require(hasClosed() || totalCapReached(), 'MintedIncreasingInterestTGE: Previous round not closed');
     }
+
+    function _finalization() internal override {
+        super._finalization();
+
+        pickedInterest = uint32(interestRate);
+    }
+
+    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+        return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
+    }
+
+    uint256[45] private __gap;
 }

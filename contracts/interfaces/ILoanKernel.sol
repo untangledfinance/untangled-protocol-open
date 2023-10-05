@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
 
@@ -60,12 +60,6 @@ abstract contract ILoanKernel {
     event LogDebtKernelError(uint8 indexed _errorId, bytes32 indexed _orderHash, string desc);
 
     event LogFeeTransfer(address indexed payer, address token, uint256 amount, address indexed beneficiary);
-    event LogDebtOrderFilled(
-        bytes32 agreementId,
-        uint256[] principalAmounts,
-        address principalTokenAddress,
-        address relayer
-    );
 
     event IssuedNewInputLoans(address[] debtor, uint256[] loanTokenIds);
 
@@ -104,4 +98,11 @@ abstract contract ILoanKernel {
     mapping(bytes32 => bool) public issuanceCancelled;
     mapping(bytes32 => bool) public debtOrderCancelled;
     mapping(bytes32 => bool) public debtOrderCompleted;
+
+    /// @notice conclude a loan by stopping lending/loan terms or allowing the loan loss. It takes the creditor, agreement ID, and term contract as input
+    function concludeLoan(
+        address creditor,
+        bytes32 agreementId,
+        address termContract
+    ) public virtual;
 }

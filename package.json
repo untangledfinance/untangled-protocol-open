@@ -3,29 +3,48 @@
   "version": "0.1.0",
   "description": "Decentralized lending and liquidity protocol for real world asset collaterals",
   "scripts": {
-    "compile": "yarn hardhat compile",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "hardhat deploy"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat deploy",
+    "slither": "bash ./scripts/static_analysis.sh",
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js --testfiles ./test/",
+    "coverage-single": "hardhat coverage --solcoverjs ./.solcover.js --testfiles",
+    "clean": "hardhat clean",
+    "local-node": "hardhat node --no-deploy"
   },
-  "author": "Teddy Nguyen",
+  "author": "Untangled Finance Ltd",
   "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-etherscan": "^3.0.3",
-    "@nomiclabs/hardhat-truffle5": "^2.0.5",
-    "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@openzeppelin/truffle-upgrades": "^1.15.0",
-    "@truffle/hdwallet-provider": "^2.0.7",
-    "chai": "^4.3.6",
-    "dotenv": "^16.0.0",
-    "ethers": "^5.6.4",
-    "ganache": "^7.0.4",
-    "hardhat": "^2.9.3",
-    "hardhat-contract-sizer": "^2.5.1",
-    "hardhat-deploy": "^0.11.4",
-    "web3": "^1.7.3"
+    "@nomicfoundation/hardhat-chai-matchers": "1.0.6",
+    "@nomiclabs/hardhat-ethers": "2.2.3",
+    "@nomicfoundation/hardhat-network-helpers": "1.0.9",
+    "@nomiclabs/hardhat-web3": "2.0.0",
+    "@openzeppelin/hardhat-upgrades": "1.25.1",
+    "chai": "4.3.6",
+    "dotenv": "16.3.1",
+    "ethers": "5.7.2",
+    "ganache-cli": "^6.12.2",
+    "hardhat": "2.17.3",
+    "hardhat-contract-sizer": "2.10.0",
+    "hardhat-deploy": "0.11.37",
+    "truffle-plugin-verify": "0.6.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.5.0",
-    "@openzeppelin/contracts-upgradeable": "^4.5.2"
+    "@chainlink/contracts": "0.7.1",
+    "@chainlink/contracts-ccip": "0.7.6",
+    "@ethersproject/bytes": "5.7.0",
+    "@ethersproject/keccak256": "5.7.0",
+    "@ethersproject/solidity": "5.7.0",
+    "@openzeppelin/contracts": "4.9.3",
+    "@openzeppelin/contracts-upgradeable": "4.9.3",
+    "@openzeppelin/test-helpers": "0.5.16",
+    "dayjs": "1.11.10",
+    "eth-gas-reporter": "0.2.25",
+    "lodash": "4.17.21",
+    "solidity-coverage": "0.8.4",
+    "truffle-contract-size": "2.0.1"
+  },
+  "installConfig": {
+    "hoistingLimits": "dependencies"
   }
 }

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import './base/SecuritizationPoolServiceBase.sol';
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 
+/// @title DistributionTranche
+/// @author Untangled Team
 contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTranche {
     using ConfigHelper for Registry;
 
@@ -13,6 +15,7 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         _;
     }
 
+    /// @inheritdoc IDistributionTranche
     function redeem(
         address usr,
         address pool,
@@ -26,11 +29,14 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         ISecuritizationPool(pool).redeem(usr, notesToken, currencyAmount, tokenAmount);
     }
 
+    /// @inheritdoc IDistributionTranche
     function redeemToken(
         address noteToken,
         address usr,
         uint256 tokenAmount
-    ) external whenNotPaused onlyOperator returns (bool) {
-        return IERC20(noteToken).transferFrom(usr, address(this), tokenAmount);
+    ) external whenNotPaused onlyOperator {
+        require(IERC20(noteToken).transferFrom(usr, address(this), tokenAmount), 'DistributionTranche: token-transfer-failed');
     }
+
+    uint256[50] private __gap;
 }

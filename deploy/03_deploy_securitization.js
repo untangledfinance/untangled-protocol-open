@@ -16,6 +16,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       'setSecuritizationManager',
       securitizationManagerProxy.address
     );
+    await execute(
+      'SecuritizationManager',
+      { from: deployer, log: true },
+      'setAllowedUIDTypes',
+      [0, 1, 2, 3],
+    );
   }
 
   //deploy SecuritizationPool
@@ -98,4 +104,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['pool'];
+module.exports.tags = ['pool', 'core'];

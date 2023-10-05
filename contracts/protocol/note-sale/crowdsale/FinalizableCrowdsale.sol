@@ -1,25 +1,33 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
+import '../../../interfaces/IFinalizableCrowdsale.sol';
 import './TimedCrowdsale.sol';
 
-abstract contract FinalizableCrowdsale is TimedCrowdsale {
-    bool public finalized;
+/// @title FinalizableCrowdsale
+/// @author Untangled Team
+/// @dev An abstract contract define finalize function for sale
+abstract contract FinalizableCrowdsale is IFinalizableCrowdsale, TimedCrowdsale {
+    
+    bool internal _finalized;
 
-    event CrowdsaleFinalized();
+    function finalized() public view virtual override returns (bool) {
+        return _finalized;
+    }
 
-    function finalize(bool claimRemainToken, address remainTokenRecipient)
-        public
-        whenNotPaused
-        nonReentrant
-        onlyRole(OWNER_ROLE)
+    /// @dev Validates that the crowdsale has not already been finalized and that it has either closed or reached the total cap
+    /// @param claimRemainToken claim remaining token or not
+    /// @param remainTokenRecipient Wallet will receive remaining token
+    function finalize(bool claimRemainToken, address remainTokenRecipient) public whenNotPaused
     {
-        require(!finalized, 'FinalizableCrowdsale: already finalized');
+        require(_msgSender() == pool, 'FinalizableCrowdsale: Only pool contract can finalize');
+        require(!finalized(), 'FinalizableCrowdsale: already finalized');
         require(hasClosed() || totalCapReached(), 'FinalizableCrowdsale: not closed');
+        _finalized = true;
 
         if (!isDistributedFully() && !isLongSale()) {
             uint256 tokenRemain = 0;
-            tokenRemain = _getTokenAmount(getCurrencyRemainAmount());
+            tokenRemain = getTokenAmount(getCurrencyRemainAmount());
 
             if (claimRemainToken) {
                 _processPurchase(remainTokenRecipient, tokenRemain);
@@ -28,13 +36,14 @@ abstract contract FinalizableCrowdsale is TimedCrowdsale {
             }
         }
 
-        finalized = true;
-
         _finalization();
         emit CrowdsaleFinalized();
     }
 
+    /// @dev This function is meant to be overridden in derived contracts to implement specific finalization logic
     function _finalization() internal virtual {
         // solhint-disable-previous-line no-empty-blocks
     }
+
+    uint256[49] private __gap;
 }

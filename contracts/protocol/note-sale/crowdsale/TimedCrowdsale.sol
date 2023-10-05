@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import './Crowdsale.sol';
 
+/// @title TimedCrowdsale
+/// @author Untangled Team
+/// @dev Note sale that has open time and close time
 abstract contract TimedCrowdsale is Crowdsale {
+    using ConfigHelper for Registry;
     uint256 public openingTime;
     uint256 public closingTime;
 
     bool public isEnableTimeLimit;
 
     event TimedCrowdsaleExtended(uint256 prevClosingTime, uint256 newClosingTime);
+    event UpdateUsingTimeLimit(bool isEnableTimeLimit);
+    event UpdateSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime);
 
     function __TimedCrowdsale__init(
         Registry _registry,
@@ -40,6 +46,7 @@ abstract contract TimedCrowdsale is Crowdsale {
         return block.timestamp > closingTime;
     }
 
+    /// @notice Updates the closing time with the new closing time
     function extendTime(uint256 newClosingTime) external whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         require(newClosingTime > closingTime, 'TimedCrowdsale: new closing time is before current closing time');
 
@@ -47,7 +54,9 @@ abstract contract TimedCrowdsale is Crowdsale {
         closingTime = newClosingTime;
     }
 
-    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused onlyRole(OWNER_ROLE) {
+    /// @notice Updates the opening time and closing time accordingly
+    function newSaleRoundTime(uint256 newOpeningTime, uint256 newClosingTime) public whenNotPaused {
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "Crowdsale: Caller must be owner or pool");
         require(newClosingTime >= newOpeningTime, 'TimedCrowdsale: opening time is not before closing time');
         // not accept opening time in the past
         if (newOpeningTime < block.timestamp) {
@@ -60,9 +69,15 @@ abstract contract TimedCrowdsale is Crowdsale {
 
         openingTime = newOpeningTime;
         closingTime = newClosingTime;
+
+        emit UpdateSaleRoundTime(newOpeningTime, newClosingTime);
     }
 
+    /// @dev Sets the isEnableTimeLimit variable to the specified value
     function setUsingTimeLimit(bool usingTimeLimit) public whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
         isEnableTimeLimit = usingTimeLimit;
+        emit UpdateUsingTimeLimit(usingTimeLimit);
     }
+
+    uint256[47] private __gap;
 }

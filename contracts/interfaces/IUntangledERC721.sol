@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
 import '../storage/Registry.sol';
@@ -27,17 +27,28 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         _mint(to, tokenId);
     }
 
+    function safeMint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
+    }
+
+    /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
     function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
         external
         view
         virtual
         returns (uint256);
 
+    /// @notice the expiration timestamp of an invoice/loan token
     function getExpirationTimestamp(uint256 agreementId) external view virtual returns (uint256);
 
+    /// @notice  the interest rate associated with an token
     function getInterestRate(uint256 agreementId) external view virtual returns (uint256);
 
+    /// @notice the risk score associated with a token
     function getRiskScore(uint256 agreementId) external view virtual returns (uint8);
 
+    /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
+
+    uint256[49] private __gap;
 }

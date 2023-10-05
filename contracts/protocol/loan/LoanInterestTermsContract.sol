@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../../base/UntangledBase.sol';
 import '../../interfaces/ILoanInterestTermsContract.sol';
@@ -7,13 +7,18 @@ import '../../libraries/UnpackLoanParamtersLib.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../libraries/ConfigHelper.sol';
 
+/// @title LoanKernel
+/// @author Untangled Team
+/// @dev Upload loan and conclude loan
 contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract {
     using ConfigHelper for Registry;
 
     uint256 public constant NUM_AMORTIZATION_UNIT_TYPES = 6;
 
+    /// @dev Represents the number of days in a year
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
+    /// @dev Represents the number of seconds in a minute
     uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
     uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
@@ -93,6 +98,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     // Register to start Loan term for batch of agreement Ids
+    /// @inheritdoc ILoanInterestTermsContract
     function registerTermStart(bytes32 agreementId)
         public
         override
@@ -105,6 +111,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return true;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function registerConcludeLoan(bytes32 agreementId)
         external
         override
@@ -130,6 +137,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /// @param  beneficiary address. The address of the payment's beneficiary.
     /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
     /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
+    /// @inheritdoc ILoanInterestTermsContract
     function registerRepayment(
         bytes32 agreementId,
         address payer,
@@ -142,14 +150,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             tokenAddress == loanRegistry.getPrincipalTokenAddress(agreementId),
             'LoanTermsContract: Invalid token for repayment.'
         );
-        require(
-            !loanRegistry.completedLoans(agreementId),
-            'LoanTermsContract: Completed Loan.'
-        );
-        require(
-            startedLoan[agreementId],
-            'LoanTermsContract: Loan has not started yet.'
-        );
+        require(!loanRegistry.completedLoans(agreementId), 'LoanTermsContract: Completed Loan.');
+        require(startedLoan[agreementId], 'LoanTermsContract: Loan has not started yet.');
 
         uint256 currentTimestamp = block.timestamp;
 
@@ -194,13 +196,16 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return remains;
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getValueRepaidToDate(bytes32 agreementId) public view override returns (uint256, uint256) {
         return (repaidPrincipalAmounts[agreementId], repaidInterestAmounts[agreementId]);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function isCompletedRepayments(bytes32[] memory agreementIds) public view override returns (bool[] memory) {
         bool[] memory result = new bool[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
+        uint256 aagreementIdsLength = agreementIds.length;
+        for (uint256 i = 0; i < aagreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
@@ -210,6 +215,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
      * Expected repayment value with Amortization of Interest and Principal
      * (AMORTIZATION) - will be used for repayment from Debtor
      */
+    /// @inheritdoc ILoanInterestTermsContract
     function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
         public
         view
@@ -225,7 +231,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
 
         bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
-        uint256 manualInterestAmountLoan;
+        uint256 manualInterestAmountLoan = 0;
         if (isManualInterestLoan) {
             manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
         }
@@ -241,6 +247,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         );
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
         public
         view
@@ -249,7 +256,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     {
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
-        for (uint256 i = 0; i < agreementIds.length; i++) {
+        uint256 agreementIdsLength = agreementIds.length;
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
             (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
                 agreementIds[i],
                 timestamp
@@ -260,10 +268,13 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return (expectedPrincipals, expectedInterests);
     }
 
+    /// @inheritdoc ILoanInterestTermsContract
     function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
         return _unpackParamsForAgreementID(agreementId).interestRate;
     }
 
+    /// @param amortizationUnitType AmortizationUnitType enum
+    /// @return the corresponding length of the unit in seconds
     function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
         private
         pure
@@ -342,12 +353,15 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _interestRate,
         uint256 _durationLengthInSec
     ) private pure returns (uint256) {
+
+        // x = 10 ** 27 + IR * (10 ** 27 / 10 ** 4 / 100) / YLIR
+        uint256 x = UntangledMath.ONE +
+                        (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
+                        YEAR_LENGTH_IN_SECONDS;
+        
         return
             (_principalAmount *
-                UntangledMath.rpow(
-                    UntangledMath.ONE +
-                        (_interestRate * (UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100)) /
-                        YEAR_LENGTH_IN_SECONDS,
+                UntangledMath.rpow(x,
                     _durationLengthInSec,
                     UntangledMath.ONE
                 )) /
@@ -358,6 +372,8 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      * Calculate values which Debtor need to pay to conclude current Loan
      */
+    /// @dev calculates the expected principal and interest amounts that the debtor needs to pay to conclude the current loan
+    /// It takes into account the repayment history, timestamps, and additional parameters specific to manual interest loans
     function _getExpectedRepaymentValuesToTimestamp(
         UnpackLoanParamtersLib.InterestParams memory _params,
         uint256 _lastRepaymentTimestamp, // timestamp of last repayment from debtor
@@ -402,13 +418,16 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             return 0;
         }
         uint256 interest = 0;
-        uint256 elapseTimeFromLastRepay = _timestamp - _lastRepayTimestamp;
-        uint256 elapseTimeFromStart = _timestamp - _startTermTimestamp;
+
+        // dangerous-strict-equalities
+        uint256 elapseTimeFromLastRepay = _timestamp < _lastRepayTimestamp ? 0 : (_timestamp - _lastRepayTimestamp);
+        uint256 elapseTimeFromStart = _timestamp < _startTermTimestamp ? 0 : (_timestamp - _startTermTimestamp);
 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
             // Have just made new repayment
-            if (elapseTimeFromLastRepay == 0 && _paidInterestAmount > 0) {
+            if (
+                _timestamp <= _lastRepayTimestamp && _paidInterestAmount > 0) {
                 interest = 0;
             } else {
                 if (_paidInterestAmount > 0) {
@@ -427,7 +446,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
                     );
                 }
             }
-        } else if (_timestamp >= _endTermTimestamp) {
+        } else {
             // If debtor has made at least 1 repayment
             if (_paidInterestAmount > 0) {
                 interest = _calculateInterestForDuration(
@@ -438,9 +457,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             } else {
                 interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
             }
-        } else {
-            interest = 0;
         }
+        
         return interest;
     }
+
+    uint256[50] private __gap;
 }

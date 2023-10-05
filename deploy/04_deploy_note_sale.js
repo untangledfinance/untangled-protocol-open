@@ -62,4 +62,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['sale'];
+module.exports.tags = ['sale', 'core'];

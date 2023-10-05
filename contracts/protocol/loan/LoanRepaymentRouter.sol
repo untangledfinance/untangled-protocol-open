@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../interfaces/ILoanInterestTermsContract.sol';
@@ -8,9 +8,9 @@ import '../../interfaces/ILoanRegistry.sol';
 import '../../interfaces/ILoanRepaymentRouter.sol';
 import '../../libraries/ConfigHelper.sol';
 
-/**
- * Repayment Router smart contract for Loan
- */
+/// @title LoanRepaymentRouter
+/// @author Untangled Team
+/// @dev Repay for loan
 contract LoanRepaymentRouter is ILoanRepaymentRouter {
     using ConfigHelper for Registry;
 
@@ -19,14 +19,13 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         registry = _registry;
     }
 
+    /// @dev performs various checks to validate the repayment request, including ensuring that the token address is not null,
+    /// the amount is greater than zero, and the debt agreement exists
     function _assertRepaymentRequest(
         bytes32 _agreementId,
-        address _payer,
-        uint256 _amount,
         address _tokenAddress
     ) private returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
-        require(_amount > 0, 'Amount must greater than 0.');
 
         // Ensure agreement exists.
         if (registry.getLoanAssetToken().ownerOf(uint256(_agreementId)) == address(0)) {
@@ -34,17 +33,12 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
             return false;
         }
 
-        // Check payer has sufficient balance and has granted router sufficient allowance.
-        if (
-            IERC20(_tokenAddress).balanceOf(_payer) < _amount ||
-            IERC20(_tokenAddress).allowance(_payer, address(this)) < _amount
-        ) {
-            emit LogError(uint8(Errors.PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT), _agreementId);
-            return false;
-        }
         return true;
     }
 
+    /// @dev executes the loan repayment by notifying the terms contract about the repayment,
+    /// transferring the repayment amount to the creditor, and handling additional logic related to securitization pools
+    /// and completed repayments
     function _doRepay(
         bytes32 _agreementId,
         address _payer,
@@ -67,12 +61,20 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
         // Transfer amount to creditor
         if (_payer != address(0x0)) {
-            if (registry.getSecuritizationManager().isExistingPools(beneficiary))
-                beneficiary = ISecuritizationPool(beneficiary).pot();
+            ISecuritizationPool poolInstance = ISecuritizationPool(beneficiary);
+            if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
+            uint256 repayAmount = _amount - remains;
             require(
-                IERC20(_tokenAddress).transferFrom(_payer, beneficiary, _amount - remains),
+                IERC20(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
                 'Unsuccessfully transferred repayment amount to Creditor.'
             );
+            poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
+        }
+        ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
+
+        if (loanTermContract.completedRepayment(_agreementId)) {
+            // Burn LAT token when repay completely
+            registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);
         }
 
         // Log event for repayment
@@ -80,14 +82,16 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         return true;
     }
 
+    /// @inheritdoc ILoanRepaymentRouter
     function repayInBatch(
         bytes32[] calldata agreementIds,
         uint256[] calldata amounts,
         address tokenAddress
     ) external override whenNotPaused nonReentrant returns (bool) {
-        for (uint256 i = 0; i < agreementIds.length; i++) {
+        uint256 agreementIdsLength = agreementIds.length;
+        for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(
-                _assertRepaymentRequest(agreementIds[i], _msgSender(), amounts[i], tokenAddress),
+                _assertRepaymentRequest(agreementIds[i], tokenAddress),
                 'LoanRepaymentRouter: Invalid repayment request'
             );
             require(
@@ -98,4 +102,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         emit LogRepayments(agreementIds, _msgSender(), amounts);
         return true;
     }
+
+    uint256[50] private __gap;
 }

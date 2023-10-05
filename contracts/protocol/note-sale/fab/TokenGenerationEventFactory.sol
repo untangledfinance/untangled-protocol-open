@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../../../base/UntangledBase.sol';
 import '../../../interfaces/ITokenGenerationEventFactory.sol';
 import '../../../libraries/ConfigHelper.sol';
 import '../../../base/Factory.sol';
+import '../../../libraries/UntangledMath.sol';
 
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
 
     enum SaleType {
-        MINTED_INCREASING_INTEREST,
-        NORMAL_SALE
+        MINTED_INCREASING_INTEREST_SOT,
+        NORMAL_SALE_JOT,
+        NORMAL_SALE_SOT
     }
 
-    function initialize(Registry _registry) public initializer {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
+        __Factory__init(_factoryAdmin);
 
         registry = _registry;
     }
@@ -28,6 +31,10 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         _;
     }
 
+    function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setFactoryAdmin(_factoryAdmin);
+    }
+
     function createNewSaleInstance(
         address issuerTokenController,
         address pool,
@@ -35,19 +42,16 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override onlySecuritizationManager returns (address) {
-        address _tgeInstance;
-
-        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST)) {
-            _tgeInstance = _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.NORMAL_SALE)) {
-            _tgeInstance = _newNormalSale(issuerTokenController, pool, token, currency, longSale);
-        }
-        else{
+    ) external override nonReentrant onlySecuritizationManager returns (address) {
+        if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
+            return _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
+        } else if (saleType == uint8(SaleType.NORMAL_SALE_JOT)) {
+            return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
+        } else if (saleType == uint8(SaleType.NORMAL_SALE_SOT)) {
+            return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
+        } else {
             revert('Unknown sale type');
         }
-
-        return _tgeInstance;
     }
 
     function _newMintedIncreasingInterestSale(
@@ -57,15 +61,27 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         bool longSale
     ) private returns (address) {
-        address tgeAddress = deployMinimal(address(registry.getMintedIncreasingInterestTGE()));
+        address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
+
+        bytes memory _initialData = abi.encodeWithSelector(
+            getSelector('initialize(address,address,address,address,bool)'),
+            registry,
+            pool,
+            token,
+            currency,
+            longSale
+        );
+
+        address tgeAddress = _deployInstance(mintedIncreasingInterestTGEImplAddress, _initialData);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
 
-        tge.initialize(registry, pool, token, currency, longSale);
         tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
         tge.renounceRole(tge.OWNER_ROLE(), address(this));
 
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
+
+        emit TokenGenerationEventCreated(tgeAddress);
 
         return tgeAddress;
     }
@@ -77,15 +93,27 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         bool longSale
     ) private returns (address) {
-        address tgeAddress = deployMinimal(address(registry.getMintedNormalTGE()));
+        address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
+
+        bytes memory _initialData = abi.encodeWithSelector(
+            getSelector('initialize(address,address,address,address,bool)'),
+            registry,
+            pool,
+            token,
+            currency,
+            longSale
+        );
+
+        address tgeAddress = _deployInstance(mintedNormalTGEImplAddress, _initialData);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
 
-        tge.initialize(registry, pool, token, currency, longSale);
         tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
         tge.renounceRole(tge.OWNER_ROLE(), address(this));
 
         tgeAddresses.push(tgeAddress);
         isExistingTge[tgeAddress] = true;
+
+        emit TokenGenerationEventCreated(tgeAddress);
 
         return tgeAddress;
     }
@@ -93,15 +121,24 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
     function pauseUnpauseTge(address tgeAdress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist');
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAdress);
-        if (tge.paused()) tge.unpause();
-        tge.pause();
+        if (tge.paused()) {
+            tge.unpause();
+        } else {
+            tge.pause();
+        }
     }
 
     function pauseUnpauseAllTges() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < tgeAddresses.length; i++) {
+        uint256 tgeAddressesLength = tgeAddresses.length;
+        for (uint256 i = 0; i < tgeAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddresses[i]);
-            if (tge.paused()) tge.unpause();
-            else tge.pause();
+            if (tge.paused()) {
+                tge.unpause();
+            } else {
+                tge.pause();
+            }
         }
     }
+
+    uint256[50] private __gap;
 }

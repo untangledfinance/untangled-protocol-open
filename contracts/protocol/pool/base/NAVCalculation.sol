@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '../../../libraries/UntangledMath.sol';
 import '../../../libraries/Configuration.sol';
@@ -86,4 +86,6 @@ contract NAVCalculation {
             totalDebtAmt -
             ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
     }
+
+    uint256[50] private __gap;
 }

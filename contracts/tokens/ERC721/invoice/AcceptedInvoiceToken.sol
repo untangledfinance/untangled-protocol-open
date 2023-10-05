@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
@@ -14,7 +14,7 @@ import '../../../libraries/ConfigHelper.sol';
 contract AcceptedInvoiceToken is IUntangledERC721 {
     using ConfigHelper for Registry;
 
-    bytes32 public constant INVOICE_CREATOR_ROLE = keccak256("INVOICE_CREATOR_ROLE");
+    bytes32 public constant INVOICE_CREATOR_ROLE = keccak256('INVOICE_CREATOR_ROLE');
 
     struct InvoiceMetaData {
         address payer;
@@ -60,9 +60,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         address from,
         address to,
         uint256 amount
-    ) private returns (bool success) {
+    ) private {
         if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPool(to).pot();
-        return IERC20(token).transferFrom(from, to, amount);
+        require(IERC20(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
     }
 
     function createBatch(
@@ -74,11 +74,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         uint256[] calldata salt,
         uint8[] calldata riskScoreIdxsAndAssetPurpose //[...riskScoreIdxs, assetPurpose]
     ) external whenNotPaused {
-        require(
-            hasRole(INVOICE_CREATOR_ROLE, _msgSender()),
-            'not permission to create token'
-        );
-
+        require(hasRole(INVOICE_CREATOR_ROLE, _msgSender()), 'not permission to create token');
+        // fail to cached the array length due to stack too deep
+        // uint256 fiatAmountLength = _fiatAmount.length;
         Configuration.ASSET_PURPOSE assetPurpose = Configuration.ASSET_PURPOSE(
             riskScoreIdxsAndAssetPurpose[_fiatAmount.length - 1]
         );
@@ -97,9 +95,10 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     }
 
     function payInBatch(uint256[] calldata tokenIds, uint256[] calldata payAmounts) external returns (bool) {
-        require(tokenIds.length == payAmounts.length, 'Length miss match');
+        uint256 tokenIdsLength = tokenIds.length;
+        require(tokenIdsLength == payAmounts.length, 'Length miss match');
 
-        for (uint256 i = 0; i < tokenIds.length; ++i) {
+        for (uint256 i = 0; i < tokenIdsLength; ++i) {
             require(!isPaid(tokenIds[i]), 'AIT: Invoice is already paid');
 
             InvoiceMetaData storage metadata = entries[bytes32(tokenIds[i])];
@@ -113,7 +112,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
                 fiatAmountRemain = metadata.fiatAmount - metadata.paidAmount - payAmounts[i];
             }
 
-            _transferTokensFrom(metadata.fiatTokenAddress, msg.sender, ownerOf(tokenIds[i]), payAmounts[i]);
+            address receiver = ownerOf(tokenIds[i]);
+
+            _transferTokensFrom(metadata.fiatTokenAddress, msg.sender, receiver, payAmounts[i]);
 
             if (fiatAmountRemain == 0) {
                 metadata.paidAmount += payAmounts[i];
@@ -122,7 +123,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
                 metadata.paidAmount += payAmounts[i];
             }
 
-            emit LogRepayment(tokenIds[i], msg.sender, ownerOf(tokenIds[i]), payAmounts[i], metadata.fiatTokenAddress);
+            emit LogRepayment(tokenIds[i], msg.sender, receiver, payAmounts[i], metadata.fiatTokenAddress);
         }
 
         emit LogRepayments(tokenIds, msg.sender, payAmounts);
@@ -209,4 +210,6 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     );
 
     event LogRepayments(uint256[] _tokenIds, address _payer, uint256[] _amounts);
+
+    uint256[49] private __gap;
 }

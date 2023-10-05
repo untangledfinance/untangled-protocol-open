@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
+/// @title UntangledMath
+/// @author Untangled Team
 library UntangledMath {
     uint256 public constant ONE = 10**27;
 
@@ -56,6 +58,12 @@ library UntangledMath {
                     }
                 }
             }
+        }
+    }
+
+    function uncheckedInc(uint256 x) internal pure returns (uint256 z) {
+        unchecked {
+            z = x + 1;
         }
     }
 }
