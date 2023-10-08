@@ -125,6 +125,7 @@ describe('Distribution', () => {
         interestRate: 910000,
         probabilityOfDefault: 800000,
         lossGivenDefault: 810000,
+        discountRate: 100000,
         gracePeriod: halfOfADay,
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
@@ -137,6 +138,7 @@ describe('Distribution', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
@@ -161,6 +163,7 @@ describe('Distribution', () => {
         interestRate: 910000,
         probabilityOfDefault: 800000,
         lossGivenDefault: 810000,
+        discountRate: 100000,
         gracePeriod: halfOfADay,
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
@@ -173,11 +176,13 @@ describe('Distribution', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate,
         riskScore.advanceRate,
         riskScore.penaltyRate,
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate,
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
