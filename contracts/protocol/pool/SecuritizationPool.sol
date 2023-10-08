@@ -168,7 +168,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     ) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
-            _daysPastDuesLength * 5 == _ratesAndDefaults.length &&
+            _daysPastDuesLength * 6 == _ratesAndDefaults.length &&
                 _daysPastDuesLength * 4 == _periodsAndWriteOffs.length,
             'SecuritizationPool: Riskscore params length is not equal'
         );
