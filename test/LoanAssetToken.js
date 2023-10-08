@@ -84,6 +84,7 @@ describe('LoanAssetToken', () => {
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
         writeOffAfterCollectionPeriod: halfOfADay,
+        discountRate: 100000
       };
       const daysPastDues = [riskScore.daysPastDue];
       const ratesAndDefaults = [
@@ -92,6 +93,7 @@ describe('LoanAssetToken', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
