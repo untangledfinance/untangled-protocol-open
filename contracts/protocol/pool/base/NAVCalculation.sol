@@ -29,12 +29,22 @@ contract NAVCalculation {
         uint32 gracePeriod;
         uint32 collectionPeriod;
         uint32 writeOffAfterCollectionPeriod;
+        uint32 discountRate;
     }
 
+    /// @dev Calculate the expected present asset value
+    /// @param totalDebtAmt total debt amount
+    /// @param interestRate interest rate of LAT, or interest rate for SOT, or interest rate for JOT (always interest rate= 0)
+    /// @param overdue overdue in seconds
+    /// @param secondTillCashFlow time till expiration in seconds
+    /// @param riskScore risk score applied
+    /// @param assetPurpose asset purpose, pledge or sale
+    /// @return expected present asset value
     function _calculateAssetValue(
         uint256 totalDebtAmt,
         uint256 interestRate,
         uint256 overdue,
+        uint256 secondTillCashFlow,
         RiskScore memory riskScore,
         Configuration.ASSET_PURPOSE assetPurpose
     ) internal pure returns (uint256) {
@@ -82,9 +92,17 @@ contract NAVCalculation {
                 UntangledMath.ONE;
         }
 
-        return
+        uint256 creditRiskAdjustedExpCF =
             totalDebtAmt -
             ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
+        return (creditRiskAdjustedExpCF * UntangledMath.ONE)
+                / (UntangledMath.ONE +
+                    UntangledMath.rpow(
+                        (riskScore.discountRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                        secondTillCashFlow,
+                    UntangledMath.ONE
+                    )
+                );
     }
 
     uint256[50] private __gap;

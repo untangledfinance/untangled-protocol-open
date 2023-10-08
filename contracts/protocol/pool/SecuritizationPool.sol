@@ -187,6 +187,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                     interestRate: _ratesAndDefaults[i + _daysPastDuesLength * 2],
                     probabilityOfDefault: _ratesAndDefaults[i + _daysPastDuesLength * 3],
                     lossGivenDefault: _ratesAndDefaults[i + _daysPastDuesLength * 4],
+                    discountRate: _ratesAndDefaults[i + _daysPastDuesLength * 5],
                     gracePeriod: _periodsAndWriteOffs[i],
                     collectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength],
                     writeOffAfterGracePeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 2],

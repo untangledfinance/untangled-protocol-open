@@ -9,6 +9,7 @@ import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
 import '../../interfaces/IDistributionAssessor.sol';
+import "../../interfaces/ILoanRegistry.sol";
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
@@ -28,6 +29,7 @@ contract SecuritizationPoolValueService is
         uint256 interestRate,
         uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
         uint256 overdue,
+        uint256 secondTillCashFlow,
         Configuration.ASSET_PURPOSE assetPurpose
     ) private view returns (uint256) {
         uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
@@ -38,7 +40,7 @@ contract SecuritizationPoolValueService is
         }
         if (!hasValidRiskScore) return totalDebt;
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        return _calculateAssetValue(totalDebt, interestRate, overdue, riskscore, assetPurpose);
+        return _calculateAssetValue(totalDebt, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
     }
 
     function getExpectedAssetValue(
@@ -48,21 +50,23 @@ contract SecuritizationPoolValueService is
         uint256 timestamp
     ) public view returns (uint256) {
         IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
-        uint256 expirationTimestamp = loanAssetToken.getExpirationTimestamp(tokenId);
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenId));
 
-        uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
+        uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
+        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp ? loanEntry.expirationTimestamp - timestamp : 0;
         uint256 totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
 
         uint256 presentValue = getPresentValueWithNAVCalculation(
             poolAddress,
             totalDebt,
             loanAssetToken.getInterestRate(tokenId),
-            loanAssetToken.getRiskScore(tokenId),
+            loanEntry.riskScore,
             overdue,
-            loanAssetToken.getAssetPurpose(tokenId)
+            secondTillCashflow,
+            loanEntry.assetPurpose
         );
 
-        if (timestamp < expirationTimestamp) {
+        if (timestamp < loanEntry.expirationTimestamp) {
             totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
         }
 
@@ -140,6 +144,7 @@ contract SecuritizationPoolValueService is
             ISecuritizationPool(assetPoolAddress).termLengthInSeconds();
 
         uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
+        uint256 secondTillCashflow = expirationTimestamp > timestamp ? expirationTimestamp - timestamp : 0;
 
         uint256 totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
             tokenAddress,
@@ -152,6 +157,7 @@ contract SecuritizationPoolValueService is
             interestRate,
             0,
             overdue,
+            secondTillCashflow,
             Configuration.ASSET_PURPOSE.SALE
         );
 
@@ -217,22 +223,22 @@ contract SecuritizationPoolValueService is
     }
 
     function getDaysPastDueByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (uint32 daysPastDue, , , , , , , , , ) = securitizationPool.riskScores(idx);
+        (uint32 daysPastDue, , , , , , , , , , ) = securitizationPool.riskScores(idx);
         return daysPastDue;
     }
 
     function getAdvanceRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, uint32 advanceRate, , , , , , , , ) = securitizationPool.riskScores(idx);
+        (, uint32 advanceRate, , , , , , , , , ) = securitizationPool.riskScores(idx);
         return advanceRate;
     }
 
     function getPenaltyRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , uint32 penaltyRate, , , , , , , ) = securitizationPool.riskScores(idx);
+        (, , uint32 penaltyRate, , , , , , , , ) = securitizationPool.riskScores(idx);
         return penaltyRate;
     }
 
     function getInterestRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , , uint32 interestRate, , , , , , ) = securitizationPool.riskScores(idx);
+        (, , , uint32 interestRate, , , , , , , ) = securitizationPool.riskScores(idx);
         return interestRate;
     }
 
@@ -241,7 +247,7 @@ contract SecuritizationPoolValueService is
         view
         returns (uint32)
     {
-        (, , , , uint32 probabilityOfDefault, , , , , ) = securitizationPool.riskScores(idx);
+        (, , , , uint32 probabilityOfDefault, , , , , , ) = securitizationPool.riskScores(idx);
         return probabilityOfDefault;
     }
 
@@ -250,12 +256,12 @@ contract SecuritizationPoolValueService is
         view
         returns (uint32)
     {
-        (, , , , , uint32 lossGivenDefault, , , , ) = securitizationPool.riskScores(idx);
+        (, , , , , uint32 lossGivenDefault, , , , , ) = securitizationPool.riskScores(idx);
         return lossGivenDefault;
     }
 
     function getGracePeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , , , , , uint32 gracePeriod, , , ) = securitizationPool.riskScores(idx);
+        (, , , , , , uint32 gracePeriod, , , , ) = securitizationPool.riskScores(idx);
         return gracePeriod;
     }
 
@@ -264,7 +270,7 @@ contract SecuritizationPoolValueService is
         view
         returns (uint32)
     {
-        (, , , , , , , uint32 collectionPeriod, , ) = securitizationPool.riskScores(idx);
+        (, , , , , , , uint32 collectionPeriod, , , ) = securitizationPool.riskScores(idx);
         return collectionPeriod;
     }
 
@@ -273,7 +279,7 @@ contract SecuritizationPoolValueService is
         view
         returns (uint32)
     {
-        (, , , , , , , , uint32 writeOffAfterGracePeriod, ) = securitizationPool.riskScores(idx);
+        (, , , , , , , , uint32 writeOffAfterGracePeriod, , ) = securitizationPool.riskScores(idx);
         return writeOffAfterGracePeriod;
     }
 
@@ -282,8 +288,17 @@ contract SecuritizationPoolValueService is
         view
         returns (uint32)
     {
-        (, , , , , , , , , uint32 writeOffAfterCollectionPeriod) = securitizationPool.riskScores(idx);
+        (, , , , , , , , , uint32 writeOffAfterCollectionPeriod, ) = securitizationPool.riskScores(idx);
         return writeOffAfterCollectionPeriod;
+    }
+
+    function getDiscountRateByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+    private
+    view
+    returns (uint32)
+    {
+        (, , , , , , , , , , uint32 discountRate) = securitizationPool.riskScores(idx);
+        return discountRate;
     }
 
     function getRiskScoreByIdx(address pool, uint256 idx) private view returns (RiskScore memory) {
@@ -300,7 +315,8 @@ contract SecuritizationPoolValueService is
                 gracePeriod: getGracePeriodByIdx(securitizationPool, idx),
                 collectionPeriod: getCollectionPeriodByIdx(securitizationPool, idx),
                 writeOffAfterGracePeriod: getWriteOffAfterGracePeriodByIdx(securitizationPool, idx),
-                writeOffAfterCollectionPeriod: getWriteOffAfterCollectionPeriodByIdx(securitizationPool, idx)
+                writeOffAfterCollectionPeriod: getWriteOffAfterCollectionPeriodByIdx(securitizationPool, idx),
+                discountRate: getDiscountRateByIdx(securitizationPool, idx)
             });
     }
 
