@@ -30,6 +30,7 @@ contract LoanAssetToken is IUntangledERC721 {
     function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
         public
         view
+        override
         returns (uint256 expectedPrincipal, uint256 expectedInterest)
     {
         bytes32 agreementId = bytes32(tokenId);

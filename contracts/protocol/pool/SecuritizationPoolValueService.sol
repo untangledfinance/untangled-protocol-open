@@ -25,7 +25,8 @@ contract SecuritizationPoolValueService is
 
     function getPresentValueWithNAVCalculation(
         address poolAddress,
-        uint256 totalDebt,
+        uint256 principalAmount,
+        uint256 interestAmount,
         uint256 interestRate,
         uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
         uint256 overdue,
@@ -38,9 +39,9 @@ contract SecuritizationPoolValueService is
             if (riskScoreIdx == 0) (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
             else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
         }
-        if (!hasValidRiskScore) return totalDebt;
+        if (!hasValidRiskScore) return principalAmount + interestAmount;
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        return _calculateAssetValue(totalDebt, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
+        return _calculateAssetValue(principalAmount, interestAmount, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
     }
 
     function getExpectedAssetValue(
@@ -54,11 +55,15 @@ contract SecuritizationPoolValueService is
 
         uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
         uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp ? loanEntry.expirationTimestamp - timestamp : 0;
-        uint256 totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
+        uint256 principalAmount;
+        uint256 interestAmount;
+
+        (principalAmount, interestAmount) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
 
         uint256 presentValue = getPresentValueWithNAVCalculation(
             poolAddress,
-            totalDebt,
+            principalAmount,
+            interestAmount,
             loanAssetToken.getInterestRate(tokenId),
             loanEntry.riskScore,
             overdue,
@@ -66,11 +71,13 @@ contract SecuritizationPoolValueService is
             loanEntry.assetPurpose
         );
 
+/*
         if (timestamp < loanEntry.expirationTimestamp) {
             totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
         }
+*/
 
-        return presentValue < totalDebt ? presentValue : totalDebt;
+        return presentValue;
     }
 
     function getExpectedAssetValues(
@@ -154,6 +161,7 @@ contract SecuritizationPoolValueService is
         uint256 presentValue = getPresentValueWithNAVCalculation(
             poolAddress,
             totalDebt,
+            0,
             interestRate,
             0,
             overdue,

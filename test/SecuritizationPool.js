@@ -390,15 +390,13 @@ describe('SecuritizationPool', () => {
       const orderValues = [
         CREDITOR_FEE,
         ASSET_PURPOSE_SALE,
-        // token 1
-        parseEther(principalAmount.toString()),
+        parseEther(principalAmount.toString()), // token 1
+        parseEther(principalAmount.toString()), // token 2
         expirationTimestamps,
+        expirationTimestamps,
+        genSalt(),
         genSalt(),
         riskScore,
-        // token 2
-        parseEther(principalAmount.toString()),
-        expirationTimestamps,
-        genSalt(),
         riskScore,
       ];
 
