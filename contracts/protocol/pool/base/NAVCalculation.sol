@@ -34,7 +34,7 @@ contract NAVCalculation {
 
     /// @dev Calculate the expected present asset value
     /// @param principalAmount Principal amount of asset
-    /// @param interestAmount Expected interest amount in expected repayment amount
+    /// @param expectTimeEarnInterest Expected interest amount in expected repayment amount
     /// @param interestRate interest rate of LAT, or interest rate for SOT, or interest rate for JOT (always interest rate= 0)
     /// @param overdue overdue in seconds
     /// @param secondTillCashFlow time till expiration in seconds
@@ -43,7 +43,7 @@ contract NAVCalculation {
     /// @return expected present asset value
     function _calculateAssetValue(
         uint256 principalAmount,
-        uint256 interestAmount,
+        uint256 expectTimeEarnInterest,
         uint256 interestRate,
         uint256 overdue,
         uint256 secondTillCashFlow,
@@ -51,12 +51,22 @@ contract NAVCalculation {
         Configuration.ASSET_PURPOSE assetPurpose
     ) internal pure returns (uint256) {
         uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
+        uint256 totalDebtAmt = 0;
 
         if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
             interestRate = riskScore.interestRate;
             principalAmount = (principalAmount * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
         }
-        uint256 totalDebtAmt = principalAmount + interestAmount;
+
+        totalDebtAmt =
+            (principalAmount *
+                UntangledMath.rpow(UntangledMath.ONE +
+                (interestRate * morePercentDecimal) /
+                YEAR_LENGTH_IN_SECONDS,
+                    expectTimeEarnInterest,
+                    UntangledMath.ONE
+                )) /
+            UntangledMath.ONE;
 
         if (overdue > riskScore.gracePeriod) {
             totalDebtAmt =
@@ -98,15 +108,14 @@ contract NAVCalculation {
 
         uint256 creditRiskAdjustedExpCF =
             totalDebtAmt -
-            ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
+            ((totalDebtAmt * riskScore.probabilityOfDefault * expectTimeEarnInterest * riskScore.lossGivenDefault) / (YEAR_LENGTH_IN_SECONDS * ONE_HUNDRED_PERCENT**2));
         return (creditRiskAdjustedExpCF * UntangledMath.ONE)
-                / (UntangledMath.ONE +
-                    UntangledMath.rpow(
-                        (riskScore.discountRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                / UntangledMath.rpow(
+                        UntangledMath.ONE + (riskScore.discountRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                         secondTillCashFlow,
-                    UntangledMath.ONE
+                        UntangledMath.ONE
                     )
-                );
+                ;
     }
 
     uint256[50] private __gap;

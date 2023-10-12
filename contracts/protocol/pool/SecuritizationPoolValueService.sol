@@ -26,7 +26,7 @@ contract SecuritizationPoolValueService is
     function getPresentValueWithNAVCalculation(
         address poolAddress,
         uint256 principalAmount,
-        uint256 interestAmount,
+        uint256 expectTimeEarnInterest,
         uint256 interestRate,
         uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
         uint256 overdue,
@@ -39,9 +39,19 @@ contract SecuritizationPoolValueService is
             if (riskScoreIdx == 0) (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
             else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
         }
-        if (!hasValidRiskScore) return principalAmount + interestAmount;
+        if (!hasValidRiskScore) {
+            return (principalAmount *
+                UntangledMath.rpow(UntangledMath.ONE +
+                (interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
+                YEAR_LENGTH_IN_SECONDS,
+                    expectTimeEarnInterest,
+                    UntangledMath.ONE
+                )) /
+                UntangledMath.ONE;
+        }
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        return _calculateAssetValue(principalAmount, interestAmount, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
+        uint256 result =  _calculateAssetValue(principalAmount, expectTimeEarnInterest, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
+        return result;
     }
 
     function getExpectedAssetValue(
@@ -56,14 +66,15 @@ contract SecuritizationPoolValueService is
         uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
         uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp ? loanEntry.expirationTimestamp - timestamp : 0;
         uint256 principalAmount;
-        uint256 interestAmount;
+        uint256 expectedTimeEarningInterest = loanEntry.expirationTimestamp -
+            (loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp ? loanEntry.lastRepayTimestamp : loanEntry.issuanceBlockTimestamp);
 
-        (principalAmount, interestAmount) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
+        (principalAmount, ) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
 
         uint256 presentValue = getPresentValueWithNAVCalculation(
             poolAddress,
             principalAmount,
-            interestAmount,
+            expectedTimeEarningInterest,
             loanAssetToken.getInterestRate(tokenId),
             loanEntry.riskScore,
             overdue,
