@@ -4,7 +4,10 @@ pragma solidity 0.8.19;
 import {IDistributionOperator} from '../../../interfaces/IDistributionOperator.sol';
 
 interface ICCIPDistributionOperator is IDistributionOperator {
-  function chainId() external view returns (uint2560);
+  
+  /// @dev destinationChainSelector in CCIP
+  // @return uint256 The chain selector
+  function chainSelector() external view returns (uint256);
 
   function makeRedeemRequestAndRedeem(address pool, INoteToken noteToken, uint256 tokenAmount) external;
 

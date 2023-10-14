@@ -2,10 +2,9 @@
 pragma solidity 0.8.19;
 
 interface ICCIPSecuritizationManager {
-  
-  /// @dev Returns the chain ID as a uint256 value.
-  /// @return The chain ID as a uint256 value.
-  function chainId() view returns (uint256);
+  // @dev Destination Chain Selector in CCIP
+  // @return uint256 The chain selector
+  function chainSelector() view returns (uint256);
 
   /// @dev Function to buy tokens from the Token Generation Event (TGE) contract.
   /// @param tge The address of the TGE contract.
