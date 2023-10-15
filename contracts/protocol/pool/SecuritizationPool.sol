@@ -258,6 +258,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
            openingBlockTimestamp = uint64(block.timestamp);
         }
+        emit CollectAsset(from, expectedAssetsValue);
     }
 
     /// @inheritdoc ISecuritizationPool
