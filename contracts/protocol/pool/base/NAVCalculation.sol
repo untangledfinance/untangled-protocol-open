@@ -97,12 +97,11 @@ contract NAVCalculation {
         } else if (overdue > 0) {
             totalDebtAmt =
                 (totalDebtAmt *
-                    (UntangledMath.ONE +
                         UntangledMath.rpow(
-                            (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                            UntangledMath.ONE + (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             overdue,
                             UntangledMath.ONE
-                        ))) /
+                        )) /
                 UntangledMath.ONE;
         }
 
