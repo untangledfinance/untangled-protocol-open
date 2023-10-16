@@ -12,23 +12,27 @@ import '../../interfaces/INoteToken.sol';
 contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
 
-    // get current individual asset for SOT tranche
-    /// @inheritdoc IDistributionAssessor
-    function getSOTTokenPrice(address pool) public view override returns (uint256) {
-        require(pool != address(0), 'DistributionAssessor: Invalid pool address');
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+    function _getTokenPrice(ISecuritizationPool securitizationPool, ERC20 noteToken, uint256 asset) private view returns(uint256) {
+         require(address(securitizationPool) != address(0), 'DistributionAssessor: Invalid pool address');
 
-        ERC20 noteToken = ERC20(securitizationPool.sotToken());
-        uint256 seniorSupply = noteToken.totalSupply();
-        uint256 seniorDecimals = noteToken.decimals();
+        uint256 totalSupply = noteToken.totalSupply();
+        uint256 decimals = noteToken.decimals();
 
         require(address(noteToken) != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
         if (noteToken.totalSupply() == 0)
-            return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - seniorDecimals);
+            return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - decimals);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getSeniorAsset(pool);
-        return seniorAsset / seniorSupply;
+        
+        return asset / totalSupply;
+    }
+
+    // get current individual asset for SOT tranche
+    /// @inheritdoc IDistributionAssessor
+    function getSOTTokenPrice(ISecuritizationPool securitizationPool) public view override returns (uint256) {
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        uint256 seniorAsset = poolService.getSeniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, ERC20(securitizationPool.sotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor
@@ -86,19 +90,9 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(ISecuritizationPool securitizationPool) public view override returns (uint256) {
-        require(address(securitizationPool) != address(0), 'DistributionAssessor: Invalid pool address');
-        // require(address(securitizationPool) != address(0), 'pool was not deployed');
-        // ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        address tokenAddress = securitizationPool.jotToken();
-        uint256 tokenSupply = INoteToken(tokenAddress).totalSupply();
-        uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
-        require(tokenAddress != address(0), 'DistributionAssessor: Invalid note token address');
-        // In initial state, SOT price = 1$
-        if (tokenSupply == 0) return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
-        // address pool = address(securitizationPool);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));
-        return juniorAsset / tokenSupply;
+        uint256 seniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, ERC20(securitizationPool.jotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor

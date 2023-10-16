@@ -4,7 +4,7 @@ import "./ISecuritizationPool.sol";
 
 interface IDistributionAssessor {
     /// @notice current individual asset price for the "SOT" tranche at the current timestamp
-    function getSOTTokenPrice(address securitizationPool) external view returns (uint256);
+    function getSOTTokenPrice(ISecuritizationPool securitizationPool) external view returns (uint256);
 
     /// @notice calculates the token price for the "JOT" tranche at the current timestamp
     function getJOTTokenPrice(ISecuritizationPool securitizationPool) external view returns (uint256);
