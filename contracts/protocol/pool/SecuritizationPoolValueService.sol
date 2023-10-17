@@ -20,7 +20,7 @@ contract SecuritizationPoolValueService is
 {
     using ConfigHelper for Registry;
 
-    uint256 public constant RATE_SCALING_FACTOR = 10**4;
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     function getPresentValueWithNAVCalculation(
         address poolAddress,
@@ -163,11 +163,10 @@ contract SecuritizationPoolValueService is
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
-    function getExpectedAssetsValue(address poolAddress, uint256 timestamp)
-        external
-        view
-        returns (uint256 expectedAssetsValue)
-    {
+    function getExpectedAssetsValue(
+        address poolAddress,
+        uint256 timestamp
+    ) external view returns (uint256 expectedAssetsValue) {
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
@@ -197,11 +196,10 @@ contract SecuritizationPoolValueService is
         }
     }
 
-    function getAssetRiskScoreIdx(address poolAddress, uint256 overdue)
-        public
-        view
-        returns (bool hasValidRiskScore, uint256 riskScoreIdx)
-    {
+    function getAssetRiskScoreIdx(
+        address poolAddress,
+        uint256 overdue
+    ) public view returns (bool hasValidRiskScore, uint256 riskScoreIdx) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
         for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
@@ -236,20 +234,18 @@ contract SecuritizationPoolValueService is
         return interestRate;
     }
 
-    function getProbabilityOfDefaultByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-        private
-        view
-        returns (uint32)
-    {
+    function getProbabilityOfDefaultByIdx(
+        ISecuritizationPool securitizationPool,
+        uint256 idx
+    ) private view returns (uint32) {
         (, , , , uint32 probabilityOfDefault, , , , , ) = securitizationPool.riskScores(idx);
         return probabilityOfDefault;
     }
 
-    function getLossGivenDefaultByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-        private
-        view
-        returns (uint32)
-    {
+    function getLossGivenDefaultByIdx(
+        ISecuritizationPool securitizationPool,
+        uint256 idx
+    ) private view returns (uint32) {
         (, , , , , uint32 lossGivenDefault, , , , ) = securitizationPool.riskScores(idx);
         return lossGivenDefault;
     }
@@ -259,29 +255,26 @@ contract SecuritizationPoolValueService is
         return gracePeriod;
     }
 
-    function getCollectionPeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-        private
-        view
-        returns (uint32)
-    {
+    function getCollectionPeriodByIdx(
+        ISecuritizationPool securitizationPool,
+        uint256 idx
+    ) private view returns (uint32) {
         (, , , , , , , uint32 collectionPeriod, , ) = securitizationPool.riskScores(idx);
         return collectionPeriod;
     }
 
-    function getWriteOffAfterGracePeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-        private
-        view
-        returns (uint32)
-    {
+    function getWriteOffAfterGracePeriodByIdx(
+        ISecuritizationPool securitizationPool,
+        uint256 idx
+    ) private view returns (uint32) {
         (, , , , , , , , uint32 writeOffAfterGracePeriod, ) = securitizationPool.riskScores(idx);
         return writeOffAfterGracePeriod;
     }
 
-    function getWriteOffAfterCollectionPeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-        private
-        view
-        returns (uint32)
-    {
+    function getWriteOffAfterCollectionPeriodByIdx(
+        ISecuritizationPool securitizationPool,
+        uint256 idx
+    ) private view returns (uint32) {
         (, , , , , , , , , uint32 writeOffAfterCollectionPeriod) = securitizationPool.riskScores(idx);
         return writeOffAfterCollectionPeriod;
     }
@@ -289,19 +282,32 @@ contract SecuritizationPoolValueService is
     function getRiskScoreByIdx(address pool, uint256 idx) private view returns (RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        return
-            RiskScore({
-                daysPastDue: getDaysPastDueByIdx(securitizationPool, idx),
-                advanceRate: getAdvanceRateByIdx(securitizationPool, idx),
-                penaltyRate: getPenaltyRateByIdx(securitizationPool, idx),
-                interestRate: getInterestRateByIdx(securitizationPool, idx),
-                probabilityOfDefault: getProbabilityOfDefaultByIdx(securitizationPool, idx),
-                lossGivenDefault: getLossGivenDefaultByIdx(securitizationPool, idx),
-                gracePeriod: getGracePeriodByIdx(securitizationPool, idx),
-                collectionPeriod: getCollectionPeriodByIdx(securitizationPool, idx),
-                writeOffAfterGracePeriod: getWriteOffAfterGracePeriodByIdx(securitizationPool, idx),
-                writeOffAfterCollectionPeriod: getWriteOffAfterCollectionPeriodByIdx(securitizationPool, idx)
-            });
+
+        (
+            uint32 daysPastDue,
+            uint32 advanceRate,
+            uint32 penaltyRate,
+            uint32 interestRate,
+            uint32 probabilityOfDefault,
+            uint32 lossGivenDefault,
+            uint32 gracePeriod,
+            uint32 collectionPeriod,
+            uint32 writeOffAfterGracePeriod,
+            uint32 writeOffAfterCollectionPeriod
+        ) = securitizationPool.riskScores(idx);
+
+        return RiskScore({
+            daysPastDue: daysPastDue,
+            advanceRate: advanceRate,
+            penaltyRate: penaltyRate,
+            interestRate: interestRate,
+            probabilityOfDefault: probabilityOfDefault,
+            lossGivenDefault: lossGivenDefault,
+            gracePeriod: gracePeriod,
+            collectionPeriod: collectionPeriod,
+            writeOffAfterGracePeriod: writeOffAfterGracePeriod,
+            writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod
+        });
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
@@ -314,11 +320,10 @@ contract SecuritizationPoolValueService is
             securitizationPool.paidPrincipalAmountSOTByInvestor(investor);
     }
 
-    function getOutstandingPrincipalCurrencyByInvestors(address pool, address[] calldata investors)
-        external
-        view
-        returns (uint256)
-    {
+    function getOutstandingPrincipalCurrencyByInvestors(
+        address pool,
+        address[] calldata investors
+    ) external view returns (uint256) {
         uint256 result = 0;
         uint256 investorsLength = investors.length;
         for (uint256 i = 0; i < investorsLength; i++) {
@@ -356,7 +361,7 @@ contract SecuritizationPoolValueService is
         require(sotToken != address(0), 'Invalid sot address');
         uint256 tokenSupply = INoteToken(sotToken).totalSupply();
         uint256 tokenDecimals = INoteToken(sotToken).decimals();
-        return tokenSupply * 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
+        return tokenSupply * 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
     }
 
     // @notice this function will return 72 in example
