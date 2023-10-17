@@ -20,6 +20,9 @@ abstract contract ILoanRegistry {
         Configuration.ASSET_PURPOSE assetPurpose;
     }
 
+    event UpdateLoanEntry(bytes32 indexed tokenId, LoanEntry entry);
+    event UpdateCompleteLoan(bytes32 indexed tokenId, bool status);
+
     mapping(bytes32 => LoanEntry) public entries;
 
     mapping(bytes32 => bool) public manualInterestLoan;
@@ -81,11 +84,10 @@ abstract contract ILoanRegistry {
 
     /// @notice retrieves information about the principal payment for a given loan agreement ID
     /// @dev Get principal payment info before start doing repayment
-    function principalPaymentInfo(bytes32 agreementId)
-        public
-        view
-        virtual
-        returns (address pTokenAddress, uint256 pAmount);
+    function principalPaymentInfo(
+        bytes32 agreementId
+    ) public view virtual returns (address pTokenAddress, uint256 pAmount);
+
     /// @notice marks a loan agreement as completed by setting the completedLoans mapping entry to true for a given agreement ID
     function setCompletedLoan(bytes32 agreementId) public virtual;
 }
