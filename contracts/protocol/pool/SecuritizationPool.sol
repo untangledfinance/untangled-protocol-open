@@ -258,6 +258,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
            openingBlockTimestamp = uint64(block.timestamp);
         }
+        emit CollectAsset(from, expectedAssetsValue);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -387,14 +388,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         if (tgeAddress != address(0)) {
             MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            if (!mintedTokenGenrationEvent.finalized()) {
-                mintedTokenGenrationEvent.finalize(false, pot);
-            }
             mintedTokenGenrationEvent.setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
             );
+            if (!mintedTokenGenrationEvent.finalized()) {
+                mintedTokenGenrationEvent.finalize(false, pot);
+            }
             interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
         }
         if (secondTGEAddress != address(0)) {

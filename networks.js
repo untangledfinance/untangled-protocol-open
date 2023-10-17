@@ -34,13 +34,13 @@ const networks = {
     bnmToken: '0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05', // LINK/SEPOLIA-ETH
   },
   mumbai: {
-    url: 'https://rpc.ankr.com/polygon_mumbai',
+    url: 'https://polygon-mumbai.blockpi.network/v1/rpc/public',
     gasPrice: undefined,
     // blockGasLimit: 100000000429720,
     accounts: PRIVATEKEY !== undefined ? [PRIVATEKEY] : [],
     // verifyApiKey: "THIS HAS NOT BEEN SET",
     chainId: 80001,
-    confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
+    // confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
     nativeCurrencySymbol: 'MATIC',
 
     // https://docs.chain.link/ccip/supported-networks/
@@ -48,6 +48,7 @@ const networks = {
     chainSelector: '12532609583862916517',
     linkToken: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
     bnmToken: '0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40',
+    kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
   },
   ether: {
     url: 'https://ethereum.publicnode.com',
@@ -80,6 +81,7 @@ const networks = {
     chainSelector: '4051577828743386545',
     linkToken: '0xb0897686c545045aFc77CF20eC7A532E3120E0F1',
     bnmToken: '',
+    kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
   },
 };
 
