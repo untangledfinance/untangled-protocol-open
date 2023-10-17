@@ -73,7 +73,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function newPoolInstance(address currency, uint32 minFirstLossCushion)
         external
         whenNotPaused
-        nonReentrant
         onlyRole(POOL_CREATOR)
         returns (address)
     {
@@ -87,14 +86,13 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         );
 
         address poolAddress = _deployInstance(poolImplAddress, _initialData);
-
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
-
-        poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
-        poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 
         isExistingPools[poolAddress] = true;
         pools.push(poolInstance);
+
+        poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
+        poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 
         emit NewPoolCreated(poolAddress);
 

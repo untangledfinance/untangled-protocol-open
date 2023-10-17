@@ -406,7 +406,7 @@ contract SecuritizationPoolValueService is
         IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
 
         require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
+        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(securitizationPool);
         uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address

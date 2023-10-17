@@ -342,7 +342,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         external
         override
         whenNotPaused
-        nonReentrant
         onlyRole(OWNER_ROLE)
         finishRedemptionValidator
     {

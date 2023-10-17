@@ -12,8 +12,12 @@ import '../../interfaces/INoteToken.sol';
 contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAssessor {
     using ConfigHelper for Registry;
 
-    function _getTokenPrice(ISecuritizationPool securitizationPool, ERC20 noteToken, uint256 asset) private view returns(uint256) {
-         require(address(securitizationPool) != address(0), 'DistributionAssessor: Invalid pool address');
+    function _getTokenPrice(
+        ISecuritizationPool securitizationPool,
+        ERC20 noteToken,
+        uint256 asset
+    ) private view returns (uint256) {
+        require(address(securitizationPool) != address(0), 'DistributionAssessor: Invalid pool address');
 
         uint256 totalSupply = noteToken.totalSupply();
         uint256 decimals = noteToken.decimals();
@@ -21,9 +25,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         require(address(noteToken) != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
         if (noteToken.totalSupply() == 0)
-            return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - decimals);
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        
+            return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - decimals);
+
         return asset / totalSupply;
     }
 
@@ -36,12 +39,10 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     }
 
     /// @inheritdoc IDistributionAssessor
-    function calcCorrespondingTotalAssetValue(address tokenAddress, address investor)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function calcCorrespondingTotalAssetValue(
+        address tokenAddress,
+        address investor
+    ) external view override returns (uint256) {
         return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
@@ -53,38 +54,37 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         INoteToken notesToken = INoteToken(tokenAddress);
         ISecuritizationPool securitizationPool = ISecuritizationPool(notesToken.poolAddress());
 
-        if (Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
-            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
-            uint256 sotBalance = notesToken.balanceOf(investor) - tokenRedeem;
-            uint256 sotPrice = getSOTTokenPrice(notesToken.poolAddress());
-            return sotBalance * sotPrice;
-        } else {
-            uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
-            uint256 jotBalance = notesToken.balanceOf(investor) - tokenRedeem;
-            uint256 jotPrice = getJOTTokenPrice(securitizationPool);
-            return jotBalance * jotPrice;
-        }
+        // if (Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
+        //     tokenPrice = getSOTTokenPrice(securitizationPool);
+        // } else {
+        //     tokenPrice = getJOTTokenPrice(securitizationPool);
+        // }
+
+        uint256 tokenPrice = calcTokenPrice(address(securitizationPool), tokenAddress);
+
+        uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
+        uint256 tokenBalance = notesToken.balanceOf(investor) - tokenRedeem;
+        return tokenBalance * tokenPrice;
     }
 
     /// @notice Calculate SOT/JOT asset value for multiple investors
-    function calcCorrespondingAssetValue(address tokenAddress, address[] calldata investors)
-        external
-        view
-        returns (uint256[] memory values)
-    {
+    function calcCorrespondingAssetValue(
+        address tokenAddress,
+        address[] calldata investors
+    ) external view returns (uint256[] memory values) {
         uint256 investorsLength = investors.length;
         values = new uint256[](investorsLength);
 
-        for (uint256 i = 0; i < investorsLength; i++) {
+        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
             values[i] = _calcCorrespondingAssetValue(tokenAddress, investors[i]);
         }
     }
 
     /// @inheritdoc IDistributionAssessor
-    function calcTokenPrice(address pool, address tokenAddress) external view override returns (uint256) {
+    function calcTokenPrice(address pool, address tokenAddress) public view override returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        if (tokenAddress == securitizationPool.sotToken()) return getSOTTokenPrice(address(securitizationPool));
-        else if (tokenAddress == securitizationPool.jotToken()) return getJOTTokenPrice(securitizationPool);
+        if (tokenAddress == securitizationPool.sotToken()) return getSOTTokenPrice(securitizationPool);
+        if (tokenAddress == securitizationPool.jotToken()) return getJOTTokenPrice(securitizationPool);
         return 0;
     }
 
