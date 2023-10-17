@@ -96,6 +96,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
         require(initialAmount < totalCap, "MintedNormalTGE: Initial JOT amount must be less than total cap");
         initialAmount = _initialAmount;
+        emit UpdateInitialAmount(_initialAmount);
     }
 
     /// @dev Validates that the previous sale round is closed and the time interval for increasing interest is greater than zero
