@@ -99,6 +99,11 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         return entries[agreementId].assetPurpose;
     }
 
+    /// @inheritdoc ILoanRegistry
+    function getEntry(bytes32 agreementId) public view override returns (LoanEntry memory) {
+        return entries[agreementId];
+    }
+
     /**
      * Returns the timestamp of the block at which a debt agreement was issued.
      */

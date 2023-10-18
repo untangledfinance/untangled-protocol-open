@@ -137,6 +137,7 @@ describe('SecuritizationPool', () => {
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
         writeOffAfterCollectionPeriod: halfOfADay,
+        discountRate: 100000
       };
       const daysPastDues = [riskScore.daysPastDue];
       const ratesAndDefaults = [
@@ -145,6 +146,7 @@ describe('SecuritizationPool', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
@@ -169,6 +171,7 @@ describe('SecuritizationPool', () => {
         interestRate: 910000,
         probabilityOfDefault: 800000,
         lossGivenDefault: 810000,
+        discountRate: 100000,
         gracePeriod: halfOfADay,
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
@@ -181,11 +184,13 @@ describe('SecuritizationPool', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate,
         riskScore.advanceRate,
         riskScore.penaltyRate,
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
+        riskScore.discountRate,
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
@@ -385,15 +390,13 @@ describe('SecuritizationPool', () => {
       const orderValues = [
         CREDITOR_FEE,
         ASSET_PURPOSE_SALE,
-        // token 1
-        parseEther(principalAmount.toString()),
+        parseEther(principalAmount.toString()), // token 1
+        parseEther(principalAmount.toString()), // token 2
         expirationTimestamps,
+        expirationTimestamps,
+        genSalt(),
         genSalt(),
         riskScore,
-        // token 2
-        parseEther(principalAmount.toString()),
-        expirationTimestamps,
-        genSalt(),
         riskScore,
       ];
 
@@ -539,7 +542,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('14834');
+      expect(result.toString()).equal('12434');
     });
 
     it('#getAssetRiskScoreIdx', async () => {
@@ -652,7 +655,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('14834');
+      expect(result.toString()).equal('12434');
     });
 
     it('#getAssetRiskScoreIdx', async () => {

@@ -46,6 +46,9 @@ abstract contract ILoanRegistry {
         uint8[] calldata assetPurposeAndRiskScore
     ) external virtual returns (bool);
 
+    /// @notice retrieves loan information
+    function getEntry(bytes32 agreementId) public view virtual returns (LoanEntry memory);
+
     /// @notice retrieves the debtor's address for a given loan
     function getLoanDebtor(bytes32 tokenId) public view virtual returns (address);
 

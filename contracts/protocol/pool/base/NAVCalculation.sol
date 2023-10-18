@@ -29,20 +29,44 @@ contract NAVCalculation {
         uint32 gracePeriod;
         uint32 collectionPeriod;
         uint32 writeOffAfterCollectionPeriod;
+        uint32 discountRate;
     }
 
+    /// @dev Calculate the expected present asset value
+    /// @param principalAmount Principal amount of asset
+    /// @param expectTimeEarnInterest Expected interest amount in expected repayment amount
+    /// @param interestRate interest rate of LAT, or interest rate for SOT, or interest rate for JOT (always interest rate= 0)
+    /// @param overdue overdue in seconds
+    /// @param secondTillCashFlow time till expiration in seconds
+    /// @param riskScore risk score applied
+    /// @param assetPurpose asset purpose, pledge or sale
+    /// @return expected present asset value
     function _calculateAssetValue(
-        uint256 totalDebtAmt,
+        uint256 principalAmount,
+        uint256 expectTimeEarnInterest,
         uint256 interestRate,
         uint256 overdue,
+        uint256 secondTillCashFlow,
         RiskScore memory riskScore,
         Configuration.ASSET_PURPOSE assetPurpose
     ) internal pure returns (uint256) {
         uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
+        uint256 totalDebtAmt = 0;
 
-        if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) interestRate = riskScore.interestRate;
+        if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
+            interestRate = riskScore.interestRate;
+            principalAmount = (principalAmount * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
+        }
 
-        totalDebtAmt = (totalDebtAmt * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
+        totalDebtAmt =
+            (principalAmount *
+                UntangledMath.rpow(UntangledMath.ONE +
+                (interestRate * morePercentDecimal) /
+                YEAR_LENGTH_IN_SECONDS,
+                    expectTimeEarnInterest,
+                    UntangledMath.ONE
+                )) /
+            UntangledMath.ONE;
 
         if (overdue > riskScore.gracePeriod) {
             totalDebtAmt =
@@ -73,18 +97,24 @@ contract NAVCalculation {
         } else if (overdue > 0) {
             totalDebtAmt =
                 (totalDebtAmt *
-                    (UntangledMath.ONE +
                         UntangledMath.rpow(
-                            (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                            UntangledMath.ONE + (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             overdue,
                             UntangledMath.ONE
-                        ))) /
+                        )) /
                 UntangledMath.ONE;
         }
 
-        return
+        uint256 creditRiskAdjustedExpCF =
             totalDebtAmt -
-            ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
+            ((totalDebtAmt * riskScore.probabilityOfDefault * expectTimeEarnInterest * riskScore.lossGivenDefault) / (YEAR_LENGTH_IN_SECONDS * ONE_HUNDRED_PERCENT**2));
+        return (creditRiskAdjustedExpCF * UntangledMath.ONE)
+                / UntangledMath.rpow(
+                        UntangledMath.ONE + (riskScore.discountRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                        secondTillCashFlow,
+                        UntangledMath.ONE
+                    )
+                ;
     }
 
     uint256[50] private __gap;

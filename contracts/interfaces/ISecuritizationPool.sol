@@ -105,6 +105,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32 collectionPeriod;
         uint32 writeOffAfterGracePeriod;
         uint32 writeOffAfterCollectionPeriod;
+        uint32 discountRate;
     }
 
     function initialize(Registry _registry, address _currency, uint32 _minFirstLossCushion) public virtual;

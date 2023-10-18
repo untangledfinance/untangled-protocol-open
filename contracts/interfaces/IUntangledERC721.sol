@@ -38,6 +38,13 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         virtual
         returns (uint256);
 
+    /// @notice the expected principal and interest for an asset
+    function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
+    public
+    view
+    virtual
+    returns (uint256 expectedPrincipal, uint256 expectedInterest);
+
     /// @notice the expiration timestamp of an invoice/loan token
     function getExpirationTimestamp(uint256 agreementId) external view virtual returns (uint256);
 
