@@ -6,7 +6,7 @@ const { BigNumber } = require('ethers');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
-describe('MintedIncreasingInterestTGE', function() {
+describe('MintedIncreasingInterestTGE', function () {
   let MintedIncreasingInterestTGE;
   let mintedIncreasingInterestTGE;
   let owner; // Replace with your contract owner's address
@@ -19,12 +19,12 @@ describe('MintedIncreasingInterestTGE', function() {
   let rate;
   let cap;
 
-  let initialInterest ; // Your desired initial interest rate
-  let finalInterest ; // Your desired final interest rate
-  let timeInterval ; // 1 hour
-  let amountChangeEachInterval ; // Your desired amount change
+  let initialInterest; // Your desired initial interest rate
+  let finalInterest; // Your desired final interest rate
+  let timeInterval; // 1 hour
+  let amountChangeEachInterval; // Your desired amount change
 
-  before(async function() {
+  before(async function () {
     MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE'); // Replace with your contract name
     [owner, securitizationManager, ...accounts] = await ethers.getSigners();
     ({ registry, noteTokenFactory } = await setup());
@@ -37,10 +37,16 @@ describe('MintedIncreasingInterestTGE', function() {
     securitizationPool = await SecuritizationPool.deploy();
     const currencyAddress = await securitizationPool.underlyingCurrency();
     const longSale = true;
-    const noteToken = await NoteToken.deploy('Test', 'TST', 18, securitizationPool.address, 1);
 
-    await mintedIncreasingInterestTGE.initialize(registry.address, owner.address, noteToken.address, currencyAddress, longSale);
+    const noteToken = await NoteToken.deploy();
 
+    await mintedIncreasingInterestTGE.initialize(
+      registry.address,
+      owner.address,
+      noteToken.address,
+      currencyAddress,
+      longSale
+    );
   });
 
   it('Get isLongSale', async () => {
@@ -77,27 +83,23 @@ describe('MintedIncreasingInterestTGE', function() {
 
     expect(actualInitialInterest).to.equal(BigNumber.from(initialInterest));
     expect(actualFinalInterest).to.equal(BigNumber.from(finalInterest));
-    expect(actualTimeInterval).to.equal(BigNumber.from((timeInterval)));
+    expect(actualTimeInterval).to.equal(BigNumber.from(timeInterval));
     expect(actualAmountChangeEachInterval).to.equal(BigNumber.from(amountChangeEachInterval));
   });
 
-  it('should allow the owner or pool to start a new round sale', async function() {
-    openingTime = await time.latest() + 60; // Starts 1 minute from now
+  it('should allow the owner or pool to start a new round sale', async function () {
+    openingTime = (await time.latest()) + 60; // Starts 1 minute from now
     closingTime = openingTime + ONE_DAY_IN_SECONDS; // Ends 1 hour after opening
     rate = 100; // Your desired rate
     cap = ethers.utils.parseEther('1000'); // Your desired cap in ether
 
     // Only the owner (or pool) should be able to start a new round sale
     await expect(
-      mintedIncreasingInterestTGE
-        .connect(accounts[0])
-        .startNewRoundSale(openingTime, closingTime, rate, cap),
+      mintedIncreasingInterestTGE.connect(accounts[0]).startNewRoundSale(openingTime, closingTime, rate, cap)
     ).to.be.revertedWith('MintedIncreasingInterestTGE: Caller must be owner or pool');
 
     // The owner (or pool) should be able to start a new round sale
-    await mintedIncreasingInterestTGE
-      .connect(owner)
-      .startNewRoundSale(openingTime, closingTime, rate, cap);
+    await mintedIncreasingInterestTGE.connect(owner).startNewRoundSale(openingTime, closingTime, rate, cap);
 
     // Verify the new round sale parameters
     const _openTime = await mintedIncreasingInterestTGE.openingTime(); // Replace with the correct function for fetching round info
@@ -110,13 +112,12 @@ describe('MintedIncreasingInterestTGE', function() {
     expect(_cap).to.equal(cap);
   });
   it('should set correct picked interest when finalize', async () => {
-    await expect(
-      mintedIncreasingInterestTGE.finalize(false,  await securitizationPool.pot())
-    ).to.be.revertedWith('FinalizableCrowdsale: not closed')
+    await expect(mintedIncreasingInterestTGE.finalize(false, await securitizationPool.pot())).to.be.revertedWith(
+      'FinalizableCrowdsale: not closed'
+    );
     await time.increaseTo(closingTime + ONE_DAY_IN_SECONDS);
     await mintedIncreasingInterestTGE.finalize(false, await securitizationPool.pot());
     const pickedInterest = await mintedIncreasingInterestTGE.pickedInterest();
     expect(pickedInterest).to.equal(BigNumber.from(finalInterest));
-
   });
 });

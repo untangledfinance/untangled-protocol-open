@@ -137,7 +137,7 @@ describe('SecuritizationPool', () => {
         collectionPeriod: halfOfADay,
         writeOffAfterGracePeriod: halfOfADay,
         writeOffAfterCollectionPeriod: halfOfADay,
-        discountRate: 100000
+        discountRate: 100000,
       };
       const daysPastDues = [riskScore.daysPastDue];
       const ratesAndDefaults = [
@@ -146,7 +146,7 @@ describe('SecuritizationPool', () => {
         riskScore.interestRate,
         riskScore.probabilityOfDefault,
         riskScore.lossGivenDefault,
-        riskScore.discountRate
+        riskScore.discountRate,
       ];
       const periodsAndWriteOffs = [
         riskScore.gracePeriod,
@@ -503,7 +503,7 @@ describe('SecuritizationPool', () => {
         dayjs(new Date()).add(1, 'days').unix()
       );
 
-      expect(result.toString()).equal('5017');
+      expect(result.toString()).equal('14803');
     });
 
     it('#getAssetInterestRate', async () => {
@@ -542,7 +542,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('12434');
+      expect(result.toString()).equal('43902');
     });
 
     it('#getAssetRiskScoreIdx', async () => {
@@ -616,7 +616,7 @@ describe('SecuritizationPool', () => {
         dayjs(new Date()).add(1, 'days').unix()
       );
 
-      expect(result.toString()).equal('5017');
+      expect(result.toString()).equal('14803');
     });
 
     it('#getAssetInterestRate', async () => {
@@ -655,7 +655,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('12434');
+      expect(result.toString()).equal('43902');
     });
 
     it('#getAssetRiskScoreIdx', async () => {

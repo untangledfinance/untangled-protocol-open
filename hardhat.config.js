@@ -54,9 +54,10 @@ module.exports = {
       },
 
       // forking: {
-      //   url: 'https://polygon-mumbai.g.alchemy.com/v2/BGyZWFgdfbIagWLGrf8rSxo1EQr2a7f4',
-      //   blockNumber: 40820043,
+      //   url: 'https://alfajores-forno.celo-testnet.org',
+      //   blockNumber: 20237109,
       // },
+      // chainId: 44787,
     },
     celo: {
       saveDeployments: true,
@@ -94,9 +95,7 @@ module.exports = {
     ...networks,
   },
   etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: 'QHKKRV5QTID4QH9MMIKU6ADXNIIHE1V4Z4',
+    apiKey: '',
     customChains: [
       {
         network: 'alfajores',
