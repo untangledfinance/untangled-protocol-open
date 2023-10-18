@@ -3,13 +3,32 @@ pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
 import '../base/UntangledBase.sol';
+import '../libraries/Configuration.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
     event Withdraw(address originatorAddress, uint256 amount);
+    event CollectAsset(address from, uint256 value);
+    event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
+    event AddTokenAssetAddress(address token);
+    event InsertNFTAsset(address token, uint256 tokenId);
+    event RemoveNFTAsset(address token, uint256 tokenId);
+    event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
+    event UpdateInterestRateSOT(uint32 _interestRateSOT);
+    event UpdateLockedDistributeBalance(
+        address indexed tokenAddress,
+        address indexed investor,
+        uint256 lockedDistributeBalance,
+        uint256 lockedRedeemBalances,
+        uint256 totalLockedRedeemBalances,
+        uint256 totalLockedDistributeBalance
+    );
+    event UpdateReserve(uint256 currencyAmount);
+    event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
+
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
-    uint256 public constant RATE_SCALING_FACTOR = 10**4;
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     address public tgeAddress;
     address public secondTGEAddress;
@@ -89,11 +108,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32 discountRate;
     }
 
-    function initialize(
-        Registry _registry,
-        address _currency,
-        uint32 _minFirstLossCushion
-    ) public virtual;
+    function initialize(Registry _registry, address _currency, uint32 _minFirstLossCushion) public virtual;
 
     /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
     function getNFTAssetsLength() public view virtual returns (uint256);
@@ -125,11 +140,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     ) external virtual;
 
     /// @notice exports NFT assets to another pool address
-    function exportAssets(
-        address tokenAddress,
-        address toPoolAddress,
-        uint256[] calldata tokenIds
-    ) external virtual;
+    function exportAssets(address tokenAddress, address toPoolAddress, uint256[] calldata tokenIds) external virtual;
 
     /// @notice withdraws NFT assets from the contract and transfers them to recipients
     function withdrawAssets(
@@ -139,11 +150,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     ) external virtual;
 
     /// @notice collects NFT assets from a specified address
-    function collectAssets(
-        address tokenAddress,
-        address from,
-        uint256[] calldata tokenIds
-    ) external virtual;
+    function collectAssets(address tokenAddress, address from, uint256[] calldata tokenIds) external virtual;
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(
@@ -200,12 +207,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     ) external virtual;
 
     /// @notice allows the redemption of tokens
-    function redeem(
-        address usr,
-        address notesToken,
-        uint256 currencyAmount,
-        uint256 tokenAmount
-    ) external virtual;
+    function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external virtual;
 
     /// @notice allows the originator to withdraw from reserve
     function withdraw(uint256 amount) public virtual;

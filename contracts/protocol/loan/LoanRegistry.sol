@@ -43,7 +43,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
-    ) external override whenNotPaused nonReentrant onlyLoanKernel returns (bool) {
+    ) external override whenNotPaused onlyLoanKernel returns (bool) {
         require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
         LoanEntry memory newEntry = LoanEntry({
             loanTermContract: termContract,
@@ -58,6 +58,8 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
             riskScore: assetPurposeAndRiskScore[1]
         });
         entries[tokenId] = newEntry;
+
+        emit UpdateLoanEntry(tokenId, newEntry);
         return true;
     }
 
@@ -131,28 +133,27 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
 
     // Update timestamp of the last repayment from Debtor
     /// @inheritdoc ILoanRegistry
-    function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp)
-        public
-        override
-        onlyLoanInterestTermsContract
-    {
+    function updateLastRepaymentTimestamp(
+        bytes32 agreementId,
+        uint256 newTimestamp
+    ) public override onlyLoanInterestTermsContract {
         entries[agreementId].lastRepayTimestamp = newTimestamp;
+        emit UpdateLoanEntry(agreementId, entries[agreementId]);
     }
 
     /// @dev Get principal payment info before start doing repayment
-    function principalPaymentInfo(bytes32 agreementId)
-        public
-        view
-        override
-        returns (address pTokenAddress, uint256 pAmount)
-    {
+    function principalPaymentInfo(
+        bytes32 agreementId
+    ) public view override returns (address pTokenAddress, uint256 pAmount) {
         LoanEntry memory entry = entries[agreementId];
         pTokenAddress = entry.principalTokenAddress;
         pAmount = 0; // @TODO
     }
 
     /// @inheritdoc ILoanRegistry
-    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanInterestTermsContract {
+    function setCompletedLoan(
+        bytes32 agreementId
+    ) public override whenNotPaused onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
 

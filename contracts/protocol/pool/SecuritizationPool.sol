@@ -126,26 +126,27 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
         nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
+
+        NFTAsset storage nft = nftAssets[nftAssets.length - 1];
+        emit RemoveNFTAsset(nft.tokenAddress, nft.tokenId);
         nftAssets.pop();
     }
 
     function _pushTokenAssetAddress(address tokenAddress) private {
         if (!existsTokenAssetAddress[tokenAddress]) tokenAssetAddresses.push(tokenAddress);
         existsTokenAssetAddress[tokenAddress] = true;
+        emit AddTokenAssetAddress(tokenAddress);
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
+    function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
+        address token = _msgSender();
         require(
-            _msgSender() == address(registry.getAcceptedInvoiceToken()) ||
-                _msgSender() == address(registry.getLoanAssetToken()),
+            token == address(registry.getAcceptedInvoiceToken()) || token == address(registry.getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
-        nftAssets.push(NFTAsset({tokenAddress: _msgSender(), tokenId: tokenId}));
+        nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));
+        emit InsertNFTAsset(token, tokenId);
+
         return this.onERC721Received.selector;
     }
 
@@ -211,7 +212,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
-}
+    }
 
     /// @inheritdoc ISecuritizationPool
     function withdrawAssets(
@@ -256,13 +257,16 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
         }
-        if (openingBlockTimestamp == 0) { // If openingBlockTimestamp is not set
-           openingBlockTimestamp = uint64(block.timestamp);
+        if (openingBlockTimestamp == 0) {
+            // If openingBlockTimestamp is not set
+            openingBlockTimestamp = uint64(block.timestamp);
         }
+
+        emit CollectAsset(from, expectedAssetsValue);
     }
 
     /// @inheritdoc ISecuritizationPool
-    function withdraw(uint256 amount) public override whenNotPaused nonReentrant onlyRole(ORIGINATOR_ROLE) {
+    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
         uint256 _amountOwedToOriginator = amountOwedToOriginator;
         if (amount <= _amountOwedToOriginator) {
             amountOwedToOriginator = _amountOwedToOriginator - amount;
@@ -270,6 +274,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             amountOwedToOriginator = 0;
         }
         reserve = reserve - amount;
+
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
             IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
@@ -314,9 +319,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             );
         }
 
-        if (openingBlockTimestamp == 0) {  // If openingBlockTimestamp is not set
+        if (openingBlockTimestamp == 0) {
+            // If openingBlockTimestamp is not set
             openingBlockTimestamp = uint64(block.timestamp);
         }
+
+        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -339,14 +347,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     // After closed pool and redeem all not -> get remain cash to recipient wallet
     /// @inheritdoc ISecuritizationPool
-    function claimCashRemain(address recipientWallet)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlyRole(OWNER_ROLE)
-        finishRedemptionValidator
-    {
+    function claimCashRemain(
+        address recipientWallet
+    ) external override whenNotPaused onlyRole(OWNER_ROLE) finishRedemptionValidator {
         IERC20 currency = IERC20(underlyingCurrency);
         require(
             currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)),
@@ -370,6 +373,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             jotToken = _tokenAddress;
         }
         state = CycleState.CROWDSALE;
+
+        emit UpdateTGEAddress(_tgeAddress, _tokenAddress, _noteType);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -412,6 +417,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
         require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge can update interest');
         interestRateSOT = _interestRateSOT;
+        emit UpdateInterestRateSOT(_interestRateSOT);
     }
 
     // Increase by value
@@ -427,6 +433,15 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         totalLockedDistributeBalance = totalLockedDistributeBalance + currency;
         totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] + token;
+
+        emit UpdateLockedDistributeBalance(
+            tokenAddress,
+            investor,
+            lockedDistributeBalances[tokenAddress][investor],
+            lockedRedeemBalances[tokenAddress][investor],
+            totalLockedRedeemBalances[tokenAddress],
+            totalLockedDistributeBalance
+        );
     }
 
     // Decrease by value
@@ -466,7 +481,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         );
         if (sotToken == notesToken) {
             paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+            emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
         }
+
         reserve = reserve - currencyAmount;
 
         if (tokenAmount > 0) {
@@ -478,31 +495,39 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
+
+        emit UpdateReserve(reserve);
     }
 
     /// @inheritdoc ISecuritizationPool
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
-            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
+            _msgSender() == address(registry.getSecuritizationManager()) ||
+                _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
+        );
         reserve = reserve + currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+
+        emit UpdateReserve(reserve);
     }
 
     /// @inheritdoc ISecuritizationPool
-    function decreaseReserve(
-        uint256 currencyAmount
-    ) external override whenNotPaused {
+    function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry.getSecuritizationManager()) || _msgSender() == address(registry.getDistributionOperator()),
-            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator');
+            _msgSender() == address(registry.getSecuritizationManager()) ||
+                _msgSender() == address(registry.getDistributionOperator()),
+            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
+        );
         reserve = reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+
+        emit UpdateReserve(reserve);
     }
 
     /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
-        require( _msgSender() == tgeAddress, "SecuritizationPool: Only tge address");
+        require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge address');
         _setUpOpeningBlockTimestamp();
     }
 
@@ -519,6 +544,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 openingBlockTimestamp = _firstNoteTokenMintedTimestamp;
             }
         }
+
+        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
     }
 
     uint256[50] private __gap;

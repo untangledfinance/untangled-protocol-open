@@ -6,6 +6,7 @@ import '../storage/Registry.sol';
 interface IMintedTGE {
     event YieldUpdated(uint256 newYield);
     event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
+    event UpdateInitialAmount(uint256 initialAmount);
 
     function initialize(
         Registry _registry,
