@@ -9,7 +9,7 @@ import './base/NAVCalculation.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/ICrowdSale.sol';
 import '../../interfaces/IDistributionAssessor.sol';
-import "../../interfaces/ILoanRegistry.sol";
+import '../../interfaces/ILoanRegistry.sol';
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
@@ -40,17 +40,26 @@ contract SecuritizationPoolValueService is
             else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
         }
         if (!hasValidRiskScore) {
-            return (principalAmount *
-                UntangledMath.rpow(UntangledMath.ONE +
-                (interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
-                YEAR_LENGTH_IN_SECONDS,
-                    expectTimeEarnInterest,
-                    UntangledMath.ONE
-                )) /
-                UntangledMath.ONE;
+            return
+                (principalAmount *
+                    UntangledMath.rpow(
+                        UntangledMath.ONE +
+                            ((interestRate * UntangledMath.ONE) / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
+                            YEAR_LENGTH_IN_SECONDS,
+                        expectTimeEarnInterest,
+                        UntangledMath.ONE
+                    )) / UntangledMath.ONE;
         }
         RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-        uint256 result =  _calculateAssetValue(principalAmount, expectTimeEarnInterest, interestRate, overdue, secondTillCashFlow, riskscore, assetPurpose);
+        uint256 result = _calculateAssetValue(
+            principalAmount,
+            expectTimeEarnInterest,
+            interestRate,
+            overdue,
+            secondTillCashFlow,
+            riskscore,
+            assetPurpose
+        );
         return result;
     }
 
@@ -64,10 +73,16 @@ contract SecuritizationPoolValueService is
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenId));
 
         uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
-        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp ? loanEntry.expirationTimestamp - timestamp : 0;
+        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp
+            ? loanEntry.expirationTimestamp - timestamp
+            : 0;
         uint256 principalAmount;
         uint256 expectedTimeEarningInterest = loanEntry.expirationTimestamp -
-            (loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp ? loanEntry.lastRepayTimestamp : loanEntry.issuanceBlockTimestamp);
+            (
+                loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp
+                    ? loanEntry.lastRepayTimestamp
+                    : loanEntry.issuanceBlockTimestamp
+            );
 
         (principalAmount, ) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
 
@@ -82,7 +97,7 @@ contract SecuritizationPoolValueService is
             loanEntry.assetPurpose
         );
 
-/*
+        /*
         if (timestamp < loanEntry.expirationTimestamp) {
             totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
         }
@@ -330,19 +345,20 @@ contract SecuritizationPoolValueService is
             uint32 discountRate
         ) = securitizationPool.riskScores(idx);
 
-        return RiskScore({
-            daysPastDue: daysPastDue,
-            advanceRate: advanceRate,
-            penaltyRate: penaltyRate,
-            interestRate: interestRate,
-            probabilityOfDefault: probabilityOfDefault,
-            lossGivenDefault: lossGivenDefault,
-            gracePeriod: gracePeriod,
-            collectionPeriod: collectionPeriod,
-            writeOffAfterGracePeriod: writeOffAfterGracePeriod,
-            writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod,
-            discountRate: discountRate
-        });
+        return
+            RiskScore({
+                daysPastDue: daysPastDue,
+                advanceRate: advanceRate,
+                penaltyRate: penaltyRate,
+                interestRate: interestRate,
+                probabilityOfDefault: probabilityOfDefault,
+                lossGivenDefault: lossGivenDefault,
+                gracePeriod: gracePeriod,
+                collectionPeriod: collectionPeriod,
+                writeOffAfterGracePeriod: writeOffAfterGracePeriod,
+                writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod,
+                discountRate: discountRate
+            });
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
@@ -361,9 +377,17 @@ contract SecuritizationPoolValueService is
     ) external view returns (uint256) {
         uint256 result = 0;
         uint256 investorsLength = investors.length;
-        for (uint256 i = 0; i < investorsLength; i++) {
-            result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
+
+        // duplicate but reduce external call
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
+
+        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
+            address investor = investors[i];
+            result += (crowdsale.currencyRaisedByInvestor(investor) -
+                securitizationPool.paidPrincipalAmountSOTByInvestor(investor));
         }
+        
         return result;
     }
 

@@ -35,10 +35,6 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         registry = _registry;
     }
 
-    event NewTGECreated(address instanceAddress);
-    event NewNotesTokenCreated(address instanceAddress);
-    event NewPoolCreated(address instanceAddress);
-
     //noteSaleAddress, investor, amount, tokenAmount
     event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
 
@@ -111,6 +107,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         require(isExistingPools[_msgSender()], 'SecuritizationManager: Only SecuritizationPool');
         require(potToPool[pot] == address(0), 'SecuritizationManager: pot used for another pool');
         potToPool[pot] = _msgSender();
+
+        emit UpdatePotToPool(pot, _msgSender());
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool

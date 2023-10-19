@@ -58,13 +58,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         _;
     }
 
-    modifier onlyPoolAdmin() {
-        require(
-            IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
-            'SecuritizationPool: Not an pool admin'
-        );
-        _;
-    }
+    // modifier onlyPoolAdmin() {
+    //     require(
+    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
+    //         'SecuritizationPool: Not an pool admin'
+    //     );
+    //     _;
+    // }
 
     modifier onlyPoolAdminOrOwner() {
         require(
