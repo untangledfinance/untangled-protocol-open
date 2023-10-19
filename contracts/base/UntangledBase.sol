@@ -44,11 +44,11 @@ abstract contract UntangledBase is
         _setRoleAdmin(role, adminRole);
     }
 
-    function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 

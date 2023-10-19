@@ -580,5 +580,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
     }
 
+    function pause() public virtual override onlyPoolAdminOrOwner {
+        _pause();
+    }
+
+    function unpause() public virtual override onlyPoolAdminOrOwner {
+        _unpause();
+    }
+
     uint256[50] private __gap;
 }

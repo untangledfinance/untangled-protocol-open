@@ -15,6 +15,9 @@ import {POOL_ADMIN} from './types.sol';
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
 contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
+
+    event UpdateAllowedUIDTypes(uint256[] uids);
+
     uint256[] public allowedUIDTypes;
 
     struct NewRoundSaleParam {
@@ -284,6 +287,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     function setAllowedUIDTypes(uint256[] calldata ids) external onlyRole(DEFAULT_ADMIN_ROLE) {
         allowedUIDTypes = ids;
+        emit UpdateAllowedUIDTypes(ids);
     }
 
     /// @notice Check if an user has valid UID type
@@ -291,31 +295,31 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
-    function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-        require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
-        ISecuritizationPool pool = ISecuritizationPool(poolAddress);
-        pool.pause();
-    }
+    // function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+    //     pool.pause();
+    // }
 
-    function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-        require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
-        ISecuritizationPool pool = ISecuritizationPool(poolAddress);
-        pool.unpause();
-    }
+    // function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+    //     pool.unpause();
+    // }
 
-    function pauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-        uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
-            pools[i].pause();
-        }
-    }
+    // function pauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     uint256 poolsLength = pools.length;
+    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
+    //         pools[i].pause();
+    //     }
+    // }
 
-    function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-        uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
-            pools[i].unpause();
-        }
-    }
+    // function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     uint256 poolsLength = pools.length;
+    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
+    //         pools[i].unpause();
+    //     }
+    // }
 
     uint256[49] private __gap;
 }

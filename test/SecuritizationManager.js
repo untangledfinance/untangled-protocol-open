@@ -224,20 +224,21 @@ describe('SecuritizationManager', () => {
       expect(isExistingTGEs).equal(true);
     });
 
-    it('Should pause all pools', async () => {
-      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager.connect(poolCreatorSigner).pauseAllPools();
+    // it('Should pause all pools', async () => {
+    //   await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+    //   await securitizationManager.connect(poolCreatorSigner).pauseAllPools();
 
-      await expect(
-        securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
-      ).to.be.revertedWith(`Pausable: paused`);
-    });
+    //   await expect(
+    //     securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+    //   ).to.be.revertedWith(`Pausable: paused`);
+    // });
 
-    it('Should un-pause all pools', async () => {
-      await securitizationManager.connect(poolCreatorSigner).unpauseAllPools();
-    });
+    // it('Should un-pause all pools', async () => {
+    //   await securitizationManager.connect(poolCreatorSigner).unpauseAllPools();
+    // });
 
     it('Should buy tokens successfully', async () => {
+      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
       await securitizationManager
         .connect(lenderSigner)
         .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
@@ -258,7 +259,8 @@ describe('SecuritizationManager', () => {
     });
 
     it('Should pause pool', async () => {
-      await securitizationManager.connect(poolCreatorSigner).pausePool(securitizationPoolContract.address);
+      await securitizationPoolContract.connect(poolCreatorSigner).pause();
+      // await securitizationManager.connect(poolCreatorSigner).pausePool(securitizationPoolContract.address);
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
@@ -266,7 +268,8 @@ describe('SecuritizationManager', () => {
     });
 
     it('Should un-pause pool', async () => {
-      await securitizationManager.connect(poolCreatorSigner).unpausePool(securitizationPoolContract.address);
+      // await securitizationManager.connect(poolCreatorSigner).unpausePool(securitizationPoolContract.address);
+      await securitizationPoolContract.connect(poolCreatorSigner).unpause();
     });
   });
 });
