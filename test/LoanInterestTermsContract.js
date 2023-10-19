@@ -22,6 +22,8 @@ const {
 const { parse } = require('dotenv');
 const { setup } = require('./setup.js');
 
+const { POOL_ADMIN_ROLE } = require('./constants.js');
+
 const ONE_DAY = 86400;
 
 const YEAR_LENGTH_IN_SECONDS = 31536000; // Number of seconds in a year (approximately)
@@ -85,12 +87,11 @@ describe('LoanInterestTermsContract', () => {
       registry,
     } = await setup());
 
-    const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-    await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     // Create new pool
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000');
+      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

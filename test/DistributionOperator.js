@@ -5,6 +5,8 @@ const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
+const { POOL_ADMIN_ROLE } = require('./constants');
+
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
@@ -90,12 +92,12 @@ describe('Distribution', () => {
 
   describe('#security pool', async () => {
     it('Create pool', async () => {
-      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -106,7 +108,7 @@ describe('Distribution', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -304,6 +306,7 @@ describe('Distribution', () => {
       expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
 
       expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
+
 
       const sotValue = await distributionAssessor.calcCorrespondingTotalAssetValue(
         sotToken.address,

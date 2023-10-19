@@ -16,9 +16,6 @@ abstract contract ISecuritizationManager {
 
     mapping(address => bool) public isExistingTGEs;
 
-    bytes32 public constant POOL_CREATOR = keccak256('POOL_CREATOR');
-
-
     /// @dev Register pot to pool instance
     /// @param pot Pool linked wallet
     function registerPot(address pot) external virtual;

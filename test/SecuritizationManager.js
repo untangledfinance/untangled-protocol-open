@@ -8,6 +8,7 @@ const { expect } = require('chai');
 const { setup } = require('./setup.js');
 const { unlimitedAllowance } = require('./utils.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
+const { POOL_ADMIN_ROLE } = require('./constants.js');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -33,12 +34,11 @@ describe('SecuritizationManager', () => {
   });
 
   it('should emit RoleGranted event with an address', async function () {
-    const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-    const transaction = await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    const transaction = await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     await transaction.wait();
     await expect(transaction)
       .to.emit(securitizationManager, 'RoleGranted')
-      .withArgs(POOL_CREATOR_ROLE, poolCreatorSigner.address, untangledAdminSigner.address);
+      .withArgs(POOL_ADMIN_ROLE, poolCreatorSigner.address, untangledAdminSigner.address);
   });
   describe('#newPoolInstance', async () => {
     it('Should create new pool instance', async function () {
@@ -46,7 +46,7 @@ describe('SecuritizationManager', () => {
 
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, minFirstLostCushion);
+        .newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address);
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
       expect(securitizationPoolAddress).to.be.properAddress;
@@ -67,13 +67,13 @@ describe('SecuritizationManager', () => {
       const minFirstLostCushion = 101 * RATE_SCALING_FACTOR;
 
       await expect(
-        securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, minFirstLostCushion)
+        securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address)
       ).to.be.revertedWith(`minFirstLossCushion is greater than 100`);
     });
 
     it('only pool creator role can create pool', async () => {
       await expect(
-        securitizationManager.connect(lenderSigner).newPoolInstance(stableCoin.address, '100000')
+        securitizationManager.connect(lenderSigner).newPoolInstance(stableCoin.address, '100000', lenderSigner.address)
       ).to.be.revertedWith(
         `AccessControl: account ${lenderSigner.address.toLowerCase()} is missing role 0x3e9c05fb0f9da4414e033bb9bf190a6e2072adf7e3077394fce683220513b8d7`
       );
@@ -226,7 +226,7 @@ describe('SecuritizationManager', () => {
 
     it('Should pause all pools', async () => {
       await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager.pauseAllPools();
+      await securitizationManager.connect(poolCreatorSigner).pauseAllPools();
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
@@ -234,7 +234,7 @@ describe('SecuritizationManager', () => {
     });
 
     it('Should un-pause all pools', async () => {
-      await securitizationManager.unpauseAllPools();
+      await securitizationManager.connect(poolCreatorSigner).unpauseAllPools();
     });
 
     it('Should buy tokens successfully', async () => {
@@ -258,7 +258,7 @@ describe('SecuritizationManager', () => {
     });
 
     it('Should pause pool', async () => {
-      await securitizationManager.pausePool(securitizationPoolContract.address);
+      await securitizationManager.connect(poolCreatorSigner).pausePool(securitizationPoolContract.address);
 
       await expect(
         securitizationManager.connect(lenderSigner).buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
@@ -266,7 +266,7 @@ describe('SecuritizationManager', () => {
     });
 
     it('Should un-pause pool', async () => {
-      await securitizationManager.unpausePool(securitizationPoolContract.address);
+      await securitizationManager.connect(poolCreatorSigner).unpausePool(securitizationPoolContract.address);
     });
   });
 });

@@ -8,6 +8,9 @@ import '../../libraries/ConfigHelper.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
+
+import './types.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -27,6 +30,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(_minFirstLossCushion < 100 * RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
         require(_currency != address(0), 'SecuritizationPool: Invalid currency');
         __UntangledBase__init(_msgSender());
+
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         registry = _registry;
 
@@ -166,7 +170,16 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
-    ) external override whenNotPaused notClosingStage onlyRole(OWNER_ROLE) {
+    ) external override whenNotPaused notClosingStage {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) ||
+                IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(
+                    POOL_ADMIN,
+                    _msgSender()
+                ),
+            'SecuritizationPool: not owner or admin'
+        );
+
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
             _daysPastDuesLength * 6 == _ratesAndDefaults.length &&

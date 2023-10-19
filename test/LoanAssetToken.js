@@ -18,6 +18,8 @@ const {
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
+const { POOL_ADMIN_ROLE } = require('./constants.js');
+
 const ONE_DAY = 86400;
 describe('LoanAssetToken', () => {
   let stableCoin;
@@ -59,12 +61,11 @@ describe('LoanAssetToken', () => {
 
   describe('#security pool', async () => {
     it('Create pool', async () => {
-      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       // Create new pool
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
