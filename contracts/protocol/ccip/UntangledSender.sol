@@ -7,7 +7,7 @@ import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/shared/interface
 import {IRouterClient} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
 import {CCIPSenderStorage} from './storage/CCIPSenderStorage.sol';
 
-import {ICommandData, MessageType} from "./ICommandData.sol";
+import {ICommandData, MessageType} from './ICommandData.sol';
 import {UntangledBase} from '../../base/UntangledBase.sol';
 
 contract UntangledSender is UntangledBase, CCIPSenderStorage {
@@ -24,7 +24,7 @@ contract UntangledSender is UntangledBase, CCIPSenderStorage {
     ) internal onlyInitializing {
         router = router_;
         linkToken = link_;
-    } 
+    }
 
     function sendMessage(
         uint64 destinationChainSelector,
@@ -52,7 +52,7 @@ contract UntangledSender is UntangledBase, CCIPSenderStorage {
         }
 
         // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
-        linkToken.approve(address(router), fees);
+        require(linkToken.approve(address(router), fees), 'UntangledSender: LinkToken approval failed');
 
         // Send the message through the router and store the returned message ID
         messageId = router.ccipSend(destinationChainSelector, evm2AnyMessage);

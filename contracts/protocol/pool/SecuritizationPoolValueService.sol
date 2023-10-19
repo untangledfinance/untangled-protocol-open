@@ -244,74 +244,74 @@ contract SecuritizationPoolValueService is
         return daysPastDue;
     }
 
-    function getAdvanceRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, uint32 advanceRate, , , , , , , , , ) = securitizationPool.riskScores(idx);
-        return advanceRate;
-    }
+    // function getAdvanceRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
+    //     (, uint32 advanceRate, , , , , , , , , ) = securitizationPool.riskScores(idx);
+    //     return advanceRate;
+    // }
 
-    function getPenaltyRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , uint32 penaltyRate, , , , , , , , ) = securitizationPool.riskScores(idx);
-        return penaltyRate;
-    }
+    // function getPenaltyRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
+    //     (, , uint32 penaltyRate, , , , , , , , ) = securitizationPool.riskScores(idx);
+    //     return penaltyRate;
+    // }
 
-    function getInterestRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , , uint32 interestRate, , , , , , , ) = securitizationPool.riskScores(idx);
-        return interestRate;
-    }
+    // function getInterestRateByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
+    //     (, , , uint32 interestRate, , , , , , , ) = securitizationPool.riskScores(idx);
+    //     return interestRate;
+    // }
 
-    function getProbabilityOfDefaultByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
-        (, , , , uint32 probabilityOfDefault, , , , , , ) = securitizationPool.riskScores(idx);
-        return probabilityOfDefault;
-    }
+    // function getProbabilityOfDefaultByIdx(
+    //     ISecuritizationPool securitizationPool,
+    //     uint256 idx
+    // ) private view returns (uint32) {
+    //     (, , , , uint32 probabilityOfDefault, , , , , , ) = securitizationPool.riskScores(idx);
+    //     return probabilityOfDefault;
+    // }
 
-    function getLossGivenDefaultByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
-        (, , , , , uint32 lossGivenDefault, , , , , ) = securitizationPool.riskScores(idx);
-        return lossGivenDefault;
-    }
+    // function getLossGivenDefaultByIdx(
+    //     ISecuritizationPool securitizationPool,
+    //     uint256 idx
+    // ) private view returns (uint32) {
+    //     (, , , , , uint32 lossGivenDefault, , , , , ) = securitizationPool.riskScores(idx);
+    //     return lossGivenDefault;
+    // }
 
-    function getGracePeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (, , , , , , uint32 gracePeriod, , , , ) = securitizationPool.riskScores(idx);
-        return gracePeriod;
-    }
+    // function getGracePeriodByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
+    //     (, , , , , , uint32 gracePeriod, , , , ) = securitizationPool.riskScores(idx);
+    //     return gracePeriod;
+    // }
 
-    function getCollectionPeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
-        (, , , , , , , uint32 collectionPeriod, , ,) = securitizationPool.riskScores(idx);
-        return collectionPeriod;
-    }
+    // function getCollectionPeriodByIdx(
+    //     ISecuritizationPool securitizationPool,
+    //     uint256 idx
+    // ) private view returns (uint32) {
+    //     (, , , , , , , uint32 collectionPeriod, , ,) = securitizationPool.riskScores(idx);
+    //     return collectionPeriod;
+    // }
 
-    function getWriteOffAfterGracePeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
-        (, , , , , , , , uint32 writeOffAfterGracePeriod, , ) = securitizationPool.riskScores(idx);
-        return writeOffAfterGracePeriod;
-    }
+    // function getWriteOffAfterGracePeriodByIdx(
+    //     ISecuritizationPool securitizationPool,
+    //     uint256 idx
+    // ) private view returns (uint32) {
+    //     (, , , , , , , , uint32 writeOffAfterGracePeriod, , ) = securitizationPool.riskScores(idx);
+    //     return writeOffAfterGracePeriod;
+    // }
 
-    function getWriteOffAfterCollectionPeriodByIdx(
-        ISecuritizationPool securitizationPool,
-        uint256 idx
-    ) private view returns (uint32) {
-        (, , , , , , , , , uint32 writeOffAfterCollectionPeriod, ) = securitizationPool.riskScores(idx);
-        return writeOffAfterCollectionPeriod;
-    }
+    // function getWriteOffAfterCollectionPeriodByIdx(
+    //     ISecuritizationPool securitizationPool,
+    //     uint256 idx
+    // ) private view returns (uint32) {
+    //     (, , , , , , , , , uint32 writeOffAfterCollectionPeriod, ) = securitizationPool.riskScores(idx);
+    //     return writeOffAfterCollectionPeriod;
+    // }
 
-    function getDiscountRateByIdx(ISecuritizationPool securitizationPool, uint256 idx)
-    private
-    view
-    returns (uint32)
-    {
-        (, , , , , , , , , , uint32 discountRate) = securitizationPool.riskScores(idx);
-        return discountRate;
-    }
+    // function getDiscountRateByIdx(ISecuritizationPool securitizationPool, uint256 idx)
+    // private
+    // view
+    // returns (uint32)
+    // {
+    //     (, , , , , , , , , , uint32 discountRate) = securitizationPool.riskScores(idx);
+    //     return discountRate;
+    // }
 
     function getRiskScoreByIdx(address pool, uint256 idx) private view returns (RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
