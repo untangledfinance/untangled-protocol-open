@@ -128,7 +128,8 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolACreator.address);
       const poolACreationTransaction = await securitizationManager
         .connect(poolACreator)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolACreator.address);
+
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
@@ -239,6 +240,7 @@ describe('Pool to Pool', () => {
       jotPoolBContract = await ethers.getContractAt('NoteToken', jotPoolBAddress);
       jotAmount = await jotPoolBContract.balanceOf(poolAPot.address);
       const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
+
       await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
       await jotPoolBContract.connect(poolAPot).approve(poolAContract.address, jotAmount);
       await poolAContract
