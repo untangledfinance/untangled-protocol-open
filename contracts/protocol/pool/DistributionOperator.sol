@@ -54,7 +54,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             'DistributionOperator: Invalid token allowance'
         );
 
-        uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(address(securitizationPool), address(noteToken));
+        uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(
+            address(securitizationPool),
+            address(noteToken)
+        );
         uint256 tokenToBeRedeemed = Math.min(
             IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) / tokenPrice,
             tokenAmount
@@ -96,13 +99,12 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
                 registry.getDistributionTranche(),
                 securitizationPool
             );
-            address tge;
+
             if (securitizationPool.sotToken() == tokenAddress) {
-                tge = securitizationPool.tgeAddress();
+                Crowdsale(securitizationPool.tgeAddress()).onRedeem(currencyLocked);
             } else if (securitizationPool.jotToken() == tokenAddress) {
-                tge = securitizationPool.secondTGEAddress();
+                Crowdsale(securitizationPool.secondTGEAddress()).onRedeem(currencyLocked);
             }
-            Crowdsale(tge).onRedeem(currencyLocked);
         }
 
         emit TokensRedeemed(redeemer, tokenAddress, currencyLocked, tokenRedeem);

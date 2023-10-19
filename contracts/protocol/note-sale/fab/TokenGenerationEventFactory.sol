@@ -118,7 +118,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         return tgeAddress;
     }
 
-    function pauseUnpauseTge(address tgeAdress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pauseUnpauseTge(address tgeAdress) external whenNotPaused onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist');
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAdress);
         if (tge.paused()) {
