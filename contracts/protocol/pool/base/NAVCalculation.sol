@@ -71,24 +71,22 @@ contract NAVCalculation {
         if (overdue > riskScore.gracePeriod) {
             totalDebtAmt =
                 (totalDebtAmt *
-                    (UntangledMath.ONE +
                         UntangledMath.rpow(
-                            (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                            UntangledMath.ONE + (interestRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             riskScore.gracePeriod,
                             UntangledMath.ONE
-                        ))) /
+                        )) /
                 UntangledMath.ONE;
 
             uint256 penaltyRate = (interestRate * riskScore.penaltyRate) / ONE_HUNDRED_PERCENT;
 
             totalDebtAmt =
                 (totalDebtAmt *
-                    (UntangledMath.ONE +
                         UntangledMath.rpow(
-                            (penaltyRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
+                            UntangledMath.ONE + (penaltyRate * morePercentDecimal) / YEAR_LENGTH_IN_SECONDS,
                             overdue - riskScore.gracePeriod,
                             UntangledMath.ONE
-                        ))) /
+                        )) /
                 UntangledMath.ONE;
             uint256 writeOff = riskScore.writeOffAfterGracePeriod;
             if (overdue > riskScore.collectionPeriod) writeOff = riskScore.writeOffAfterCollectionPeriod;
