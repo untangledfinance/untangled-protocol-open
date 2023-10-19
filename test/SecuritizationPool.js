@@ -22,6 +22,8 @@ const {
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
+const { POOL_ADMIN_ROLE } = require('./constants.js');
+
 const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -92,18 +94,17 @@ describe('SecuritizationPool', () => {
 
   describe('#security pool', async () => {
     it('Create pool', async () => {
-      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
 
       const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
-      await securitizationManager.setRoleAdmin(POOL_CREATOR_ROLE, OWNER_ROLE);
+      await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
 
       await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
-      await securitizationManager.connect(borrowerSigner).grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
 
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -114,7 +115,7 @@ describe('SecuritizationPool', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

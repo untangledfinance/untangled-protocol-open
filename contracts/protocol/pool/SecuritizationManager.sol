@@ -8,6 +8,8 @@ import '../../libraries/ConfigHelper.sol';
 import '../../interfaces/IRequiresUID.sol';
 import '../note-sale/fab/TokenGenerationEventFactory.sol';
 
+import {POOL_ADMIN} from './types.sol';
+
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
@@ -25,7 +27,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
-        _setRoleAdmin(POOL_CREATOR, OWNER_ROLE);
+        _setRoleAdmin(POOL_ADMIN, OWNER_ROLE);
 
         registry = _registry;
     }
@@ -44,7 +46,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     modifier onlyManager(ISecuritizationPool pool) {
         require(
-            pool.hasRole(pool.OWNER_ROLE(), _msgSender()),
+            // pool.hasRole(pool.OWNER_ROLE(), _msgSender()) ||
+            hasRole(POOL_ADMIN, _msgSender()),
             'SecuritizationManager: Not the controller of the project'
         );
         _;
@@ -71,12 +74,11 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     /// @param currency The main currency used in this new pool. Ex: cUSD's address
     /// @param minFirstLossCushion Define the minimum JOT ratio in pool
     /// @dev Creates a new instance of a securitization pool. Set msg sender as owner of the new pool
-    function newPoolInstance(address currency, uint32 minFirstLossCushion)
-        external
-        whenNotPaused
-        onlyRole(POOL_CREATOR)
-        returns (address)
-    {
+    function newPoolInstance(
+        address currency,
+        uint32 minFirstLossCushion,
+        address poolOwner
+    ) external whenNotPaused onlyRole(POOL_ADMIN) returns (address) {
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
@@ -92,7 +94,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         isExistingPools[poolAddress] = true;
         pools.push(poolInstance);
 
-        poolInstance.grantRole(poolInstance.OWNER_ROLE(), _msgSender());
+        // ...
+        poolInstance.grantRole(poolInstance.OWNER_ROLE(), poolOwner);
         poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
 
         emit NewPoolCreated(poolAddress);
@@ -288,28 +291,28 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
-    function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
         require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
         ISecuritizationPool pool = ISecuritizationPool(poolAddress);
         pool.pause();
     }
 
-    function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
         require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
         ISecuritizationPool pool = ISecuritizationPool(poolAddress);
         pool.unpause();
     }
 
-    function pauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
         uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i++) {
+        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
             pools[i].pause();
         }
     }
 
-    function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
         uint256 poolsLength = pools.length;
-        for (uint256 i = 0; i < poolsLength; i++) {
+        for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
             pools[i].unpause();
         }
     }

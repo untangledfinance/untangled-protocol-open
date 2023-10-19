@@ -34,7 +34,7 @@ abstract contract UntangledBase is
 
         if (owner == address(0)) owner = _msgSender();
 
-        _setupRole(DEFAULT_ADMIN_ROLE, owner);
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(OWNER_ROLE, owner);
 
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);

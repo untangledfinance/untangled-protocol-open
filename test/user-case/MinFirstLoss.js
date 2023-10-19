@@ -7,6 +7,7 @@ const _ = require('lodash');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { setup } = require('../setup');
 const { presignedMintMessage } = require('../shared/uid-helper');
+const { POOL_ADMIN_ROLE } = require('../constants.js');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -44,12 +45,11 @@ describe('MinFirstLoss', () => {
     // Init contracts
     ({ stableCoin, uniqueIdentity, securitizationManager } = await setup());
 
-    const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-    await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+    await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     // Create new pool
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000');
+      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

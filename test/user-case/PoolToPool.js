@@ -5,6 +5,7 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { presignedMintMessage } = require('../shared/uid-helper');
+const { POOL_ADMIN_ROLE } = require('../constants.js');
 
 /**
  * This file tests the case that a pool invest into another pool
@@ -65,11 +66,10 @@ describe('Pool to Pool', () => {
       } = await setup());
 
       // Create new main pool
-      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -125,10 +125,11 @@ describe('Pool to Pool', () => {
       );
 
       // Create investor pool
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolACreator.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolACreator.address);
       const poolACreationTransaction = await securitizationManager
         .connect(poolACreator)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolACreator.address);
+
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
@@ -231,7 +232,7 @@ describe('Pool to Pool', () => {
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
-      expect(await stableCoin.balanceOf(poolAPot.address)).equal( '0');
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal('0');
     });
     it('Pool A originator can transfer JOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -239,6 +240,7 @@ describe('Pool to Pool', () => {
       jotPoolBContract = await ethers.getContractAt('NoteToken', jotPoolBAddress);
       jotAmount = await jotPoolBContract.balanceOf(poolAPot.address);
       const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
+
       await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
       await jotPoolBContract.connect(poolAPot).approve(poolAContract.address, jotAmount);
       await poolAContract
@@ -287,7 +289,7 @@ describe('Pool to Pool', () => {
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
-      const value =await mintedIncreasingInterestTGEPoolBContract.hasStarted();
+      const value = await mintedIncreasingInterestTGEPoolBContract.hasStarted();
       // Invest into main pool (buy SOT token)
       await stableCoin
         .connect(poolAPot)
@@ -295,7 +297,7 @@ describe('Pool to Pool', () => {
       await securitizationManager
         .connect(poolAPot)
         .buyTokens(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
-      expect(await stableCoin.balanceOf(poolAPot.address)).equal('0') ;
+      expect(await stableCoin.balanceOf(poolAPot.address)).equal('0');
     });
     it('Pool A originator can transfer SOT from pool A pot to pool A', async () => {
       // Transfer to pool
@@ -429,14 +431,12 @@ describe('Pool to Pool', () => {
         securitizationPoolValueService,
       } = await setup());
 
-      // Get constants
-      const POOL_CREATOR_ROLE = await securitizationManager.POOL_CREATOR();
 
       // Create pool C
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolCCreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCCreatorSigner.address);
       const poolCCreationTransaction = await securitizationManager
         .connect(poolCCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolCCreatorSigner.address);
       const poolCCreationReceipt = await poolCCreationTransaction.wait();
       const [poolCContractAddress] = poolCCreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolCContract = await ethers.getContractAt('SecuritizationPool', poolCContractAddress);
@@ -499,10 +499,10 @@ describe('Pool to Pool', () => {
       sotCContract = await ethers.getContractAt('NoteToken', sotPoolCAddress);
 
       // Create pool B
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolBCreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolBCreatorSigner.address);
       const transaction = await securitizationManager
         .connect(poolBCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolBCreatorSigner.address);
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -565,10 +565,10 @@ describe('Pool to Pool', () => {
       sotBContract = await ethers.getContractAt('NoteToken', sotPoolBAddress);
 
       // Create pool A
-      await securitizationManager.grantRole(POOL_CREATOR_ROLE, poolACreatorSigner.address);
+      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolACreatorSigner.address);
       const poolACreationTransaction = await securitizationManager
         .connect(poolACreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000');
+        .newPoolInstance(stableCoin.address, '100000', poolACreatorSigner.address);
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
