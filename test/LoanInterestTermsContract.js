@@ -231,7 +231,8 @@ describe('LoanInterestTermsContract', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, 
+        [0], [constants.ZERO_ADDRESS], [Buffer.from("")]);
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
     });
     it('should return correct expected principal and expected interest', async () => {

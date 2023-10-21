@@ -21,6 +21,7 @@ import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import '../protocol/note-sale/MintedNormalTGE.sol';
 import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import '../interfaces/IGo.sol';
+import '../tokens/ERC721/ILoanAssetToken.sol';
 
 /**
  * @title ConfigHelper
@@ -60,8 +61,8 @@ library ConfigHelper {
         return IDistributionOperator(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR));
     }
 
-    function getLoanAssetToken(Registry registry) internal view returns (IUntangledERC721) {
-        return IUntangledERC721(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
+    function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
+        return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
     }
 
     function getAcceptedInvoiceToken(Registry registry) internal view returns (AcceptedInvoiceToken) {

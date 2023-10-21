@@ -424,7 +424,7 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")]);
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);
@@ -433,7 +433,7 @@ describe('SecuritizationPool', () => {
       expect(balanceOfPool).equal(tokenIds.length);
 
       await expect(
-        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds)
+        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")])
       ).to.be.revertedWith(`ERC721: token already minted`);
     });
 
@@ -484,7 +484,7 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, pledgeTokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, pledgeTokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")]);
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);

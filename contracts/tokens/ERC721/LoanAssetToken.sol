@@ -3,13 +3,13 @@ pragma solidity 0.8.19;
 
 import '../../interfaces/ILoanRegistry.sol';
 import '../../interfaces/ILoanInterestTermsContract.sol';
-import '../../interfaces/IUntangledERC721.sol';
+import './ILoanAssetToken.sol';
 import '../../libraries/ConfigHelper.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
  */
-contract LoanAssetToken is IUntangledERC721 {
+contract LoanAssetToken is ILoanAssetToken {
     using ConfigHelper for Registry;
 
     /** CONSTRUCTOR */
@@ -27,12 +27,10 @@ contract LoanAssetToken is IUntangledERC721 {
         _revokeRole(MINTER_ROLE, _msgSender());
     }
 
-    function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedPrincipal, uint256 expectedInterest)
-    {
+    function getExpectedRepaymentValues(
+        uint256 tokenId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
         bytes32 agreementId = bytes32(tokenId);
         (expectedPrincipal, expectedInterest) = registry.getLoanInterestTermsContract().getExpectedRepaymentValues(
             agreementId,
@@ -56,16 +54,24 @@ contract LoanAssetToken is IUntangledERC721 {
         return registry.getLoanInterestTermsContract().getInterestRate(bytes32(_tokenId));
     }
 
-    function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedRepaymentValue)
-    {
+    function getTotalExpectedRepaymentValue(
+        uint256 agreementId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedRepaymentValue) {
         uint256 principalAmount;
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
         expectedRepaymentValue = principalAmount + interestAmount;
+    }
+
+    function safeMint(
+        address to,
+        uint256 tokenId,
+        uint256 nonce,
+        address validators,
+        bytes memory signatures
+    ) public virtual override onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
     }
 
     uint256[50] private __gap;
