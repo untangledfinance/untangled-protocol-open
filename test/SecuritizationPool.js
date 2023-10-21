@@ -1,17 +1,15 @@
-const { ethers, upgrades } = require('hardhat');
-const { deployments } = require('hardhat');
+const { ethers } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { BigNumber } = ethers;
-const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
+const { constants } = ethers;
+const { parseEther, formatEther } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const {
   unlimitedAllowance,
-  ZERO_ADDRESS,
   genLoanAgreementIds,
   saltFromOrderValues,
   debtorsFromOrderAddresses,
@@ -24,7 +22,6 @@ const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
 
-const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
 
 describe('SecuritizationPool', () => {
@@ -424,7 +421,14 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")]);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        tokenIds.map(x => ({
+          tokenId: x,
+          nonce: 0,
+          validator: constants.AddressZero,
+          validateSignature: Buffer.from([])
+        }))
+      );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);
@@ -433,7 +437,14 @@ describe('SecuritizationPool', () => {
       expect(balanceOfPool).equal(tokenIds.length);
 
       await expect(
-        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")])
+        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+          tokenIds.map(x => ({
+            tokenId: x,
+            nonce: 0,
+            validator: constants.AddressZero,
+            validateSignature: Buffer.from([])
+          }))
+        )
       ).to.be.revertedWith(`ERC721: token already minted`);
     });
 
@@ -484,7 +495,14 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, pledgeTokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")]);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        pledgeTokenIds.map(x => ({
+          tokenId: x,
+          nonce: 0,
+          validator: constants.AddressZero,
+          validateSignature: Buffer.from([])
+        }))
+      );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);

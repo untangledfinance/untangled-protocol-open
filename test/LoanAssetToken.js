@@ -1,11 +1,10 @@
-const { ethers, upgrades } = require('hardhat');
-const { deployments } = require('hardhat');
+const { ethers } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
 
-const { BigNumber } = ethers;
-const { parseEther, parseUnits, formatEther } = ethers.utils;
+const { BigNumber, constants } = ethers;
+const { parseEther, formatEther } = ethers.utils;
 
 const {
   unlimitedAllowance,
@@ -20,7 +19,6 @@ const { setup } = require('./setup.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
 
-const ONE_DAY = 86400;
 describe('LoanAssetToken', () => {
   let stableCoin;
   let registry;
@@ -171,7 +169,14 @@ describe('LoanAssetToken', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds, [0], [constants.ZERO_ADDRESS], [Buffer.from("")])
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        tokenIds.map((x) => ({
+          tokenId: x,
+          nonce: 0,
+          validator: constants.AddressZero,
+          validateSignature: Buffer.from([])
+        }))
+      )
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);

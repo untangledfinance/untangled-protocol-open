@@ -3,8 +3,8 @@ const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber } = require('ethers');
 
-const ONE_DAY = 86400;
-const DECIMAL = BigNumber.from(10).pow(18);
+// const ONE_DAY = 86400;
+// const DECIMAL = BigNumber.from(10).pow(18);
 describe('NoteTokenFactory', () => {
   let registry;
   let noteTokenFactory;

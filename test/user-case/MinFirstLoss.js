@@ -1,9 +1,9 @@
 const { ethers, getChainId } = require('hardhat');
 const { expect } = require('chai');
 const { BigNumber } = require('ethers');
-const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
+const { parseEther } = ethers.utils;
+
 const dayjs = require('dayjs');
-const _ = require('lodash');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { setup } = require('../setup');
 const { presignedMintMessage } = require('../shared/uid-helper');

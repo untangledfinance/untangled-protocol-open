@@ -64,15 +64,5 @@ contract LoanAssetToken is ILoanAssetToken {
         expectedRepaymentValue = principalAmount + interestAmount;
     }
 
-    function safeMint(
-        address to,
-        uint256 tokenId,
-        uint256 nonce,
-        address validators,
-        bytes memory signatures
-    ) public virtual override onlyRole(MINTER_ROLE) {
-        _safeMint(to, tokenId);
-    }
-
     uint256[50] private __gap;
 }

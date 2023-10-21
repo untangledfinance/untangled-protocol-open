@@ -110,7 +110,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     //** Issue Loan to Farmers */
     function _issueDebtAgreements(
-        bytes32 latTokenId,
+        LoanAssetInfo calldata latInfo,
         address creditor,
         address termContract,
         address debtor,
@@ -118,17 +118,14 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         address principalTokenAddress,
         uint256 salt,
         uint256 expirationTimestampInSecs,
-        uint8[] memory assetPurposeAndRiskScore,
-        uint256 nonce,
-        address validator,
-        bytes memory validateSignature
+        uint8[] memory assetPurposeAndRiskScore
     ) private {
         // Mint debt tokens and finalize debt agreement
-        registry.getLoanAssetToken().safeMint(creditor, uint256(latTokenId), nonce, validator, validateSignature);
+        registry.getLoanAssetToken().safeMint(creditor, uint256(latInfo.tokenId));
 
         require(
             registry.getLoanRegistry().insert(
-                latTokenId,
+                latInfo.tokenId,
                 termContract,
                 debtor,
                 termsParam,
@@ -269,14 +266,21 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      *   + Debtor Fee
      */
     function fillDebtOrder(
+        // latInfo[x].tokenId: // [x]-Loan liability token Id, [x]-Loan liability token Id
         address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
         uint256[] calldata orderValues, //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
-        bytes32[] calldata tokenIds, // [x]-Loan liability token Id, [x]-Loan liability token Id
-        uint256[] calldata nonces,
-        address[] calldata validators,
-        bytes[] memory validateSignatures
-    ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
+        LoanAssetInfo[] calldata latInfo
+    )
+        external
+        // bytes32[] calldata tokenIds,
+        // uint256[] calldata nonces,
+        // address[] calldata validators,
+        // bytes[] memory validateSignatures
+        whenNotPaused
+        nonReentrant
+        validFillingOrderAddresses(orderAddresses)
+    {
         require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
@@ -288,38 +292,33 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             salts
         );
 
-        {
-            uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
-            for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
-                require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
+        uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
+        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
+            require(debtOrder.issuance.agreementIds[i] == latInfo[i].tokenId, 'LoanKernel: Invalid LAT Token Id');
 
-                _issueDebtAgreements(
-                    tokenIds[i],
-                    orderAddresses[uint8(FillingAddressesIndex.CREDITOR)],
-                    orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
-                    debtOrder.issuance.debtors[i],
-                    termsContractParameters[i],
-                    debtOrder.principalTokenAddress,
-                    salts[i],
-                    debtOrder.expirationTimestampInSecs[i],
-                    _getAssetPurposeAndRiskScore(debtOrder.assetPurpose, debtOrder.riskScores[i]),
-                    nonces[i],
-                    validators[i],
-                    validateSignatures[i]
-                );
+            _issueDebtAgreements(
+                latInfo[i],
+                orderAddresses[uint8(FillingAddressesIndex.CREDITOR)],
+                orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
+                debtOrder.issuance.debtors[i],
+                termsContractParameters[i],
+                debtOrder.principalTokenAddress,
+                salts[i],
+                debtOrder.expirationTimestampInSecs[i],
+                _getAssetPurposeAndRiskScore(debtOrder.assetPurpose, debtOrder.riskScores[i])
+            );
 
-                require(
-                    ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]),
-                    'Cannot register term start'
-                );
+            require(
+                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(latInfo[i].tokenId),
+                'Cannot register term start'
+            );
 
-                emit LogDebtOrderFilled(
-                    debtOrder.issuance.agreementIds[i],
-                    debtOrder.principalAmounts[i],
-                    debtOrder.principalTokenAddress,
-                    debtOrder.relayer
-                );
-            }
+            emit LogDebtOrderFilled(
+                debtOrder.issuance.agreementIds[i],
+                debtOrder.principalAmounts[i],
+                debtOrder.principalTokenAddress,
+                debtOrder.relayer
+            );
         }
     }
 

@@ -92,6 +92,13 @@ abstract contract ILoanKernel {
         uint8 assetPurpose;
     }
 
+    struct LoanAssetInfo {
+        bytes32 tokenId;
+        uint256 nonce;
+        address validator;
+        bytes validateSignature;
+    }
+
     /*********** */
     // VARIABLES
     /*********** */
@@ -100,9 +107,5 @@ abstract contract ILoanKernel {
     mapping(bytes32 => bool) public debtOrderCompleted;
 
     /// @notice conclude a loan by stopping lending/loan terms or allowing the loan loss. It takes the creditor, agreement ID, and term contract as input
-    function concludeLoan(
-        address creditor,
-        bytes32 agreementId,
-        address termContract
-    ) public virtual;
+    function concludeLoan(address creditor, bytes32 agreementId, address termContract) public virtual;
 }
