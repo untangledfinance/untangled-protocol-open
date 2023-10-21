@@ -5,11 +5,12 @@ import '../../interfaces/ILoanRegistry.sol';
 import '../../interfaces/ILoanInterestTermsContract.sol';
 import './ILoanAssetToken.sol';
 import '../../libraries/ConfigHelper.sol';
+import './LATValidator.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
  */
-contract LoanAssetToken is ILoanAssetToken {
+contract LoanAssetToken is ILoanAssetToken, LATValidator {
     using ConfigHelper for Registry;
 
     /** CONSTRUCTOR */
@@ -62,6 +63,13 @@ contract LoanAssetToken is ILoanAssetToken {
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
         expectedRepaymentValue = principalAmount + interestAmount;
+    }
+
+    function safeMint(
+        address creditor,
+        LoanAssetInfo calldata latInfo
+    ) public virtual override onlyRole(MINTER_ROLE) requireValidator(latInfo) {
+        _safeMint(creditor, latInfo.tokenId);
     }
 
     uint256[50] private __gap;

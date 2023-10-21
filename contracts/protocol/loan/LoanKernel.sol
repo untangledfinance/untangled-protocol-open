@@ -121,11 +121,12 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint8[] memory assetPurposeAndRiskScore
     ) private {
         // Mint debt tokens and finalize debt agreement
-        registry.getLoanAssetToken().safeMint(creditor, uint256(latInfo.tokenId));
+        // registry.getLoanAssetToken().safeMint(creditor, latInfo.tokenId);
+        registry.getLoanAssetToken().safeMint(creditor, latInfo);
 
         require(
             registry.getLoanRegistry().insert(
-                latInfo.tokenId,
+                bytes32(latInfo.tokenId),
                 termContract,
                 debtor,
                 termsParam,
@@ -294,7 +295,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
         uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            require(debtOrder.issuance.agreementIds[i] == latInfo[i].tokenId, 'LoanKernel: Invalid LAT Token Id');
+            require(debtOrder.issuance.agreementIds[i] == bytes32(latInfo[i].tokenId), 'LoanKernel: Invalid LAT Token Id');
 
             _issueDebtAgreements(
                 latInfo[i],
@@ -309,7 +310,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             );
 
             require(
-                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(latInfo[i].tokenId),
+                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(bytes32(latInfo[i].tokenId)),
                 'Cannot register term start'
             );
 

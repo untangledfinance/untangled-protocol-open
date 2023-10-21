@@ -91,14 +91,7 @@ abstract contract ILoanKernel {
         uint8[] riskScores;
         uint8 assetPurpose;
     }
-
-    struct LoanAssetInfo {
-        bytes32 tokenId;
-        uint256 nonce;
-        address validator;
-        bytes validateSignature;
-    }
-
+    
     /*********** */
     // VARIABLES
     /*********** */
