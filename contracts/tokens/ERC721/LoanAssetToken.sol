@@ -7,6 +7,8 @@ import './ILoanAssetToken.sol';
 import '../../libraries/ConfigHelper.sol';
 import './LATValidator.sol';
 
+import '../../protocol/';
+
 /**
  * LoanAssetToken: The representative for ownership of a Loan
  */
@@ -23,6 +25,9 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         __UntangledERC721__init(name, symbol, baseTokenURI);
 
         registry = _registry;
+
+        _setupRole(VALIDATOR_ADMIN_ROLE, address(registry.getSecuritizationManager()));
+        _setRoleAdmin(VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE);
 
         _setupRole(MINTER_ROLE, address(registry.getLoanKernel()));
         _revokeRole(MINTER_ROLE, _msgSender());
@@ -68,7 +73,8 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
     function safeMint(
         address creditor,
         LoanAssetInfo calldata latInfo
-    ) public virtual override onlyRole(MINTER_ROLE) requireValidator(latInfo) {
+    ) public virtual override onlyRole(MINTER_ROLE) requireNonceValid(latInfo) requireValidator(latInfo) {
+        require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
         _safeMint(creditor, latInfo.tokenId);
     }
 

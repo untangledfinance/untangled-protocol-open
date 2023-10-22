@@ -8,3 +8,6 @@ struct LoanAssetInfo {
     address validator;
     bytes validateSignature;
 }
+
+bytes32 constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
+bytes32 constant VALIDATOR_ADMIN_ROLE = keccak256("VALIDATOR_ADMIN_ROLE");
