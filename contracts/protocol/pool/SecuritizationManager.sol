@@ -18,6 +18,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
 
     event UpdateAllowedUIDTypes(uint256[] uids);
 
+    bytes4 constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,uint32)'));
+
     uint256[] public allowedUIDTypes;
 
     struct NewRoundSaleParam {
@@ -85,7 +87,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,uint32)'),
+            POOL_INIT_FUNC_SELECTOR,
             registry,
             currency,
             minFirstLossCushion

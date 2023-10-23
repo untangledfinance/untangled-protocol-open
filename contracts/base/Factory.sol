@@ -19,9 +19,9 @@ abstract contract Factory is Initializable {
         factoryAdmin = _factoryAdmin;
     }
 
-    function getSelector(string memory _func) internal pure returns (bytes4) {
-        return bytes4(keccak256(bytes(_func)));
-    }
+    // function getSelector(string memory _func) internal pure returns (bytes4) {
+    //     return bytes4(keccak256(bytes(_func)));
+    // }
 
     function _deployInstance(address _poolImplAddress, bytes memory _data) internal returns (address) {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(_poolImplAddress, factoryAdmin, _data);

@@ -10,6 +10,8 @@ import '../../../libraries/UntangledMath.sol';
 contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
     using ConfigHelper for Registry;
 
+    bytes4 constant TOKEN_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(string,string,uint8,address,uint8)'));
+
     modifier onlySecuritizationManager() {
         require(
             _msgSender() == address(registry.getSecuritizationManager()),
@@ -53,7 +55,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         address noteTokenImplAddress = address(registry.getNoteToken());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(string,string,uint8,address,uint8)'),
+            TOKEN_INIT_FUNC_SELECTOR,
             name,
             symbol,
             _nDecimals,
