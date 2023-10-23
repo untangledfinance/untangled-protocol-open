@@ -10,6 +10,8 @@ import '../../../libraries/UntangledMath.sol';
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
 
+    bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
+
     enum SaleType {
         MINTED_INCREASING_INTEREST_SOT,
         NORMAL_SALE_JOT,
@@ -64,7 +66,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,address,address,bool)'),
+            TGE_INIT_FUNC_SELECTOR,
             registry,
             pool,
             token,
@@ -96,7 +98,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,address,address,bool)'),
+            TGE_INIT_FUNC_SELECTOR,
             registry,
             pool,
             token,
