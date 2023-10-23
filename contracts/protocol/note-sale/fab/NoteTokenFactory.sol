@@ -73,7 +73,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         return address(token);
     }
 
-    function pauseUnpauseToken(address tokenAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pauseUnpauseToken(address tokenAddress) external whenNotPaused onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTokens[tokenAddress], 'NoteTokenFactory: token does not exist');
         NoteToken token = NoteToken(tokenAddress);
         if (token.paused()) {

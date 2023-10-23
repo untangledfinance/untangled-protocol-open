@@ -9,6 +9,7 @@ import '../../interfaces/IRequiresUID.sol';
 import '../note-sale/fab/TokenGenerationEventFactory.sol';
 
 import {POOL_ADMIN} from './types.sol';
+import {VALIDATOR_ROLE} from '../../tokens/ERC721/types.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -318,6 +319,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     //         pools[i].unpause();
     //     }
     // }
+
+    function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
+        require(validator != address(0), 'SecuritizationManager: Invalid validator address');
+        IAccessControlUpgradeable(address(registry.getLoanAssetToken())).grantRole(VALIDATOR_ROLE, validator);
+    }
+
+    function unregisterValidator(address validator) public onlyRole(POOL_ADMIN) {
+        IAccessControlUpgradeable(address(registry.getLoanAssetToken())).revokeRole(VALIDATOR_ROLE, validator);
+    }
 
     uint256[49] private __gap;
 }

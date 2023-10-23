@@ -3,12 +3,43 @@ const { deployments } = require('hardhat');
 
 const { parseEther } = ethers.utils;
 
+
+const setUpLoanAssetToken = async (registry, securitizationManager) => {
+  const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
+  const loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
+    initializer: 'initialize(address,string,string,string)',
+  });
+
+  const [, defaultLoanAssetTokenValidator] = await ethers.getSigners();
+  // await securitizationManager.registerValidator(defaultLoanAssetTokenValidator.address);
+
+  return {
+    loanAssetTokenContract,
+    defaultLoanAssetTokenValidator
+  };
+}
+
+const setUpAcceptedInvoiceToken = async (registry) => {
+  const AcceptedInvoiceToken = await ethers.getContractFactory('AcceptedInvoiceToken');
+  const acceptedInvoiceToken = await upgrades.deployProxy(
+    AcceptedInvoiceToken,
+    [registry.address, 'TEST', 'TST', 'test.com'],
+    {
+      initializer: 'initialize(address,string,string,string)',
+    }
+  );
+
+  return { acceptedInvoiceToken };
+}
+
 async function setup() {
   await deployments.fixture(['all']);
 
   let stableCoin;
   let registry;
-  let loanAssetTokenContract;
+
+  let defaultLoanAssetTokenValidator;
+
   let loanInterestTermsContract;
   let loanRegistry;
   let loanKernel;
@@ -22,7 +53,6 @@ async function setup() {
   let distributionAssessor;
   let distributionOperator;
   let distributionTranche;
-  let acceptedInvoiceToken;
   let factoryAdmin;
 
   const [untangledAdminSigner] = await ethers.getSigners();
@@ -57,6 +87,7 @@ async function setup() {
 
   const Go = await ethers.getContractFactory('Go');
   go = await upgrades.deployProxy(Go, [untangledAdminSigner.address, uniqueIdentity.address]);
+  await registry.setGo(go.address);
 
   const LoanInterestTermsContract = await ethers.getContractFactory('LoanInterestTermsContract');
   loanInterestTermsContract = await upgrades.deployProxy(LoanInterestTermsContract, [registry.address]);
@@ -82,21 +113,11 @@ async function setup() {
   await registry.setDistributionOperator(distributionOperator.address);
   await registry.setDistributionTranche(distributionTranche.address);
 
-  const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
-  loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
-    initializer: 'initialize(address,string,string,string)',
-  });
 
-  const AcceptedInvoiceToken = await ethers.getContractFactory('AcceptedInvoiceToken');
-  acceptedInvoiceToken = await upgrades.deployProxy(
-    AcceptedInvoiceToken,
-    [registry.address, 'TEST', 'TST', 'test.com'],
-    {
-      initializer: 'initialize(address,string,string,string)',
-    }
-  );
-
+  const { loanAssetTokenContract } = await setUpLoanAssetToken(registry, securitizationManager);
   await registry.setLoanAssetToken(loanAssetTokenContract.address);
+
+  const { acceptedInvoiceToken } = await setUpAcceptedInvoiceToken(registry);
   await registry.setAcceptedInvoiceToken(acceptedInvoiceToken.address);
 
   const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
@@ -113,16 +134,15 @@ async function setup() {
   await registry.setMintedIncreasingInterestTGE(mintedIncreasingInterestTGEImpl.address);
   await registry.setMintedNormalTGE(mintedNormalTGEImpl.address);
   await registry.setNoteToken(noteTokenImpl.address);
-
   await registry.setNoteTokenFactory(noteTokenFactory.address);
   await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
-
-  await registry.setGo(go.address);
 
   return {
     stableCoin,
     registry,
     loanAssetTokenContract,
+    defaultLoanAssetTokenValidator,
+
     acceptedInvoiceToken,
     loanInterestTermsContract,
     loanRegistry,
