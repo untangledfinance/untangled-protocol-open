@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import '../../base/UntangledBase.sol';
 import './crowdsale/IncreasingInterestCrowdsale.sol';
-import '../../interfaces/IMintedTGE.sol';
+import './IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
 
 /// @title MintedIncreasingInterestTGE

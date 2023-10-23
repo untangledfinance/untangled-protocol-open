@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../storage/Registry.sol';
+import {Registry} from '../../storage/Registry.sol';
 
 interface IMintedTGE {
     event YieldUpdated(uint256 newYield);

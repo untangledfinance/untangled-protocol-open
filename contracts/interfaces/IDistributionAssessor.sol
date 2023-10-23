@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../protocol/pool/IDistributionAssessor.sol';
+import {IDistributionAssessor} from '../protocol/pool/IDistributionAssessor.sol';

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import '../../interfaces/ILoanInterestTermsContract.sol';
-import '../pool/ISecuritizationPool.sol';
-import '../../interfaces/ILoanRegistry.sol';
-import '../../interfaces/ILoanRepaymentRouter.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
+import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
+import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
+import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
+
+import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
+import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 
 /// @title LoanRepaymentRouter
@@ -62,7 +64,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
             if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
             uint256 repayAmount = _amount - remains;
             require(
-                IERC20(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
+                IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
                 'Unsuccessfully transferred repayment amount to Creditor.'
             );
             poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);

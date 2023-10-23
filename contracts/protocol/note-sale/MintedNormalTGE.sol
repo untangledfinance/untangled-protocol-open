@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import './base/LongSaleInterest.sol';
-import '../../libraries/ConfigHelper.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Crowdsale} from './crowdsale/Crowdsale.sol';
 import {FinalizableCrowdsale} from './crowdsale/FinalizableCrowdsale.sol';
-import '../../interfaces/IMintedTGE.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
+import {IMintedTGE} from './IMintedTGE.sol';
+import {LongSaleInterest} from './base/LongSaleInterest.sol';
 
 /// @title MintedNormalTGE
 /// @author Untangled Team
@@ -78,7 +79,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused override {
+    ) external override whenNotPaused {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'MintedNormalTGE: Caller must be owner or pool'

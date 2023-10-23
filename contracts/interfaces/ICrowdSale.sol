@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../protocol/note-sale/crowdsale/ICrowdSale.sol';
+import {ICrowdSale} from '../protocol/note-sale/crowdsale/ICrowdSale.sol';
