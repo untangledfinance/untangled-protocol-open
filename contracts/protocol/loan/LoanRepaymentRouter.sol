@@ -3,10 +3,10 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../interfaces/ILoanInterestTermsContract.sol';
-import '../../interfaces/ISecuritizationPool.sol';
+import '../pool/ISecuritizationPool.sol';
 import '../../interfaces/ILoanRegistry.sol';
 import '../../interfaces/ILoanRepaymentRouter.sol';
-import '../../libraries/ConfigHelper.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
@@ -21,10 +21,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
     /// @dev performs various checks to validate the repayment request, including ensuring that the token address is not null,
     /// the amount is greater than zero, and the debt agreement exists
-    function _assertRepaymentRequest(
-        bytes32 _agreementId,
-        address _tokenAddress
-    ) private returns (bool) {
+    function _assertRepaymentRequest(bytes32 _agreementId, address _tokenAddress) private returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
 
         // Ensure agreement exists.

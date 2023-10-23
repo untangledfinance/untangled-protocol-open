@@ -4,11 +4,13 @@ pragma solidity 0.8.19;
 import '../../interfaces/IUntangledERC721.sol';
 import '../../interfaces/INoteToken.sol';
 import '../note-sale/MintedIncreasingInterestTGE.sol';
-import '../../libraries/ConfigHelper.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
+
+import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 
 import './types.sol';
 
@@ -174,6 +176,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     /// @inheritdoc ISecuritizationPool
     function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage onlyPoolAdminOrOwner {
         require(!hasRole(OWNER_ROLE, _pot));
+
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
         if (_pot == address(this)) {

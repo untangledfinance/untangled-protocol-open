@@ -6,7 +6,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
 import '../../../interfaces/ISecuritizationPool.sol';
 import '../../../interfaces/IUntangledERC721.sol';
-import '../../../libraries/ConfigHelper.sol';
+import { ConfigHelper } from '../../../libraries/ConfigHelper.sol';
 
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility

@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import '../storage/Registry.sol';
 import './Configuration.sol';
 
-import '../interfaces/ISecuritizationManager.sol';
-import '../interfaces/ISecuritizationPool.sol';
+import '../protocol/pool/ISecuritizationManager.sol';
+import '../protocol/pool/ISecuritizationPool.sol';
 import '../interfaces/INoteTokenFactory.sol';
 import '../interfaces/ITokenGenerationEventFactory.sol';
 import '../interfaces/IUntangledERC721.sol';
@@ -15,11 +15,12 @@ import '../interfaces/ILoanRegistry.sol';
 import '../interfaces/ILoanInterestTermsContract.sol';
 import '../interfaces/ILoanRepaymentRouter.sol';
 import '../interfaces/ILoanKernel.sol';
-import '../interfaces/IDistributionAssessor.sol';
+import {IDistributionAssessor} from '../interfaces/IDistributionAssessor.sol';
 import '../interfaces/ISecuritizationPoolValueService.sol';
-import '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
-import '../protocol/note-sale/MintedNormalTGE.sol';
-import '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
+
+import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
+import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
+import {AcceptedInvoiceToken} from '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import '../interfaces/IGo.sol';
 
 /**
@@ -89,11 +90,9 @@ library ConfigHelper {
         return IDistributionTranche(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE));
     }
 
-    function getSecuritizationPoolValueService(Registry registry)
-        internal
-        view
-        returns (ISecuritizationPoolValueService)
-    {
+    function getSecuritizationPoolValueService(
+        Registry registry
+    ) internal view returns (ISecuritizationPoolValueService) {
         return
             ISecuritizationPoolValueService(
                 getAddress(registry, Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE)

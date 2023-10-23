@@ -25,4 +25,6 @@ interface IMintedTGE {
 
     ///@notice investor bids for SOT/JOT token. Paid by pool's currency
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) external returns (uint256);
+
+    function startNewRoundSale(uint256 openingTime_, uint256 closingTime_, uint256 rate_, uint256 cap_) external;
 }

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IPauseable} from '../../../base/IPauseable.sol';
 import '../../../base/UntangledBase.sol';
 import '../../../base/Factory.sol';
 import '../../../interfaces/INoteTokenFactory.sol';
 import '../../../libraries/ConfigHelper.sol';
 import '../../../libraries/UntangledMath.sol';
+import {MINTER_ROLE} from '../../../tokens/ERC20/types.sol';
 
 contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
     using ConfigHelper for Registry;
@@ -30,8 +32,8 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
     }
 
     function changeMinterRole(address tokenAddress, address newController) external override onlySecuritizationManager {
-        NoteToken token = NoteToken(tokenAddress);
-        token.grantRole(token.MINTER_ROLE(), newController);
+        IAccessControlUpgradeable token = IAccessControlUpgradeable(tokenAddress);
+        token.grantRole(MINTER_ROLE, newController);
     }
 
     function createToken(
@@ -63,7 +65,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
 
         address ntAddress = _deployInstance(noteTokenImplAddress, _initialData);
 
-        NoteToken token = NoteToken(ntAddress);
+        INoteToken token = INoteToken(ntAddress);
 
         tokens.push(token);
         isExistingTokens[address(token)] = true;
@@ -75,7 +77,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
 
     function pauseUnpauseToken(address tokenAddress) external whenNotPaused nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTokens[tokenAddress], 'NoteTokenFactory: token does not exist');
-        NoteToken token = NoteToken(tokenAddress);
+        IPauseable token = IPauseable(tokenAddress);
         if (token.paused()) {
             token.unpause();
         } else {

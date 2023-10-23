@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../storage/Registry.sol';
+import '../../storage/Registry.sol';
 import './ISecuritizationPool.sol';
 
 abstract contract ISecuritizationManager {
     Registry public registry;
+
+    event NewTGECreated(address instanceAddress);
+    event NewNotesTokenCreated(address instanceAddress);
+    event NewPoolCreated(address instanceAddress);
 
     mapping(address => bool) public isExistingPools;
     ISecuritizationPool[] public pools;

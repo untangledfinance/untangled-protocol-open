@@ -77,7 +77,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused {
+    ) external whenNotPaused override {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'MintedIncreasingInterestTGE: Caller must be owner or pool'

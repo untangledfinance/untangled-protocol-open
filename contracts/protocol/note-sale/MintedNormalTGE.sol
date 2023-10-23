@@ -2,9 +2,11 @@
 pragma solidity 0.8.19;
 
 import './base/LongSaleInterest.sol';
-import "../../libraries/ConfigHelper.sol";
-import './crowdsale/FinalizableCrowdsale.sol';
+import '../../libraries/ConfigHelper.sol';
+import {Crowdsale} from './crowdsale/Crowdsale.sol';
+import {FinalizableCrowdsale} from './crowdsale/FinalizableCrowdsale.sol';
 import '../../interfaces/IMintedTGE.sol';
+import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 
 /// @title MintedNormalTGE
 /// @author Untangled Team
@@ -60,9 +62,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     }
 
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getJOTTokenPrice(
-            ISecuritizationPool(pool)
-        );
+        return registry.getDistributionAssessor().getJOTTokenPrice(ISecuritizationPool(pool));
     }
 
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
@@ -78,8 +78,11 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused {
-        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
+    ) external whenNotPaused override {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'MintedNormalTGE: Caller must be owner or pool'
+        );
         _preValidateNewSaleRound();
 
         // call inner function for each extension
@@ -90,11 +93,12 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
 
     /// @notice Setup initial amount currency raised for JOT condition
     /// @param _initialAmount Expected minimum amount of JOT before SOT start
-    function setInitialAmount(
-        uint256 _initialAmount
-    ) external whenNotPaused {
-        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedNormalTGE: Caller must be owner or pool");
-        require(initialAmount < totalCap, "MintedNormalTGE: Initial JOT amount must be less than total cap");
+    function setInitialAmount(uint256 _initialAmount) external whenNotPaused {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'MintedNormalTGE: Caller must be owner or pool'
+        );
+        require(initialAmount < totalCap, 'MintedNormalTGE: Initial JOT amount must be less than total cap');
         initialAmount = _initialAmount;
         emit UpdateInitialAmount(_initialAmount);
     }
@@ -110,7 +114,11 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         pickedInterest = uint32(interestRate);
     }
 
-    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256) {
+    function buyTokens(
+        address payee,
+        address beneficiary,
+        uint256 currencyAmount
+    ) public override(IMintedTGE, Crowdsale) returns (uint256) {
         return Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
     }
 
