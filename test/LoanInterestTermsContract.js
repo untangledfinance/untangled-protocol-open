@@ -9,6 +9,7 @@ const {
   debtorsFromOrderAddresses,
   genLoanAgreementIds,
   unlimitedAllowance,
+  generateLATMintPayload,
 } = require('./utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
@@ -232,12 +233,15 @@ describe('LoanInterestTermsContract', () => {
       );
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        tokenIds.map((x) => ({
-          tokenId: x,
-          nonce: 0,
-          validator: constants.AddressZero,
-          validateSignature: Buffer.from([])
-        }))
+        await Promise.all(tokenIds.map(async (x) => ({
+          ...generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
       );
 
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);

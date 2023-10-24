@@ -6,11 +6,14 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerU
 import './IERC5008.sol';
 import './types.sol';
 
+import {ECDSAUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
+
 contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
+    using ECDSAUpgradeable for bytes32;
 
     bytes32 internal constant LAT_TYPEHASH =
-        keccak256('LoanAssetInfo(uint256 tokenId,uint256 nonce,address validator)');
+        keccak256('LoanAssetToken(uint256 tokenId,uint256 nonce,address validator)');
 
     mapping(uint256 => uint256) internal _nonces;
 
@@ -20,17 +23,15 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     }
 
     modifier requireNonceValid(LoanAssetInfo calldata info) {
+        require(_nonces[info.tokenId] == info.nonce, 'LATValidator: invalid nonce');
+
+        unchecked {
+            _nonces[info.tokenId] = _nonces[info.tokenId] + 1;
+        }
+
+        emit NonceChanged(info.tokenId, _nonces[info.tokenId]);
+
         _;
-
-        // require(_nonces[info.tokenId] == info.nonce, 'LATValidator: invalid nonce');
-        
-        // unchecked {
-        //     _nonces[info.tokenId] = _nonces[info.tokenId] + 1;
-        // }
-
-        // emit NonceChanged(info.tokenId, _nonces[info.tokenId]);
-
-        // _;
     }
 
     function __LATValidator_init() internal onlyInitializing {
@@ -45,13 +46,15 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     }
 
     function _checkValidator(LoanAssetInfo calldata latInfo) internal view returns (bool) {
-        return true;
-        // // EIP check
-        // bytes32 digest = _hashTypedDataV4(
-        //     keccak256(abi.encode(LAT_TYPEHASH, latInfo.tokenId, latInfo.nonce, latInfo.validator))
-        // );
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(abi.encode(LAT_TYPEHASH, latInfo.tokenId, latInfo.nonce, latInfo.validator))
+        );
 
-        // return latInfo.validator.isValidSignatureNow(digest, latInfo.validateSignature);
+        return latInfo.validator.isValidSignatureNow(digest, latInfo.validateSignature);
+    }
+
+    function domainSeparatorV4() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 
     uint256[50] private __gap;

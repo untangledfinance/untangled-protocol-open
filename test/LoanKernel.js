@@ -16,6 +16,7 @@ const {
   packTermsContractParameters,
   interestRateFixedPoint,
   genSalt,
+  generateLATMintPayload
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -28,6 +29,7 @@ describe('LoanKernel', () => {
   let registry;
   let loanAssetTokenContract;
   let loanInterestTermsContract;
+  let defaultLoanAssetTokenValidator;
   let loanRegistry;
   let loanKernel;
   let loanRepaymentRouter;
@@ -47,6 +49,7 @@ describe('LoanKernel', () => {
       stableCoin,
       registry,
       loanAssetTokenContract,
+      defaultLoanAssetTokenValidator,
       loanInterestTermsContract,
       loanRegistry,
       loanKernel,
@@ -200,14 +203,18 @@ describe('LoanKernel', () => {
       const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
       const tokenIds = ['0x944b447816387dc1f14b1a81dc4d95a77f588c214732772d921e146acd456b2b'];
+
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-          tokenIds.map(x => ({
-            tokenId: x,
-            nonce: 0,
-            validator: constants.AddressZero,
-            validateSignature: Buffer.from([])
-          }))
+          await Promise.all(tokenIds.map(async (x) => ({
+            ...generateLATMintPayload(
+              loanAssetTokenContract,
+              defaultLoanAssetTokenValidator,
+              x,
+              await loanAssetTokenContract.nonce(x),
+              defaultLoanAssetTokenValidator.address
+            )
+          })))
         )
       ).to.be.revertedWith(`LoanKernel: Invalid LAT Token Id`);
     });
@@ -259,12 +266,15 @@ describe('LoanKernel', () => {
       );
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        tokenIds.map(x => ({
-          tokenId: x,
-          nonce: 0,
-          validator: constants.AddressZero,
-          validateSignature: Buffer.from([])
-        }))
+        await Promise.all(tokenIds.map(async (x) => ({
+          ...generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
       );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
@@ -275,12 +285,15 @@ describe('LoanKernel', () => {
 
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-          tokenIds.map(x => ({
-            tokenId: x,
-            nonce: 0,
-            validator: constants.AddressZero,
-            validateSignature: Buffer.from([])
-          }))
+          await Promise.all(tokenIds.map(async (x) => ({
+            ...generateLATMintPayload(
+              loanAssetTokenContract,
+              defaultLoanAssetTokenValidator,
+              x,
+              await loanAssetTokenContract.nonce(x),
+              defaultLoanAssetTokenValidator.address
+            )
+          })))
         )
       ).to.be.revertedWith(`ERC721: token already minted`);
     });

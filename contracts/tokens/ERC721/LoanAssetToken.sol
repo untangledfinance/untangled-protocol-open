@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../interfaces/ILoanRegistry.sol';
-import '../../interfaces/ILoanInterestTermsContract.sol';
-import './ILoanAssetToken.sol';
-import '../../libraries/ConfigHelper.sol';
-import './LATValidator.sol';
+import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
+import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
+import {ILoanAssetToken} from './ILoanAssetToken.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {LATValidator} from './LATValidator.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
@@ -21,6 +24,7 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         string memory baseTokenURI
     ) public initializer {
         __UntangledERC721__init(name, symbol, baseTokenURI);
+        __LATValidator_init();
 
         registry = _registry;
 

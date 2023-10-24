@@ -14,6 +14,7 @@ const {
   packTermsContractParameters,
   interestRateFixedPoint,
   genSalt,
+  generateLATMintPayload,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -29,9 +30,8 @@ describe('LoanAssetToken', () => {
   let loanRepaymentRouter;
   let securitizationManager;
   let securitizationPoolContract;
-  let securitizationPoolValueService;
-  let securitizationPoolImpl;
   let tokenIds;
+  let defaultLoanAssetTokenValidator;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
@@ -50,6 +50,7 @@ describe('LoanAssetToken', () => {
       securitizationManager,
       securitizationPoolValueService,
       securitizationPoolImpl,
+      defaultLoanAssetTokenValidator,
     } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
@@ -64,6 +65,7 @@ describe('LoanAssetToken', () => {
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -170,11 +172,23 @@ describe('LoanAssetToken', () => {
       );
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        tokenIds.map((x) => ({
-          tokenId: x,
-          nonce: 0,
-          validator: constants.AddressZero,
-          validateSignature: Buffer.from([])
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = await loanAssetTokenContract.nonce(tokenId);
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              defaultLoanAssetTokenValidator,
+              tokenId,
+              nonce,
+              defaultLoanAssetTokenValidator.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
         }))
       )
 

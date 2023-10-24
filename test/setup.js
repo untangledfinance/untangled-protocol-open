@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
+const { OWNER_ROLE, POOL_ADMIN_ROLE, VALIDATOR_ADMIN_ROLE } = require('./constants');
 
 const { parseEther } = ethers.utils;
 
@@ -9,9 +10,14 @@ const setUpLoanAssetToken = async (registry, securitizationManager) => {
   const loanAssetTokenContract = await upgrades.deployProxy(LoanAssetToken, [registry.address, 'TEST', 'TST', 'test.com'], {
     initializer: 'initialize(address,string,string,string)',
   });
+  await registry.setLoanAssetToken(loanAssetTokenContract.address);
 
-  const [, defaultLoanAssetTokenValidator] = await ethers.getSigners();
-  // await securitizationManager.registerValidator(defaultLoanAssetTokenValidator.address);
+  const [poolAdmin, defaultLoanAssetTokenValidator] = await ethers.getSigners();
+
+  await loanAssetTokenContract.grantRole(VALIDATOR_ADMIN_ROLE, securitizationManager.address);
+  await securitizationManager.grantRole(OWNER_ROLE, poolAdmin.address);
+
+  await securitizationManager.connect(poolAdmin).registerValidator(defaultLoanAssetTokenValidator.address);
 
   return {
     loanAssetTokenContract,
@@ -37,8 +43,6 @@ async function setup() {
 
   let stableCoin;
   let registry;
-
-  let defaultLoanAssetTokenValidator;
 
   let loanInterestTermsContract;
   let loanRegistry;
@@ -69,6 +73,8 @@ async function setup() {
 
   const SecuritizationManager = await ethers.getContractFactory('SecuritizationManager');
   securitizationManager = await upgrades.deployProxy(SecuritizationManager, [registry.address, factoryAdmin.address]);
+  await securitizationManager.grantRole(POOL_ADMIN_ROLE, untangledAdminSigner.address);
+
   const SecuritizationPoolValueService = await ethers.getContractFactory('SecuritizationPoolValueService');
   securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
@@ -114,8 +120,7 @@ async function setup() {
   await registry.setDistributionTranche(distributionTranche.address);
 
 
-  const { loanAssetTokenContract } = await setUpLoanAssetToken(registry, securitizationManager);
-  await registry.setLoanAssetToken(loanAssetTokenContract.address);
+  const { loanAssetTokenContract, defaultLoanAssetTokenValidator } = await setUpLoanAssetToken(registry, securitizationManager);
 
   const { acceptedInvoiceToken } = await setUpAcceptedInvoiceToken(registry);
   await registry.setAcceptedInvoiceToken(acceptedInvoiceToken.address);
