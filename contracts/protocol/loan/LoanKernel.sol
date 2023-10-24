@@ -5,6 +5,7 @@ import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
+import '../../tokens/ERC721/types.sol';
 
 /// @title LoanKernel
 /// @author Untangled Team

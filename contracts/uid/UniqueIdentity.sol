@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
-import '../external/ERC1155PresetPauserUpgradeable.sol';
-import '../interfaces/IUniqueIdentity.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {ECDSAUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
+import {ERC1155PresetPauserUpgradeable} from '../external/ERC1155PresetPauserUpgradeable.sol';
+import {IUniqueIdentity} from './IUniqueIdentity.sol';
 
 /**
  * @title UniqueIdentity
@@ -178,10 +178,13 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     // unlock
     function unlockWrongToken(address token) public onlyAdmin {
         if (token == address(0)) {
-            (bool success, ) = payable(_msgSender()).call { value: IERC20(token).balanceOf(address(this)) } ("");
-            require(success, "Transfer failed.");
+            (bool success, ) = payable(_msgSender()).call{value: IERC20Upgradeable(token).balanceOf(address(this))}('');
+            require(success, 'Transfer failed.');
         } else {
-            require(IERC20(token).transfer(_msgSender(), IERC20(token).balanceOf(address(this))), "Transfer failed.");
+            require(
+                IERC20Upgradeable(token).transfer(_msgSender(), IERC20Upgradeable(token).balanceOf(address(this))),
+                'Transfer failed.'
+            );
         }
     }
 

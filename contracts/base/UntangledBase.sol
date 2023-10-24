@@ -23,15 +23,23 @@ abstract contract UntangledBase is
 {
     bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
+    function isAdmin() public view returns (bool) {
+        return hasRole(OWNER_ROLE, _msgSender());
+    }
+
+    modifier onlyAdmin() {
+        require(isAdmin(), 'UntangledBase: Must have admin role to perform this action');
+        _;
+    }
+
     function __UntangledBase__init(address owner) internal onlyInitializing {
+        __Pausable_init_unchained();
+        __ReentrancyGuard_init_unchained();
+        __AccessControlEnumerable_init_unchained();
         __UntangledBase__init_unchained(owner);
     }
 
     function __UntangledBase__init_unchained(address owner) internal onlyInitializing {
-        __Pausable_init_unchained();
-        __ReentrancyGuard_init_unchained();
-        __AccessControlEnumerable_init_unchained();
-
         if (owner == address(0)) owner = _msgSender();
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -40,16 +48,16 @@ abstract contract UntangledBase is
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
     }
 
-    function setRoleAdmin(bytes32 role, bytes32 adminRole) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setRoleAdmin(role, adminRole);
-    }
-
     function pause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
     function unpause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
+    }
+
+    function setRoleAdmin(bytes32 role, bytes32 adminRole) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setRoleAdmin(role, adminRole);
     }
 
     uint256[50] private __gap;

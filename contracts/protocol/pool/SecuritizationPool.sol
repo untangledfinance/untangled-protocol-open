@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../interfaces/IUntangledERC721.sol';
-import '../../interfaces/INoteToken.sol';
-import '../note-sale/MintedIncreasingInterestTGE.sol';
-import '../../libraries/ConfigHelper.sol';
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
-import '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
+import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
+import {IERC721ReceiverUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
+import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 
-import './types.sol';
+import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
+import {INoteToken} from '../../interfaces/INoteToken.sol';
+import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
+
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
+
+import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
+import {POOL_ADMIN} from './types.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -20,6 +29,10 @@ import './types.sol';
  */
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /** CONSTRUCTOR */
     function initialize(
@@ -39,7 +52,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         minFirstLossCushion = _minFirstLossCushion;
 
         pot = address(this);
-        require(IERC20(_currency).approve(pot, type(uint256).max), 'SecuritizationPool: Currency approval failed');
+        require(
+            IERC20Upgradeable(_currency).approve(pot, type(uint256).max),
+            'SecuritizationPool: Currency approval failed'
+        );
         registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
     }
 
@@ -122,10 +138,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     function hasFinishedRedemption() public view override returns (bool) {
         if (sotToken != address(0)) {
-            require(IERC20(sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
+            require(IERC20Upgradeable(sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
         }
         if (jotToken != address(0)) {
-            require(IERC20(jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
+            require(IERC20Upgradeable(jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
         }
 
         return true;
@@ -174,10 +190,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     /// @inheritdoc ISecuritizationPool
     function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage onlyPoolAdminOrOwner {
         require(!hasRole(OWNER_ROLE, _pot));
+
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
         if (_pot == address(this)) {
-            require(IERC20(underlyingCurrency).approve(pot, type(uint256).max), 'SecuritizationPool: Pot not approved');
+            require(
+                IERC20Upgradeable(underlyingCurrency).approve(pot, type(uint256).max),
+                'SecuritizationPool: Pot not approved'
+            );
         }
         registry.getSecuritizationManager().registerPot(pot);
     }
@@ -298,7 +318,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
-            IERC20(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
+            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
             'SecuritizationPool: Transfer failed'
         );
         emit Withdraw(_msgSender(), amount);
@@ -335,7 +355,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
-                IERC20(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
+                IERC20Upgradeable(tokenAddresses[i]).transferFrom(senders[i], address(this), amounts[i]),
                 'SecuritizationPool: Transfer failed'
             );
         }
@@ -360,7 +380,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             require(
-                IERC20(tokenAddresses[i]).transfer(recipients[i], amounts[i]),
+                IERC20Upgradeable(tokenAddresses[i]).transfer(recipients[i], amounts[i]),
                 'SecuritizationPool: Transfer failed'
             );
         }
@@ -371,7 +391,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function claimCashRemain(
         address recipientWallet
     ) external override whenNotPaused onlyRole(OWNER_ROLE) finishRedemptionValidator {
-        IERC20 currency = IERC20(underlyingCurrency);
+        IERC20Upgradeable currency = IERC20Upgradeable(underlyingCurrency);
         require(
             currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)),
             'SecuritizationPool: Transfer failed'
@@ -519,12 +539,12 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         reserve = reserve - currencyAmount;
 
         if (tokenAmount > 0) {
-            ERC20Burnable(notesToken).burn(tokenAmount);
+            ERC20BurnableUpgradeable(notesToken).burn(tokenAmount);
         }
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
-            IERC20(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
+            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
 

@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../../base/UntangledBase.sol';
-import '../../../interfaces/ITokenGenerationEventFactory.sol';
-import '../../../libraries/ConfigHelper.sol';
-import '../../../base/Factory.sol';
-import '../../../libraries/UntangledMath.sol';
+import {UntangledBase} from '../../../base/UntangledBase.sol';
+import {ITokenGenerationEventFactory} from './ITokenGenerationEventFactory.sol';
+import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
+import {Factory} from '../../../base/Factory.sol';
+import {Registry} from '../../../storage/Registry.sol';
+import {UntangledMath} from '../../../libraries/UntangledMath.sol';
+import {MintedIncreasingInterestTGE} from '../MintedIncreasingInterestTGE.sol';
+import {MintedNormalTGE} from '../MintedNormalTGE.sol';
 
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
+
+    bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
 
     enum SaleType {
         MINTED_INCREASING_INTEREST_SOT,
@@ -64,7 +69,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,address,address,bool)'),
+            TGE_INIT_FUNC_SELECTOR,
             registry,
             pool,
             token,
@@ -96,7 +101,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,address,address,bool)'),
+            TGE_INIT_FUNC_SELECTOR,
             registry,
             pool,
             token,

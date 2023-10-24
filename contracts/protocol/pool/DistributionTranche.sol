@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import './base/SecuritizationPoolServiceBase.sol';
-
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
+import './IDistributionTranche.sol';
 
 /// @title DistributionTranche
 /// @author Untangled Team

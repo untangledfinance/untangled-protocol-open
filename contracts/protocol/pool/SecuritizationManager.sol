@@ -1,15 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../note-sale/MintedIncreasingInterestTGE.sol';
-import '../../base/UntangledBase.sol';
-import '../../base/Factory.sol';
-import '../../libraries/ConfigHelper.sol';
-import '../../interfaces/IRequiresUID.sol';
-import '../note-sale/fab/TokenGenerationEventFactory.sol';
+import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 
+import {UntangledBase} from '../../base/UntangledBase.sol';
+
+import {IRequiresUID} from '../../interfaces/IRequiresUID.sol';
+import {INoteToken} from '../../interfaces/INoteToken.sol';
+
+import {Factory} from '../../base/Factory.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {INoteTokenFactory} from '../note-sale/fab/INoteTokenFactory.sol';
+import {ISecuritizationManager} from './ISecuritizationManager.sol';
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
 import {POOL_ADMIN} from './types.sol';
 import {VALIDATOR_ROLE} from '../../tokens/ERC721/types.sol';
+import {MintedNormalTGE} from '../note-sale/MintedNormalTGE.sol';
+import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
+import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -18,6 +29,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     using ConfigHelper for Registry;
 
     event UpdateAllowedUIDTypes(uint256[] uids);
+
+    bytes4 constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,uint32)'));
 
     uint256[] public allowedUIDTypes;
 
@@ -82,7 +95,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
-            getSelector('initialize(address,address,uint32)'),
+            POOL_INIT_FUNC_SELECTOR,
             registry,
             currency,
             minFirstLossCushion
@@ -263,7 +276,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         require(isExistingTGEs[tgeAddress], 'SMP: Note sale does not exist');
         require(hasAllowedUID(_msgSender()), 'Unauthorized. Must have correct UID');
 
-        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
+        ICrowdSale tge = ICrowdSale(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
 
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
@@ -271,7 +284,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
                 address sotTGEAddress = ISecuritizationPool(tge.pool()).tgeAddress();
                 if (sotTGEAddress != address(0)) {
-                    Crowdsale(sotTGEAddress).setHasStarted(true);
+                    ICrowdSale(sotTGEAddress).setHasStarted(true);
                 }
             }
         }

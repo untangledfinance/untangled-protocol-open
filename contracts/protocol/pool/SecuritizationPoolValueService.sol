@@ -1,15 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import '../../interfaces/INoteToken.sol';
-import '../../interfaces/ISecuritizationPool.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
+import {IERC20MetadataUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20MetadataUpgradeable.sol';
 
-import './base/NAVCalculation.sol';
-import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/ICrowdSale.sol';
-import '../../interfaces/IDistributionAssessor.sol';
-import '../../interfaces/ILoanRegistry.sol';
+import {INoteToken} from '../../interfaces/INoteToken.sol';
+import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
+import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
+import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
+
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
+import {IDistributionAssessor} from './IDistributionAssessor.sol';
+
+import {NAVCalculation} from './base/NAVCalculation.sol';
+import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
@@ -387,7 +396,7 @@ contract SecuritizationPoolValueService is
             result += (crowdsale.currencyRaisedByInvestor(investor) -
                 securitizationPool.paidPrincipalAmountSOTByInvestor(investor));
         }
-        
+
         return result;
     }
 
@@ -420,7 +429,9 @@ contract SecuritizationPoolValueService is
         require(sotToken != address(0), 'Invalid sot address');
         uint256 tokenSupply = INoteToken(sotToken).totalSupply();
         uint256 tokenDecimals = INoteToken(sotToken).decimals();
-        return tokenSupply * 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
+        return
+            tokenSupply *
+            10 ** (IERC20MetadataUpgradeable(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
     }
 
     // @notice this function will return 72 in example
@@ -474,7 +485,7 @@ contract SecuritizationPoolValueService is
         uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(securitizationPool);
         address currencyAddress = securitizationPool.underlyingCurrency();
         // currency balance of pool Address
-        uint256 reserve = IERC20(currencyAddress).balanceOf(poolAddress);
+        uint256 reserve = IERC20Upgradeable(currencyAddress).balanceOf(poolAddress);
         uint256 SOTPrincipal = securitizationPool.principalAmountSOT();
         // uint256 JOTPrincipal;
         // uint256 SOTTokenRedeem;

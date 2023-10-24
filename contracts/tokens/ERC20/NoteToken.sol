@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC20/presets/ERC20PresetMinterPauserUpgradeable.sol';
-import '../../interfaces/INoteToken.sol';
+import './INoteToken.sol';
 
 /// @title NoteToken
 /// @author Untangled Team
@@ -45,5 +45,17 @@ contract NoteToken is INoteToken, ERC20PresetMinterPauserUpgradeable {
 
     function mint(address receiver, uint256 amount) public override(INoteToken, ERC20PresetMinterPauserUpgradeable) {
         return ERC20PresetMinterPauserUpgradeable.mint(receiver, amount);
+    }
+
+    function pause() public virtual override(ERC20PresetMinterPauserUpgradeable, IPauseable) {
+        super.pause();
+    }
+
+    function paused() public view virtual override(IPauseable, PausableUpgradeable) returns (bool) {
+        return super.paused();
+    }
+
+    function unpause() public virtual override(ERC20PresetMinterPauserUpgradeable, IPauseable) {
+        super.unpause();
     }
 }

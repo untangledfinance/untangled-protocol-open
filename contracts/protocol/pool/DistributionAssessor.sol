@@ -6,6 +6,10 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {IDistributionAssessor} from './IDistributionAssessor.sol';
+import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
+
 /// @title DistributionAssessor
 /// @author Untangled Team
 /// @notice Calculate values in a pool
