@@ -424,7 +424,7 @@ describe('SecuritizationPool', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (x) => ({
-          ...generateLATMintPayload(
+          ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
             x,
@@ -443,7 +443,7 @@ describe('SecuritizationPool', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
-            ...generateLATMintPayload(
+            ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
               x,
@@ -504,7 +504,7 @@ describe('SecuritizationPool', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(pledgeTokenIds.map(async (x) => ({
-          ...generateLATMintPayload(
+          ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
             x,

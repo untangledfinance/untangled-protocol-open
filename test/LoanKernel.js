@@ -207,7 +207,7 @@ describe('LoanKernel', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
-            ...generateLATMintPayload(
+            ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
               x,
@@ -267,7 +267,7 @@ describe('LoanKernel', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (x) => ({
-          ...generateLATMintPayload(
+          ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
             x,
@@ -286,7 +286,7 @@ describe('LoanKernel', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
-            ...generateLATMintPayload(
+            ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
               x,

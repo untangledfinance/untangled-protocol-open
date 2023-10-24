@@ -234,7 +234,7 @@ describe('LoanInterestTermsContract', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (x) => ({
-          ...generateLATMintPayload(
+          ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
             x,

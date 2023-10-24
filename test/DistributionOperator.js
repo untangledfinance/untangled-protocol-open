@@ -404,7 +404,7 @@ describe('Distribution', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (x) => ({
-          ...generateLATMintPayload(
+          ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
             x,
@@ -423,7 +423,7 @@ describe('Distribution', () => {
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
-            ...generateLATMintPayload(
+            ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
               x,
@@ -483,12 +483,15 @@ describe('Distribution', () => {
       );
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        pledgeTokenIds.map((x) => ({
-          tokenId: x,
-          nonce: 0,
-          validator: constants.AddressZero,
-          validateSignature: Buffer.from([])
-        }))
+        await Promise.all(pledgeTokenIds.map(async (x) => ({
+          ...await generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
       );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
