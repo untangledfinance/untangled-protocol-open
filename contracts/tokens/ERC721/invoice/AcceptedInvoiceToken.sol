@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol';
-import '../../../interfaces/ISecuritizationPool.sol';
-import '../../../interfaces/IUntangledERC721.sol';
-import '../../../libraries/ConfigHelper.sol';
+import {Registry} from '../../../storage/Registry.sol';
+import {Configuration} from '../../../libraries/Configuration.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {ERC20PresetMinterPauserUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/presets/ERC20PresetMinterPauserUpgradeable.sol';
+import {ISecuritizationPool} from '../../../interfaces/ISecuritizationPool.sol';
+import {IUntangledERC721} from '../../../interfaces/IUntangledERC721.sol';
+import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility
@@ -55,14 +57,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         return keccak256(abi.encodePacked(_payer, _receiver, _fiatAmount, _dueDate, _salt));
     }
 
-    function _transferTokensFrom(
-        address token,
-        address from,
-        address to,
-        uint256 amount
-    ) private {
+    function _transferTokensFrom(address token, address from, address to, uint256 amount) private {
         if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPool(to).pot();
-        require(IERC20(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
+        require(IERC20Upgradeable(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
     }
 
     function createBatch(
@@ -103,7 +100,9 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
 
             InvoiceMetaData storage metadata = entries[bytes32(tokenIds[i])];
 
-            ERC20PresetMinterPauser token = ERC20PresetMinterPauser(entries[bytes32(tokenIds[i])].fiatTokenAddress);
+            ERC20PresetMinterPauserUpgradeable token = ERC20PresetMinterPauserUpgradeable(
+                entries[bytes32(tokenIds[i])].fiatTokenAddress
+            );
 
             require(token.balanceOf(msg.sender) >= payAmounts[i], 'Not enough balance');
 
@@ -165,12 +164,10 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         return (entries[bytes32(tokenId)].fiatAmount - entries[bytes32(tokenId)].paidAmount, 0);
     }
 
-    function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedRepaymentValue)
-    {
+    function getTotalExpectedRepaymentValue(
+        uint256 agreementId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedRepaymentValue) {
         uint256 principalAmount;
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);

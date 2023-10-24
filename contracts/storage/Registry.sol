@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '../base/UntangledBase.sol';
 
 /**
@@ -28,75 +29,75 @@ contract Registry is UntangledBase {
         return contractAddresses[index];
     }
 
-    function setSecuritizationManager(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setSecuritizationManager(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.SECURITIZATION_MANAGER), newAddress);
     }
 
-    function setSecuritizationPool(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setSecuritizationPool(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.SECURITIZATION_POOL), newAddress);
     }
 
-    function setNoteTokenFactory(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setNoteTokenFactory(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY), newAddress);
     }
 
-    function setNoteToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setNoteToken(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN), newAddress);
     }
 
-    function setTokenGenerationEventFactory(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setTokenGenerationEventFactory(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.TOKEN_GENERATION_EVENT_FACTORY), newAddress);
     }
 
-    function setMintedIncreasingInterestTGE(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setMintedIncreasingInterestTGE(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE), newAddress);
     }
 
-    function setMintedNormalTGE(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setMintedNormalTGE(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE), newAddress);
     }
 
-    function setDistributionOperator(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setDistributionOperator(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR), newAddress);
     }
 
-    function setDistributionAssessor(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setDistributionAssessor(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR), newAddress);
     }
 
-    function setLoanAssetToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setLoanAssetToken(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN), newAddress);
     }
 
-    function setAcceptedInvoiceToken(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setAcceptedInvoiceToken(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN), newAddress);
     }
 
-    function setDistributionTranche(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setDistributionTranche(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE), newAddress);
     }
 
-    function setSecuritizationPoolValueService(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setSecuritizationPoolValueService(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE), newAddress);
     }
 
-    function setLoanRegistry(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setLoanRegistry(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_REGISTRY), newAddress);
     }
 
-    function setLoanInterestTermsContract(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setLoanInterestTermsContract(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_INTEREST_TERMS_CONTRACT), newAddress);
     }
 
-    function setLoanRepaymentRouter(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setLoanRepaymentRouter(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_REPAYMENT_ROUTER), newAddress);
     }
 
-    function setLoanKernel(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setLoanKernel(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_KERNEL), newAddress);
     }
 
-    function setGo(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function setGo(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.GO), newAddress);
     }
 

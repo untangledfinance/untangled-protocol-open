@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../interfaces/ILoanRegistry.sol';
-import '../../base/UntangledBase.sol';
-import '../../libraries/ConfigHelper.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {UntangledBase} from '../../base/UntangledBase.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {ILoanRegistry} from './ILoanRegistry.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
 
 /// @title LoanRegistry
 /// @author Untangled Team
@@ -151,9 +153,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     }
 
     /// @inheritdoc ILoanRegistry
-    function setCompletedLoan(
-        bytes32 agreementId
-    ) public override whenNotPaused onlyLoanInterestTermsContract {
+    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
 

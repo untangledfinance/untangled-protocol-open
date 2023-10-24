@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../../base/UntangledBase.sol';
-import '../../../interfaces/ISecuritizationPool.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '../../../libraries/ConfigHelper.sol';
+import {Registry} from '../../../storage/Registry.sol';
+import {UntangledBase} from '../../../base/UntangledBase.sol';
+import {ISecuritizationPool} from '../../../interfaces/ISecuritizationPool.sol';
+import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 
 contract SecuritizationPoolServiceBase is UntangledBase {
     Registry public registry;

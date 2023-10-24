@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import '../../base/UntangledBase.sol';
 import './crowdsale/IncreasingInterestCrowdsale.sol';
-import '../../interfaces/IMintedTGE.sol';
+import './IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
 
 /// @title MintedIncreasingInterestTGE
@@ -77,7 +77,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused {
+    ) external whenNotPaused override {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'MintedIncreasingInterestTGE: Caller must be owner or pool'

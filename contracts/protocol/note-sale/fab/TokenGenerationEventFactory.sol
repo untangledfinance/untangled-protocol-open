@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../../base/UntangledBase.sol';
-import '../../../interfaces/ITokenGenerationEventFactory.sol';
-import '../../../libraries/ConfigHelper.sol';
-import '../../../base/Factory.sol';
-import '../../../libraries/UntangledMath.sol';
+import {UntangledBase} from '../../../base/UntangledBase.sol';
+import {ITokenGenerationEventFactory} from './ITokenGenerationEventFactory.sol';
+import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
+import {Factory} from '../../../base/Factory.sol';
+import {Registry} from '../../../storage/Registry.sol';
+import {UntangledMath} from '../../../libraries/UntangledMath.sol';
+import {MintedIncreasingInterestTGE} from '../MintedIncreasingInterestTGE.sol';
+import {MintedNormalTGE} from '../MintedNormalTGE.sol';
 
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;

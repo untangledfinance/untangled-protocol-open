@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import '../../../base/UntangledBase.sol';
-import '../../../interfaces/ISecuritizationPool.sol';
-import '../../../libraries/ConfigHelper.sol';
+import '../../pool/ISecuritizationPool.sol';
+
+import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
@@ -12,18 +13,18 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
 
     event UpdateTotalCap(uint256 totalCap);
-    event SetHasStarted(bool hasStarted);
 
     Registry public registry;
 
     // decimal calculating for rate
-    uint256 public constant RATE_SCALING_FACTOR = 10**4;
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
     /// @dev Pool address which this sale belongs to
-    address public pool;
+    address public override pool;
 
     /// @dev The token being sold
-    address public token;
+    address public override token;
+
     /// @dev The token being sold
     address public currency;
 
@@ -34,7 +35,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Amount of currency raised
     uint256 internal _currencyRaised;
-    
+
     /// @dev Amount of token raised
     uint256 public tokenRaised;
 
@@ -71,7 +72,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _;
     }
 
-    function currencyRaisedByInvestor(address investor) public view returns(uint256) {
+    function currencyRaisedByInvestor(address investor) public view returns (uint256) {
         return _currencyRaisedByInvestor[investor];
     }
 
@@ -114,7 +115,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         address payee,
         address beneficiary,
         uint256 currencyAmount
-    ) public whenNotPaused nonReentrant smpRestricted virtual returns (uint256) {
+    ) public virtual whenNotPaused nonReentrant smpRestricted returns (uint256) {
         uint256 tokenAmount = getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
@@ -141,10 +142,11 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @notice Catch event redeem token
     /// @param currencyAmount amount of currency investor want to redeem
-    function onRedeem(
-        uint256 currencyAmount
-    ) public virtual {
-        require(_msgSender() == address(registry.getDistributionOperator()), "Crowdsale: Caller must be distribution operator");
+    function onRedeem(uint256 currencyAmount) public virtual override {
+        require(
+            _msgSender() == address(registry.getDistributionOperator()),
+            'Crowdsale: Caller must be distribution operator'
+        );
         _currencyRaised -= currencyAmount;
     }
 
@@ -190,10 +192,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     /// @dev Mints and delivers tokens to the beneficiary
     function _deliverTokens(address beneficiary, uint256 tokenAmount) internal {
         INoteToken noteToken = INoteToken(token);
-        if (
-            noteToken.noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.SENIOR) &&
-            noteToken.totalSupply() == 0
-        ) {
+        if (noteToken.noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.SENIOR) && noteToken.totalSupply() == 0) {
             firstNoteTokenMintedTimestamp = uint64(block.timestamp);
             ISecuritizationPool(pool).setUpOpeningBlockTimestamp();
         }
@@ -253,7 +252,6 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     function currencyRaised() public view virtual override returns (uint256) {
         return _currencyRaised;
     }
-
 
     uint256[40] private __gap;
 }

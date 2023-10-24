@@ -6,6 +6,11 @@ import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 import '@openzeppelin/contracts/utils/math/Math.sol';
 
+import {IDistributionOperator} from './IDistributionOperator.sol';
+import {IDistributionTranche} from './IDistributionTranche.sol';
+import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
+
 /// @title DistributionOperator
 /// @author Untangled Team
 contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOperator {
@@ -101,9 +106,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             );
 
             if (securitizationPool.sotToken() == tokenAddress) {
-                Crowdsale(securitizationPool.tgeAddress()).onRedeem(currencyLocked);
+                ICrowdSale(securitizationPool.tgeAddress()).onRedeem(currencyLocked);
             } else if (securitizationPool.jotToken() == tokenAddress) {
-                Crowdsale(securitizationPool.secondTGEAddress()).onRedeem(currencyLocked);
+                ICrowdSale(securitizationPool.secondTGEAddress()).onRedeem(currencyLocked);
             }
         }
 
