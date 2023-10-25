@@ -6,8 +6,6 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerU
 import './IERC5008.sol';
 import './types.sol';
 
-import {ECDSAUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
-
 contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
     using ECDSAUpgradeable for bytes32;

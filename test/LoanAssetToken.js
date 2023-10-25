@@ -1,4 +1,5 @@
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
+const { snapshot } = require('@openzeppelin/test-helpers');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
@@ -125,7 +126,324 @@ describe('LoanAssetToken', () => {
       );
     });
 
-    it('Only Loan Kernel can mint', async () => {
+    it('Can not mint with invalid nonce', async () => {
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
+
+      const salt = genSalt();
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
+
+      await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).add(10); // wrong nonce
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              wrongLoanAssetTokenValidator,
+              tokenId,
+              nonce,
+              defaultLoanAssetTokenValidator.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
+        }))
+      )).to.be.revertedWith('LATValidator: invalid nonce');
+    });
+
+    it('Can not mint with wrong signature', async () => {
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
+
+      const salt = genSalt();
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
+
+      await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = await loanAssetTokenContract.nonce(tokenId);
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              wrongLoanAssetTokenValidator,
+              tokenId,
+              nonce,
+              defaultLoanAssetTokenValidator.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
+        }))
+      )).to.be.revertedWith('LATValidator: invalid validator signature');
+    });
+
+    it('Can not mint with wrong validator', async () => {
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
+
+      const salt = genSalt();
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
+
+      await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = await loanAssetTokenContract.nonce(tokenId);
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              wrongLoanAssetTokenValidator,
+              tokenId,
+              nonce,
+              wrongLoanAssetTokenValidator.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
+        }))
+      ), "Validator not whitelisted").to.be.revertedWith('LoanAssetToken: invalid validator');
+    });
+
+    it('Only Loan Kernel can mint with AA validator', async () => {
+      const snap = await snapshot();
+
+      // grant AA as Validator
+      const [, , , , newValidatorSigner] = await ethers.getSigners();
+      const aa = await upgrades.deployProxy(await ethers.getContractFactory("AAWallet"), []);
+      await securitizationManager.registerValidator(aa.address);
+
+      const orderAddresses = [
+        securitizationPoolContract.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
+
+      const salt = genSalt();
+      const riskScore = '50';
+      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        parseEther(principalAmount.toString()),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 10;
+      const interestRatePercentage = 5;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 2,
+        principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      // 1: no newValidator in AA
+      await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = await loanAssetTokenContract.nonce(tokenId);
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              newValidatorSigner,
+              tokenId,
+              nonce,
+              aa.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
+        }))
+      )).to.be.revertedWith("LATValidator: invalid validator signature");
+
+      // add whitelist & try again
+      await aa.grantRole(await aa.VALIDATOR_ROLE(), newValidatorSigner.address);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (tokenId) => {
+          const nonce = await loanAssetTokenContract.nonce(tokenId);
+
+          return ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              newValidatorSigner,
+              tokenId,
+              nonce,
+              aa.address
+            ),
+
+            // tokenId,
+            // nonce,
+            // validator: defaultLoanAssetTokenValidator.address,
+            // validateSignature: ,
+          })
+        }))
+      );
+
+      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+      expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+      expect(balanceOfPool).equal(tokenIds.length);
+
+      await snap.restore();
+    });
+
+    it('Only Loan Kernel can mint with validator signature', async () => {
       const orderAddresses = [
         securitizationPoolContract.address,
         stableCoin.address,
