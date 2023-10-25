@@ -4,17 +4,21 @@ pragma solidity 0.8.19;
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 import {IERC20MetadataUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20MetadataUpgradeable.sol';
 
-import '../../interfaces/INoteToken.sol';
-import '../../interfaces/IUntangledERC721.sol';
-import '../../interfaces/ICrowdSale.sol';
-import '../../interfaces/ILoanRegistry.sol';
+import {INoteToken} from '../../interfaces/INoteToken.sol';
+import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
+import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
+import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 
-import './ISecuritizationPool.sol';
-import './ISecuritizationPoolValueService.sol';
-import './IDistributionAssessor.sol';
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
+import {IDistributionAssessor} from './IDistributionAssessor.sol';
 
-import './base/NAVCalculation.sol';
-import './base/SecuritizationPoolServiceBase.sol';
+import {NAVCalculation} from './base/NAVCalculation.sol';
+import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
@@ -382,9 +386,17 @@ contract SecuritizationPoolValueService is
     ) external view returns (uint256) {
         uint256 result = 0;
         uint256 investorsLength = investors.length;
-        for (uint256 i = 0; i < investorsLength; i++) {
-            result = result + getOutstandingPrincipalCurrencyByInvestor(pool, investors[i]);
+
+        // duplicate but reduce external call
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
+
+        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
+            address investor = investors[i];
+            result += (crowdsale.currencyRaisedByInvestor(investor) -
+                securitizationPool.paidPrincipalAmountSOTByInvestor(investor));
         }
+
         return result;
     }
 

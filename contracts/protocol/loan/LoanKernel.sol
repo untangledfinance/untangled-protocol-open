@@ -5,6 +5,7 @@ import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
+import '../../tokens/ERC721/types.sol';
 
 /// @title LoanKernel
 /// @author Untangled Team
@@ -110,7 +111,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     //** Issue Loan to Farmers */
     function _issueDebtAgreements(
-        bytes32 latTokenId,
+        LoanAssetInfo calldata latInfo,
         address creditor,
         address termContract,
         address debtor,
@@ -121,12 +122,12 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint8[] memory assetPurposeAndRiskScore
     ) private {
         // Mint debt tokens and finalize debt agreement
-
-        registry.getLoanAssetToken().safeMint(creditor, uint256(latTokenId));
+        // registry.getLoanAssetToken().safeMint(creditor, latInfo.tokenId);
+        registry.getLoanAssetToken().safeMint(creditor, latInfo);
 
         require(
             registry.getLoanRegistry().insert(
-                latTokenId,
+                bytes32(latInfo.tokenId),
                 termContract,
                 debtor,
                 termsParam,
@@ -142,11 +143,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     /**
      * 6 is fixed size of constant addresses list
      */
-    function _debtorsFromOrderAddresses(address[] memory _orderAddresses, uint256 _length)
-        private
-        pure
-        returns (address[] memory)
-    {
+    function _debtorsFromOrderAddresses(
+        address[] memory _orderAddresses,
+        uint256 _length
+    ) private pure returns (address[] memory) {
         address[] memory debtors = new address[](_length);
         for (uint256 i = 5; i < (5 + _length); i = UntangledMath.uncheckedInc(i)) {
             debtors[i - 5] = _orderAddresses[i];
@@ -155,11 +155,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     // Dettach principal amounts from order values
-    function _principalAmountsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _principalAmountsFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory principalAmounts = new uint256[](_length);
         for (uint256 i = 2; i < (2 + _length); i = UntangledMath.uncheckedInc(i)) {
             principalAmounts[i - 2] = _orderValues[i];
@@ -167,11 +166,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return principalAmounts;
     }
 
-    function _expirationTimestampsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _expirationTimestampsFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory expirationTimestamps = new uint256[](_length);
         for (uint256 i = 2 + _length; i < (2 + _length * 2); i = UntangledMath.uncheckedInc(i)) {
             expirationTimestamps[i - 2 - _length] = _orderValues[i];
@@ -179,11 +177,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return expirationTimestamps;
     }
 
-    function _saltFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _saltFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory salts = new uint256[](_length);
         for (uint256 i = 2 + _length * 2; i < (2 + _length * 3); i = UntangledMath.uncheckedInc(i)) {
             salts[i - 2 - _length * 2] = _orderValues[i];
@@ -191,11 +188,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return salts;
     }
 
-    function _riskScoresFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint8[] memory)
-    {
+    function _riskScoresFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint8[] memory) {
         uint8[] memory riskScores = new uint8[](_length);
         for (uint256 i = 2 + _length * 3; i < (2 + _length * 4); i = UntangledMath.uncheckedInc(i)) {
             riskScores[i - 2 - _length * 3] = uint8(_orderValues[i]);
@@ -224,11 +220,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     /// @inheritdoc ILoanKernel
     /// @dev A loan, stop lending/loan terms or allow the loan loss
-    function concludeLoan(
-        address creditor,
-        bytes32 agreementId,
-        address termContract
-    ) public override whenNotPaused {
+    function concludeLoan(address creditor, bytes32 agreementId, address termContract) public override whenNotPaused {
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
         require(termContract != address(0), 'Invalid terms contract.');
@@ -259,6 +251,14 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         }
     }
 
+    function _tokenIdsValidate(
+        bytes32[] calldata tokenIds,
+        address[] calldata validators,
+        bytes[] memory validateSignatures
+    ) private {
+        // ...
+    }
+
     /**
      * Filling new Debt Order
      * Notice:
@@ -268,11 +268,21 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      *   + Debtor Fee
      */
     function fillDebtOrder(
+        // latInfo[x].tokenId: // [x]-Loan liability token Id, [x]-Loan liability token Id
         address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
         uint256[] calldata orderValues, //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
-        bytes32[] calldata tokenIds // [x]-Loan liability token Id, [x]-Loan liability token Id
-    ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
+        LoanAssetInfo[] calldata latInfo
+    )
+        external
+        // bytes32[] calldata tokenIds,
+        // uint256[] calldata nonces,
+        // address[] calldata validators,
+        // bytes[] memory validateSignatures
+        whenNotPaused
+        nonReentrant
+        validFillingOrderAddresses(orderAddresses)
+    {
         require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
@@ -286,10 +296,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
         uint256 agreementIdsLength = debtOrder.issuance.agreementIds.length;
         for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            require(debtOrder.issuance.agreementIds[i] == tokenIds[i], 'LoanKernel: Invalid LAT Token Id');
+            require(debtOrder.issuance.agreementIds[i] == bytes32(latInfo[i].tokenId), 'LoanKernel: Invalid LAT Token Id');
 
             _issueDebtAgreements(
-                tokenIds[i],
+                latInfo[i],
                 orderAddresses[uint8(FillingAddressesIndex.CREDITOR)],
                 orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
                 debtOrder.issuance.debtors[i],
@@ -301,7 +311,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             );
 
             require(
-                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(tokenIds[i]),
+                ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(bytes32(latInfo[i].tokenId)),
                 'Cannot register term start'
             );
 

@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { BigNumber } = require('ethers');
+const { BigNumber, constants } = require('ethers');
 const {
   genSalt,
   packTermsContractParameters,
@@ -9,6 +9,7 @@ const {
   debtorsFromOrderAddresses,
   genLoanAgreementIds,
   unlimitedAllowance,
+  generateLATMintPayload,
 } = require('./utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
@@ -231,7 +232,18 @@ describe('LoanInterestTermsContract', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (x) => ({
+          ...await generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
+      );
+
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
     });
     it('should return correct expected principal and expected interest', async () => {

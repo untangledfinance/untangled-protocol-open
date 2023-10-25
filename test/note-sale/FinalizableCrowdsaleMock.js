@@ -1,12 +1,12 @@
-const { artifacts, ethers, upgrades } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 const { setup } = require('../setup');
-const { expect, assert } = require('chai');
-const { BigNumber, providers } = require('ethers');
-const { keccak256 } = require('@ethersproject/keccak256');
+// const { BigNumber } = require('ethers');
+// const { keccak256 } = require('@ethersproject/keccak256');
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
-const ONE_DAY = 86400;
-const DECIMAL = BigNumber.from(10).pow(18);
+// const ONE_DAY = 86400;
+// const DECIMAL = BigNumber.from(10).pow(18);
+
 describe('FinalizableCrowdsaleMock', () => {
   let registry;
   let securitizationPool;

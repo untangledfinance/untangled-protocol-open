@@ -1,30 +1,28 @@
-const { ethers, upgrades } = require('hardhat');
-const { deployments } = require('hardhat');
+const { ethers } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { BigNumber } = ethers;
-const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
+const { constants } = ethers;
+const { parseEther, formatEther } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const {
   unlimitedAllowance,
-  ZERO_ADDRESS,
   genLoanAgreementIds,
   saltFromOrderValues,
   debtorsFromOrderAddresses,
   packTermsContractParameters,
   interestRateFixedPoint,
   genSalt,
+  generateLATMintPayload
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
 
-const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
 
 describe('SecuritizationPool', () => {
@@ -424,7 +422,17 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(tokenIds.map(async (x) => ({
+          ...await generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
+      );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);
@@ -433,7 +441,17 @@ describe('SecuritizationPool', () => {
       expect(balanceOfPool).equal(tokenIds.length);
 
       await expect(
-        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, tokenIds)
+        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+          await Promise.all(tokenIds.map(async (x) => ({
+            ...await generateLATMintPayload(
+              loanAssetTokenContract,
+              defaultLoanAssetTokenValidator,
+              x,
+              await loanAssetTokenContract.nonce(x),
+              defaultLoanAssetTokenValidator.address
+            )
+          })))
+        )
       ).to.be.revertedWith(`ERC721: token already minted`);
     });
 
@@ -484,7 +502,17 @@ describe('SecuritizationPool', () => {
         salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters, pledgeTokenIds);
+      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
+        await Promise.all(pledgeTokenIds.map(async (x) => ({
+          ...await generateLATMintPayload(
+            loanAssetTokenContract,
+            defaultLoanAssetTokenValidator,
+            x,
+            await loanAssetTokenContract.nonce(x),
+            defaultLoanAssetTokenValidator.address
+          )
+        })))
+      );
 
       const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
       expect(ownerOfAgreement).equal(securitizationPoolContract.address);

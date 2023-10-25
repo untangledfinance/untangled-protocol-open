@@ -10,6 +10,8 @@ abstract contract ISecuritizationManager {
     event NewTGECreated(address instanceAddress);
     event NewNotesTokenCreated(address instanceAddress);
     event NewPoolCreated(address instanceAddress);
+    event UpdatePotToPool(address indexed pot, address indexed pool);
+
 
     mapping(address => bool) public isExistingPools;
     ISecuritizationPool[] public pools;

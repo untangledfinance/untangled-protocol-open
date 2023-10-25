@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
+
 import {UntangledBase} from '../../base/UntangledBase.sol';
 
 import {IRequiresUID} from '../../interfaces/IRequiresUID.sol';
@@ -15,7 +17,7 @@ import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {POOL_ADMIN} from './types.sol';
-
+import {VALIDATOR_ROLE} from '../../tokens/ERC721/types.sol';
 import {MintedNormalTGE} from '../note-sale/MintedNormalTGE.sol';
 import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
 import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
@@ -119,6 +121,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         require(isExistingPools[_msgSender()], 'SecuritizationManager: Only SecuritizationPool');
         require(potToPool[pot] == address(0), 'SecuritizationManager: pot used for another pool');
         potToPool[pot] = _msgSender();
+
+        emit UpdatePotToPool(pot, _msgSender());
     }
 
     /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool
@@ -328,6 +332,15 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     //         pools[i].unpause();
     //     }
     // }
+
+    function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
+        require(validator != address(0), 'SecuritizationManager: Invalid validator address');
+        IAccessControlUpgradeable(address(registry.getLoanAssetToken())).grantRole(VALIDATOR_ROLE, validator);
+    }
+
+    function unregisterValidator(address validator) public onlyRole(POOL_ADMIN) {
+        IAccessControlUpgradeable(address(registry.getLoanAssetToken())).revokeRole(VALIDATOR_ROLE, validator);
+    }
 
     uint256[49] private __gap;
 }
