@@ -105,16 +105,16 @@ library ConfigHelper {
         return IDistributionAssessor(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR));
     }
 
-    function getMintedIncreasingInterestTGE(Registry registry) internal view returns (MintedIncreasingInterestTGE) {
-        return
-            MintedIncreasingInterestTGE(
-                getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
-            );
-    }
+    // function getMintedIncreasingInterestTGE(Registry registry) internal view returns (MintedIncreasingInterestTGE) {
+    //     return
+    //         MintedIncreasingInterestTGE(
+    //             getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
+    //         );
+    // }
 
-    function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
-        return MintedNormalTGE(getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE));
-    }
+    // function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
+    //     return MintedNormalTGE(getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE));
+    // }
 
     function getGo(Registry registry) internal view returns (IGo) {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));

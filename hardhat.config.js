@@ -52,6 +52,7 @@ module.exports = {
       accounts: {
         mnemonic: MNEMONIC,
       },
+      kycAdmin: '0x9C469Ff6d548D0219575AAc9c26Ac041314AE2bA',
 
       // forking: {
       //   url: 'https://alfajores-forno.celo-testnet.org',

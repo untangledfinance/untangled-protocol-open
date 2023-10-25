@@ -9,24 +9,20 @@ import {Registry} from '../../../storage/Registry.sol';
 import {UntangledMath} from '../../../libraries/UntangledMath.sol';
 import {MintedIncreasingInterestTGE} from '../MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../MintedNormalTGE.sol';
+import {Registry} from '../../../storage/Registry.sol';
 
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
 
     bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
 
-    enum SaleType {
-        MINTED_INCREASING_INTEREST_SOT,
-        NORMAL_SALE_JOT,
-        NORMAL_SALE_SOT
-    }
+    Registry public registry;
 
-    function initialize(Registry _registry, address _factoryAdmin) public initializer {
-        __UntangledBase__init(_msgSender());
-        __Factory__init(_factoryAdmin);
+    address[] public override tgeAddresses;
 
-        registry = _registry;
-    }
+    mapping(address => bool) public override isExistingTge;
+
+    mapping(SaleType => address) public override TGEImplAddress;
 
     modifier onlySecuritizationManager() {
         require(
@@ -36,8 +32,21 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         _;
     }
 
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
+        __UntangledBase__init(_msgSender());
+        __Factory__init(_factoryAdmin);
+
+        registry = _registry;
+    }
+
     function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _setFactoryAdmin(_factoryAdmin);
+    }
+
+    function setTGEImplAddress(SaleType tgeType, address newImpl) public onlyAdmin {
+        require(newImpl != address(0), 'TokenGenerationEventFactory: TGEImplAddress cannot be zero');
+        TGEImplAddress[tgeType] = newImpl;
+        emit UpdateTGEImplAddress(tgeType, newImpl);
     }
 
     function createNewSaleInstance(
@@ -47,27 +56,54 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override nonReentrant onlySecuritizationManager returns (address) {
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
         if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
-            return _newMintedIncreasingInterestSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.NORMAL_SALE_JOT)) {
-            return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
-        } else if (saleType == uint8(SaleType.NORMAL_SALE_SOT)) {
-            return _newNormalSale(issuerTokenController, pool, token, currency, longSale);
-        } else {
-            revert('Unknown sale type');
+            return
+                _newSale(
+                    TGEImplAddress[SaleType.MINTED_INCREASING_INTEREST_SOT],
+                    issuerTokenController,
+                    pool,
+                    token,
+                    currency,
+                    longSale
+                );
         }
+
+        if (saleType == uint8(SaleType.NORMAL_SALE_JOT)) {
+            return
+                _newSale(
+                    TGEImplAddress[SaleType.NORMAL_SALE_JOT],
+                    issuerTokenController,
+                    pool,
+                    token,
+                    currency,
+                    longSale
+                );
+        }
+
+        if (saleType == uint8(SaleType.NORMAL_SALE_SOT)) {
+            return
+                _newSale(
+                    TGEImplAddress[SaleType.NORMAL_SALE_SOT],
+                    issuerTokenController,
+                    pool,
+                    token,
+                    currency,
+                    longSale
+                );
+        }
+
+        revert('Unknown sale type');
     }
 
-    function _newMintedIncreasingInterestSale(
+    function _newSale(
+        address tgeImpl,
         address issuerTokenController,
         address pool,
         address token,
         address currency,
         bool longSale
     ) private returns (address) {
-        address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
-
         bytes memory _initialData = abi.encodeWithSelector(
             TGE_INIT_FUNC_SELECTOR,
             registry,
@@ -77,8 +113,8 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
             longSale
         );
 
-        address tgeAddress = _deployInstance(mintedIncreasingInterestTGEImplAddress, _initialData);
-        MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
+        address tgeAddress = _deployInstance(tgeImpl, _initialData);
+        UntangledBase tge = UntangledBase(tgeAddress);
 
         tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
         tge.renounceRole(tge.OWNER_ROLE(), address(this));
@@ -91,37 +127,69 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         return tgeAddress;
     }
 
-    function _newNormalSale(
-        address issuerTokenController,
-        address pool,
-        address token,
-        address currency,
-        bool longSale
-    ) private returns (address) {
-        address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
+    // function _newMintedIncreasingInterestSale(
+    //     address issuerTokenController,
+    //     address pool,
+    //     address token,
+    //     address currency,
+    //     bool longSale
+    // ) private returns (address) {
+    //     address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
 
-        bytes memory _initialData = abi.encodeWithSelector(
-            TGE_INIT_FUNC_SELECTOR,
-            registry,
-            pool,
-            token,
-            currency,
-            longSale
-        );
+    //     bytes memory _initialData = abi.encodeWithSelector(
+    //         TGE_INIT_FUNC_SELECTOR,
+    //         registry,
+    //         pool,
+    //         token,
+    //         currency,
+    //         longSale
+    //     );
 
-        address tgeAddress = _deployInstance(mintedNormalTGEImplAddress, _initialData);
-        MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
+    //     address tgeAddress = _deployInstance(mintedIncreasingInterestTGEImplAddress, _initialData);
+    //     MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
 
-        tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
-        tge.renounceRole(tge.OWNER_ROLE(), address(this));
+    //     tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
+    //     tge.renounceRole(tge.OWNER_ROLE(), address(this));
 
-        tgeAddresses.push(tgeAddress);
-        isExistingTge[tgeAddress] = true;
+    //     tgeAddresses.push(tgeAddress);
+    //     isExistingTge[tgeAddress] = true;
 
-        emit TokenGenerationEventCreated(tgeAddress);
+    //     emit TokenGenerationEventCreated(tgeAddress);
 
-        return tgeAddress;
-    }
+    //     return tgeAddress;
+    // }
+
+    // function _newNormalSale(
+    //     address issuerTokenController,
+    //     address pool,
+    //     address token,
+    //     address currency,
+    //     bool longSale
+    // ) private returns (address) {
+    //     address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
+
+    //     bytes memory _initialData = abi.encodeWithSelector(
+    //         TGE_INIT_FUNC_SELECTOR,
+    //         registry,
+    //         pool,
+    //         token,
+    //         currency,
+    //         longSale
+    //     );
+
+    //     address tgeAddress = _deployInstance(mintedNormalTGEImplAddress, _initialData);
+    //     MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
+
+    //     tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
+    //     tge.renounceRole(tge.OWNER_ROLE(), address(this));
+
+    //     tgeAddresses.push(tgeAddress);
+    //     isExistingTge[tgeAddress] = true;
+
+    //     emit TokenGenerationEventCreated(tgeAddress);
+
+    //     return tgeAddress;
+    // }
 
     function pauseUnpauseTge(address tgeAdress) external whenNotPaused onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist');
@@ -145,5 +213,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         }
     }
 
+    uint256[47] private __gap0;
     uint256[50] private __gap;
 }
