@@ -3,6 +3,7 @@ const { deployments } = require('hardhat');
 
 const { parseEther } = ethers.utils;
 
+
 async function setup() {
   await deployments.fixture(['all']);
 
@@ -105,6 +106,7 @@ async function setup() {
   const mintedIncreasingInterestTGEImpl = await MintedIncreasingInterestTGE.deploy();
   const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
   const mintedNormalTGEImpl = await MintedNormalTGE.deploy();
+
   const NoteToken = await ethers.getContractFactory('NoteToken');
   const noteTokenImpl = await NoteToken.deploy();
 

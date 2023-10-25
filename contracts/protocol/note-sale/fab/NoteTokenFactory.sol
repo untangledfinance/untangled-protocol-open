@@ -14,6 +14,13 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
 
     bytes4 constant TOKEN_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(string,string,uint8,address,uint8)'));
 
+    Registry public registry;
+
+    INoteToken[] public override tokens;
+    mapping(address => bool) public override isExistingTokens;
+
+    address public override noteTokenImplementation;
+
     modifier onlySecuritizationManager() {
         require(
             _msgSender() == address(registry.getSecuritizationManager()),
@@ -38,6 +45,12 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         token.grantRole(MINTER_ROLE, newController);
     }
 
+    function setNoteTokenImplementation(address newAddress) external onlyAdmin {
+        require(newAddress != address(0), 'NoteTokenFactory: new address cannot be zero');
+        noteTokenImplementation = newAddress;
+        emit UpdateNoteTokenImplementation(newAddress);
+    }
+
     function createToken(
         address _poolAddress,
         Configuration.NOTE_TOKEN_TYPE _noteTokenType,
@@ -54,8 +67,6 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
             symbol = string.concat(ticker, '_JOT');
         }
 
-        address noteTokenImplAddress = address(registry.getNoteToken());
-
         bytes memory _initialData = abi.encodeWithSelector(
             TOKEN_INIT_FUNC_SELECTOR,
             name,
@@ -65,7 +76,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
             uint8(_noteTokenType)
         );
 
-        address ntAddress = _deployInstance(noteTokenImplAddress, _initialData);
+        address ntAddress = _deployInstance(noteTokenImplementation, _initialData);
 
         INoteToken token = INoteToken(ntAddress);
 
@@ -101,5 +112,6 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         }
     }
 
+    uint256[46] private __gap0;
     uint256[50] private __gap;
 }
