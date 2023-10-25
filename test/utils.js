@@ -1,4 +1,6 @@
-const { ethers, utils } = require('ethers');
+const { ethers } = require('hardhat');
+const { utils } = require('ethers');
+
 const { BigNumber } = require('bignumber.js');
 const crypto = require('crypto');
 
@@ -84,6 +86,103 @@ const generateEntryHash = (payer, receiver, fiatAmount, dueDate, salt) => {
   );
 };
 
+
+const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, validator) => {
+  const network = await signer.provider.getNetwork();
+
+  const domain = {
+    name: 'UntangledLoanAssetToken',
+    version: '0.0.1',
+    chainId: network.chainId,
+    verifyingContract: loanAssetToken.address,
+  }
+
+  const message = {
+    tokenId,
+    nonce,
+    validator
+  };
+
+  const validateSignature = await signer._signTypedData(
+    domain,
+    {
+      LoanAssetToken: [
+        {
+          name: "tokenId",
+          type: "uint256"
+        },
+        {
+          name: "nonce",
+          type: "uint256"
+        },
+        {
+          name: "validator",
+          type: "address"
+        }
+      ],
+    },
+    message,
+  )
+
+  // const add = require('@metamask/eth-sig-util').recoverTypedSignature({
+  //   data: {
+  //     domain,
+  //     types: {
+  //       EIP712Domain: [
+  //         {
+  //           name: "name",
+  //           type: "string",
+  //         },
+  //         {
+  //           name: "version",
+  //           type: "string",
+  //         },
+  //         {
+  //           name: "chainId",
+  //           type: "uint256",
+  //         },
+  //         {
+  //           name: "verifyingContract",
+  //           type: "address",
+  //         },
+  //       ],
+  //       LoanAssetToken: [
+  //         {
+  //           name: "tokenId",
+  //           type: "uint256"
+  //         },
+  //         {
+  //           name: "nonce",
+  //           type: "uint256"
+  //         },
+  //         {
+  //           name: "validator",
+  //           type: "address"
+  //         }
+  //       ],
+  //     },
+  //     message,
+  //     primaryType: 'LoanAssetToken',
+  //   }, signature: validateSignature, version: 'V4'
+  // })
+
+  // console.log({
+  //   validateSignature,
+  //   tokenId,
+  //   nonce,
+  //   validator,
+
+  //   add, signer: signer.address
+  // });
+
+  return {
+    validateSignature,
+    tokenId,
+    nonce,
+    validator,
+  };
+}
+
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
@@ -95,4 +194,6 @@ module.exports = {
   genSalt,
   bitShiftLeft,
   generateEntryHash,
+
+  generateLATMintPayload,
 };

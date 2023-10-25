@@ -16,7 +16,7 @@ import {ILoanRegistry} from '../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanRepaymentRouter} from '../interfaces/ILoanRepaymentRouter.sol';
 import {ILoanKernel} from '../interfaces/ILoanKernel.sol';
-
+import {ILoanAssetToken} from '../interfaces/ILoanAssetToken.sol';
 import {IDistributionAssessor} from '../interfaces/IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from '../interfaces/ISecuritizationPoolValueService.sol';
 
@@ -48,9 +48,9 @@ library ConfigHelper {
         return INoteTokenFactory(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY));
     }
 
-    function getNoteToken(Registry registry) internal view returns (INoteToken) {
-        return INoteToken(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN));
-    }
+    // function getNoteToken(Registry registry) internal view returns (INoteToken) {
+    //     return INoteToken(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN));
+    // }
 
     function getTokenGenerationEventFactory(Registry registry) internal view returns (ITokenGenerationEventFactory) {
         return
@@ -63,8 +63,8 @@ library ConfigHelper {
         return IDistributionOperator(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR));
     }
 
-    function getLoanAssetToken(Registry registry) internal view returns (IUntangledERC721) {
-        return IUntangledERC721(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
+    function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
+        return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
     }
 
     function getAcceptedInvoiceToken(Registry registry) internal view returns (AcceptedInvoiceToken) {

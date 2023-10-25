@@ -3,8 +3,8 @@ const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber } = require('ethers');
 
-const ONE_DAY = 86400;
-const DECIMAL = BigNumber.from(10).pow(18);
+// const ONE_DAY = 86400;
+// const DECIMAL = BigNumber.from(10).pow(18);
 describe('NoteTokenFactory', () => {
   let registry;
   let noteTokenFactory;
@@ -18,14 +18,18 @@ describe('NoteTokenFactory', () => {
     const NoteTokenFactory = await ethers.getContractFactory('NoteTokenFactory');
     const Registry = await ethers.getContractFactory('Registry');
 
-    registry = await Registry.deploy();
-    await registry.initialize();
-    noteTokenFactory = await NoteTokenFactory.deploy();
-    const noteTokenImpl = await NoteToken.deploy();
-    await registry.setNoteToken(noteTokenImpl.address);
+    registry = await upgrades.deployProxy(Registry, []);
 
     const admin = await upgrades.admin.getInstance();
-    await noteTokenFactory.initialize(registry.address, admin.address);
+    noteTokenFactory = await upgrades.deployProxy(NoteTokenFactory, [
+      registry.address, admin.address
+    ]);
+
+    const noteTokenImpl = await NoteToken.deploy();
+    await noteTokenFactory.setNoteTokenImplementation(noteTokenImpl.address);
+    // await registry.setNoteToken(noteTokenImpl.address);
+
+    // await noteTokenFactory.initialize(registry.address, admin.address);
   });
 
   it('#createToken', async () => {

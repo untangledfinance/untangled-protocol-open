@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 /// @title Configuration
 /// @author Untangled Team
 library Configuration {
-    uint256 public constant PRICE_SCALING_FACTOR = 10**4;
+    uint256 public constant PRICE_SCALING_FACTOR = 10 ** 4;
 
     // NEVER EVER CHANGE THE ORDER OF THESE!
     // You can rename or append. But NEVER change the order.
@@ -12,7 +12,7 @@ library Configuration {
         SECURITIZATION_MANAGER,
         SECURITIZATION_POOL,
         NOTE_TOKEN_FACTORY,
-        NOTE_TOKEN,
+        NOTE_TOKEN, // deprecated
         TOKEN_GENERATION_EVENT_FACTORY,
         DISTRIBUTION_OPERATOR,
         DISTRIBUTION_ASSESSOR,
