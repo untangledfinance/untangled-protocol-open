@@ -7,7 +7,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const proxyAdmin = await get('DefaultProxyAdmin');
 
   //deploy SecuritizationManager
-  const securitizationManagerProxy = await deployProxy({ getNamedAccounts, deployments }, 'SecuritizationManager', [
+  const securitizationManagerProxy = await deployProxy({ getNamedAccounts, deployments }, 
+    'SecuritizationManager', [
     registry.address,
     proxyAdmin.address,
   ]);

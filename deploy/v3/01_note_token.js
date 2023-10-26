@@ -12,6 +12,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
+  
 };
 
 module.exports.dependencies = ['registry', 'securitization_manager', 'note_token_factory'];
