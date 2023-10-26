@@ -1,5 +1,4 @@
 const { getChainId } = require('hardhat');
-const { networks } = require('../../networks');
 const { registrySet } = require('./utils');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
@@ -12,6 +11,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
+  
 };
 
 module.exports.dependencies = ['registry', 'securitization_manager', 'note_token_factory'];

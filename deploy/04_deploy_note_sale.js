@@ -27,13 +27,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   // }
 
   //deploy MintedNormalTGE
-  const mintedNormalTGEImpl = await deploy(`MintedNormalTGEImpl`, {
-    contract: 'MintedNormalTGE',
-    skipIfAlreadyDeployed: true,
-    from: deployer,
-    args: [],
-    log: true,
-  });
+  // const mintedNormalTGEImpl = await deploy(`MintedNormalTGEImpl`, {
+  //   contract: 'MintedNormalTGE',
+  //   skipIfAlreadyDeployed: true,
+  //   from: deployer,
+  //   args: [],
+  //   log: true,
+  // });
   // if (mintedNormalTGEImpl.newlyDeployed) {
   //   const mintedNormalTGE = mintedNormalTGEImpl;
   //   mintedNormalTGE.address = mintedNormalTGEImpl.address;

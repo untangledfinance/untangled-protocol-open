@@ -42,7 +42,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         uint256 cap;
     }
 
-    function initialize(Registry _registry, address _factoryAdmin) public initializer {
+    function initialize(Registry _registry, address _factoryAdmin) public reinitializer(2) {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
         _setRoleAdmin(POOL_ADMIN, OWNER_ROLE);
