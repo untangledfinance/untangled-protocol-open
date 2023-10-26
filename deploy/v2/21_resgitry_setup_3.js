@@ -5,8 +5,8 @@ const { registrySet } = require('./utils');
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const contracts = [
     'SecuritizationPool',
-    'MintedIncreasingInterestTGE',
-    'MintedNormalTGE',
+    // 'MintedIncreasingInterestTGE',
+    // 'MintedNormalTGE',
     'SecuritizationManager',
     'NoteTokenFactory',
     'TokenGenerationEventFactory',

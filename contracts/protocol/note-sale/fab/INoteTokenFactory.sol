@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import '../../../storage/Registry.sol';
 import '../../../interfaces/INoteToken.sol';
 
-abstract contract INoteTokenFactory {
+interface INoteTokenFactory {
     event TokenCreated(
         address indexed token,
         address indexed poolAddress,
@@ -13,13 +13,17 @@ abstract contract INoteTokenFactory {
         string ticker
     );
 
-    Registry public registry;
+    event UpdateNoteTokenImplementation(address indexed newAddress);
 
-    INoteToken[] public tokens;
+    function tokens(uint256 idx) external view returns (INoteToken);
 
-    mapping(address => bool) public isExistingTokens;
+    function isExistingTokens(address tokenAddress) external view returns (bool);
 
-    function changeMinterRole(address token, address newController) external virtual;
+    function changeMinterRole(address token, address newController) external;
+
+    function setNoteTokenImplementation(address newAddress) external;
+
+    function noteTokenImplementation() external view returns (address);
 
     /// @notice Creates a new NoteToken contract instance with the specified parameters
     /// Initializes the token with the provided parameters, including the pool address and note token type
@@ -28,7 +32,5 @@ abstract contract INoteTokenFactory {
         Configuration.NOTE_TOKEN_TYPE noteTokenType,
         uint8 _nDecimals,
         string calldata ticker
-    ) external virtual returns (address);
-
-    uint256[47] private __gap;
+    ) external returns (address);
 }

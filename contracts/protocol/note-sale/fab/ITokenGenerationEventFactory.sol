@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../../../storage/Registry.sol';
+interface ITokenGenerationEventFactory {
+    enum SaleType {
+        MINTED_INCREASING_INTEREST_SOT,
+        NORMAL_SALE_JOT,
+        NORMAL_SALE_SOT
+    }
 
-abstract contract ITokenGenerationEventFactory {
-    Registry public registry;
+    event UpdateTGEImplAddress(SaleType indexed tgeType, address newImpl);
 
     event TokenGenerationEventCreated(address indexed tgeInstance);
 
-    address[] public tgeAddresses;
+    function tgeAddresses(uint256) external view returns (address);
 
-    mapping(address => bool) public isExistingTge;
+    function isExistingTge(address) external view returns (bool);
+
+    function TGEImplAddress(SaleType tgeType) external view returns (address);
 
     /// @notice creates a new TGE instance based on the provided parameters and the sale type
     function createNewSaleInstance(
@@ -20,7 +26,5 @@ abstract contract ITokenGenerationEventFactory {
         address currency,
         uint8 saleType,
         bool longSale
-    ) external virtual returns (address);
-
-    uint256[47] private __gap;
+    ) external returns (address);
 }

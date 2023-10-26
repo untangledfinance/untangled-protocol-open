@@ -21,6 +21,7 @@ import {VALIDATOR_ROLE} from '../../tokens/ERC721/types.sol';
 import {MintedNormalTGE} from '../note-sale/MintedNormalTGE.sol';
 import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
 import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
+import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEventFactory.sol';
 
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -196,7 +197,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
         address tgeAddress = initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         uint8 saleType = saleTypeAndDecimal[0];
-        if (saleType == uint8(TokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
+        if (saleType == uint8(ITokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);

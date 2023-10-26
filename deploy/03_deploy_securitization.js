@@ -4,10 +4,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get, save } = deployments;
   const { deployer } = await getNamedAccounts();
   const registry = await get('Registry');
+  const proxyAdmin = await get('DefaultProxyAdmin');
 
   //deploy SecuritizationManager
   const securitizationManagerProxy = await deployProxy({ getNamedAccounts, deployments }, 'SecuritizationManager', [
     registry.address,
+    proxyAdmin.address,
   ]);
   if (securitizationManagerProxy.newlyDeployed) {
     await execute(
@@ -58,6 +60,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   //deploy NoteTokenFactory
   const noteTokenFactoryProxy = await deployProxy({ getNamedAccounts, deployments }, 'NoteTokenFactory', [
     registry.address,
+    proxyAdmin.address,
   ]);
   if (noteTokenFactoryProxy.newlyDeployed) {
     await execute('Registry', { from: deployer, log: true }, 'setNoteTokenFactory', noteTokenFactoryProxy.address);

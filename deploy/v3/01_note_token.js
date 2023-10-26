@@ -12,10 +12,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
-
-  // const contracts = ['NoteToken'];
-
-  // await registrySet(contracts);
 };
 
 module.exports.dependencies = ['registry', 'securitization_manager', 'note_token_factory'];

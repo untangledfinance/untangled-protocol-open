@@ -2,7 +2,8 @@
 pragma solidity 0.8.19;
 
 import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '../base/UntangledBase.sol';
+import {UntangledBase} from '../base/UntangledBase.sol';
+import {Configuration} from '../libraries/Configuration.sol';
 
 /**
  * @title Registry
@@ -41,21 +42,21 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY), newAddress);
     }
 
-    function setNoteToken(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN), newAddress);
-    }
+    // function setNoteToken(address newAddress) public onlyAdmin whenNotPaused {
+    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN), newAddress);
+    // }
 
     function setTokenGenerationEventFactory(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.TOKEN_GENERATION_EVENT_FACTORY), newAddress);
     }
 
-    function setMintedIncreasingInterestTGE(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE), newAddress);
-    }
+    // function setMintedIncreasingInterestTGE(address newAddress) public onlyAdmin whenNotPaused {
+    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE), newAddress);
+    // }
 
-    function setMintedNormalTGE(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE), newAddress);
-    }
+    // function setMintedNormalTGE(address newAddress) public onlyAdmin whenNotPaused {
+    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE), newAddress);
+    // }
 
     function setDistributionOperator(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR), newAddress);
