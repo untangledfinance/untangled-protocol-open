@@ -13,8 +13,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
       execute: {
-        methodName: 'initialize',
-        args: [registry.address, proxyAdmin.address],
+        init: {
+          methodName: 'initialize',
+          args: [registry.address, proxyAdmin.address],
+        },
+        onUpgrade: {
+          methodName: 'initialize',
+          args: [registry.address, proxyAdmin.address],
+        },
       },
     },
     skipIfAlreadyDeployed: true,
