@@ -16,14 +16,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
 
-    Registry public registry;
-
-    address[] public override tgeAddresses;
-
-    mapping(address => bool) public override isExistingTge;
-
-    mapping(SaleType => address) public override TGEImplAddress;
-
     modifier onlySecuritizationManager() {
         require(
             _msgSender() == address(registry.getSecuritizationManager()),
@@ -32,18 +24,30 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         _;
     }
 
-    function initialize(Registry _registry, address _factoryAdmin) public initializer {
+    function __TokenGenerationEventFactory_init(Registry _registry, address _factoryAdmin) internal onlyInitializing {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
 
         registry = _registry;
     }
 
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
+        __TokenGenerationEventFactory_init(_registry, _factoryAdmin);
+    }
+
+    function initializeV2(Registry _registry, address _factoryAdmin) public reinitializer(2) {
+        __TokenGenerationEventFactory_init(_registry, _factoryAdmin);
+    }
+
     function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _setFactoryAdmin(_factoryAdmin);
     }
 
-    function setTGEImplAddress(SaleType tgeType, address newImpl) public onlyAdmin {
+    function setTGEImplAddress(SaleType tgeType, address newImpl) public {
+        require(
+            isAdmin() || hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+            'UntangledBase: Must have admin role to perform this action'
+        );
         require(newImpl != address(0), 'TokenGenerationEventFactory: TGEImplAddress cannot be zero');
         TGEImplAddress[tgeType] = newImpl;
         emit UpdateTGEImplAddress(tgeType, newImpl);
@@ -213,6 +217,5 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         }
     }
 
-    uint256[47] private __gap0;
     uint256[50] private __gap;
 }

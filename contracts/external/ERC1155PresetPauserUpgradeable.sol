@@ -118,7 +118,6 @@ contract ERC1155PresetPauserUpgradeable is
     super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
   }
 
-
   function isAdmin() public view returns (bool) {
     return hasRole(OWNER_ROLE, _msgSender());
   }

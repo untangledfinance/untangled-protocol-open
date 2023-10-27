@@ -6,8 +6,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const tgeNormal = await deployments.deploy('MintedNormalTGE', {
     from: deployer,
+    log: true,
   });
 
+  // if (tgeNormal.newlyDeployed) {
   await execute('TokenGenerationEventFactory', {
     from: deployer,
     log: true,
@@ -17,8 +19,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
   }, 'setTGEImplAddress', 2, tgeNormal.address);
-
+  // }
 };
 
-module.exports.dependencies = ['registry', 'tge_factory'];
-module.exports.tags = ['mainnet', 'tge_normal'];
+module.exports.dependencies = ['registry', 'TokenGenerationEventFactory'];
+module.exports.tags = ['v3', 'mainnet', 'MintedNormalTGE'];

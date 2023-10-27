@@ -17,6 +17,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
     Registry public registry;
 
     INoteToken[] public override tokens;
+
     mapping(address => bool) public override isExistingTokens;
 
     address public override noteTokenImplementation;
@@ -29,7 +30,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         _;
     }
 
-    function initialize(Registry _registry, address _factoryAdmin) public initializer {
+    function initialize(Registry _registry, address _factoryAdmin) public reinitializer(3) {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
 

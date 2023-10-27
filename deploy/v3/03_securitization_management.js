@@ -2,7 +2,7 @@ const { getChainId } = require('hardhat');
 const { registrySet } = require('./utils');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, get } = deployments;
+  const { deploy,read, get } = deployments;
   const { deployer } = await getNamedAccounts();
   const proxyAdmin = await get('DefaultProxyAdmin');
 
@@ -12,22 +12,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
 
     proxy: {
-      execute: {
-        init: {
-          methodName: 'initialize',
-          args: [registry.address, proxyAdmin.address],
-        },
-        onUpgrade: {
-          methodName: 'initialize',
-          args: [registry.address, proxyAdmin.address],
-        },
-      },
       proxyContract: "OpenZeppelinTransparentProxy",
-    }
+    },
+    log: true,
   });
+
+  const currentVersion = await read('SecuritizationManager', {}, 'getInitializedVersion');
+  if (currentVersion.toNumber() < 2) {
+    await execute('SecuritizationManager', {
+      from: deployer,
+      log: true,
+    }, 'initialize', registry.address, proxyAdmin.address);
+  }
 
   await registrySet(['SecuritizationManager']);
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'securitization_manager'];
+module.exports.tags = ['v3', 'mainnet', 'SecuritizationManager'];

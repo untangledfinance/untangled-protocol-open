@@ -23,7 +23,7 @@ abstract contract UntangledBase is
 {
     bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
 
-    function isAdmin() public view returns (bool) {
+    function isAdmin() public view virtual returns (bool) {
         return hasRole(OWNER_ROLE, _msgSender());
     }
 
@@ -46,6 +46,10 @@ abstract contract UntangledBase is
         _setupRole(OWNER_ROLE, owner);
 
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+    }
+
+    function getInitializedVersion() public view virtual returns (uint256) {
+        return _getInitializedVersion();
     }
 
     function pause() public virtual onlyRole(DEFAULT_ADMIN_ROLE) {

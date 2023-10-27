@@ -6,10 +6,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await deployments.deploy('SecuritizationPool', {
     from: deployer,
+    log: true,
   });
 
   await registrySet(['SecuritizationPool']);
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'securitization_pool'];
+module.exports.tags = ['v3', 'mainnet', 'SecuritizationPool'];
