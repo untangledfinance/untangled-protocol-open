@@ -22,7 +22,7 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         string memory name,
         string memory symbol,
         string memory baseTokenURI
-    ) public initializer {
+    ) public reinitializer(2) {
         __UntangledERC721__init(name, symbol, baseTokenURI);
         __LATValidator_init();
 

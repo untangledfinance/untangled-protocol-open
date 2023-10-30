@@ -74,13 +74,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         _;
     }
 
-    // modifier onlyPoolAdmin() {
-    //     require(
-    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
-    //         'SecuritizationPool: Not an pool admin'
-    //     );
-    //     _;
-    // }
+    modifier onlyPoolAdmin() {
+        require(
+            IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
+            'SecuritizationPool: Not an pool admin'
+        );
+        _;
+    }
 
     modifier onlyPoolAdminOrOwner() {
         require(
@@ -207,7 +207,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
-    ) external override whenNotPaused notClosingStage onlyPoolAdminOrOwner {
+    ) external override whenNotPaused notClosingStage onlyPoolAdmin {
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
             _daysPastDuesLength * 6 == _ratesAndDefaults.length &&
