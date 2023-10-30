@@ -4,7 +4,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deployments.deploy('TokenGenerationEventFactory', {
+  await deployments.deploy('SecuritizationPool', {
     from: deployer,
     proxy: {
       // execute: {
