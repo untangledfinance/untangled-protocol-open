@@ -3,22 +3,7 @@ pragma solidity 0.8.19;
 
 import "./math.sol";
 import "./auth.sol";
-
-interface TitleLike {
-    function issue(address) external returns (uint);
-    function close(uint) external;
-    function ownerOf (uint) external view returns (address);
-    function count () external view returns (uint);
-}
-
-contract TitleOwned {
-    TitleLike title;
-    constructor (address title_) {
-        title = TitleLike(title_);
-    }
-
-    modifier owner (uint loan) { require(title.ownerOf(loan) == msg.sender); _; }
-}
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 interface NFTLike {
     function ownerOf(uint256 tokenId) external view returns (address owner);
@@ -65,7 +50,7 @@ interface AssessorLike {
     function reBalance() external;
 }
 
-contract Shelf is Auth, TitleOwned, Math {
+contract Shelf is Auth, Math, Initializable {
     /// Contract Interfaces
     NAVFeedLike public ceiling;
     PileLike public pile;
@@ -97,7 +82,7 @@ contract Shelf is Auth, TitleOwned, Math {
     event Claim(uint256 indexed loan, address usr);
     event Depend(bytes32 indexed contractName, address addr);
 
-    constructor(address currency_, address title_, address pile_, address ceiling_) TitleOwned(title_) {
+    function initialize(address currency_, address title_, address pile_, address ceiling_) public initializer {
         currency = TokenLike(currency_);
         pile = PileLike(pile_);
         ceiling = NAVFeedLike(ceiling_);
@@ -112,8 +97,6 @@ contract Shelf is Auth, TitleOwned, Math {
     function depend(bytes32 contractName, address addr) external auth {
         if (contractName == "token") {
             currency = TokenLike(addr);
-        } else if (contractName == "title") {
-            title = TitleLike(addr);
         } else if (contractName == "pile") {
             pile = PileLike(addr);
         } else if (contractName == "ceiling") {
@@ -146,10 +129,9 @@ contract Shelf is Auth, TitleOwned, Math {
     /// @param tokenId the tokenId of the nft
     /// @return loan the id of the loan
     function issue(address registry, uint256 tokenId) external returns (uint256 loan) {
-        require(NFTLike(registry).ownerOf(tokenId) == msg.sender, "nft-not-owned");
         bytes32 nft = keccak256(abi.encodePacked(registry, tokenId));
         require(nftlookup[nft] == 0, "nft-in-use");
-        loan = title.issue(msg.sender);
+        loan = tokenId;
         nftlookup[nft] = loan;
         shelf[loan].registry = registry;
         shelf[loan].tokenId = tokenId;
@@ -160,14 +142,9 @@ contract Shelf is Auth, TitleOwned, Math {
 
     /// @notice closes a loan after the nft has been returned
     /// @param loan the id of the loan
-    function close(uint256 loan) external {
+    function close(uint256 loan) external auth {
         require(!nftLocked(loan), "nft-locked");
         (address registry, uint256 tokenId) = token(loan);
-        require(
-            title.ownerOf(loan) == msg.sender || NFTLike(registry).ownerOf(tokenId) == msg.sender,
-            "not-loan-or-nft-owner"
-        );
-        title.close(loan);
         bytes32 nft = keccak256(abi.encodePacked(shelf[loan].registry, shelf[loan].tokenId));
         nftlookup[nft] = 0;
         _resetLoanBalance(loan);
@@ -181,7 +158,7 @@ contract Shelf is Auth, TitleOwned, Math {
     /// a max ceiling needs to be defined by an oracle
     /// @param loan the id of the loan
     /// @param currencyAmount the amount which should be borrowed
-    function borrow(uint256 loan, uint256 currencyAmount) external owner(loan) {
+    function borrow(uint256 loan, uint256 currencyAmount) external auth {
         require(nftLocked(loan), "nft-not-locked");
 
         if (address(subscriber) != address(0)) {
@@ -210,7 +187,7 @@ contract Shelf is Auth, TitleOwned, Math {
     /// @param loan the id of the loan
     /// @param currencyAmount the amount which should be withdrawn
     /// @param usr the address of the receiver
-    function withdraw(uint256 loan, uint256 currencyAmount, address usr) external owner(loan) {
+    function withdraw(uint256 loan, uint256 currencyAmount, address usr) external auth {
         require(nftLocked(loan), "nft-not-locked");
         require(currencyAmount <= balances[loan], "withdraw-amount-too-high");
 
@@ -223,7 +200,7 @@ contract Shelf is Auth, TitleOwned, Math {
     ///  @notice repays the entire or partial debt of a loan
     ///  @param loan the id of the loan
     ///  @param currencyAmount the amount which should be repaid
-    function repay(uint256 loan, uint256 currencyAmount) external owner(loan) {
+    function repay(uint256 loan, uint256 currencyAmount) external auth {
         require(nftLocked(loan), "nft-not-locked");
         require(balances[loan] == 0, "withdraw-required-before-repay");
 
@@ -274,7 +251,7 @@ contract Shelf is Auth, TitleOwned, Math {
     /// @notice locks an nft in the shelf
     /// @dev requires an issued loan
     /// @param loan the id of the loan
-    function lock(uint256 loan) external owner(loan) {
+    function lock(uint256 loan) external auth {
         if (address(subscriber) != address(0)) {
             subscriber.lockEvent(loan);
         }
@@ -285,7 +262,7 @@ contract Shelf is Auth, TitleOwned, Math {
     /// @notice unlocks an nft in the shelf
     /// @dev requires zero debt or 100% write off
     /// @param loan the id of the loan
-    function unlock(uint256 loan) external owner(loan) {
+    function unlock(uint256 loan) external auth {
         // loans can be unlocked and closed when the debt is 0, or the loan is written off 100%
         uint256 debt_ = pile.debt(loan);
 
@@ -325,9 +302,4 @@ contract Shelf is Auth, TitleOwned, Math {
         }
     }
 
-    /// @notice returns the total number of loans including closed loans
-    /// @return totalNumber total number of loans
-    function loanCount() public view returns (uint256 totalNumber) {
-        return title.count();
-    }
 }
