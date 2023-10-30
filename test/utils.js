@@ -87,7 +87,7 @@ const generateEntryHash = (payer, receiver, fiatAmount, dueDate, salt) => {
 };
 
 
-const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, validator) => {
+const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, validator) => {
   const network = await signer.provider.getNetwork();
 
   const domain = {
@@ -98,8 +98,8 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, va
   }
 
   const message = {
-    tokenId,
-    nonce,
+    tokenIds,
+    nonces,
     validator
   };
 
@@ -108,12 +108,12 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, va
     {
       LoanAssetToken: [
         {
-          name: "tokenId",
-          type: "uint256"
+          name: "tokenIds",
+          type: "uint256[]"
         },
         {
-          name: "nonce",
-          type: "uint256"
+          name: "nonces",
+          type: "uint256[]"
         },
         {
           name: "validator",
@@ -148,12 +148,12 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, va
   //       ],
   //       LoanAssetToken: [
   //         {
-  //           name: "tokenId",
-  //           type: "uint256"
+  //           name: "tokenIds",
+  //           type: "uint256[]"
   //         },
   //         {
-  //           name: "nonce",
-  //           type: "uint256"
+  //           name: "nonces",
+  //           type: "uint256[]"
   //         },
   //         {
   //           name: "validator",
@@ -166,19 +166,10 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenId, nonce, va
   //   }, signature: validateSignature, version: 'V4'
   // })
 
-  // console.log({
-  //   validateSignature,
-  //   tokenId,
-  //   nonce,
-  //   validator,
-
-  //   add, signer: signer.address
-  // });
-
   return {
     validateSignature,
-    tokenId,
-    nonce,
+    tokenIds,
+    nonces,
     validator,
   };
 }
