@@ -6,7 +6,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature, contrac
   const specificName = contractSpecificName || contractName;
   const contractImpl = await deploy(`${specificName}_Implementation`, {
     contract: contractName,
-    skipIfAlreadyDeployed: true,
+    // skipIfAlreadyDeployed: true,
     from: deployer,
     args: [],
     log: true,
@@ -26,7 +26,7 @@ const deployProxy = async (hre, contractName, initParams, initSignature, contrac
     await save(specificName, contract);
     await execute(specificName, { from: deployer, log: true }, initSignature || 'initialize', ...initParams);
   } else if (contractImpl.newlyDeployed) {
-    await execute(`${specificName}Proxy`, { from: deployer, log: true }, 'updateImplementation', contractImpl.address);
+    await execute(`${specificName}_Proxy`, { from: deployer, log: true }, 'updateImplementation', contractImpl.address);
     const contract = contractImpl;
     contract.address = contractProxy.address;
     await save(specificName, contract);

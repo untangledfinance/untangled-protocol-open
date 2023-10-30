@@ -407,8 +407,8 @@ describe('Distribution', () => {
           ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
-            x,
-            await loanAssetTokenContract.nonce(x),
+            [x],
+            [(await loanAssetTokenContract.nonce(x)).toNumber()],
             defaultLoanAssetTokenValidator.address
           )
         })))
@@ -426,8 +426,8 @@ describe('Distribution', () => {
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
-              x,
-              await loanAssetTokenContract.nonce(x),
+              [x],
+              [(await loanAssetTokenContract.nonce(x)).toNumber()],
               defaultLoanAssetTokenValidator.address
             )
           })))
@@ -487,8 +487,8 @@ describe('Distribution', () => {
           ...await generateLATMintPayload(
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
-            x,
-            await loanAssetTokenContract.nonce(x),
+            [x],
+            [(await loanAssetTokenContract.nonce(x)).toNumber()],
             defaultLoanAssetTokenValidator.address
           )
         })))

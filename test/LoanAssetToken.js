@@ -176,14 +176,14 @@ describe('LoanAssetToken', () => {
 
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = (await loanAssetTokenContract.nonce(tokenId)).add(10); // wrong nonce
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).add(10).toNumber(); // wrong nonce
 
           return ({
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               wrongLoanAssetTokenValidator,
-              tokenId,
-              nonce,
+              [tokenId],
+              [nonce],
               defaultLoanAssetTokenValidator.address
             ),
 
@@ -246,14 +246,14 @@ describe('LoanAssetToken', () => {
 
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = await loanAssetTokenContract.nonce(tokenId);
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).toNumber();
 
           return ({
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               wrongLoanAssetTokenValidator,
-              tokenId,
-              nonce,
+              [tokenId],
+              [nonce],
               defaultLoanAssetTokenValidator.address
             ),
 
@@ -314,25 +314,10 @@ describe('LoanAssetToken', () => {
 
       const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
+      const latInfo = await generateLATMintPayload(loanAssetTokenContract, wrongLoanAssetTokenValidator, tokenIds, [0], wrongLoanAssetTokenValidator.address);
+
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = await loanAssetTokenContract.nonce(tokenId);
-
-          return ({
-            ...await generateLATMintPayload(
-              loanAssetTokenContract,
-              wrongLoanAssetTokenValidator,
-              tokenId,
-              nonce,
-              wrongLoanAssetTokenValidator.address
-            ),
-
-            // tokenId,
-            // nonce,
-            // validator: defaultLoanAssetTokenValidator.address,
-            // validateSignature: ,
-          })
-        }))
+        [latInfo]
       ), "Validator not whitelisted").to.be.revertedWith('LoanAssetToken: invalid validator');
     });
 
@@ -392,14 +377,14 @@ describe('LoanAssetToken', () => {
       // 1: no newValidator in AA
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = await loanAssetTokenContract.nonce(tokenId);
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).toNumber();
 
           return ({
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               newValidatorSigner,
-              tokenId,
-              nonce,
+              [tokenId],
+              [nonce],
               aa.address
             ),
 
@@ -415,14 +400,14 @@ describe('LoanAssetToken', () => {
       await aa.grantRole(await aa.VALIDATOR_ROLE(), newValidatorSigner.address);
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = await loanAssetTokenContract.nonce(tokenId);
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).toNumber();
 
           return ({
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               newValidatorSigner,
-              tokenId,
-              nonce,
+              [tokenId],
+              [nonce],
               aa.address
             ),
 
@@ -491,14 +476,14 @@ describe('LoanAssetToken', () => {
 
       await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         await Promise.all(tokenIds.map(async (tokenId) => {
-          const nonce = await loanAssetTokenContract.nonce(tokenId);
+          const nonce = (await loanAssetTokenContract.nonce(tokenId)).toNumber();
 
           return ({
             ...await generateLATMintPayload(
               loanAssetTokenContract,
               defaultLoanAssetTokenValidator,
-              tokenId,
-              nonce,
+              [tokenId],
+              [nonce],
               defaultLoanAssetTokenValidator.address
             ),
 

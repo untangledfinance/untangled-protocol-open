@@ -9,6 +9,7 @@ import {LATValidator} from './LATValidator.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
@@ -77,7 +78,10 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         LoanAssetInfo calldata latInfo
     ) public virtual override onlyRole(MINTER_ROLE) requireNonceValid(latInfo) requireValidator(latInfo) {
         require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
-        _safeMint(creditor, latInfo.tokenId);
+
+        for (uint i = 0; i < latInfo.tokenIds.length; i = UntangledMath.uncheckedInc(i)) {
+            _safeMint(creditor, latInfo.tokenIds[i]);
+        }
     }
 
     uint256[50] private __gap;
