@@ -15,7 +15,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init_unchained(_msgSender());
-
         registry = _registry;
     }
 
@@ -294,7 +293,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         );
 
         uint x = 0;
-
         for (uint i = 0; i < latInfo.length; i = UntangledMath.uncheckedInc(i)) {
             registry.getLoanAssetToken().safeMint(orderAddresses[uint8(FillingAddressesIndex.CREDITOR)], latInfo[i]);
             
