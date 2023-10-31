@@ -56,7 +56,6 @@ contract Shelf is Auth, Math, Initializable {
     PileLike public pile;
     TokenLike public currency;
     ReserveLike public reserve;
-    AssessorLike public assessor;
     SubscriberLike public subscriber;
 
     uint256 public balance;
@@ -105,8 +104,6 @@ contract Shelf is Auth, Math, Initializable {
             if (address(reserve) != address(0)) currency.approve(address(reserve), uint256(0));
             currency.approve(addr, type(uint256).max);
             reserve = ReserveLike(addr);
-        } else if (contractName == "assessor") {
-            assessor = AssessorLike(addr);
         } else if (contractName == "subscriber") {
             subscriber = SubscriberLike(addr);
         } else {
@@ -159,26 +156,14 @@ contract Shelf is Auth, Math, Initializable {
     /// @param loan the id of the loan
     /// @param currencyAmount the amount which should be borrowed
     function borrow(uint256 loan, uint256 currencyAmount) external auth {
-        require(nftLocked(loan), "nft-not-locked");
-
-        if (address(subscriber) != address(0)) {
-            subscriber.borrowEvent(loan, currencyAmount);
-        }
-
         pile.accrue(loan);
 
         balances[loan] = safeAdd(balances[loan], currencyAmount);
         balance = safeAdd(balance, currencyAmount);
 
-        // payout to shelf
-        reserve.payoutForLoans(currencyAmount);
-
         // increase NAV
         ceiling.borrow(loan, currencyAmount);
         pile.incDebt(loan, currencyAmount);
-
-        // reBalance lender interest bearing amount based on new NAV
-        assessor.reBalance();
 
         emit Borrow(loan, currencyAmount);
     }
@@ -219,9 +204,6 @@ contract Shelf is Auth, Math, Initializable {
         ceiling.repay(loan, currencyAmount);
         pile.decDebt(loan, currencyAmount);
         reserve.deposit(currencyAmount);
-
-        // reBalance lender interest bearing amount based on new NAV
-        assessor.reBalance();
 
         emit Repay(loan, currencyAmount);
     }
