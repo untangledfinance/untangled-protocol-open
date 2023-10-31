@@ -5,12 +5,6 @@ import "./auth.sol";
 import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-interface ShelfLike {
-    function shelf(uint256 loan) external view returns (address registry, uint256 tokenId);
-    function nftlookup(bytes32 nftID) external returns (uint256 loan);
-    function loanCount() external view returns (uint256);
-}
-
 interface PileLike {
     function setRate(uint256 loan, uint256 rate) external;
     function debt(uint256 loan) external view returns (uint256);
@@ -23,17 +17,8 @@ interface PileLike {
     function rateDebt(uint256 rate) external view returns (uint256);
 }
 
-/// @notice NAVFeed contract calculates the Net Asset Value of a Tinlake pool.
-/// NAV is computed as the sum of all discounted future values (fv) of ongoing loans (debt > 0) in the pool.
-/// The applied discountRate is dependant on the maturity data of the underlying collateral.
-/// The discount decreases with the maturity date approaching.
-/// To optimize the NAV calculation, the NAV is calculated as the change in discounted future values
-/// since the calculation. When loans are overdue, they are locked at their fv on the maturity date.
-/// They can then be written off, using the public writeoff method based on
-/// the default writeoff schedule, or using the override writeoff method.
 contract NAVFeed is Auth, Discounting, Initializable {
     PileLike public pile;
-    ShelfLike public shelf;
 
     /// @notice details of the underlying collateral
     struct NFTDetails {
@@ -42,6 +27,10 @@ contract NAVFeed is Auth, Discounting, Initializable {
         uint128 maturityDate;
         uint128 risk;
     }
+
+    uint256 public loanCount;
+    mapping(uint256 => uint256) public balances;
+
 
     /// @notice risk group details
     struct RiskGroup {
@@ -111,10 +100,26 @@ contract NAVFeed is Auth, Discounting, Initializable {
         uint256 rate_,
         uint256 recoveryRatePD_
     );
-    event File(bytes32 indexed name, bytes32 nftID_, uint256 maturityDate_);
     event File(bytes32 indexed name, uint256 value);
+    event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
     event File(bytes32 indexed name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_);
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
+    event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
+
+    function addLoan(uint256 loan, uint256 principalAmount, uint256 maturityDate_) external auth {
+        loanCount++;
+        setLoanMaturityDate(byte32(loan), maturityDate_);
+        pile.accrue(loan);
+
+        balances[loan] = safeAdd(balances[loan], principalAmount);
+        balance = safeAdd(balance, principalAmount);
+
+        // increase NAV
+        borrow(loan, principalAmount);
+        pile.incDebt(loan, principalAmount);
+
+        emit AddLoan(loan, principalAmount, maturityDate_);
+    }
 
     /// @notice getter function for the maturityDate
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
@@ -142,20 +147,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
     /// @return fv_ future value of the loan
     function futureValue(bytes32 nft_) public view returns (uint256 fv_) {
         return uint256(details[nft_].futureValue);
-    }
-    /// @notice getter function for the ceiling Ratio
-    /// @param riskID id of a risk group
-    /// @return ceilingRatio_ the ceiling ratio of the risk group
-
-    function ceilingRatio(uint256 riskID) public view returns (uint256 ceilingRatio_) {
-        return uint256(riskGroup[riskID].ceilingRatio);
-    }
-
-    /// @notice getter function for the threshold Ratio
-    /// @param riskID id of a risk group
-    /// @return thresholdRatio_ threshold ratio of the risk group
-    function thresholdRatio(uint256 riskID) public view returns (uint256 thresholdRatio_) {
-        return uint256(riskGroup[riskID].thresholdRatio);
     }
 
     /// @notice getter function for the recovery rate PD
@@ -186,27 +177,11 @@ contract NAVFeed is Auth, Discounting, Initializable {
         return uint128(value);
     }
 
-    /// @notice returns the ceiling of a loan
-    /// the ceiling defines the maximum amount which can be borrowed
-    /// @param loan the id of the loan
-    /// @return ceiling_ the ceiling of the loan
-    function ceiling(uint256 loan) public view virtual returns (uint256 ceiling_) {
-        bytes32 nftID_ = nftID(loan);
-        uint256 initialCeiling = rmul(nftValues(nftID_), ceilingRatio(risk(nftID_)));
-
-        if (borrowed(loan) > initialCeiling) {
-            return 0;
-        }
-
-        return safeSub(initialCeiling, borrowed(loan));
-    }
-
     /// @notice depend wires contract dependencies together
     /// @param contractName id of a contract dependency
     /// @param addr address of the contract dependency
     function depend(bytes32 contractName, address addr) external auth {
         if (contractName == "pile") pile = PileLike(addr);
-        else if (contractName == "shelf") shelf = ShelfLike(addr);
         else revert();
         emit Depend(contractName, addr);
     }
@@ -235,19 +210,10 @@ contract NAVFeed is Auth, Discounting, Initializable {
         }
     }
 
-    /// @notice file allows governance to change parameters of the contract
-    /// @param name name of the parameter group
-    /// @param nftID_ the nft id of the nft
-    /// @param maturityDate_ the maturity date of the nft
-    function file(bytes32 name, bytes32 nftID_, uint256 maturityDate_) public auth {
-        // maturity date only can be changed when there is no debt on the collateral -> futureValue == 0
-        if (name == "maturityDate") {
-            require((futureValue(nftID_) == 0), "can-not-change-maturityDate-outstanding-debt");
-            details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
-            emit File(name, nftID_, maturityDate_);
-        } else {
-            revert("unknown config parameter");
-        }
+    function setLoanMaturityDate(bytes32 nftID_, uint256 maturityDate_) public auth {
+        require((futureValue(nftID_) == 0), "can-not-change-maturityDate-outstanding-debt");
+        details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
+        emit SetLoanMaturity(nftID_, maturityDate_);
     }
 
     /// @notice file allows governance to change parameters of the contract
@@ -265,29 +231,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
             emit File(name, value);
         } else {
             revert("unknown config parameter");
-        }
-    }
-
-    /// @notice file allows governance to change parameters of the contract
-    /// @param name name of the parameter group
-    /// @param risk_ id of new risk group
-    /// @param thresholdRatio_ new threshold ratio
-    /// @param ceilingRatio_ new ceiling ratio
-    /// @param interestRate_ new interest rate of the risk group
-    function file(bytes32 name, uint256 risk_, uint256 thresholdRatio_, uint256 ceilingRatio_, uint256 interestRate_)
-        public
-        auth
-    {
-        if (name == "riskGroupNFT") {
-            require(ceilingRatio(risk_) == 0, "risk-group-in-usage");
-            riskGroup[risk_].thresholdRatio = toUint128(thresholdRatio_);
-            riskGroup[risk_].ceilingRatio = toUint128(ceilingRatio_);
-
-            // set interestRate for risk group
-            pile.file("rate", risk_, interestRate_);
-            emit File(name, risk_, thresholdRatio_, ceilingRatio_, interestRate_);
-        } else {
-            revert("unknown name");
         }
     }
 
@@ -411,10 +354,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
         }
     }
 
-    function repayEvent(uint256 loan, uint256 amount) public virtual auth {}
-    function lockEvent(uint256 loan) public virtual auth {}
-    function unlockEvent(uint256 loan) public virtual auth {}
-
     /// @notice writeOff writes off a loan if it is overdue
     /// @param loan the id of the loan
     function writeOff(uint256 loan) public {
@@ -422,7 +361,7 @@ contract NAVFeed is Auth, Discounting, Initializable {
 
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
-        require(maturityDate_ > 0 && loan < shelf.loanCount(), "loan-does-not-exist");
+        require(maturityDate_ > 0, "loan-does-not-exist");
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
@@ -578,7 +517,7 @@ contract NAVFeed is Auth, Discounting, Initializable {
     function reCalcTotalDiscount() public view returns (uint256 latestDiscount_) {
         latestDiscount_ = 0;
 
-        for (uint256 loanID = 1; loanID < shelf.loanCount(); loanID++) {
+        for (uint256 loanID = 1; loanID < loanCount; loanID++) {
             bytes32 nftID_ = nftID(loanID);
             uint256 maturityDate_ = maturityDate(nftID_);
 
@@ -623,7 +562,7 @@ contract NAVFeed is Auth, Discounting, Initializable {
 
         // switch of collateral risk group results in new: ceiling, threshold and interest rate for existing loan
         // change to new rate interestRate immediately in pile if loan debt exists
-        uint256 loan = shelf.nftlookup(nftID_);
+        uint256 loan = uint256(nftID_);
         if (pile.pie(loan) != 0) {
             pile.changeRate(loan, risk_);
         }
@@ -682,8 +621,7 @@ contract NAVFeed is Auth, Discounting, Initializable {
     /// @param loan the loan id
     /// @return nftID_ the nftID of the loan
     function nftID(uint256 loan) public view returns (bytes32 nftID_) {
-        (address registry, uint256 tokenId) = shelf.shelf(loan);
-        return nftID(registry, tokenId);
+        return bytes32(loan);
     }
 
     /// @notice returns true if the present value of a loan is zero
