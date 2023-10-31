@@ -6,11 +6,6 @@ import "./interest.sol";
 import "./auth.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-/// @notice Pile Contract to manage different interest groups of debt
-/// The following is one implementation of a debt module.
-/// It keeps track of different buckets of interest rates and is optimized for many loans per interest bucket.
-/// Each bucket holds it own rate accumulators (chi values). It calculates debt for each
-/// loan according to its interest rate category and pie value.
 contract Pile is Auth, Interest, Initializable {
     /// @notice stores all needed information of an interest rate group
     struct Rate {
@@ -29,10 +24,6 @@ contract Pile is Auth, Interest, Initializable {
     /// @notice Interest Rate Groups are identified by a `uint` and stored in a mapping
     mapping(uint256 => Rate) public rates;
 
-    /// @notice mapping of all loan debts
-    /// the debt is stored as pie
-    /// pie is defined as pie = debt/chi therefore debt = pie * chi
-    /// where chi is the accumulated interest rate index over time
     mapping(uint256 => uint256) public pie;
 
     /// @notice mapping from loan => rate
@@ -78,10 +69,6 @@ contract Pile is Auth, Interest, Initializable {
         emit File(what, rate, value);
     }
 
-    /// @notice increases the debt of a loan by a currencyAmount
-    /// a change of the loan debt updates the rate debt and total debt
-    /// @param loan the id of the loan
-    /// @param currencyAmount the amount of currency to be added to the loan debt
     function incDebt(uint256 loan, uint256 currencyAmount) external auth {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
@@ -94,10 +81,6 @@ contract Pile is Auth, Interest, Initializable {
         emit IncreaseDebt(loan, currencyAmount);
     }
 
-    /// @notice decrease the loan's debt by a currencyAmount
-    /// a change of the loan debt updates the rate debt and total debt
-    /// @param loan the id of the loan
-    /// @param currencyAmount the amount of currency to be removed from the loan debt
     function decDebt(uint256 loan, uint256 currencyAmount) external auth {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
@@ -109,9 +92,6 @@ contract Pile is Auth, Interest, Initializable {
         emit DecreaseDebt(loan, currencyAmount);
     }
 
-    /// @notice returns the current debt based on actual block.timestamp (now)
-    /// @param loan the id of the loan
-    /// @return loanDebt debt of the loan
     function debt(uint256 loan) external view returns (uint256 loanDebt) {
         uint256 rate_ = loanRates[loan];
         uint256 chi_ = rates[rate_].chi;
@@ -121,9 +101,6 @@ contract Pile is Auth, Interest, Initializable {
         return toAmount(chi_, pie[loan]);
     }
 
-    /// @notice returns the total debt of a interest rate group
-    /// @param rate the id of the interest rate group
-    /// @return totalDebt total debt of the interest rate group
     function rateDebt(uint256 rate) external view returns (uint256 totalDebt) {
         uint256 chi_ = rates[rate].chi;
         uint256 pie_ = rates[rate].pie;
@@ -134,9 +111,6 @@ contract Pile is Auth, Interest, Initializable {
         return toAmount(chi_, pie_);
     }
 
-    /// @notice set rate loanRates for a loan
-    /// @param loan the id of the loan
-    /// @param rate the id of the interest rate group
     function setRate(uint256 loan, uint256 rate) external auth {
         require(pie[loan] == 0, "non-zero-debt");
         // rate category has to be initiated
@@ -145,9 +119,6 @@ contract Pile is Auth, Interest, Initializable {
         emit SetRate(loan, rate);
     }
 
-    /// @notice change rate loanRates for a loan
-    /// @param loan the id of the loan
-    /// @param newRate the id ofthe new interest rate group
     function changeRate(uint256 loan, uint256 newRate) external auth {
         require(rates[newRate].chi != 0, "rate-group-not-set");
         uint256 currentRate = loanRates[loan];
@@ -162,14 +133,10 @@ contract Pile is Auth, Interest, Initializable {
         emit ChangeRate(loan, newRate);
     }
 
-    /// @notice calls drip on the given loan
-    /// @param loan the id of the loan
     function accrue(uint256 loan) external {
         drip(loanRates[loan]);
     }
 
-    /// @notice drip updates the chi of the rate category by compounding the interest
-    /// @param rate the id of the interest rate group
     function drip(uint256 rate) public {
         if (block.timestamp >= rates[rate].lastUpdated) {
             (uint256 chi,) =
