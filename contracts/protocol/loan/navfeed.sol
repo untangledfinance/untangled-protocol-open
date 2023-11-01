@@ -11,13 +11,16 @@ interface PileLike {
     function pie(uint256 loan) external returns (uint256);
     function changeRate(uint256 loan, uint256 newRate) external;
     function loanRates(uint256 loan) external view returns (uint256);
+    function accrue(uint256) external;
+    function incDebt(uint256, uint256) external;
+    function decDebt(uint256, uint256) external;
     function file(bytes32, uint256, uint256) external;
     function rates(uint256 rate) external view returns (uint256, uint256, uint256, uint48, uint256);
     function total() external view returns (uint256);
     function rateDebt(uint256 rate) external view returns (uint256);
 }
 
-contract NAVFeed is Auth, Discounting, Initializable {
+contract PoolNAV is Auth, Discounting, Initializable {
     PileLike public pile;
 
     /// @notice details of the underlying collateral
@@ -30,6 +33,7 @@ contract NAVFeed is Auth, Discounting, Initializable {
 
     uint256 public loanCount;
     mapping(uint256 => uint256) public balances;
+    uint256 public balance;
 
 
     /// @notice risk group details
@@ -108,14 +112,14 @@ contract NAVFeed is Auth, Discounting, Initializable {
 
     function addLoan(uint256 loan, uint256 principalAmount, uint256 maturityDate_) external auth {
         loanCount++;
-        setLoanMaturityDate(byte32(loan), maturityDate_);
+        setLoanMaturityDate(bytes32(loan), maturityDate_);
         pile.accrue(loan);
 
         balances[loan] = safeAdd(balances[loan], principalAmount);
         balance = safeAdd(balance, principalAmount);
 
         // increase NAV
-        borrow(loan, principalAmount);
+        this.borrow(loan, principalAmount);
         pile.incDebt(loan, principalAmount);
 
         emit AddLoan(loan, principalAmount, maturityDate_);
@@ -186,30 +190,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
         emit Depend(contractName, addr);
     }
 
-    /// @notice file allows governance to change parameters of the contract
-    /// @param name name of the parameter group
-    /// @param risk_ id of new risk group
-    /// @param thresholdRatio_ new threshold ratio
-    /// @param ceilingRatio_ new ceiling ratio
-    /// @param interestRate_ new interest rate of the risk group
-    /// @param recoveryRatePD_ new recovery rate PD of the risk group
-    function file(
-        bytes32 name,
-        uint256 risk_,
-        uint256 thresholdRatio_,
-        uint256 ceilingRatio_,
-        uint256 interestRate_,
-        uint256 recoveryRatePD_
-    ) public auth {
-        if (name == "riskGroup") {
-            file("riskGroupNFT", risk_, thresholdRatio_, ceilingRatio_, interestRate_);
-            riskGroup[risk_].recoveryRatePD = toUint128(recoveryRatePD_);
-            emit File(name, risk_, thresholdRatio_, ceilingRatio_, interestRate_, recoveryRatePD_);
-        } else {
-            revert("unknown name");
-        }
-    }
-
     function setLoanMaturityDate(bytes32 nftID_, uint256 maturityDate_) public auth {
         require((futureValue(nftID_) == 0), "can-not-change-maturityDate-outstanding-debt");
         details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
@@ -258,7 +238,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
 
-        require(ceiling(loan) >= amount, "borrow-amount-too-high");
         require(maturityDate_ > nnow, "maturity-date-is-not-in-the-future");
 
         if (nnow > lastNAVUpdate) {
@@ -551,8 +530,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
             return;
         }
 
-        // nfts can only be added to risk groups that are part of the score card
-        require(thresholdRatio(risk_) != 0, "risk group not defined in contract");
         details[nftID_].risk = toUint128(risk_);
 
         // update nav -> latestNAVUpdate = now
@@ -596,16 +573,6 @@ contract NAVFeed is Auth, Discounting, Initializable {
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestNAV = safeAdd(latestNAV, navIncrease);
         emit Update(nftID_, value, risk_);
-    }
-
-    // --- Utilities ---
-    /// @notice returns the threshold of a loan
-    /// if the loan debt is above the loan threshold the NFT can be seized
-    /// @param loan the id of the loan
-    /// @return threshold_ the threshold of the loan
-    function threshold(uint256 loan) public view returns (uint256 threshold_) {
-        bytes32 nftID_ = nftID(loan);
-        return rmul(nftValues(nftID_), thresholdRatio(risk(nftID_)));
     }
 
     /// @notice returns a unique id based on the nft registry and tokenId
