@@ -93,20 +93,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     // events
     event Depend(bytes32 indexed name, address addr);
-    event File(bytes32 indexed name, uint256 risk_, uint256 thresholdRatio_, uint256 ceilingRatio_, uint256 rate_);
-    event Update(bytes32 indexed nftID, uint256 value);
-    event Update(bytes32 indexed nftID, uint256 value, uint256 risk);
-    event File(
-        bytes32 indexed name,
-        uint256 risk_,
-        uint256 thresholdRatio_,
-        uint256 ceilingRatio_,
-        uint256 rate_,
-        uint256 recoveryRatePD_
-    );
-    event File(bytes32 indexed name, uint256 value);
     event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
-    event File(bytes32 indexed name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_);
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
 
@@ -170,7 +157,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function initialize(address _pool) public initializer {
         wards[_pool] = 1;
         lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
-        emit Rely(msg.sender);
+        emit Rely(_pool);
     }
 
     /// @notice converts a uint256 to uint128
@@ -208,7 +195,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
             if (oldDiscountRate != 0) {
                 reCalcNAV();
             }
-            emit File(name, value);
         } else {
             revert("unknown config parameter");
         }
@@ -223,7 +209,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
             uint256 index = writeOffGroups.length;
             writeOffGroups.push(WriteOffGroup(toUint128(writeOffPercentage_), toUint128(overdueDays_)));
             pile.file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), rate_);
-            emit File(name, rate_, writeOffPercentage_, overdueDays_);
         } else {
             revert("unknown name");
         }
@@ -514,7 +499,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function update(bytes32 nftID_, uint256 value) public auth {
         // switch of collateral risk group results in new: ceiling, threshold for existing loan
         details[nftID_].nftValues = toUint128(value);
-        emit Update(nftID_, value);
     }
 
     /// @notice updates the risk group of active loans (borrowed and unborrowed loans)
@@ -572,7 +556,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
         buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestNAV = safeAdd(latestNAV, navIncrease);
-        emit Update(nftID_, value, risk_);
     }
 
     /// @notice returns a unique id based on the nft registry and tokenId

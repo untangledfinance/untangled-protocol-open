@@ -18,6 +18,7 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
+import {IPoolNAVFactory} from '../note-sale/fab/IPoolNAVFactory.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN} from './types.sol';
 
@@ -581,6 +582,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
         require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge address');
         _setUpOpeningBlockTimestamp();
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function setUpPoolNAV() public override {
+        require(poolNAV == address(0), 'SecuritizationPool: PoolNAV already set');
+        IPoolNAVFactory poolNAVFactory = registry.getPoolNAVFactory();
+        require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
+        poolNAV = poolNAVFactory.createPoolNAV();
     }
 
     /// @dev Set the opening block timestamp
