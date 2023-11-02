@@ -5,23 +5,7 @@ import "./auth.sol";
 import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
-interface PileLike {
-    function setRate(uint256 loan, uint256 rate) external;
-    function debt(uint256 loan) external view returns (uint256);
-    function pie(uint256 loan) external returns (uint256);
-    function changeRate(uint256 loan, uint256 newRate) external;
-    function loanRates(uint256 loan) external view returns (uint256);
-    function accrue(uint256) external;
-    function incDebt(uint256, uint256) external;
-    function decDebt(uint256, uint256) external;
-    function file(bytes32, uint256, uint256) external;
-    function rates(uint256 rate) external view returns (uint256, uint256, uint256, uint48, uint256);
-    function total() external view returns (uint256);
-    function rateDebt(uint256 rate) external view returns (uint256);
-}
-
 contract PoolNAV is Auth, Discounting, Initializable {
-    PileLike public pile;
 
     /// @notice details of the underlying collateral
     struct NFTDetails {
