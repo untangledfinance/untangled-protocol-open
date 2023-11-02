@@ -6,5 +6,5 @@ import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 interface IPoolNAV {
-
+    function addLoan(uint256 loan, uint256 principalAmount, uint256 maturityDate_) external;
 }

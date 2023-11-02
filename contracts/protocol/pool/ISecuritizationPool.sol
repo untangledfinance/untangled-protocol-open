@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import '../../storage/Registry.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/Configuration.sol';
+import "./IPoolNAV.sol";
 
 abstract contract ISecuritizationPool is UntangledBase {
     event Withdraw(address originatorAddress, uint256 amount);
@@ -82,7 +83,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     address public pot;
 
     // Pool NAV address
-    address public poolNAV;
+    IPoolNAV public poolNAV;
 
     /** ENUM & STRUCT */
     enum CycleState {

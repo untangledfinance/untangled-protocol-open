@@ -11,6 +11,7 @@ import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {IPoolNAV} from './IPoolNAV.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 
 import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
@@ -293,6 +294,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             expectedAssetsValue =
                 expectedAssetsValue +
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
+//            ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenIds[i]));
+//            poolNAV.addLoan(tokenIds[i], )
         }
         amountOwedToOriginator += expectedAssetsValue;
         if (firstAssetTimestamp == 0) {
@@ -586,10 +589,11 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     /// @inheritdoc ISecuritizationPool
     function setUpPoolNAV() public override {
-        require(poolNAV == address(0), 'SecuritizationPool: PoolNAV already set');
+        require(address(poolNAV) == address(0), 'SecuritizationPool: PoolNAV already set');
         IPoolNAVFactory poolNAVFactory = registry.getPoolNAVFactory();
         require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
-        poolNAV = poolNAVFactory.createPoolNAV();
+        address poolNAVAddress = poolNAVFactory.createPoolNAV();
+        poolNAV = IPoolNAV(poolNAVAddress);
     }
 
     /// @dev Set the opening block timestamp

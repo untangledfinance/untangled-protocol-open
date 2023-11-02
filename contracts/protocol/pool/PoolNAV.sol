@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import "./auth.sol";
 import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import "./interest.sol";
 
 interface PileLike {
     function setRate(uint256 loan, uint256 rate) external;
