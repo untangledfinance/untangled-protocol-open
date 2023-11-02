@@ -80,6 +80,18 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
   return { noteTokenFactory };
 }
 
+const setUpPoolNAVFactory = async (registry, factoryAdmin) => {
+  const PoolNAVFactory = await ethers.getContractFactory('PoolNAVFactory');
+  const poolNAVFactory = await upgrades.deployProxy(PoolNAVFactory, [registry.address, factoryAdmin.address]);
+
+  const PoolNAV = await ethers.getContractFactory('PoolNAV');
+  const poolNAVImpl = await PoolNAV.deploy();
+  // await registry.setNoteToken(noteTokenImpl.address);
+  await poolNAVFactory.setPoolNAVImplementation(poolNAVImpl.address);
+
+  return { poolNAVFactory };
+}
+
 async function setup() {
   await deployments.fixture(['all']);
 
@@ -119,6 +131,7 @@ async function setup() {
   securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
   const { noteTokenFactory } = await setUpNoteTokenFactory(registry, factoryAdmin);
+  const { poolNAVFactory } = await setUpPoolNAVFactory(registry, factoryAdmin);
   const { tokenGenerationEventFactory } = await setUpTokenGenerationEventFactory(registry, factoryAdmin);
 
   const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
@@ -167,6 +180,7 @@ async function setup() {
   await registry.setSecuritizationManager(securitizationManager.address);
 
   await registry.setNoteTokenFactory(noteTokenFactory.address);
+  await registry.setPoolNAVFactory(poolNAVFactory.address);
   await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
 
   return {
@@ -186,6 +200,7 @@ async function setup() {
     go,
     uniqueIdentity,
     noteTokenFactory,
+    poolNAVFactory,
     tokenGenerationEventFactory,
     distributionOperator,
     distributionAssessor,

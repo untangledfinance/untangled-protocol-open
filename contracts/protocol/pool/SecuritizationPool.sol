@@ -18,6 +18,7 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
+import {IPoolNAVFactory} from '../note-sale/fab/IPoolNAVFactory.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN} from './types.sol';
 
@@ -74,13 +75,13 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         _;
     }
 
-    // modifier onlyPoolAdmin() {
-    //     require(
-    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
-    //         'SecuritizationPool: Not an pool admin'
-    //     );
-    //     _;
-    // }
+    modifier onlyPoolAdmin() {
+        require(
+            IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
+            'SecuritizationPool: Not an pool admin'
+        );
+        _;
+    }
 
     modifier onlyPoolAdminOrOwner() {
         require(
@@ -207,7 +208,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
-    ) external override whenNotPaused notClosingStage onlyPoolAdminOrOwner {
+    ) external override whenNotPaused notClosingStage onlyPoolAdmin {
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
             _daysPastDuesLength * 6 == _ratesAndDefaults.length &&
@@ -581,6 +582,14 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
         require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge address');
         _setUpOpeningBlockTimestamp();
+    }
+
+    /// @inheritdoc ISecuritizationPool
+    function setUpPoolNAV() public override {
+        require(poolNAV == address(0), 'SecuritizationPool: PoolNAV already set');
+        IPoolNAVFactory poolNAVFactory = registry.getPoolNAVFactory();
+        require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
+        poolNAV = poolNAVFactory.createPoolNAV();
     }
 
     /// @dev Set the opening block timestamp

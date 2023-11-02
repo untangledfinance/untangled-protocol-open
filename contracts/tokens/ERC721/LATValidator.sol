@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerUpgradeable.sol';
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import './IERC5008.sol';
 import './types.sol';
 
@@ -11,7 +12,7 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     using ECDSAUpgradeable for bytes32;
 
     bytes32 internal constant LAT_TYPEHASH =
-        keccak256('LoanAssetToken(uint256 tokenId,uint256 nonce,address validator)');
+        keccak256('LoanAssetToken(uint256[] tokenIds,uint256[] nonces,address validator)');
 
     mapping(uint256 => uint256) internal _nonces;
 
@@ -21,15 +22,19 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     }
 
     modifier requireNonceValid(LoanAssetInfo calldata info) {
-        require(_nonces[info.tokenId] == info.nonce, 'LATValidator: invalid nonce');
-
-        unchecked {
-            _nonces[info.tokenId] = _nonces[info.tokenId] + 1;
-        }
-
-        emit NonceChanged(info.tokenId, _nonces[info.tokenId]);
-
+        _checkNonceValid(info);
         _;
+    }
+
+    function _checkNonceValid(LoanAssetInfo calldata info) internal {
+        for (uint256 i = 0; i < info.tokenIds.length; i = UntangledMath.uncheckedInc(i)) {
+            require(_nonces[info.tokenIds[i]] == info.nonces[i], 'LATValidator: invalid nonce');
+            unchecked {
+                _nonces[info.tokenIds[i]] = _nonces[info.tokenIds[i]] + 1;
+            }
+
+            emit NonceChanged(info.tokenIds[i], _nonces[info.tokenIds[i]]);
+        }
     }
 
     function __LATValidator_init() internal onlyInitializing {
@@ -45,7 +50,14 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
 
     function _checkValidator(LoanAssetInfo calldata latInfo) internal view returns (bool) {
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(LAT_TYPEHASH, latInfo.tokenId, latInfo.nonce, latInfo.validator))
+            keccak256(
+                abi.encode(
+                    LAT_TYPEHASH,
+                    keccak256(abi.encodePacked(latInfo.tokenIds)),
+                    keccak256(abi.encodePacked(latInfo.nonces)),
+                    latInfo.validator
+                )
+            )
         );
 
         return latInfo.validator.isValidSignatureNow(digest, latInfo.validateSignature);

@@ -81,6 +81,9 @@ abstract contract ISecuritizationPool is UntangledBase {
     // by default it is address(this)
     address public pot;
 
+    // Pool NAV address
+    address public poolNAV;
+
     /** ENUM & STRUCT */
     enum CycleState {
         INITIATED,
@@ -220,6 +223,9 @@ abstract contract ISecuritizationPool is UntangledBase {
 
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
+
+    /// @dev Set pool NAV
+    function setUpPoolNAV() external virtual;
 
     uint256[22] private __gap;
 }
