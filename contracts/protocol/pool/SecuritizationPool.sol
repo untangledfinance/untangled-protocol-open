@@ -19,7 +19,7 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
-import {IPoolNAVFactory} from '../note-sale/fab/IPoolNAVFactory.sol';
+import {IPoolNAVFactory} from "./IPoolNAVFactory.sol";
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN} from './types.sol';
 

@@ -4,8 +4,10 @@ pragma solidity 0.8.19;
 import "./auth.sol";
 import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import "../../libraries/ConfigHelper.sol";
 
 contract PoolNAV is Auth, Discounting, Initializable {
+    using ConfigHelper for Registry;
 
     /// @notice details of the underlying collateral
     struct NFTDetails {
@@ -28,6 +30,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // fixed rate applied to each loan of the group
         uint256 fixedRate;
     }
+
+    Registry public registry;
 
     /// @notice Interest Rate Groups are identified by a `uint` and stored in a mapping
     mapping(uint256 => Rate) public rates;
@@ -167,7 +171,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         return uint256(loanDetails[loan].borrowed);
     }
 
-    function initialize(address _pool) public initializer {
+    function initialize(Registry _registry, address _pool) public initializer {
+        registry = _registry;
         wards[_pool] = 1;
         lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
 

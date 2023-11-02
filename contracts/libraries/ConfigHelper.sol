@@ -24,7 +24,7 @@ import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasin
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
 import {AcceptedInvoiceToken} from '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import {IGo} from '../interfaces/IGo.sol';
-import "../protocol/note-sale/fab/IPoolNAVFactory.sol";
+import "../protocol/pool/IPoolNAVFactory.sol";
 
 /**
  * @title ConfigHelper

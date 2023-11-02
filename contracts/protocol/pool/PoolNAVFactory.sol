@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPauseable} from '../../../base/IPauseable.sol';
-import '../../../base/UntangledBase.sol';
-import '../../../base/Factory.sol';
-import '../../../libraries/ConfigHelper.sol';
-import '../../../libraries/UntangledMath.sol';
-import {MINTER_ROLE} from '../../../tokens/ERC20/types.sol';
+import {IPauseable} from '../../base/IPauseable.sol';
+import '../../base/UntangledBase.sol';
+import '../../base/Factory.sol';
+import '../../libraries/ConfigHelper.sol';
+import '../../libraries/UntangledMath.sol';
 import "./IPoolNAVFactory.sol";
 
 contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
     using ConfigHelper for Registry;
 
-    bytes4 constant POOL_NAV_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address)'));
+    bytes4 constant POOL_NAV_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address)'));
 
     Registry public registry;
 
@@ -38,6 +37,7 @@ contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
     function createPoolNAV() external override whenNotPaused nonReentrant returns (address) {
         bytes memory _initialData = abi.encodeWithSelector(
             POOL_NAV_INIT_FUNC_SELECTOR,
+            registry,
             _msgSender()
         );
 
