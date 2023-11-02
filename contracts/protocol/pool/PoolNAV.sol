@@ -5,6 +5,7 @@ import "./auth.sol";
 import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import "../../libraries/ConfigHelper.sol";
+import "../../libraries/UnpackLoanParamtersLib.sol";
 
 contract PoolNAV is Auth, Discounting, Initializable {
     using ConfigHelper for Registry;
@@ -114,19 +115,20 @@ contract PoolNAV is Auth, Discounting, Initializable {
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
 
-    function addLoan(uint256 loan, uint256 principalAmount, uint256 maturityDate_) external auth {
+    function addLoan(uint256 loan) external auth {
+        UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
         loanCount++;
-        setLoanMaturityDate(bytes32(loan), maturityDate_);
+        setLoanMaturityDate(bytes32(loan), loanParam.termEndUnixTimestamp);
         accrue(loan);
 
-        balances[loan] = safeAdd(balances[loan], principalAmount);
-        balance = safeAdd(balance, principalAmount);
+        balances[loan] = safeAdd(balances[loan], loanParam.principalAmount);
+        balance = safeAdd(balance, loanParam.principalAmount);
 
         // increase NAV
-        this.borrow(loan, principalAmount);
-        incDebt(loan, principalAmount);
+//        borrow(loan, loanParam.principalAmount);
+        incDebt(loan, loanParam.principalAmount);
 
-        emit AddLoan(loan, principalAmount, maturityDate_);
+        emit AddLoan(loan, loanParam.principalAmount, loanParam.termEndUnixTimestamp);
     }
 
     /// @notice getter function for the maturityDate
@@ -255,7 +257,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param loan the id of the loan
     /// @param amount the amount borrowed
     /// @return navIncrease the increase of the NAV impacted by the new borrow
-    function borrow(uint256 loan, uint256 amount) external virtual auth returns (uint256 navIncrease) {
+    function borrow(uint256 loan, uint256 amount) private returns (uint256 navIncrease) {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);

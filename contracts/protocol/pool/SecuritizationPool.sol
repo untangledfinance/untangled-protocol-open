@@ -294,8 +294,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             expectedAssetsValue =
                 expectedAssetsValue +
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
-//            ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenIds[i]));
-//            poolNAV.addLoan(tokenIds[i], )
+            poolNAV.addLoan(tokenIds[i]);
         }
         amountOwedToOriginator += expectedAssetsValue;
         if (firstAssetTimestamp == 0) {

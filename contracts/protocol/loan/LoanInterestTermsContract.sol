@@ -222,7 +222,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         override
         returns (uint256 expectedPrincipal, uint256 expectedInterest)
     {
-        UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
+        UnpackLoanParamtersLib.InterestParams memory params = unpackParamsForAgreementID(agreementId);
 
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
 
@@ -270,7 +270,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     /// @inheritdoc ILoanInterestTermsContract
     function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
-        return _unpackParamsForAgreementID(agreementId).interestRate;
+        return unpackParamsForAgreementID(agreementId).interestRate;
     }
 
     /// @param amortizationUnitType AmortizationUnitType enum
@@ -300,9 +300,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
-    function _unpackParamsForAgreementID(bytes32 agreementId)
-        private
+    function unpackParamsForAgreementID(bytes32 agreementId)
+        public
         view
+        override
         returns (UnpackLoanParamtersLib.InterestParams memory params)
     {
         bytes32 parameters;
@@ -358,7 +359,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 x = UntangledMath.ONE +
                         (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
                         YEAR_LENGTH_IN_SECONDS;
-        
+
         return
             (_principalAmount *
                 UntangledMath.rpow(x,
@@ -458,7 +459,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
                 interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
             }
         }
-        
+
         return interest;
     }
 
