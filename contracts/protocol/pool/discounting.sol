@@ -23,9 +23,8 @@ contract Discounting is Math {
     /// @param loanInterestRate the interest rate of the loan
     /// @param amount of the loan (principal)
     /// @param maturityDate the maturity date of the loan
-    /// @param recoveryRatePD the recovery rate together with the probability of default of the loan
     /// @return fv future value of the loan
-    function calcFutureValue(uint256 loanInterestRate, uint256 amount, uint256 maturityDate, uint256 recoveryRatePD)
+    function calcFutureValue(uint256 loanInterestRate, uint256 amount, uint256 maturityDate)
         public
         view
         returns (uint256 fv)
@@ -36,7 +35,7 @@ contract Discounting is Math {
             timeRemaining = safeSub(maturityDate, nnow);
         }
 
-        return rmul(rmul(rpow(loanInterestRate, timeRemaining, ONE), amount), recoveryRatePD);
+        return rmul(rpow(loanInterestRate, timeRemaining, ONE), amount);
     }
 
     /// @notice substracts to values if the result smaller than 0 it returns 0

@@ -278,7 +278,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
         // calculate future value FV
         uint256 fv =
-            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, 1);
+            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_);
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -325,7 +325,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 fvDecrease = preFV;
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
-            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(risk(nftID_)));
+            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_);
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
             } else {
@@ -591,7 +591,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // update latest Discount
         Rate memory _rate = rates[loanRates[loan]];
         details[nftID_].futureValue = toUint128(
-            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(risk(nftID_)))
+            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_))
         );
 
         uint256 fvIncrease = futureValue(nftID_);
