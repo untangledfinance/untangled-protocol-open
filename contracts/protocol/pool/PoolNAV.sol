@@ -28,8 +28,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 ratePerSecond;
         // last time the rate was accumulated
         uint48 lastUpdated;
-        // fixed rate applied to each loan of the group
-        uint256 fixedRate;
     }
 
     Registry public registry;
@@ -93,6 +91,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // Write-off groups will be added as rate groups to the pile with their index
     // in the writeOffGroups array + this number
     uint256 public constant WRITEOFF_RATE_GROUP_START = 1000;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
 
     // Discount rate applied on every asset's fv depending on its maturityDate.
     // The discount decreases with the maturityDate approaching.
@@ -119,6 +118,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
         loanCount++;
         setLoanMaturityDate(bytes32(loan), loanParam.termEndUnixTimestamp);
+        uint256 _convertedInterestRate = ONE + loanParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+        if (rates[_convertedInterestRate].ratePerSecond == 0) { // If interest rate is not set
+            file("rate", _convertedInterestRate, _convertedInterestRate);
+        }
+        setRate(loan, _convertedInterestRate);
         accrue(loan);
 
         balances[loan] = safeAdd(balances[loan], loanParam.principalAmount);
@@ -248,8 +252,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 drip(rate);
             }
             rates[rate].ratePerSecond = value;
-        } else if (what == "fixedRate") {
-            rates[rate].fixedRate = value;
         } else {
             revert("unknown parameter");
         }
@@ -273,11 +275,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
         // calculate amount including fixed fee if applicatable
         Rate memory _rate = rates[loanRates[loan]];
-        uint256 amountIncludingFixed = safeAdd(amount, rmul(amount, _rate.fixedRate));
 
         // calculate future value FV
         uint256 fv =
-            calcFutureValue(_rate.ratePerSecond, amountIncludingFixed, maturityDate_, recoveryRatePD(risk(nftID_)));
+            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, 1);
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -660,7 +661,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function incDebt(uint256 loan, uint256 currencyAmount) public auth {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
-        currencyAmount = safeAdd(currencyAmount, rmul(currencyAmount, rates[rate].fixedRate));
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);
 
         pie[loan] = safeAdd(pie[loan], pieAmount);
