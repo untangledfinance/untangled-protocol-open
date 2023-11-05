@@ -125,7 +125,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         balance = safeAdd(balance, loanParam.principalAmount);
 
         // increase NAV
-//        borrow(loan, loanParam.principalAmount);
+        borrow(loan, loanParam.principalAmount);
         incDebt(loan, loanParam.principalAmount);
 
         emit AddLoan(loan, loanParam.principalAmount, loanParam.termEndUnixTimestamp);
@@ -181,6 +181,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // pre-definition for loans without interest rates
         rates[0].chi = ONE;
         rates[0].ratePerSecond = ONE;
+
+        // TODO hardcode
+        discountRate = 1000001000000000000000000000;
 
         emit Rely(_pool);
     }
