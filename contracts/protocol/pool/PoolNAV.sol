@@ -298,7 +298,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @notice repay updates the NAV for a new repaid loan
     /// @param loan the id of the loan
     /// @param amount the amount repaid
-    function repay(uint256 loan, uint256 amount) external virtual auth {
+    function repayLoan(uint256 loan, uint256 amount) external {
+        require(address(registry.getLoanRepaymentRouter()) == msg.sender, "not authorized");
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         if (nnow > lastNAVUpdate) {
             calcUpdateNAV();
@@ -309,6 +310,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 maturityDate_ = maturityDate(nftID_);
 
         // case 1: repayment of a written-off loan
+        // TODO Temporarily disable write off
+/*
         if (isLoanWrittenOff(loan)) {
             // update nav with write-off decrease
             latestNAV = secureSub(
@@ -317,8 +320,13 @@ contract PoolNAV is Auth, Discounting, Initializable {
             );
             return;
         }
+*/
 
-        uint256 _debt = safeSub(this.debt(loan), amount);
+        uint256 _currentDebt = this.debt(loan);
+        if (amount > _currentDebt) {
+            amount = _currentDebt;
+        }
+        uint256 _debt = safeSub(_currentDebt, amount);
         uint256 preFV = futureValue(nftID_);
         // in case of partial repayment, compute the fv of the remaining debt and add to the according fv bucket
         uint256 fv = 0;

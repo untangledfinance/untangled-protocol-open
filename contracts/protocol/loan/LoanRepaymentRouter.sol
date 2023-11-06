@@ -9,6 +9,7 @@ import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {IPoolNAV} from '../pool/IPoolNAV.sol';
 
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
@@ -67,6 +68,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
                 IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
                 'Unsuccessfully transferred repayment amount to Creditor.'
             );
+            IPoolNAV(poolInstance.poolNAV()).repayLoan(uint256(_agreementId), _amount);
             poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
         }
         ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
