@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../../libraries/UntangledMath.sol';
@@ -15,7 +15,7 @@ contract NAVCalculation {
     // To convert an encoded interest rate into its equivalent in percents,
     // divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
     //     10,000 => 1% interest rate
-    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
     uint256 public constant ONE_HUNDRED_PERCENT = 100 * INTEREST_RATE_SCALING_FACTOR_PERCENT;
 
     struct RiskScore {
@@ -84,7 +84,7 @@ contract NAVCalculation {
 
         return
             totalDebtAmt -
-            ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT**2);
+            ((totalDebtAmt * riskScore.probabilityOfDefault * riskScore.lossGivenDefault) / ONE_HUNDRED_PERCENT ** 2);
     }
 
     uint256[50] private __gap;

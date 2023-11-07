@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
@@ -25,19 +25,17 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         require(address(noteToken) != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
         if (noteToken.totalSupply() == 0)
-            return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - seniorDecimals);
+            return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - seniorDecimals);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 seniorAsset = poolService.getSeniorAsset(pool);
         return seniorAsset / seniorSupply;
     }
 
     /// @inheritdoc IDistributionAssessor
-    function calcCorrespondingTotalAssetValue(address tokenAddress, address investor)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function calcCorrespondingTotalAssetValue(
+        address tokenAddress,
+        address investor
+    ) external view override returns (uint256) {
         return _calcCorrespondingAssetValue(tokenAddress, investor);
     }
 
@@ -63,11 +61,10 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     }
 
     /// @notice Calculate SOT/JOT asset value for multiple investors
-    function calcCorrespondingAssetValue(address tokenAddress, address[] calldata investors)
-        external
-        view
-        returns (uint256[] memory values)
-    {
+    function calcCorrespondingAssetValue(
+        address tokenAddress,
+        address[] calldata investors
+    ) external view returns (uint256[] memory values) {
         uint256 investorsLength = investors.length;
         values = new uint256[](investorsLength);
 
@@ -94,7 +91,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         uint256 tokenDecimals = INoteToken(tokenAddress).decimals();
         require(tokenAddress != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
-        if (tokenSupply == 0) return 10**(ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
+        if (tokenSupply == 0) return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
         // address pool = address(securitizationPool);
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         uint256 juniorAsset = poolService.getJuniorAsset(address(securitizationPool));

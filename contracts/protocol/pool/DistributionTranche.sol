@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import './base/SecuritizationPoolServiceBase.sol';
@@ -30,12 +30,11 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
     }
 
     /// @inheritdoc IDistributionTranche
-    function redeemToken(
-        address noteToken,
-        address usr,
-        uint256 tokenAmount
-    ) external whenNotPaused onlyOperator {
-        require(IERC20(noteToken).transferFrom(usr, address(this), tokenAmount), 'DistributionTranche: token-transfer-failed');
+    function redeemToken(address noteToken, address usr, uint256 tokenAmount) external whenNotPaused onlyOperator {
+        require(
+            IERC20(noteToken).transferFrom(usr, address(this), tokenAmount),
+            'DistributionTranche: token-transfer-failed'
+        );
     }
 
     uint256[50] private __gap;

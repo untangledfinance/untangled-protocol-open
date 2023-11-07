@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../note-sale/MintedIncreasingInterestTGE.sol';
@@ -71,13 +71,10 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     /// @param currency The main currency used in this new pool. Ex: cUSD's address
     /// @param minFirstLossCushion Define the minimum JOT ratio in pool
     /// @dev Creates a new instance of a securitization pool. Set msg sender as owner of the new pool
-    function newPoolInstance(address currency, uint32 minFirstLossCushion)
-        external
-        whenNotPaused
-        nonReentrant
-        onlyRole(POOL_CREATOR)
-        returns (address)
-    {
+    function newPoolInstance(
+        address currency,
+        uint32 minFirstLossCushion
+    ) external whenNotPaused nonReentrant onlyRole(POOL_CREATOR) returns (address) {
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
