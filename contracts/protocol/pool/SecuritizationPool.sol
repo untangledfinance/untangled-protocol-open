@@ -239,6 +239,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 })
             );
         }
+
+        // Set discount rate
+        poolNAV.file("discountRate", riskScores[0].discountRate);
     }
 
     /// @inheritdoc ISecuritizationPool

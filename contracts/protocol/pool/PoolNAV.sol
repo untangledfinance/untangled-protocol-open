@@ -186,8 +186,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         rates[0].chi = ONE;
         rates[0].ratePerSecond = ONE;
 
-        // TODO hardcode
-        discountRate = 1000001000000000000000000000;
+        // Default discount rate
+        discountRate = ONE;
 
         emit Rely(_pool);
     }
@@ -212,7 +212,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function file(bytes32 name, uint256 value) public auth {
         if (name == "discountRate") {
             uint256 oldDiscountRate = discountRate;
-            discountRate = value;
+            discountRate = ONE + value * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             // the nav needs to be re-calculated based on the new discount rate
             // no need to recalculate it if initialized the first time
             if (oldDiscountRate != 0) {

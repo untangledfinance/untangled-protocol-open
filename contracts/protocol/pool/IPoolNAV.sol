@@ -8,4 +8,5 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 interface IPoolNAV {
     function addLoan(uint256 loan) external;
     function repayLoan(uint256 loan, uint256 amount) external;
+    function file(bytes32 name, uint256 value) external;
 }
