@@ -210,7 +210,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param riskID id of a risk group
     /// @return recoveryRatePD_ recovery rate PD of the risk group
     function recoveryRatePD(uint256 riskID) public view returns (uint256 recoveryRatePD_) {
-        return uint256(riskGroup[riskID].recoveryRatePD);
+        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(riskID);
+        return ONE - (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault)/ (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT);
     }
 
     /// @notice getter function for the borrowed amount
@@ -321,8 +322,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
         Rate memory _rate = rates[loanRates[loan]];
 
         // calculate future value FV
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         uint256 fv =
-            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_);
+            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore-1));
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -377,7 +379,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 fvDecrease = preFV;
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
-            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_);
+            ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
+            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore-1));
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
             } else {
@@ -642,8 +645,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // update latest NAV
         // update latest Discount
         Rate memory _rate = rates[loanRates[loan]];
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         details[nftID_].futureValue = toUint128(
-            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_))
+            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore-1))
         );
 
         uint256 fvIncrease = futureValue(nftID_);
