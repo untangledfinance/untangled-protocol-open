@@ -30,6 +30,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint48 lastUpdated;
     }
 
+    address public pool;
     Registry public registry;
 
     /// @notice Interest Rate Groups are identified by a `uint` and stored in a mapping
@@ -92,6 +93,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // in the writeOffGroups array + this number
     uint256 public constant WRITEOFF_RATE_GROUP_START = 1000;
     uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+    uint256 public constant ONE_HUNDRED_PERCENT = 100 * INTEREST_RATE_SCALING_FACTOR_PERCENT;
 
     // Discount rate applied on every asset's fv depending on its maturityDate.
     // The discount decreases with the maturityDate approaching.
@@ -114,10 +116,51 @@ contract PoolNAV is Auth, Discounting, Initializable {
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
 
+    function getRiskScoreByIdx(uint256 idx) private view returns (ISecuritizationPool.RiskScore memory) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        require(address(securitizationPool) != address(0), 'Pool was not deployed');
+        (
+            uint32 daysPastDue,
+            uint32 advanceRate,
+            uint32 penaltyRate,
+            uint32 interestRate,
+            uint32 probabilityOfDefault,
+            uint32 lossGivenDefault,
+            uint32 gracePeriod,
+            uint32 collectionPeriod,
+            uint32 writeOffAfterGracePeriod,
+            uint32 writeOffAfterCollectionPeriod,
+            uint32 discountRate
+        ) = securitizationPool.riskScores(idx);
+
+        return
+            ISecuritizationPool.RiskScore({
+            daysPastDue: daysPastDue,
+            advanceRate: advanceRate,
+            penaltyRate: penaltyRate,
+            interestRate: interestRate,
+            probabilityOfDefault: probabilityOfDefault,
+            lossGivenDefault: lossGivenDefault,
+            gracePeriod: gracePeriod,
+            collectionPeriod: collectionPeriod,
+            writeOffAfterGracePeriod: writeOffAfterGracePeriod,
+            writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod,
+            discountRate: discountRate
+        });
+    }
+
     function addLoan(uint256 loan) external auth {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
+        bytes32 _tokenId = bytes32(loan);
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
+        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore - 1);
+        uint256 principalAmount = loanParam.principalAmount;
+        if (loanEntry.assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
+            principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
+        }
+
         loanCount++;
-        setLoanMaturityDate(bytes32(loan), loanParam.termEndUnixTimestamp);
+        setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
         uint256 _convertedInterestRate = ONE + loanParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
         if (rates[_convertedInterestRate].ratePerSecond == 0) { // If interest rate is not set
             file("rate", _convertedInterestRate, _convertedInterestRate);
@@ -125,14 +168,14 @@ contract PoolNAV is Auth, Discounting, Initializable {
         setRate(loan, _convertedInterestRate);
         accrue(loan);
 
-        balances[loan] = safeAdd(balances[loan], loanParam.principalAmount);
-        balance = safeAdd(balance, loanParam.principalAmount);
+        balances[loan] = safeAdd(balances[loan], principalAmount);
+        balance = safeAdd(balance, principalAmount);
 
         // increase NAV
-        borrow(loan, loanParam.principalAmount);
-        incDebt(loan, loanParam.principalAmount);
+        borrow(loan, principalAmount);
+        incDebt(loan, principalAmount);
 
-        emit AddLoan(loan, loanParam.principalAmount, loanParam.termEndUnixTimestamp);
+        emit AddLoan(loan, principalAmount, loanParam.termEndUnixTimestamp);
     }
 
     /// @notice getter function for the maturityDate
@@ -180,6 +223,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function initialize(Registry _registry, address _pool) public initializer {
         registry = _registry;
         wards[_pool] = 1;
+        pool = _pool;
         lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
 
         // pre-definition for loans without interest rates
