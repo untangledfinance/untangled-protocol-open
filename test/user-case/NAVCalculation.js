@@ -346,10 +346,29 @@ describe('NAVCalculation', () => {
       // PoolNAV contract
       const poolNAVAddress = await securitizationPoolContract.poolNAV();
       poolNAV = await ethers.getContractAt('PoolNAV', poolNAVAddress);
-      console.log("Current Value", await poolNAV.currentNAV());
     });
 
-    it('should repay now', async () => {
+    it('now', async () => {
+      const currentNAV = await poolNAV.currentNAV();
+      expect(currentNAV).to.closeTo(parseEther('9.0037'), parseEther('0.001'));
+    });
+
+    it('after 10 days', async () => {
+      await time.increase(10 * ONE_DAY);
+      // const now = await time.latest();
+
+      const currentNAV = await poolNAV.currentNAV();
+      expect(currentNAV).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+    });
+    it('next 20 days', async () => {
+      await time.increase(20 * ONE_DAY);
+      const now = await time.latest();
+      // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
+      // console.log("ASSET", value);
+      const currentNAV = await poolNAV.currentNAV();
+      expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
+    });
+    xit('should repay now', async () => {
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
       await loanRepaymentRouter
           .connect(untangledAdminSigner)
@@ -357,21 +376,6 @@ describe('NAVCalculation', () => {
 
     });
 
-    xit('should return correct expected principal and expected interest', async () => {
-      await time.increase(10 * ONE_DAY);
-      const now = await time.latest();
-      const duration = YEAR_LENGTH_IN_SECONDS
-
-      // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
-      // console.log("ASSET", value);
-    });
-    xit('next 20 days', async () => {
-      await time.increase(20 * ONE_DAY);
-      const now = await time.latest();
-      const duration = YEAR_LENGTH_IN_SECONDS
-      // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
-      // console.log("ASSET", value);
-    });
     xit('overdue 3 days', async () => {
       await time.increase(3 * ONE_DAY);
       const now = await time.latest();
