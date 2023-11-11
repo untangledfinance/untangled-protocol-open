@@ -7,6 +7,7 @@ import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../tokens/ERC721/types.sol';
 
+// TODO A @KhanhPham Upgrade this
 /// @title LoanKernel
 /// @author Untangled Team
 /// @notice Upload loan and conclude loan
@@ -219,18 +220,23 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     /// @inheritdoc ILoanKernel
     /// @dev A loan, stop lending/loan terms or allow the loan loss
     function concludeLoan(address creditor, bytes32 agreementId, address termContract) public override whenNotPaused {
+        require(
+            _msgSender() == address(registry.getLoanRepaymentRouter()),
+            'LoanKernel: Only LoanRepaymentRouter'
+        );
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
         require(termContract != address(0), 'Invalid terms contract.');
 
-        if (!_assertDebtExisting(agreementId) || !_assertCompletedRepayment(agreementId)) {
-            revert('Debt does not exsits or Debtor have not completed repayment.');
+        if (!_assertDebtExisting(agreementId)) {
+            revert('Debt does not exsits');
         }
 
         require(
             ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId),
             'Cannot register conclude loan.'
         );
+
         _burnLoanAssetToken(agreementId);
     }
 
@@ -295,7 +301,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint x = 0;
         for (uint i = 0; i < latInfo.length; i = UntangledMath.uncheckedInc(i)) {
             registry.getLoanAssetToken().safeMint(orderAddresses[uint8(FillingAddressesIndex.CREDITOR)], latInfo[i]);
-            
+
             for (uint j = 0; j < latInfo[i].tokenIds.length; j = UntangledMath.uncheckedInc(j)) {
                 require(
                     debtOrder.issuance.agreementIds[x] == bytes32(latInfo[i].tokenIds[j]),

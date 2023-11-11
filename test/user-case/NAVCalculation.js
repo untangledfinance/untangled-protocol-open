@@ -368,11 +368,11 @@ describe('NAVCalculation', () => {
       const currentNAV = await poolNAV.currentNAV();
       expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
     });
-    xit('should repay now', async () => {
+    it('should repay now', async () => {
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
       await loanRepaymentRouter
           .connect(untangledAdminSigner)
-          .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
+          .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
 
     });
 

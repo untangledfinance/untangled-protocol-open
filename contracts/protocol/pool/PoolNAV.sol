@@ -7,6 +7,7 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import "../../libraries/ConfigHelper.sol";
 import "../../libraries/UnpackLoanParamtersLib.sol";
 
+// TODO A @KhanhPham Deploy this
 contract PoolNAV is Auth, Discounting, Initializable {
     using ConfigHelper for Registry;
 
@@ -344,8 +345,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @notice repay updates the NAV for a new repaid loan
     /// @param loan the id of the loan
     /// @param amount the amount repaid
-    function repayLoan(uint256 loan, uint256 amount) external {
+    function repayLoan(uint256 loan, uint256 amount) external returns (uint256) {
         require(address(registry.getLoanRepaymentRouter()) == msg.sender, "not authorized");
+        accrue(loan);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         if (nnow > lastNAVUpdate) {
             calcUpdateNAV();
@@ -372,14 +374,14 @@ contract PoolNAV is Auth, Discounting, Initializable {
         if (amount > _currentDebt) {
             amount = _currentDebt;
         }
-        uint256 _debt = safeSub(_currentDebt, amount);
+        uint256 _debt = safeSub(_currentDebt, amount); // Remaining
         uint256 preFV = futureValue(nftID_);
         // in case of partial repayment, compute the fv of the remaining debt and add to the according fv bucket
         uint256 fv = 0;
         uint256 fvDecrease = preFV;
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
-            ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
+            ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
             fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore-1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
@@ -401,6 +403,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
             overdueLoans = safeSub(overdueLoans, fvDecrease);
             latestNAV = secureSub(latestNAV, fvDecrease);
         }
+        decDebt(loan, amount);
+        return amount;
     }
 
     /// @notice borrowEvent triggers a borrow event for a loan
@@ -725,7 +729,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         emit IncreaseDebt(loan, currencyAmount);
     }
 
-    function decDebt(uint256 loan, uint256 currencyAmount) external auth {
+    function decDebt(uint256 loan, uint256 currencyAmount) private {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);

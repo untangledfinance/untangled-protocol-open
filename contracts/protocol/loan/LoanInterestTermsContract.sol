@@ -7,6 +7,7 @@ import '../../libraries/UnpackLoanParamtersLib.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../libraries/ConfigHelper.sol';
 
+// TODO A @KhanhPham Upgrade this
 /// @title LoanKernel
 /// @author Untangled Team
 /// @dev Upload loan and conclude loan
@@ -120,8 +121,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         onlyKernel
         returns (bool)
     {
-        require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
-
         registry.getLoanRegistry().setCompletedLoan(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);
