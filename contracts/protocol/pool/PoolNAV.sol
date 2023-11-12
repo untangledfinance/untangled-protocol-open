@@ -276,8 +276,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_) public auth {
         if (name == "writeOffGroup") {
             uint256 index = writeOffGroups.length;
-            writeOffGroups.push(WriteOffGroup(toUint128(writeOffPercentage_), toUint128(overdueDays_)));
-            file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), rate_);
+            uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+            uint256 _convertedWriteOffPercentage = writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
+            uint256 _convertedOverdueDays = overdueDays_ / 1 days;
+            writeOffGroups.push(WriteOffGroup(toUint128(writeOffPercentage_), toUint128(_convertedOverdueDays)));
+            file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
         } else {
             revert("unknown name");
         }
@@ -357,6 +360,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
 
+
+        uint256 _currentDebt = this.debt(loan);
+        if (amount > _currentDebt) {
+            amount = _currentDebt;
+        }
         // case 1: repayment of a written-off loan
         // TODO Temporarily disable write off
 /*
@@ -369,11 +377,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
             return;
         }
 */
-
-        uint256 _currentDebt = this.debt(loan);
-        if (amount > _currentDebt) {
-            amount = _currentDebt;
-        }
         uint256 _debt = safeSub(_currentDebt, amount); // Remaining
         uint256 preFV = futureValue(nftID_);
         // in case of partial repayment, compute the fv of the remaining debt and add to the according fv bucket

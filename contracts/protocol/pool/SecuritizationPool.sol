@@ -223,21 +223,24 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
                 'SecuritizationPool: Risk scores must be sorted'
             );
+            uint32 _interestRate = _ratesAndDefaults[i + _daysPastDuesLength * 2];
+            uint32 _writeOffAfterGracePeriod = _ratesAndDefaults[i + _daysPastDuesLength * 2];
             riskScores.push(
                 RiskScore({
                     daysPastDue: _daysPastDues[i],
                     advanceRate: _ratesAndDefaults[i],
                     penaltyRate: _ratesAndDefaults[i + _daysPastDuesLength],
-                    interestRate: _ratesAndDefaults[i + _daysPastDuesLength * 2],
+                    interestRate: _interestRate,
                     probabilityOfDefault: _ratesAndDefaults[i + _daysPastDuesLength * 3],
                     lossGivenDefault: _ratesAndDefaults[i + _daysPastDuesLength * 4],
                     discountRate: _ratesAndDefaults[i + _daysPastDuesLength * 5],
                     gracePeriod: _periodsAndWriteOffs[i],
                     collectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength],
-                    writeOffAfterGracePeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 2],
+                    writeOffAfterGracePeriod: _writeOffAfterGracePeriod,
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
+            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _daysPastDues[i]);
         }
 
         // Set discount rate
