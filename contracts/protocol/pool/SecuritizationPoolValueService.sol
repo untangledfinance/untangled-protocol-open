@@ -19,7 +19,9 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {IPoolNAV} from './IPoolNAV.sol';
 
+// TODO A @KhanhPham Upgrade this
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
@@ -219,12 +221,8 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); ++i) {
-            (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
-            expectedAssetsValue =
-                expectedAssetsValue +
-                getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
-        }
+        expectedAssetsValue =
+            expectedAssetsValue + IPoolNAV(securitizationPool.poolNAV()).currentNAV();
         for (uint256 i = 0; i < securitizationPool.getTokenAssetAddressesLength(); ++i) {
             address tokenAddress = securitizationPool.tokenAssetAddresses(i);
             INoteToken notesToken = INoteToken(tokenAddress);
