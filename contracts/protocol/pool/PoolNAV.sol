@@ -280,7 +280,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
             uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             uint256 _convertedWriteOffPercentage = writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
             uint256 _convertedOverdueDays = overdueDays_ / 1 days;
-            writeOffGroups.push(WriteOffGroup(toUint128(writeOffPercentage_), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
+            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
             file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
         } else {
             revert("unknown name");
@@ -706,13 +706,15 @@ contract PoolNAV is Auth, Discounting, Initializable {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
+        uint8 _loanRiskIndex = loanEntry.riskScore - 1;
 
         uint128 lastValidWriteOff = type(uint128).max;
         uint128 highestOverdueDays = 0;
         // it is not guaranteed that writeOff groups are sorted by overdue days
         for (uint128 i = 0; i < writeOffGroups.length; i++) {
             uint128 overdueDays = writeOffGroups[i].overdueDays;
-            if (overdueDays >= highestOverdueDays && nnow >= maturityDate_ + overdueDays * 1 days) {
+            if (writeOffGroups[i].riskIndex == _loanRiskIndex && overdueDays >= highestOverdueDays && nnow >= maturityDate_ + overdueDays * 1 days) {
                 lastValidWriteOff = i;
                 highestOverdueDays = overdueDays;
             }
@@ -771,7 +773,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         emit SetRate(loan, rate);
     }
 
-    function changeRate(uint256 loan, uint256 newRate) public auth {
+    function changeRate(uint256 loan, uint256 newRate) internal {
         require(rates[newRate].chi != 0, "rate-group-not-set");
         uint256 currentRate = loanRates[loan];
         drip(currentRate);

@@ -116,8 +116,8 @@ describe('NAVCalculation', () => {
         probabilityOfDefault: 10000, // 1%
         lossGivenDefault: 810000, // 25%
         discountRate: 100000, // 10%
-        gracePeriod: ONE_DAY_IN_SECONDS,
-        collectionPeriod: ONE_DAY_IN_SECONDS,
+        gracePeriod: ONE_DAY_IN_SECONDS*5,
+        collectionPeriod: ONE_DAY_IN_SECONDS*30,
         writeOffAfterGracePeriod: 250000, // 25%
         writeOffAfterCollectionPeriod: 1000000, // 100%
       };
@@ -130,8 +130,8 @@ describe('NAVCalculation', () => {
         probabilityOfDefault: 20000, // 2%
         lossGivenDefault: 500000, // 50%
         discountRate: 100000, // 10%
-        gracePeriod: ONE_DAY_IN_SECONDS,
-        collectionPeriod: ONE_DAY_IN_SECONDS,
+        gracePeriod: ONE_DAY_IN_SECONDS*5,
+        collectionPeriod: ONE_DAY_IN_SECONDS*30,
         writeOffAfterGracePeriod: 500000, // 50%
         writeOffAfterCollectionPeriod: 1000000, // 100%
       };
@@ -158,7 +158,7 @@ describe('NAVCalculation', () => {
         probabilityOfDefault: 40000, // 3%
         lossGivenDefault: 750000, // 50%
         discountRate: 100000, // 10%
-        gracePeriod: ONE_DAY_IN_SECONDS * 30,
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
         collectionPeriod: ONE_DAY_IN_SECONDS * 30,
         writeOffAfterGracePeriod: 500000, // 50%
         writeOffAfterCollectionPeriod: 1000000, // 100%
@@ -172,7 +172,7 @@ describe('NAVCalculation', () => {
         probabilityOfDefault: 50000, // 3%
         lossGivenDefault: 1000000, // 50%
         discountRate: 100000, // 10%
-        gracePeriod: ONE_DAY_IN_SECONDS * 30,
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
         collectionPeriod: ONE_DAY_IN_SECONDS * 30,
         writeOffAfterGracePeriod: 1000000, // 100%
         writeOffAfterCollectionPeriod: 1000000, // 100%
@@ -187,7 +187,7 @@ describe('NAVCalculation', () => {
         probabilityOfDefault: 100000, // 100%
         lossGivenDefault: 1000000, // 100%
         discountRate: 100000, // 10%
-        gracePeriod: ONE_DAY_IN_SECONDS * 30,
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
         collectionPeriod: ONE_DAY_IN_SECONDS * 30,
         writeOffAfterGracePeriod: 1000000, // 100%
         writeOffAfterCollectionPeriod: 1000000, // 100%
@@ -369,6 +369,7 @@ describe('NAVCalculation', () => {
       // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
       // console.log("ASSET", value);
       const currentNAV = await poolNAV.currentNAV();
+      console.log(`NAVCalculation.js - currentNAV ${currentNAV}`);
       expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
     });
     xit('should repay now', async () => {
@@ -379,9 +380,9 @@ describe('NAVCalculation', () => {
 
     });
 
-    it('overdue 3 days', async () => {
-      await time.increase(3 * ONE_DAY);
-      const now = await time.latest();
+    it('overdue 6 days', async () => {
+      await time.increase(6 * ONE_DAY);
+      await poolNAV.writeOff(tokenIds[0]);
       const currentNAV = await poolNAV.currentNAV();
       console.log("ASSET", currentNAV);
     });
