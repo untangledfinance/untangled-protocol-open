@@ -225,6 +225,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             );
             uint32 _interestRate = _ratesAndDefaults[i + _daysPastDuesLength * 2];
             uint32 _writeOffAfterGracePeriod = _ratesAndDefaults[i + _daysPastDuesLength * 2];
+            uint32 _writeOffAfterCollectionPeriod = _periodsAndWriteOffs[i + _daysPastDuesLength * 3];
             riskScores.push(
                 RiskScore({
                     daysPastDue: _daysPastDues[i],
@@ -240,7 +241,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
-            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _daysPastDues[i]);
+            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], i);
+            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], i);
         }
 
         // Set discount rate
