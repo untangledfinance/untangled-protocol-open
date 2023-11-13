@@ -4,8 +4,11 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '@openzeppelin/contracts/utils/Create2.sol';
+import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 
-abstract contract Factory is Initializable {
+abstract contract Factory2 is Initializable {
+    using AddressUpgradeable for address;
+
     address public factoryAdmin;
 
     function __Factory__init(address _factoryAdmin) internal onlyInitializing {
@@ -24,8 +27,20 @@ abstract contract Factory is Initializable {
     //     return bytes4(keccak256(bytes(_func)));
     // }
 
-    function _deployInstance(address _poolImplAddress, bytes memory _data) internal returns (address) {
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(_poolImplAddress, factoryAdmin, _data);
+    function _deployInstance(address _poolImplAddress, bytes memory _data, bytes32 salt) internal returns (address) {
+        ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(
+            Create2.deploy(
+                0,
+                salt,
+                abi.encodePacked(
+                    type(TransparentUpgradeableProxy).creationCode,
+                    abi.encode(_poolImplAddress, address(this), '')
+                )
+            )
+        );
+
+        proxy.changeAdmin(factoryAdmin);
+        address(proxy).functionCall(_data);
 
         return address(proxy);
     }

@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { BigNumber, constants } = require('ethers');
+const { BigNumber, constants, utils } = require('ethers');
 const {
   genSalt,
   packTermsContractParameters,
@@ -92,7 +92,7 @@ describe('LoanInterestTermsContract', () => {
     // Create new pool
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address,  utils.keccak256(Date.now()));
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

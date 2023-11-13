@@ -1,6 +1,6 @@
 const { ethers, getChainId } = require('hardhat');
 const { expect } = require('chai');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
 const { parseEther } = ethers.utils;
 
 const dayjs = require('dayjs');
@@ -49,7 +49,7 @@ describe('MinFirstLoss', () => {
     // Create new pool
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
