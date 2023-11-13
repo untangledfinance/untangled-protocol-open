@@ -297,12 +297,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
         uint256 expectedAssetsValue = 0;
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            expectedAssetsValue =
-                expectedAssetsValue +
-                poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
             poolNAV.addLoan(tokenIds[i]);
+            expectedAssetsValue =
+                expectedAssetsValue + poolNAV.debt(tokenIds[i]);
         }
         amountOwedToOriginator += expectedAssetsValue;
         if (firstAssetTimestamp == 0) {
