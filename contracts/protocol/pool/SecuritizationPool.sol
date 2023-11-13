@@ -623,5 +623,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         _unpause();
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return type(ISecuritizationPool).interfaceId == interfaceId || super.supportsInterface(interfaceId);
+    }
+
     uint256[50] private __gap;
 }

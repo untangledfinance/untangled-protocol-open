@@ -404,6 +404,7 @@ describe('Distribution', () => {
   const principalAmount = _.round(inputAmount * inputPrice * 100);
 
   describe('#LoanKernel', async () => {
+
     it('Execute fillDebtOrder successfully', async () => {
       const orderAddresses = [
         securitizationPoolContract.address,
@@ -465,7 +466,7 @@ describe('Distribution', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );
@@ -476,6 +477,8 @@ describe('Distribution', () => {
       const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
       expect(balanceOfPool).equal(tokenIds.length);
 
+
+
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
@@ -484,7 +487,7 @@ describe('Distribution', () => {
               defaultLoanAssetTokenValidator,
               [x],
               [(await loanAssetTokenContract.nonce(x)).toNumber()],
-              defaultLoanAssetTokenValidator.address
+              defaultLoanAssetTokenValidator.address,
             )
           })))
         )
@@ -545,7 +548,7 @@ describe('Distribution', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );

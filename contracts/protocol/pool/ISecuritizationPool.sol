@@ -229,5 +229,5 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
 
-    uint256[22] private __gap;
+    uint256[21] private __gap;
 }

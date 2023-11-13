@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerUpgradeable.sol';
+import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
+import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import './IERC5008.sol';
 import './types.sol';
@@ -10,11 +12,23 @@ import './types.sol';
 contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
     using ECDSAUpgradeable for bytes32;
+    using ERC165CheckerUpgradeable for address;
 
     bytes32 internal constant LAT_TYPEHASH =
         keccak256('LoanAssetToken(uint256[] tokenIds,uint256[] nonces,address validator)');
 
     mapping(uint256 => uint256) internal _nonces;
+
+    modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
+        //  requireNonceValid(latInfo) requireValidator(latInfo)
+        if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
+            if (ISecuritizationPool(creditor).validatorRequired()) {
+                _checkNonceValid(info);
+                require(_checkValidator(info), 'LATValidator: invalid validator signature');
+            }
+        }
+        _;
+    }
 
     modifier requireValidator(LoanAssetInfo calldata info) {
         require(_checkValidator(info), 'LATValidator: invalid validator signature');
