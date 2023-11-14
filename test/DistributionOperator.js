@@ -24,7 +24,7 @@ const {
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
-const { constants } = require('ethers');
+const { constants, utils } = require('ethers');
 
 const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
@@ -95,11 +95,12 @@ describe('Distribution', () => {
 
   describe('#security pool', async () => {
     it('Create pool', async () => {
+
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
 
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
@@ -111,7 +112,7 @@ describe('Distribution', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

@@ -7,9 +7,9 @@ import './ISecuritizationPool.sol';
 abstract contract ISecuritizationManager {
     Registry public registry;
 
-    event NewTGECreated(address instanceAddress);
-    event NewNotesTokenCreated(address instanceAddress);
-    event NewPoolCreated(address instanceAddress);
+    event NewTGECreated(address indexed instanceAddress);
+    event NewNotesTokenCreated(address indexed instanceAddress);
+    event NewPoolCreated(address indexed instanceAddress);
     event UpdatePotToPool(address indexed pot, address indexed pool);
 
 

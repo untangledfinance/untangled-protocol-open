@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { deployments } = require('hardhat');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
 const dayjs = require('dayjs');
 const { parseEther, formatEther } = ethers.utils;
 
@@ -46,7 +46,7 @@ describe('SecuritizationManager', () => {
 
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address, utils.keccak256(Date.now()));
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
       expect(securitizationPoolAddress).to.be.properAddress;
@@ -67,13 +67,13 @@ describe('SecuritizationManager', () => {
       const minFirstLostCushion = 101 * RATE_SCALING_FACTOR;
 
       await expect(
-        securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address)
+        securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, minFirstLostCushion, poolCreatorSigner.address, utils.keccak256(Date.now()))
       ).to.be.revertedWith(`minFirstLossCushion is greater than 100`);
     });
 
     it('only pool creator role can create pool', async () => {
       await expect(
-        securitizationManager.connect(lenderSigner).newPoolInstance(stableCoin.address, '100000', lenderSigner.address)
+        securitizationManager.connect(lenderSigner).newPoolInstance(stableCoin.address, '100000', lenderSigner.address,  utils.keccak256(Date.now()))
       ).to.be.revertedWith(
         `AccessControl: account ${lenderSigner.address.toLowerCase()} is missing role 0x3e9c05fb0f9da4414e033bb9bf190a6e2072adf7e3077394fce683220513b8d7`
       );

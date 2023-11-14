@@ -1,7 +1,7 @@
 const { artifacts } = require('hardhat');
 const { setup } = require('../setup');
 const { expect } = require('chai');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
 const { POOL_ADMIN_ROLE } = require('../constants.js');
 
@@ -21,7 +21,7 @@ describe('TokenGenerationEventFactory', () => {
   });
 
   it('#pauseUnpauseTge', async () => {
-    const poolTx = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, 0, poolCreatorSigner.address);
+    const poolTx = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, 0, poolCreatorSigner.address, utils.keccak256(Date.now()));
     const poolTxWait = await poolTx.wait();
     const poolAddress = poolTxWait.events.find((x) => x.event == 'NewPoolCreated').args.instanceAddress;
 
