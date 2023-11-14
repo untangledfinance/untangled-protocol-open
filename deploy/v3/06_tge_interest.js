@@ -9,14 +9,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log: true,
   });
 
-  console.log(await read('TokenGenerationEventFactory', { from: deployer, log: true }, 'isAdmin'));
-
-  // // // if (tgeInterest.newlyDeployed) {
-  // await execute('TokenGenerationEventFactory', {
-  //   from: deployer,
-  //   log: true,
-  // }, 'setTGEImplAddress', 0, tgeInterest.address);
-  // // // }
+  // // if (tgeInterest.newlyDeployed) {
+  await execute('TokenGenerationEventFactory', {
+    from: deployer,
+    log: true,
+  }, 'setTGEImplAddress', 0, tgeInterest.address);
+  // // }
 };
 
 module.exports.dependencies = ['registry', 'TokenGenerationEventFactory'];
