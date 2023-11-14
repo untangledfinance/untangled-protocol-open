@@ -369,7 +369,6 @@ describe('NAVCalculation', () => {
       // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
       // console.log("ASSET", value);
       const currentNAV = await poolNAV.currentNAV();
-      console.log(`NAVCalculation.js - currentNAV ${currentNAV}`);
       expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
     });
     xit('should repay now', async () => {
@@ -384,7 +383,7 @@ describe('NAVCalculation', () => {
       await time.increase(6 * ONE_DAY);
       await poolNAV.writeOff(tokenIds[0]);
       const currentNAV = await poolNAV.currentNAV();
-      console.log("ASSET", currentNAV);
+      expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.001'));
     });
     xit('overdue 6 days', async () => {
       await time.increase(3 * ONE_DAY);

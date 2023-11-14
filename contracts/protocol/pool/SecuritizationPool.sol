@@ -224,7 +224,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                 'SecuritizationPool: Risk scores must be sorted'
             );
             uint32 _interestRate = _ratesAndDefaults[i + _daysPastDuesLength * 2];
-            uint32 _writeOffAfterGracePeriod = _ratesAndDefaults[i + _daysPastDuesLength * 2];
+            uint32 _writeOffAfterGracePeriod = _periodsAndWriteOffs[i + _daysPastDuesLength * 2];
             uint32 _writeOffAfterCollectionPeriod = _periodsAndWriteOffs[i + _daysPastDuesLength * 3];
             riskScores.push(
                 RiskScore({

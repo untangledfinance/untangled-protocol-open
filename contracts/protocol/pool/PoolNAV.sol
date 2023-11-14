@@ -53,7 +53,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
     mapping(uint256 => uint256) public balances;
     uint256 public balance;
 
-
     /// @notice risk group details
     struct RiskGroup {
         // denominated in (10^27)
@@ -93,8 +92,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     // Write-off groups will be added as rate groups to the pile with their index
     // in the writeOffGroups array + this number
-    uint256 public constant WRITEOFF_RATE_GROUP_START = 1000;
-    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+    uint256 public constant WRITEOFF_RATE_GROUP_START = 1000 * ONE;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
     uint256 public constant ONE_HUNDRED_PERCENT = 100 * INTEREST_RATE_SCALING_FACTOR_PERCENT;
 
     // Discount rate applied on every asset's fv depending on its maturityDate.
@@ -213,7 +212,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @return recoveryRatePD_ recovery rate PD of the risk group
     function recoveryRatePD(uint256 riskID, uint256 termLength) public view returns (uint256 recoveryRatePD_) {
         ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(riskID);
-        return ONE - (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength)/ (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
+        return ONE - (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) / (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
     }
 
     /// @notice getter function for the borrowed amount
@@ -278,7 +277,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         if (name == "writeOffGroup") {
             uint256 index = writeOffGroups.length;
             uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
-            uint256 _convertedWriteOffPercentage = writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
+            uint256 _convertedWriteOffPercentage = ONE - writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
             uint256 _convertedOverdueDays = overdueDays_ / 1 days;
             writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
             file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
@@ -329,7 +328,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // calculate future value FV
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         uint256 fv =
-            calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore-1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+                        calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -386,7 +385,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
             ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
-            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore-1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
             } else {
@@ -596,7 +595,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
             }
 
             latestDiscount_ =
-                safeAdd(latestDiscount_, calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_));
+                            safeAdd(latestDiscount_, calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_));
         }
         return latestDiscount_;
     }
@@ -655,7 +654,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         Rate memory _rate = rates[loanRates[loan]];
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         details[nftID_].futureValue = toUint128(
-            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore-1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp))
+            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp))
         );
 
         uint256 fvIncrease = futureValue(nftID_);
