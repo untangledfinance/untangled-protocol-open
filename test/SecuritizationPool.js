@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, artifacts } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
@@ -22,6 +22,7 @@ const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
+const { utils } = require('ethers');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -45,6 +46,7 @@ describe('SecuritizationPool', () => {
   let securitizationPoolValueService;
   let factoryAdmin;
   let securitizationPoolImpl;
+  let defaultLoanAssetTokenValidator;
 
   // Wallets
   let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
@@ -65,6 +67,7 @@ describe('SecuritizationPool', () => {
       securitizationPoolValueService,
       factoryAdmin,
       securitizationPoolImpl,
+      defaultLoanAssetTokenValidator,
     } = await setup());
 
     await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
@@ -99,12 +102,34 @@ describe('SecuritizationPool', () => {
       await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
       await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
 
+      const salt = utils.keccak256(Date.now());
+
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, salt);
+
+
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+      // expect address, create2
+      const { bytecode } = await artifacts.readArtifact('TransparentUpgradeableProxy');
+      // abi.encodePacked(
+      //     type(TransparentUpgradeableProxy).creationCode,
+      //     abi.encode(_poolImplAddress, address(this), '')
+      // )
+      const initCodeHash = utils.keccak256(utils.solidityPack(['bytes', 'bytes'], [
+        `${bytecode}`,
+        utils.defaultAbiCoder.encode(['address', 'address', 'bytes'], [
+          securitizationPoolImpl.address,
+          securitizationManager.address,
+          Buffer.from([])
+        ])
+      ]));
+
+      const create2 = utils.getCreate2Address(securitizationManager.address, salt, initCodeHash);
+      expect(create2).to.be.eq(securitizationPoolAddress);
 
       securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
       await securitizationPoolContract
@@ -113,7 +138,7 @@ describe('SecuritizationPool', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

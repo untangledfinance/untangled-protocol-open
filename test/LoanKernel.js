@@ -70,7 +70,7 @@ describe('LoanKernel', () => {
       // Create new pool
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address,  utils.keccak256(Date.now()));
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

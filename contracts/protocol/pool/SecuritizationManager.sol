@@ -8,7 +8,7 @@ import {UntangledBase} from '../../base/UntangledBase.sol';
 import {IRequiresUID} from '../../interfaces/IRequiresUID.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 
-import {Factory} from '../../base/Factory.sol';
+import {Factory2} from '../../base/Factory2.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {INoteTokenFactory} from '../note-sale/fab/INoteTokenFactory.sol';
 import {ISecuritizationManager} from './ISecuritizationManager.sol';
@@ -26,7 +26,7 @@ import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEve
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
-contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager, IRequiresUID {
+contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManager, IRequiresUID {
     using ConfigHelper for Registry;
 
     event UpdateAllowedUIDTypes(uint256[] uids);
@@ -91,7 +91,8 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
     function newPoolInstance(
         address currency,
         uint32 minFirstLossCushion,
-        address poolOwner
+        address poolOwner,
+        bytes32 salt
     ) external whenNotPaused onlyRole(POOL_ADMIN) returns (address) {
         address poolImplAddress = address(registry.getSecuritizationPool());
 
@@ -102,7 +103,7 @@ contract SecuritizationManager is UntangledBase, Factory, ISecuritizationManager
             minFirstLossCushion
         );
 
-        address poolAddress = _deployInstance(poolImplAddress, _initialData);
+        address poolAddress = _deployInstance(poolImplAddress, _initialData, salt);
         ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
 
         isExistingPools[poolAddress] = true;
