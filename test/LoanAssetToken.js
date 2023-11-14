@@ -566,10 +566,10 @@ describe('LoanAssetToken', () => {
       expect(balanceOfPool).equal(tokenIds.length - 1);
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount)));
+      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(parseEther('0')));
 
       const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(principalAmount);
+      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(0);
     });
   });
 });

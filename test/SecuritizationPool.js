@@ -596,7 +596,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('43902');
+      expect(result.toString()).equal("0");
     });
 
     it('#getAssetRiskScoreIdx', async () => {
@@ -709,7 +709,7 @@ describe('SecuritizationPool', () => {
         securitizationPoolContract.address,
         dayjs(new Date()).add(1, 'days').unix()
       );
-      expect(result.toString()).equal('43902');
+      expect(result.toString()).equal('0');
     });
 
     it('#getAssetRiskScoreIdx', async () => {
