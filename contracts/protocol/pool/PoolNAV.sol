@@ -67,6 +67,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint128 percentage;
         // amount of days after the maturity days that the writeoff group can be applied by default
         uint128 overdueDays;
+        // denominated in (10^27)
+        uint128 penalty;
         uint128 riskIndex;
     }
 
@@ -280,13 +282,14 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param name name of the parameter group
     /// @param writeOffPercentage_ the write off rate in percent
     /// @param overdueDays_ the number of days after which a loan is considered overdue
-    function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_, uint256 riskIndex) public auth {
+    function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_, uint256 penaltyRate_, uint256 riskIndex) public auth {
         if (name == "writeOffGroup") {
             uint256 index = writeOffGroups.length;
             uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             uint256 _convertedWriteOffPercentage = ONE - writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
+            uint256 _convertedPenaltyRate = ONE + penaltyRate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             uint256 _convertedOverdueDays = overdueDays_ / 1 days;
-            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
+            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(_convertedPenaltyRate), toUint128(riskIndex)));
             file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
         } else {
             revert("unknown name");
