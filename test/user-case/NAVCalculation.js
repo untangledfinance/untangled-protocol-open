@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
 const {
   genSalt,
   packTermsContractParameters,
@@ -85,9 +85,10 @@ describe('NAVCalculation', () => {
     await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
     await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     // Create new pool
+    const salt = utils.keccak256(Date.now());
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address);
+      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, salt);
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
