@@ -372,26 +372,33 @@ describe('NAVCalculation', () => {
       const currentNAV = await poolNAV.currentNAV();
       expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
     });
+/*
     xit('should repay now', async () => {
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
       await loanRepaymentRouter
           .connect(untangledAdminSigner)
           .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
+*/
 
-    });
-
-    it('overdue 6 days', async () => {
+    it('overdue 6 days - should write off', async () => {
       await time.increase(6 * ONE_DAY);
       await poolNAV.writeOff(tokenIds[0]);
       const currentNAV = await poolNAV.currentNAV();
       expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.001'));
     });
-    xit('overdue 6 days', async () => {
-      await time.increase(3 * ONE_DAY);
-      const now = await time.latest();
-      const duration = YEAR_LENGTH_IN_SECONDS
-      // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
-      // console.log("ASSET", value);
+    it('overdue next 30 days - should write off', async () => {
+      await time.increase(30 * ONE_DAY);
+      await poolNAV.writeOff(tokenIds[0]);
+      const currentNAV = await poolNAV.currentNAV();
+      expect(currentNAV).to.equal(parseEther('0'));
+    });
+
+    it('should repay now', async () => {
+      await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
+      await loanRepaymentRouter
+        .connect(untangledAdminSigner)
+        .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
+
     });
   });
 
