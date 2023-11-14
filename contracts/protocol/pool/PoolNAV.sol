@@ -54,16 +54,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
     mapping(uint256 => uint256) public balances;
     uint256 public balance;
 
-    /// @notice risk group details
-    struct RiskGroup {
-        // denominated in (10^27)
-        uint128 ceilingRatio;
-        // denominated in (10^27)
-        uint128 thresholdRatio;
-        // denominated in (10^27)
-        uint128 recoveryRatePD;
-    }
-
     /// @notice details of the loan
     struct LoanDetails {
         uint128 borrowed;
@@ -82,8 +72,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     // nft => details
     mapping(bytes32 => NFTDetails) public details;
-    // risk => riskGroup
-    mapping(uint256 => RiskGroup) public riskGroup;
     // loan => details
     mapping(uint256 => LoanDetails) public loanDetails;
     // timestamp => bucket
@@ -679,15 +667,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
         buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestNAV = safeAdd(latestNAV, navIncrease);
-    }
-
-    /// @notice returns a unique id based on the nft registry and tokenId
-    /// the nftID is used to set the risk group and value for nfts
-    /// @param registry the address of the nft registry
-    /// @param tokenId the tokenId of the nft
-    /// @return nftID_ the nftID of the nft
-    function nftID(address registry, uint256 tokenId) public pure returns (bytes32 nftID_) {
-        return keccak256(abi.encodePacked(registry, tokenId));
     }
 
     /// @notice returns the nftID for the underlying collateral nft
