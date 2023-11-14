@@ -384,17 +384,15 @@ contract PoolNAV is Auth, Discounting, Initializable {
             amount = _currentDebt;
         }
         // case 1: repayment of a written-off loan
-        // TODO Temporarily disable write off
-/*
         if (isLoanWrittenOff(loan)) {
             // update nav with write-off decrease
             latestNAV = secureSub(
                 latestNAV,
                 rmul(amount, toUint128(writeOffGroups[loanRates[loan] - WRITEOFF_RATE_GROUP_START].percentage))
             );
-            return;
+
+            return amount;
         }
-*/
         uint256 _debt = safeSub(_currentDebt, amount); // Remaining
         uint256 preFV = futureValue(nftID_);
         // in case of partial repayment, compute the fv of the remaining debt and add to the according fv bucket
