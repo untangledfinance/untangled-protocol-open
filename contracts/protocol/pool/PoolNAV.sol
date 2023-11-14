@@ -120,6 +120,24 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function getRiskScoreByIdx(uint256 idx) private view returns (ISecuritizationPool.RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
+        if (idx == 0 || securitizationPool.getRiskScoresLength() == 0) {
+            // Default risk score
+            return ISecuritizationPool.RiskScore({
+                daysPastDue: 0,
+                advanceRate: 1000000,
+                penaltyRate: 0,
+                interestRate: 0,
+                probabilityOfDefault: 0,
+                lossGivenDefault: 0,
+                gracePeriod: 0,
+                collectionPeriod: 0,
+                writeOffAfterGracePeriod: 0,
+                writeOffAfterCollectionPeriod: 0,
+                discountRate: 0
+            });
+        }
+        // Because risk score upload = risk score index onchain + 1
+        idx = idx - 1;
         (
             uint32 daysPastDue,
             uint32 advanceRate,
@@ -154,7 +172,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
-        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore - 1);
+        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         if (loanEntry.assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
             principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
@@ -328,7 +346,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // calculate future value FV
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         uint256 fv =
-                        calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+                        calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -385,7 +403,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
             ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
-            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
             } else {
@@ -654,7 +672,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         Rate memory _rate = rates[loanRates[loan]];
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         details[nftID_].futureValue = toUint128(
-            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore - 1, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp))
+            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp))
         );
 
         uint256 fvIncrease = futureValue(nftID_);
