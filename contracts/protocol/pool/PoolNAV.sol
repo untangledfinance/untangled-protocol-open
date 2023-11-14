@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+// TODO License
 pragma solidity 0.8.19;
 
 import "./auth.sol";

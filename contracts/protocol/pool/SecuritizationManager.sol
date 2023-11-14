@@ -23,6 +23,7 @@ import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterest
 import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
 import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEventFactory.sol';
 
+// TODO A @KhanhPham Upgrade this
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token

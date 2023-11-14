@@ -23,6 +23,7 @@ import {IPoolNAVFactory} from "./IPoolNAVFactory.sol";
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN} from './types.sol';
 
+// TODO A @KhanhPham Upgrade this
 /**
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
