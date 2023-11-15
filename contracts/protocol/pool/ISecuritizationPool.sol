@@ -25,6 +25,12 @@ abstract contract ISecuritizationPool is UntangledBase {
     event UpdateReserve(uint256 currencyAmount);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
 
+    struct NewPoolParams {
+        address currency;
+        uint32 minFirstLossCushion;
+        bool validatorRequired;
+    }
+
     Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
@@ -81,6 +87,8 @@ abstract contract ISecuritizationPool is UntangledBase {
     // by default it is address(this)
     address public pot;
 
+    bool public validatorRequired;
+
     /** ENUM & STRUCT */
     enum CycleState {
         INITIATED,
@@ -108,7 +116,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32 discountRate;
     }
 
-    function initialize(Registry _registry, address _currency, uint32 _minFirstLossCushion) public virtual;
+    function initialize(Registry _registry, bytes memory params) public virtual;
 
     /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
     function getNFTAssetsLength() public view virtual returns (uint256);
@@ -221,5 +229,5 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
 
-    uint256[22] private __gap;
+    uint256[21] private __gap;
 }

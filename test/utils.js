@@ -88,6 +88,8 @@ const generateEntryHash = (payer, receiver, fiatAmount, dueDate, salt) => {
 
 
 const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, validator) => {
+  await signer.provider.ready;
+
   const network = await signer.provider.getNetwork();
 
   const domain = {
@@ -100,7 +102,7 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, 
   const message = {
     tokenIds,
     nonces,
-    validator
+    validator,
   };
 
   const validateSignature = await signer._signTypedData(

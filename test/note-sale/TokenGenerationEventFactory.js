@@ -21,7 +21,39 @@ describe('TokenGenerationEventFactory', () => {
   });
 
   it('#pauseUnpauseTge', async () => {
-    const poolTx = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(stableCoin.address, 0, poolCreatorSigner.address, utils.keccak256(Date.now()));
+    const poolTx = await securitizationManager.connect(poolCreatorSigner)
+
+    .newPoolInstance(
+      utils.keccak256(Date.now()),
+
+      poolCreatorSigner.address,
+      utils.defaultAbiCoder.encode([
+        {
+          type: 'tuple',
+          components: [
+            {
+              name: 'currency',
+              type: 'address'
+            },
+            {
+              name: 'minFirstLossCushion',
+              type: 'uint32'
+            },
+            {
+              name: 'validatorRequired',
+              type: 'bool'
+            }
+          ]
+        }
+      ], [
+        {
+          currency: stableCoin.address,
+          minFirstLossCushion: 0,
+          validatorRequired: true
+        }
+      ]));
+
+
     const poolTxWait = await poolTx.wait();
     const poolAddress = poolTxWait.events.find((x) => x.event == 'NewPoolCreated').args.instanceAddress;
 
