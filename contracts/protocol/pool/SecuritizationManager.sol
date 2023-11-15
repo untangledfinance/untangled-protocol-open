@@ -31,7 +31,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
     event UpdateAllowedUIDTypes(uint256[] uids);
 
-    bytes4 constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,uint32)'));
+    bytes4 constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
 
     uint256[] public allowedUIDTypes;
 
@@ -85,22 +85,28 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
     }
 
     /// @notice Creates a new securitization pool
-    /// @param currency The main currency used in this new pool. Ex: cUSD's address
-    /// @param minFirstLossCushion Define the minimum JOT ratio in pool
+    /// @param params params data of the securitization pool
     /// @dev Creates a new instance of a securitization pool. Set msg sender as owner of the new pool
     function newPoolInstance(
-        address currency,
-        uint32 minFirstLossCushion,
+        bytes32 salt,
         address poolOwner,
-        bytes32 salt
-    ) external whenNotPaused onlyRole(POOL_ADMIN) returns (address) {
+        bytes memory params
+    )
+        external
+        // address currency,
+        // uint32 minFirstLossCushion,
+        whenNotPaused
+        onlyRole(POOL_ADMIN)
+        returns (address)
+    {
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
             POOL_INIT_FUNC_SELECTOR,
             registry,
-            currency,
-            minFirstLossCushion
+            params
+            // currency,
+            // minFirstLossCushion
         );
 
         address poolAddress = _deployInstance(poolImplAddress, _initialData, salt);

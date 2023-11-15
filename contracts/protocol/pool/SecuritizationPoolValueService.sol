@@ -20,6 +20,8 @@ import {Registry} from '../../storage/Registry.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
+import {ISecuritizationPoolERC721Receiver} from './ISecuritizationPoolERC721Receiver.sol';
+
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
@@ -217,16 +219,19 @@ contract SecuritizationPoolValueService is
         uint256 timestamp
     ) external view returns (uint256 expectedAssetsValue) {
         expectedAssetsValue = 0;
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        ISecuritizationPoolERC721Receiver securitizationPool = ISecuritizationPoolERC721Receiver(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); ++i) {
-            (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
+        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
+            ISecuritizationPoolERC721Receiver.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
+            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
             expectedAssetsValue =
                 expectedAssetsValue +
-                getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
+                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
         }
-        for (uint256 i = 0; i < securitizationPool.getTokenAssetAddressesLength(); ++i) {
-            address tokenAddress = securitizationPool.tokenAssetAddresses(i);
+
+        uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
+        for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
+            address tokenAddress = securitizationPool.getTokenAssetAddresses(i);
             INoteToken notesToken = INoteToken(tokenAddress);
             if (notesToken.balanceOf(poolAddress) > 0) {
                 expectedAssetsValue =

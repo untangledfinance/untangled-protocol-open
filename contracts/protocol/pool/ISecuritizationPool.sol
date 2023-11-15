@@ -7,13 +7,12 @@ import '../../libraries/Configuration.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
     event Withdraw(address originatorAddress, uint256 amount);
-    event CollectAsset(address from, uint256 value);
+
     event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event AddTokenAssetAddress(address token);
-    event InsertNFTAsset(address token, uint256 tokenId);
-    event RemoveNFTAsset(address token, uint256 tokenId);
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
+
     event UpdateLockedDistributeBalance(
         address indexed tokenAddress,
         address indexed investor,
@@ -39,7 +38,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     //CycleState
     CycleState public state;
 
-    uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
+    // uint64 internal _firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
@@ -70,10 +69,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     //RiskScores
     RiskScore[] public riskScores;
 
-    //ERC721 Assets
-    NFTAsset[] public nftAssets;
-
-    address[] public tokenAssetAddresses;
+    // address[] public tokenAssetAddresses;
     mapping(address => bool) public existsTokenAssetAddress;
 
     mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
@@ -87,11 +83,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         CROWDSALE,
         OPEN,
         CLOSED
-    }
-
-    struct NFTAsset {
-        address tokenAddress;
-        uint256 tokenId;
     }
 
     struct RiskScore {
@@ -110,14 +101,14 @@ abstract contract ISecuritizationPool is UntangledBase {
 
     function initialize(Registry _registry, address _currency, uint32 _minFirstLossCushion) public virtual;
 
-    /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
-    function getNFTAssetsLength() public view virtual returns (uint256);
+    // // /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
+    // // function getNFTAssetsLength() public view virtual returns (uint256);
 
-    /// @notice A view function that returns an array of token asset addresses
-    function getTokenAssetAddresses() public view virtual returns (address[] memory);
+    // /// @notice A view function that returns an array of token asset addresses
+    // function getTokenAssetAddresses() public view virtual returns (address[] memory);
 
-    /// @notice A view function that returns the length of the token asset addresses array
-    function getTokenAssetAddressesLength() public view virtual returns (uint256);
+    // /// @notice A view function that returns the length of the token asset addresses array
+    // function getTokenAssetAddressesLength() public view virtual returns (uint256);
 
     /// @notice Riks scores length
     /// @return the length of the risk scores array
