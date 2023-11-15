@@ -6,15 +6,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await deployments.deploy('SecuritizationPool', {
     from: deployer,
-    proxy: {
-      // execute: {
-      //   onUpgrade: {
-      //     methodName: 'initializeV7',
-      //     args: [registry.address, proxyAdmin.address],
-      //   },
-      // },
-      proxyContract: "OpenZeppelinTransparentProxy",
-    },
+    // proxy: {
+    //   // execute: {
+    //   //   onUpgrade: {
+    //   //     methodName: 'initializeV7',
+    //   //     args: [registry.address, proxyAdmin.address],
+    //   //   },
+    //   // },
+    //   proxyContract: "OpenZeppelinTransparentProxy",
+    // },
     log: true,
   });
 
