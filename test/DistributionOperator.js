@@ -107,10 +107,8 @@ describe('SecuritizationPool', () => {
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-
         .newPoolInstance(
-          salt,
-
+          utils.keccak256(Date.now()),
           poolCreatorSigner.address,
           utils.defaultAbiCoder.encode([
             {
@@ -125,8 +123,8 @@ describe('SecuritizationPool', () => {
                   type: 'uint32'
                 },
                 {
-                  name: 'validatorRequired',
-                  type: 'bool'
+                  name: "validatorRequired",
+                  type: "bool"
                 }
               ]
             }
@@ -137,7 +135,6 @@ describe('SecuritizationPool', () => {
               validatorRequired: true
             }
           ]));
-
 
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
@@ -167,8 +164,6 @@ describe('SecuritizationPool', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-
-
         .newPoolInstance(
           utils.keccak256(Date.now()),
 
@@ -198,7 +193,6 @@ describe('SecuritizationPool', () => {
               validatorRequired: true
             }
           ]));
-
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -455,6 +449,7 @@ describe('SecuritizationPool', () => {
   const principalAmount = _.round(inputAmount * inputPrice * 100);
 
   describe('#LoanKernel', async () => {
+
     it('Execute fillDebtOrder successfully', async () => {
       const orderAddresses = [
         securitizationPoolContract.address,
@@ -514,7 +509,7 @@ describe('SecuritizationPool', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );
@@ -525,6 +520,8 @@ describe('SecuritizationPool', () => {
       const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
       expect(balanceOfPool).equal(tokenIds.length);
 
+
+
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
@@ -533,7 +530,7 @@ describe('SecuritizationPool', () => {
               defaultLoanAssetTokenValidator,
               [x],
               [(await loanAssetTokenContract.nonce(x)).toNumber()],
-              defaultLoanAssetTokenValidator.address
+              defaultLoanAssetTokenValidator.address,
             )
           })))
         )
@@ -594,7 +591,7 @@ describe('SecuritizationPool', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );

@@ -14,14 +14,14 @@ abstract contract ISecuritizationPool is UntangledBase {
     event RemoveNFTAsset(address token, uint256 tokenId);
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
-    event UpdateLockedDistributeBalance(
-        address indexed tokenAddress,
-        address indexed investor,
-        uint256 lockedDistributeBalance,
-        uint256 lockedRedeemBalances,
-        uint256 totalLockedRedeemBalances,
-        uint256 totalLockedDistributeBalance
-    );
+    // event UpdateLockedDistributeBalance(
+    //     address indexed tokenAddress,
+    //     address indexed investor,
+    //     uint256 lockedDistributeBalance,
+    //     uint256 lockedRedeemBalances,
+    //     uint256 totalLockedRedeemBalances,
+    //     uint256 totalLockedDistributeBalance
+    // );
     event UpdateReserve(uint256 currencyAmount);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
 
@@ -31,7 +31,7 @@ abstract contract ISecuritizationPool is UntangledBase {
         bool validatorRequired;
     }
 
-    Registry public registry;
+    // Registry public registry;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
@@ -51,14 +51,14 @@ abstract contract ISecuritizationPool is UntangledBase {
 
     uint256 public reserve; // Money in pool
     uint256 public amountOwedToOriginator; // Money owed to originator
-    uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
+    // uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
-    uint256 public totalLockedDistributeBalance;
+    // uint256 public totalLockedDistributeBalance;
     // token address -> total locked
-    mapping(address => uint256) public totalLockedRedeemBalances;
+    // mapping(address => uint256) public totalLockedRedeemBalances;
     // token address -> user -> locked
-    mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
-    mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
+    // mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
+    // mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
 
     uint256 public totalAssetRepaidCurrency; // Total $ (cUSD) paid for Asset repayment - repayInBatch
 
@@ -195,27 +195,27 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @notice sets the interest rate for the senior tranche of tokens
     function setInterestRateForSOT(uint32 _interestRateSOT) external virtual;
 
-    /// @notice increases the locked distribution balance for a specific investor
-    function increaseLockedDistributeBalance(
-        address tokenAddress,
-        address investor,
-        uint256 currency,
-        uint256 token
-    ) external virtual;
+    // /// @notice increases the locked distribution balance for a specific investor
+    // function increaseLockedDistributeBalance(
+    //     address tokenAddress,
+    //     address investor,
+    //     uint256 currency,
+    //     uint256 token
+    // ) external virtual;
 
     /// @dev trigger update asset value repaid
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual;
 
-    /// @notice decreases the locked distribution balance for a specific investor
-    function decreaseLockedDistributeBalance(
-        address tokenAddress,
-        address investor,
-        uint256 currency,
-        uint256 token
-    ) external virtual;
+    // /// @notice decreases the locked distribution balance for a specific investor
+    // function decreaseLockedDistributeBalance(
+    //     address tokenAddress,
+    //     address investor,
+    //     uint256 currency,
+    //     uint256 token
+    // ) external virtual;
 
-    /// @notice allows the redemption of tokens
-    function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external virtual;
+    // /// @notice allows the redemption of tokens
+    // function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external virtual;
 
     /// @notice allows the originator to withdraw from reserve
     function withdraw(uint256 amount) public virtual;

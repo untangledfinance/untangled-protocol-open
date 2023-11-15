@@ -6,18 +6,20 @@ import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 
-contract SecuritizationLockDistribution is PausableUpgradeable, ISecuritizationLockDistribution {
+abstract contract SecuritizationLockDistribution is PausableUpgradeable, ISecuritizationLockDistribution {
     using ConfigHelper for Registry;
 
     Registry public registry;
 
     // token address -> user -> locked
-    mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
-    uint256 public totalLockedDistributeBalance;
+    mapping(address => mapping(address => uint256)) public override lockedDistributeBalances;
+    uint256 public override totalLockedDistributeBalance;
 
-    mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
+    mapping(address => mapping(address => uint256)) public override lockedRedeemBalances;
     // token address -> total locked
-    mapping(address => uint256) public totalLockedRedeemBalances;
+    mapping(address => uint256) public override totalLockedRedeemBalances;
+
+    uint256 public override totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
 
     // Increase by value
     function increaseLockedDistributeBalance(
@@ -26,11 +28,38 @@ contract SecuritizationLockDistribution is PausableUpgradeable, ISecuritizationL
         uint256 currency,
         uint256 token
     ) external override whenNotPaused {
+        registry.requireDistributionOperator(_msgSender());
+
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
 
         totalLockedDistributeBalance = totalLockedDistributeBalance + currency;
         totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] + token;
+
+        emit UpdateLockedDistributeBalance(
+            tokenAddress,
+            investor,
+            lockedDistributeBalances[tokenAddress][investor],
+            lockedRedeemBalances[tokenAddress][investor],
+            totalLockedRedeemBalances[tokenAddress],
+            totalLockedDistributeBalance
+        );
+    }
+
+    function decreaseLockedDistributeBalance(
+        address tokenAddress,
+        address investor,
+        uint256 currency,
+        uint256 token
+    ) external override whenNotPaused {
+        registry.requireDistributionOperator(_msgSender());
+
+        lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
+        lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
+
+        totalLockedDistributeBalance = totalLockedDistributeBalance - currency;
+        totalRedeemedCurrency = totalRedeemedCurrency + currency;
+        totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
 
         emit UpdateLockedDistributeBalance(
             tokenAddress,

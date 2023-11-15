@@ -9,6 +9,7 @@ import '../../interfaces/INoteToken.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
+import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -56,7 +57,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @return The value in pool's underlying currency
     function _calcCorrespondingAssetValue(address tokenAddress, address investor) internal view returns (uint256) {
         INoteToken notesToken = INoteToken(tokenAddress);
-        ISecuritizationPool securitizationPool = ISecuritizationPool(notesToken.poolAddress());
+        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(notesToken.poolAddress());
 
         // if (Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
         //     tokenPrice = getSOTTokenPrice(securitizationPool);
@@ -101,9 +102,9 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
     /// @inheritdoc IDistributionAssessor
     function getCashBalance(address pool) public view override returns (uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
         return
-            IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) -
+            IERC20(ISecuritizationPool(pool).underlyingCurrency()).balanceOf(ISecuritizationPool(pool).pot()) -
             securitizationPool.totalLockedDistributeBalance();
     }
 

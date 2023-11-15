@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 import {Registry} from '../storage/Registry.sol';
 import {Configuration} from './Configuration.sol';
 
@@ -24,6 +25,8 @@ import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasin
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
 import {AcceptedInvoiceToken} from '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import {IGo} from '../interfaces/IGo.sol';
+
+import {POOL_ADMIN, OWNER_ROLE} from './types.sol';
 
 /**
  * @title ConfigHelper
@@ -122,5 +125,31 @@ library ConfigHelper {
 
     function requireDistributionOperator(Registry registry, address account) internal view {
         require(account == address(getDistributionOperator(registry)), 'SecuritizationPool: Only DistributionOperator');
+    }
+
+    function requirePoolAdmin(Registry registry, address account) internal view {
+        require(
+            IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account),
+            'SecuritizationPool: Not an pool admin'
+        );
+    }
+
+    function requirePoolAdminOrOwner(Registry registry, address pool, address account) internal view {
+        require(
+            IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account) ||
+                IAccessControlUpgradeable(pool).hasRole(OWNER_ROLE, account),
+            'SecuritizationPool: Not an pool admin or pool owner'
+        );
+    }
+
+    function requireSecuritizationManager(Registry registry, address account) internal view {
+        require(
+            account == address(getSecuritizationManager(registry)),
+            'SecuritizationPool: Only SecuritizationManager'
+        );
+    }
+
+    function requireLoanRepaymentRouter(Registry registry, address account) internal view {
+        require(account == address(getLoanRepaymentRouter(registry)), 'SecuritizationPool: Only LoanRepaymentRouter');
     }
 }

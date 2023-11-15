@@ -21,14 +21,56 @@ import {Registry} from '../../storage/Registry.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN} from './types.sol';
 
+import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
+
 /**
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
  *  Automatically invests across borrower pools using an adjustable strategy.
  * @author Untangled Team
  */
-contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
+contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
+
+    modifier onlyIssuingTokenStage() {
+        require(state != CycleState.OPEN && state != CycleState.CLOSED, 'Not in issuing token stage');
+        _;
+    }
+
+    modifier notClosingStage() {
+        require(!isClosedState(), 'SecuritizationPool: Pool in closed state');
+        _;
+    }
+
+    modifier finishRedemptionValidator() {
+        require(hasFinishedRedemption(), 'SecuritizationPool: Redemption has not finished');
+        _;
+    }
+
+    // modifier onlyPoolAdmin() {
+    //     require(
+    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
+    //         'SecuritizationPool: Not an pool admin'
+    //     );
+    //     _;
+    // }
+
+    // modifier onlyPoolAdminOrOwner() {
+    //     require(
+    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()) ||
+    //             hasRole(OWNER_ROLE, _msgSender()),
+    //         'SecuritizationPool: Not an pool admin or pool owner'
+    //     );
+    //     _;
+    // }
+
+    // modifier onlySecuritizationManager() {
+    //     require(
+    //         _msgSender() == address(registry.getSecuritizationManager()),
+    //         'SecuritizationPool: Only SecuritizationManager'
+    //     );
+    //     _;
+    // }
 
     constructor() {
         _disableInitializers();
@@ -72,62 +114,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             'SecuritizationPool: Currency approval failed'
         );
         registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
-    }
-
-    modifier onlyIssuingTokenStage() {
-        require(state != CycleState.OPEN && state != CycleState.CLOSED, 'Not in issuing token stage');
-        _;
-    }
-
-    modifier notClosingStage() {
-        require(!isClosedState(), 'SecuritizationPool: Pool in closed state');
-        _;
-    }
-
-    modifier finishRedemptionValidator() {
-        require(hasFinishedRedemption(), 'SecuritizationPool: Redemption has not finished');
-        _;
-    }
-
-    modifier onlyPoolAdmin() {
-        require(
-            IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
-            'SecuritizationPool: Not an pool admin'
-        );
-        _;
-    }
-
-    modifier onlyPoolAdminOrOwner() {
-        require(
-            IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()) ||
-                hasRole(OWNER_ROLE, _msgSender()),
-            'SecuritizationPool: Not an pool admin or pool owner'
-        );
-        _;
-    }
-
-    modifier onlySecuritizationManager() {
-        require(
-            _msgSender() == address(registry.getSecuritizationManager()),
-            'SecuritizationPool: Only SecuritizationManager'
-        );
-        _;
-    }
-
-    modifier onlyDistributionOperator() {
-        require(
-            _msgSender() == address(registry.getDistributionOperator()),
-            'SecuritizationPool: Only DistributionOperator'
-        );
-        _;
-    }
-
-    modifier onlyLoanRepaymentRouter() {
-        require(
-            _msgSender() == address(registry.getLoanRepaymentRouter()),
-            'SecuritizationPool: Only LoanRepaymentRouter'
-        );
-        _;
     }
 
     /** GETTER */
@@ -203,7 +189,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     }
 
     /// @inheritdoc ISecuritizationPool
-    function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage onlyPoolAdminOrOwner {
+    function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage {
+        registry.requirePoolAdminOrOwner(address(this), _msgSender());
         require(!hasRole(OWNER_ROLE, _pot));
 
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
@@ -222,7 +209,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         uint32[] calldata _daysPastDues,
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
-    ) external override whenNotPaused notClosingStage onlyPoolAdmin {
+    ) external override whenNotPaused notClosingStage {
+        registry.requirePoolAdmin(_msgSender());
+
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
             _daysPastDuesLength * 6 == _ratesAndDefaults.length &&
@@ -259,7 +248,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address tokenAddress,
         address toPoolAddress,
         uint256[] calldata tokenIds
-    ) external override whenNotPaused nonReentrant notClosingStage onlyPoolAdminOrOwner {
+    ) external override whenNotPaused nonReentrant notClosingStage {
+        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+
         uint256 tokenIdsLength = tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             require(_removeNFTAsset(tokenAddress, tokenIds[i]), 'SecuritizationPool: Asset does not exist');
@@ -388,7 +379,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address[] calldata tokenAddresses,
         address[] calldata recipients,
         uint256[] calldata amounts
-    ) external override whenNotPaused nonReentrant onlyPoolAdminOrOwner {
+    ) external override whenNotPaused nonReentrant {
+        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+
         uint256 tokenAddressesLength = tokenAddresses.length;
         require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
         require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
@@ -418,7 +411,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         address _tgeAddress,
         address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteType
-    ) external override whenNotPaused onlySecuritizationManager onlyIssuingTokenStage {
+    ) external override whenNotPaused onlyIssuingTokenStage {
+        registry.requireSecuritizationManager(_msgSender());
         require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
@@ -476,66 +470,65 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         emit UpdateInterestRateSOT(_interestRateSOT);
     }
 
-    // Increase by value
-    /// @inheritdoc ISecuritizationPool
-    function increaseLockedDistributeBalance(
-        address tokenAddress,
-        address investor,
-        uint256 currency,
-        uint256 token
-    ) external override whenNotPaused onlyDistributionOperator {
-        lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
-        lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
+    // // Increase by value
+    // /// @inheritdoc ISecuritizationPool
+    // function increaseLockedDistributeBalance(
+    //     address tokenAddress,
+    //     address investor,
+    //     uint256 currency,
+    //     uint256 token
+    // ) external override whenNotPaused onlyDistributionOperator {
+    //     lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
+    //     lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
 
-        totalLockedDistributeBalance = totalLockedDistributeBalance + currency;
-        totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] + token;
+    //     totalLockedDistributeBalance = totalLockedDistributeBalance + currency;
+    //     totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] + token;
 
-        emit UpdateLockedDistributeBalance(
-            tokenAddress,
-            investor,
-            lockedDistributeBalances[tokenAddress][investor],
-            lockedRedeemBalances[tokenAddress][investor],
-            totalLockedRedeemBalances[tokenAddress],
-            totalLockedDistributeBalance
-        );
-    }
+    //     emit UpdateLockedDistributeBalance(
+    //         tokenAddress,
+    //         investor,
+    //         lockedDistributeBalances[tokenAddress][investor],
+    //         lockedRedeemBalances[tokenAddress][investor],
+    //         totalLockedRedeemBalances[tokenAddress],
+    //         totalLockedDistributeBalance
+    //     );
+    // }
 
     // Decrease by value
 
-    /// @inheritdoc ISecuritizationPool
-    function decreaseLockedDistributeBalance(
-        address tokenAddress,
-        address investor,
-        uint256 currency,
-        uint256 token
-    ) external override whenNotPaused onlyDistributionOperator {
-        lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
-        lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
+    // /// @inheritdoc ISecuritizationPool
+    // function decreaseLockedDistributeBalance(
+    //     address tokenAddress,
+    //     address investor,
+    //     uint256 currency,
+    //     uint256 token
+    // ) external override whenNotPaused onlyDistributionOperator {
+    //     lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
+    //     lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
 
-        totalLockedDistributeBalance = totalLockedDistributeBalance - currency;
-        totalRedeemedCurrency = totalRedeemedCurrency + currency;
-        totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
+    //     totalLockedDistributeBalance = totalLockedDistributeBalance - currency;
+    //     totalRedeemedCurrency = totalRedeemedCurrency + currency;
+    //     totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
 
-        emit UpdateLockedDistributeBalance(
-            tokenAddress,
-            investor,
-            lockedDistributeBalances[tokenAddress][investor],
-            lockedRedeemBalances[tokenAddress][investor],
-            totalLockedRedeemBalances[tokenAddress],
-            totalLockedDistributeBalance
-        );
-    }
+    //     emit UpdateLockedDistributeBalance(
+    //         tokenAddress,
+    //         investor,
+    //         lockedDistributeBalances[tokenAddress][investor],
+    //         lockedRedeemBalances[tokenAddress][investor],
+    //         totalLockedRedeemBalances[tokenAddress],
+    //         totalLockedDistributeBalance
+    //     );
+    // }
 
     // Increase by value
-    /// @inheritdoc ISecuritizationPool
-    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused onlyLoanRepaymentRouter {
+    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused {
+        registry.requireLoanRepaymentRouter(_msgSender());
         reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
 
         emit UpdateReserve(reserve);
     }
 
-    /// @inheritdoc ISecuritizationPool
     function redeem(
         address usr,
         address notesToken,
@@ -615,12 +608,18 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
     }
 
-    function pause() public virtual override onlyPoolAdminOrOwner {
+    function pause() public virtual override {
+        registry.requirePoolAdminOrOwner(address(this), _msgSender());
         _pause();
     }
 
-    function unpause() public virtual override onlyPoolAdminOrOwner {
+    function unpause() public virtual override {
+        registry.requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return type(ISecuritizationPool).interfaceId == interfaceId || super.supportsInterface(interfaceId);
     }
 
     uint256[50] private __gap;

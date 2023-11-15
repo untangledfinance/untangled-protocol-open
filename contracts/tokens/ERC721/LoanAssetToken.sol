@@ -76,7 +76,7 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
     function safeMint(
         address creditor,
         LoanAssetInfo calldata latInfo
-    ) public virtual override onlyRole(MINTER_ROLE) requireNonceValid(latInfo) requireValidator(latInfo) {
+    ) public virtual override onlyRole(MINTER_ROLE) validateCreditor(creditor, latInfo) {
         require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
 
         for (uint i = 0; i < latInfo.tokenIds.length; i = UntangledMath.uncheckedInc(i)) {

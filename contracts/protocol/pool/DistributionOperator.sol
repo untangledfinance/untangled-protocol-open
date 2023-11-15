@@ -10,6 +10,7 @@ import {IDistributionOperator} from './IDistributionOperator.sol';
 import {IDistributionTranche} from './IDistributionTranche.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 
 /// @title DistributionOperator
 /// @author Untangled Team
@@ -46,7 +47,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             'DistributionOperator: Invalid NoteToken'
         );
         require(noteToken.balanceOf(_msgSender()) >= tokenAmount, 'DistributionOperator: Invalid token amount');
-        ISecuritizationPool securitizationPool = ISecuritizationPool(noteToken.poolAddress());
+
+        address poolAddress = noteToken.poolAddress();
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         require(
             securitizationPool.sotToken() != address(noteToken) || securitizationPool.jotToken() != address(noteToken),
@@ -70,7 +73,8 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         uint256 currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
 
-        securitizationPool.increaseLockedDistributeBalance(
+        ISecuritizationLockDistribution securitizationLockDistribute = ISecuritizationLockDistribution(poolAddress);
+        securitizationLockDistribute.increaseLockedDistributeBalance(
             address(noteToken),
             _msgSender(),
             currencyAmtToBeDistributed,
@@ -90,25 +94,17 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address pool,
         address tokenAddress
     ) private whenNotPaused nonReentrant returns (uint256) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
         uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, redeemer);
         if (currencyLocked > 0) {
-            _redeem(
-                redeemer,
-                pool,
-                tokenAddress,
-                tokenRedeem,
-                currencyLocked,
-                registry.getDistributionTranche(),
-                securitizationPool
-            );
+            _redeem(redeemer, pool, tokenAddress, tokenRedeem, currencyLocked, registry.getDistributionTranche(), pool);
 
-            if (securitizationPool.sotToken() == tokenAddress) {
-                ICrowdSale(securitizationPool.tgeAddress()).onRedeem(currencyLocked);
-            } else if (securitizationPool.jotToken() == tokenAddress) {
-                ICrowdSale(securitizationPool.secondTGEAddress()).onRedeem(currencyLocked);
+            if (ISecuritizationPool(pool).sotToken() == tokenAddress) {
+                ICrowdSale(ISecuritizationPool(pool).tgeAddress()).onRedeem(currencyLocked);
+            } else if (ISecuritizationPool(pool).jotToken() == tokenAddress) {
+                ICrowdSale(ISecuritizationPool(pool).secondTGEAddress()).onRedeem(currencyLocked);
             }
         }
 
@@ -151,9 +147,14 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 tokenAmount,
         uint256 currencyAmount,
         IDistributionTranche tranche,
-        ISecuritizationPool securitizationPool
+        address securitizationPool
     ) internal {
-        securitizationPool.decreaseLockedDistributeBalance(tokenAddress, redeemer, currencyAmount, tokenAmount);
+        ISecuritizationLockDistribution(securitizationPool).decreaseLockedDistributeBalance(
+            tokenAddress,
+            redeemer,
+            currencyAmount,
+            tokenAmount
+        );
         tranche.redeem(redeemer, pool, tokenAddress, currencyAmount, tokenAmount);
     }
 
