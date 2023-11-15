@@ -31,7 +31,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
     event UpdateAllowedUIDTypes(uint256[] uids);
 
-    bytes4 constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
+    bytes4 public constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
 
     uint256[] public allowedUIDTypes;
 
