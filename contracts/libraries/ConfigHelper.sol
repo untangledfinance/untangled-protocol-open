@@ -119,4 +119,8 @@ library ConfigHelper {
     function getGo(Registry registry) internal view returns (IGo) {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
+
+    function requireDistributionOperator(Registry registry, address account) internal view {
+        require(account == address(getDistributionOperator(registry)), 'SecuritizationPool: Only DistributionOperator');
+    }
 }

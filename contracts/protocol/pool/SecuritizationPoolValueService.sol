@@ -219,19 +219,19 @@ contract SecuritizationPoolValueService is
         uint256 timestamp
     ) external view returns (uint256 expectedAssetsValue) {
         expectedAssetsValue = 0;
-        ISecuritizationPoolERC721Receiver securitizationPool = ISecuritizationPoolERC721Receiver(poolAddress);
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
-            ISecuritizationPoolERC721Receiver.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
-            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
+            // ISecuritizationPoolERC721Receiver.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
+            (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
             expectedAssetsValue =
                 expectedAssetsValue +
-                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
+                getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
         }
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
-            address tokenAddress = securitizationPool.getTokenAssetAddresses(i);
+            address tokenAddress = securitizationPool.tokenAssetAddresses(i);
             INoteToken notesToken = INoteToken(tokenAddress);
             if (notesToken.balanceOf(poolAddress) > 0) {
                 expectedAssetsValue =
