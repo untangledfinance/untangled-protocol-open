@@ -124,13 +124,13 @@ library ConfigHelper {
     }
 
     function requireDistributionOperator(Registry registry, address account) internal view {
-        require(account == address(getDistributionOperator(registry)), 'SecuritizationPool: Only DistributionOperator');
+        require(account == address(getDistributionOperator(registry)), 'Registry: Only DistributionOperator');
     }
 
     function requirePoolAdmin(Registry registry, address account) internal view {
         require(
             IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account),
-            'SecuritizationPool: Not an pool admin'
+            'Registry: Not an pool admin'
         );
     }
 
@@ -138,18 +138,23 @@ library ConfigHelper {
         require(
             IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account) ||
                 IAccessControlUpgradeable(pool).hasRole(OWNER_ROLE, account),
-            'SecuritizationPool: Not an pool admin or pool owner'
+            'Registry: Not an pool admin or pool owner'
         );
     }
 
     function requireSecuritizationManager(Registry registry, address account) internal view {
-        require(
-            account == address(getSecuritizationManager(registry)),
-            'SecuritizationPool: Only SecuritizationManager'
-        );
+        require(account == address(getSecuritizationManager(registry)), 'Registry: Only SecuritizationManager');
     }
 
     function requireLoanRepaymentRouter(Registry registry, address account) internal view {
-        require(account == address(getLoanRepaymentRouter(registry)), 'SecuritizationPool: Only LoanRepaymentRouter');
+        require(account == address(getLoanRepaymentRouter(registry)), 'Registry: Only LoanRepaymentRouter');
+    }
+
+    function requireLoanKernel(Registry registry, address account) internal view {
+        require(account == address(getLoanKernel(registry)), 'Registry: Only LoanKernel');
+    }
+
+    function requireLoanInterestTermsContract(Registry registry, address account) internal view {
+        require(account == address(getLoanInterestTermsContract(registry)), 'Registry: Only LoanInterestTermsContract');
     }
 }

@@ -90,11 +90,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
     /// @param redeemer Redeemer wallet address
     /// @param pool Pool address which issued note token
     /// @param tokenAddress Note token address
-    function _redeem(
-        address redeemer,
-        address pool,
-        address tokenAddress
-    ) private whenNotPaused nonReentrant returns (uint256) {
+    function _redeem(address redeemer, address pool, address tokenAddress) private returns (uint256) {
         ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
 
         uint256 currencyLocked = securitizationPool.lockedDistributeBalances(tokenAddress, redeemer);
@@ -119,7 +115,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address pool,
         INoteToken noteToken,
         uint256 tokenAmount
-    ) public whenNotPaused returns (uint256) {
+    ) public whenNotPaused nonReentrant returns (uint256) {
         _makeRedeemRequest(noteToken, tokenAmount);
         uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
         address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
@@ -133,7 +129,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         address[] calldata pools,
         INoteToken[] calldata noteTokens,
         uint256[] calldata tokenAmounts
-    ) public whenNotPaused {
+    ) public whenNotPaused nonReentrant {
         address redeemer = _msgSender();
         for (uint256 i = 0; i < pools.length; i = UntangledMath.uncheckedInc(i)) {
             _makeRedeemRequest(noteTokens[i], tokenAmounts[i]);

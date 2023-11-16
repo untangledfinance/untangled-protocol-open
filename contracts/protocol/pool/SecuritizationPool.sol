@@ -41,8 +41,6 @@ contract SecuritizationPool is
 {
     using ConfigHelper for Registry;
 
-
-
     constructor() {
         _disableInitializers();
     }
@@ -509,7 +507,6 @@ contract SecuritizationPool is
 
     //     emit UpdateReserve(reserve);
     // }
-
 
     /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {

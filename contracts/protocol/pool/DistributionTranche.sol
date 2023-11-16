@@ -11,11 +11,6 @@ import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTranche {
     using ConfigHelper for Registry;
 
-    modifier onlyOperator() {
-        require(_msgSender() == address(registry.getDistributionOperator()), 'DistributionTranche: Only Operator');
-        _;
-    }
-
     /// @inheritdoc IDistributionTranche
     function redeem(
         address usr,
@@ -23,7 +18,9 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
         address notesToken,
         uint256 currencyAmount,
         uint256 tokenAmount
-    ) external whenNotPaused onlyOperator {
+    ) external whenNotPaused {
+        registry.requireDistributionOperator(_msgSender());
+
         if (tokenAmount > 0) {
             require(
                 IERC20Upgradeable(notesToken).transfer(pool, tokenAmount),
@@ -34,7 +31,9 @@ contract DistributionTranche is SecuritizationPoolServiceBase, IDistributionTran
     }
 
     /// @inheritdoc IDistributionTranche
-    function redeemToken(address noteToken, address usr, uint256 tokenAmount) external whenNotPaused onlyOperator {
+    function redeemToken(address noteToken, address usr, uint256 tokenAmount) external whenNotPaused {
+        registry.requireDistributionOperator(_msgSender());
+
         require(
             IERC20Upgradeable(noteToken).transferFrom(usr, address(this), tokenAmount),
             'DistributionTranche: token-transfer-failed'
