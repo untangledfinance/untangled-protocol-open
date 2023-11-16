@@ -140,7 +140,7 @@ describe('LoanInterestTermsContract', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
         loanInterestTermsContract.connect(untangledAdminSigner).registerTermStart(agreementID)
-      ).to.be.revertedWith('LoanInterestTermsContract: Only for LoanKernel.');
+      ).to.be.revertedWith('Registry: Only LoanKernel');
     });
     it('should start loan successfully', async () => {
       await registry.setLoanKernel(impersonationKernel.address);
@@ -298,7 +298,7 @@ describe('LoanInterestTermsContract', () => {
       const tokenAddress = stableCoin.address;
       await expect(
         loanInterestTermsContract.registerRepayment(agreement, payer, beneficiary, unitOfRepayment, tokenAddress)
-      ).to.be.revertedWith('LoanInterestTermsContract: Only for Repayment Router.');
+      ).to.be.revertedWith('Registry: Only LoanRepaymentRouter');
     });
     it('should execute successfully', async () => {
       await time.increase(YEAR_LENGTH_IN_SECONDS);
@@ -365,7 +365,7 @@ describe('LoanInterestTermsContract', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
         loanInterestTermsContract.connect(untangledAdminSigner).registerConcludeLoan(agreementID)
-      ).to.be.revertedWith('LoanInterestTermsContract: Only for LoanKernel.');
+      ).to.be.revertedWith('Registry: Only LoanKernel');
     });
     it('should revert if repayment for loan has not been completed', async () => {
       await impersonateAccount(loanKernel.address);
