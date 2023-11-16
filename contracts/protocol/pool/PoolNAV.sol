@@ -28,8 +28,14 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 chi;
         // interest rate per second
         uint256 ratePerSecond;
+        // penalty rate per second
+        uint256 penaltyRatePerSecond;
+        // accumlated penalty rate index over time
+        uint256 penaltyChi;
         // last time the rate was accumulated
         uint48 lastUpdated;
+        // the period after overdue to start penalty
+        uint48 gracePeriod;
     }
 
     address public pool;
@@ -42,6 +48,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     /// @notice mapping from loan => rate
     mapping(uint256 => uint256) public loanRates;
+    /// @notice mapping from loan => grace time
+    mapping(uint256 => uint256) public loanGraceTime;
 
     /// Events
     event IncreaseDebt(uint256 indexed loan, uint256 currencyAmount);
@@ -67,8 +75,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint128 percentage;
         // amount of days after the maturity days that the writeoff group can be applied by default
         uint128 overdueDays;
-        // denominated in (10^27)
-        uint128 penalty;
         uint128 riskIndex;
     }
 
@@ -91,6 +97,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // The discount decreases with the maturityDate approaching.
     // denominated in (10^27)
     uint256 public discountRate;
+    uint256 public penaltyRate;
 
     // latestNAV is calculated in case of borrows & repayments between epoch executions.
     // It decreases/increases the NAV by the repaid/borrowed amount without running the NAV calculation routine.
@@ -282,15 +289,17 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param name name of the parameter group
     /// @param writeOffPercentage_ the write off rate in percent
     /// @param overdueDays_ the number of days after which a loan is considered overdue
-    function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_, uint256 penaltyRate_, uint256 riskIndex) public auth {
+    function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_, uint256 penaltyRate_, uint256 gracePeriod_, uint256 riskIndex) public auth {
         if (name == "writeOffGroup") {
             uint256 index = writeOffGroups.length;
             uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             uint256 _convertedWriteOffPercentage = ONE - writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
-            uint256 _convertedPenaltyRate = ONE + penaltyRate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+            uint256 _convertedPenaltyRate = ONE + (ONE * penaltyRate_ * rate_) / (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
             uint256 _convertedOverdueDays = overdueDays_ / 1 days;
-            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(_convertedPenaltyRate), toUint128(riskIndex)));
+            uint256 _convertedGracePeriod = gracePeriod_ / 1 days;
+            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
             file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
+            file("penalty", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedPenaltyRate, uint48(_convertedGracePeriod));
         } else {
             revert("unknown name");
         }
@@ -311,6 +320,24 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 drip(rate);
             }
             rates[rate].ratePerSecond = value;
+        } else {
+            revert("unknown parameter");
+        }
+
+    }
+
+    function file(bytes32 what, uint256 rate, uint256 value, uint48 gracePeriod) public auth {
+        if (what == "penalty") {
+            require(value != 0, "penalty-per-second-can-not-be-0");
+            if (rates[rate].penaltyChi == 0) {
+                rates[rate].penaltyChi = ONE;
+                rates[rate].lastUpdated = uint48(block.timestamp);
+            } else {
+                drip(rate);
+            }
+
+            rates[rate].penaltyRatePerSecond = value;
+            rates[rate].gracePeriod = gracePeriod;
         } else {
             revert("unknown parameter");
         }
@@ -559,6 +586,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function currentWriteOffs() public view returns (uint256 sum) {
         for (uint256 i = 0; i < writeOffGroups.length; i++) {
             // multiply writeOffGroupDebt with the writeOff rate
+
             sum =
                 safeAdd(sum, rmul(rateDebt(WRITEOFF_RATE_GROUP_START + i), uint256(writeOffGroups[i].percentage)));
         }
@@ -747,20 +775,26 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function debt(uint256 loan) public view returns (uint256 loanDebt) {
         uint256 rate_ = loanRates[loan];
         uint256 chi_ = rates[rate_].chi;
+        uint256 penaltyChi_ = rates[rate_].penaltyChi;
         if (block.timestamp >= rates[rate_].lastUpdated) {
             chi_ = chargeInterest(rates[rate_].chi, rates[rate_].ratePerSecond, rates[rate_].lastUpdated);
+            penaltyChi_ = chargeInterest(rates[rate_].penaltyChi, rates[rate_].penaltyRatePerSecond, rates[rate_].lastUpdated);
         }
-        return toAmount(chi_, pie[loan]);
+//        return toAmount(chi_, pie[loan]);
+        return toAmount(penaltyChi_, toAmount(chi_, pie[loan]));
     }
 
     function rateDebt(uint256 rate) public view returns (uint256 totalDebt) {
         uint256 chi_ = rates[rate].chi;
+        uint256 penaltyChi_ = rates[rate].penaltyChi;
         uint256 pie_ = rates[rate].pie;
 
         if (block.timestamp >= rates[rate].lastUpdated) {
             chi_ = chargeInterest(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated);
+            penaltyChi_ = chargeInterest(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, rates[rate].lastUpdated);
         }
-        return toAmount(chi_, pie_);
+//        return toAmount(chi_, pie_);
+        return toAmount(penaltyChi_, toAmount(chi_, pie_));
     }
 
     function setRate(uint256 loan, uint256 rate) public auth {
@@ -794,6 +828,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
             (uint256 chi,) =
                             compounding(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated, rates[rate].pie);
             rates[rate].chi = chi;
+            if (rates[rate].penaltyRatePerSecond != 0) {
+                (uint256 penaltyChi,) = compounding(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, rates[rate].lastUpdated, rates[rate].pie);
+                rates[rate].penaltyChi = penaltyChi;
+            }
             rates[rate].lastUpdated = uint48(block.timestamp);
         }
     }

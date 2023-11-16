@@ -242,8 +242,8 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
-            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], _ratesAndDefaults[i + _daysPastDuesLength], i);
-            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], _ratesAndDefaults[i + _daysPastDuesLength], i);
+            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], _ratesAndDefaults[i + _daysPastDuesLength], _periodsAndWriteOffs[i], i);
+            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], _ratesAndDefaults[i + _daysPastDuesLength], _periodsAndWriteOffs[i], i);
         }
 
         // Set discount rate
