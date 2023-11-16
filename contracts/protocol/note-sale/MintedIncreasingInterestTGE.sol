@@ -60,7 +60,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     /// @notice Calculate token price
     /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getSOTTokenPrice(ISecuritizationPool(pool));
+        return registry.getDistributionAssessor().getSOTTokenPrice(pool);
     }
 
     /// @notice Get amount of token can receive from an amount of currency

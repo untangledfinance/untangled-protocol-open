@@ -5,11 +5,16 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {RegistryInjection} from './RegistryInjection.sol';
 
-abstract contract SecuritizationLockDistribution is PausableUpgradeable, ISecuritizationLockDistribution {
+abstract contract SecuritizationLockDistribution is
+    PausableUpgradeable,
+    RegistryInjection,
+    ISecuritizationLockDistribution
+{
     using ConfigHelper for Registry;
 
-    Registry public registry;
+    // Registry public override registry;
 
     // token address -> user -> locked
     mapping(address => mapping(address => uint256)) public override lockedDistributeBalances;
@@ -44,6 +49,9 @@ abstract contract SecuritizationLockDistribution is PausableUpgradeable, ISecuri
             totalLockedRedeemBalances[tokenAddress],
             totalLockedDistributeBalance
         );
+
+        emit UpdateTotalRedeemedCurrency(totalRedeemedCurrency, tokenAddress);
+        emit UpdateTotalLockedDistributeBalance(totalLockedDistributeBalance, tokenAddress);
     }
 
     function decreaseLockedDistributeBalance(
@@ -69,5 +77,8 @@ abstract contract SecuritizationLockDistribution is PausableUpgradeable, ISecuri
             totalLockedRedeemBalances[tokenAddress],
             totalLockedDistributeBalance
         );
+
+        emit UpdateTotalRedeemedCurrency(totalRedeemedCurrency, tokenAddress);
+        emit UpdateTotalLockedDistributeBalance(totalLockedDistributeBalance, tokenAddress);
     }
 }

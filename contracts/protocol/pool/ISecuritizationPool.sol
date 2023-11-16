@@ -12,7 +12,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
-    event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     // event UpdateLockedDistributeBalance(
     //     address indexed tokenAddress,
@@ -22,8 +21,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     //     uint256 totalLockedRedeemBalances,
     //     uint256 totalLockedDistributeBalance
     // );
-    event UpdateReserve(uint256 currencyAmount);
-    event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
+    // event UpdateReserve(uint256 currencyAmount);
 
     struct NewPoolParams {
         address currency;
@@ -36,20 +34,20 @@ abstract contract ISecuritizationPool is UntangledBase {
     bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
 
-    address public tgeAddress;
-    address public secondTGEAddress;
-    address public sotToken;
-    address public jotToken;
-    address public underlyingCurrency;
+    // address public tgeAddress;
+    // address public secondTGEAddress;
+    // address public sotToken;
+    // address public jotToken;
+    // address public underlyingCurrency;
 
-    //CycleState
-    CycleState public state;
+    // //CycleState
+    // CycleState public state;
 
     uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
     uint64 public openingBlockTimestamp;
     uint64 public termLengthInSeconds;
 
-    uint256 public reserve; // Money in pool
+    // uint256 public reserve; // Money in pool
     uint256 public amountOwedToOriginator; // Money owed to originator
     // uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
     // for lending operation
@@ -60,18 +58,18 @@ abstract contract ISecuritizationPool is UntangledBase {
     // mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
     // mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
 
-    uint256 public totalAssetRepaidCurrency; // Total $ (cUSD) paid for Asset repayment - repayInBatch
+    // uint256 public totalAssetRepaidCurrency; // Total $ (cUSD) paid for Asset repayment - repayInBatch
 
     // user -> amount
     mapping(address => uint256) public paidInterestAmountSOT;
     mapping(address => uint256) public lastRepayTimestampSOT;
 
     // for base (sell-loan) operation
-    uint256 public principalAmountSOT;
-    uint256 public paidPrincipalAmountSOT;
-    uint32 public interestRateSOT; // Annually, support 4 decimals num
+    // uint256 public principalAmountSOT;
+    // uint256 public paidPrincipalAmountSOT;
+    // uint32 public interestRateSOT; // Annually, support 4 decimals num
 
-    uint32 public minFirstLossCushion;
+    // uint32 public minFirstLossCushion;
 
     //RiskScores
     RiskScore[] public riskScores;
@@ -82,20 +80,14 @@ abstract contract ISecuritizationPool is UntangledBase {
     address[] public tokenAssetAddresses;
     mapping(address => bool) public existsTokenAssetAddress;
 
-    mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
+    // mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
 
     // by default it is address(this)
-    address public pot;
+    // address public pot;
 
     bool public validatorRequired;
 
     /** ENUM & STRUCT */
-    enum CycleState {
-        INITIATED,
-        CROWDSALE,
-        OPEN,
-        CLOSED
-    }
 
     struct NFTAsset {
         address tokenAddress;
@@ -131,14 +123,8 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @return the length of the risk scores array
     function getRiskScoresLength() public view virtual returns (uint256);
 
-    /// @notice checks if the contract is in a closed state
-    function isClosedState() public view virtual returns (bool);
 
-    /// @notice checks if the redemption process has finished
-    function hasFinishedRedemption() public view virtual returns (bool);
 
-    /// @notice sets the pot address for the contract
-    function setPot(address _pot) external virtual;
 
     /// @notice sets up the risk scores for the contract for pool
     function setupRiskScores(
@@ -177,12 +163,12 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @notice transfers the remaining cash to a specified recipient wallet
     function claimCashRemain(address recipientWallet) external virtual;
 
-    /// @notice injects the address of the Token Generation Event (TGE) and the associated token address
-    function injectTGEAddress(
-        address _tgeAddress,
-        address _tokenAddress,
-        Configuration.NOTE_TOKEN_TYPE _noteToken
-    ) external virtual;
+    // /// @notice injects the address of the Token Generation Event (TGE) and the associated token address
+    // function injectTGEAddress(
+    //     address _tgeAddress,
+    //     address _tokenAddress,
+    //     Configuration.NOTE_TOKEN_TYPE _noteToken
+    // ) external virtual;
 
     /// @notice starts a new cycle and sets various parameters for the contract
     function startCycle(
@@ -203,8 +189,8 @@ abstract contract ISecuritizationPool is UntangledBase {
     //     uint256 token
     // ) external virtual;
 
-    /// @dev trigger update asset value repaid
-    function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual;
+    // /// @dev trigger update asset value repaid
+    // function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual;
 
     // /// @notice decreases the locked distribution balance for a specific investor
     // function decreaseLockedDistributeBalance(
@@ -220,11 +206,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @notice allows the originator to withdraw from reserve
     function withdraw(uint256 amount) public virtual;
 
-    /// @dev trigger update reserve when buy note token action happens
-    function increaseReserve(uint256 currencyAmount) external virtual;
-
-    /// @dev trigger update reserve
-    function decreaseReserve(uint256 currencyAmount) external virtual;
 
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;

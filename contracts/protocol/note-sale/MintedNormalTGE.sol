@@ -63,7 +63,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     }
 
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getJOTTokenPrice(ISecuritizationPool(pool));
+        return registry.getDistributionAssessor().getJOTTokenPrice(pool);
     }
 
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {

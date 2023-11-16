@@ -11,6 +11,9 @@ interface ISecuritizationLockDistribution {
         uint256 totalLockedDistributeBalance
     );
 
+    event UpdateTotalRedeemedCurrency(uint256 totalRedeemedCurrency, address tokenAddress);
+    event UpdateTotalLockedDistributeBalance(uint256 totalLockedDistributionBalance, address tokenAddress);
+
     // Total $ (cUSD) has been redeemed
     function totalRedeemedCurrency() external view returns (uint256);
 
@@ -41,7 +44,4 @@ interface ISecuritizationLockDistribution {
         uint256 currency,
         uint256 token
     ) external;
-
-    /// @notice allows the redemption of tokens
-    function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external;
 }

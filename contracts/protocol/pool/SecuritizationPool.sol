@@ -22,6 +22,9 @@ import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsal
 import {POOL_ADMIN} from './types.sol';
 
 import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
+import {SecuritizationTGE} from './SecuritizationTGE.sol';
+import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
+import {RegistryInjection} from './RegistryInjection.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -29,48 +32,16 @@ import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.s
  *  Automatically invests across borrower pools using an adjustable strategy.
  * @author Untangled Team
  */
-contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPool, IERC721ReceiverUpgradeable {
+contract SecuritizationPool is
+    RegistryInjection,
+    SecuritizationLockDistribution,
+    SecuritizationTGE,
+    ISecuritizationPool,
+    IERC721ReceiverUpgradeable
+{
     using ConfigHelper for Registry;
 
-    modifier onlyIssuingTokenStage() {
-        require(state != CycleState.OPEN && state != CycleState.CLOSED, 'Not in issuing token stage');
-        _;
-    }
 
-    modifier notClosingStage() {
-        require(!isClosedState(), 'SecuritizationPool: Pool in closed state');
-        _;
-    }
-
-    modifier finishRedemptionValidator() {
-        require(hasFinishedRedemption(), 'SecuritizationPool: Redemption has not finished');
-        _;
-    }
-
-    // modifier onlyPoolAdmin() {
-    //     require(
-    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()),
-    //         'SecuritizationPool: Not an pool admin'
-    //     );
-    //     _;
-    // }
-
-    // modifier onlyPoolAdminOrOwner() {
-    //     require(
-    //         IAccessControlUpgradeable(address(registry.getSecuritizationManager())).hasRole(POOL_ADMIN, _msgSender()) ||
-    //             hasRole(OWNER_ROLE, _msgSender()),
-    //         'SecuritizationPool: Not an pool admin or pool owner'
-    //     );
-    //     _;
-    // }
-
-    // modifier onlySecuritizationManager() {
-    //     require(
-    //         _msgSender() == address(registry.getSecuritizationManager()),
-    //         'SecuritizationPool: Only SecuritizationManager'
-    //     );
-    //     _;
-    // }
 
     constructor() {
         _disableInitializers();
@@ -78,7 +49,7 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
 
     /** CONSTRUCTOR */
     function initialize(
-        Registry _registry,
+        Registry registry_,
         bytes memory params
     )
         public
@@ -100,9 +71,9 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
         __UntangledBase__init(_msgSender());
 
         _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
-        registry = _registry;
+        registry = registry_;
 
-        state = CycleState.INITIATED;
+        state = ISecuritizationTGE.CycleState.INITIATED;
         underlyingCurrency = newPoolParams.currency;
         minFirstLossCushion = newPoolParams.minFirstLossCushion;
 
@@ -133,20 +104,16 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
         return riskScores.length;
     }
 
-    function isClosedState() public view override returns (bool) {
-        return state == CycleState.CLOSED;
-    }
+    // function hasFinishedRedemption() public view override returns (bool) {
+    //     if (sotToken != address(0)) {
+    //         require(IERC20Upgradeable(sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
+    //     }
+    //     if (jotToken != address(0)) {
+    //         require(IERC20Upgradeable(jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
+    //     }
 
-    function hasFinishedRedemption() public view override returns (bool) {
-        if (sotToken != address(0)) {
-            require(IERC20Upgradeable(sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
-        }
-        if (jotToken != address(0)) {
-            require(IERC20Upgradeable(jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
-        }
-
-        return true;
-    }
+    //     return true;
+    // }
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
@@ -186,22 +153,6 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
         emit InsertNFTAsset(token, tokenId);
 
         return this.onERC721Received.selector;
-    }
-
-    /// @inheritdoc ISecuritizationPool
-    function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
-        require(!hasRole(OWNER_ROLE, _pot));
-
-        require(pot != _pot, 'SecuritizationPool: Same address with current pot');
-        pot = _pot;
-        if (_pot == address(this)) {
-            require(
-                IERC20Upgradeable(underlyingCurrency).approve(pot, type(uint256).max),
-                'SecuritizationPool: Pot not approved'
-            );
-        }
-        registry.getSecuritizationManager().registerPot(pot);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -330,10 +281,10 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
         emit Withdraw(_msgSender(), amount);
     }
 
-    function checkMinFirstLost() public view returns (bool) {
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
-    }
+    // function checkMinFirstLost() public view returns (bool) {
+    //     ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+    //     return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
+    // }
 
     /// @inheritdoc ISecuritizationPool
     function collectERC20Assets(
@@ -406,26 +357,26 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
         );
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function injectTGEAddress(
-        address _tgeAddress,
-        address _tokenAddress,
-        Configuration.NOTE_TOKEN_TYPE _noteType
-    ) external override whenNotPaused onlyIssuingTokenStage {
-        registry.requireSecuritizationManager(_msgSender());
-        require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
+    // /// @inheritdoc ISecuritizationPool
+    // function injectTGEAddress(
+    //     address _tgeAddress,
+    //     address _tokenAddress,
+    //     Configuration.NOTE_TOKEN_TYPE _noteType
+    // ) external override whenNotPaused onlyIssuingTokenStage {
+    //     registry.requireSecuritizationManager(_msgSender());
+    //     require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
-        if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
-            tgeAddress = _tgeAddress;
-            sotToken = _tokenAddress;
-        } else {
-            secondTGEAddress = _tgeAddress;
-            jotToken = _tokenAddress;
-        }
-        state = CycleState.CROWDSALE;
+    //     if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
+    //         tgeAddress = _tgeAddress;
+    //         sotToken = _tokenAddress;
+    //     } else {
+    //         secondTGEAddress = _tgeAddress;
+    //         jotToken = _tokenAddress;
+    //     }
+    //     state = CycleState.CROWDSALE;
 
-        emit UpdateTGEAddress(_tgeAddress, _tokenAddress, _noteType);
-    }
+    //     emit UpdateTGEAddress(_tgeAddress, _tokenAddress, _noteType);
+    // }
 
     /// @inheritdoc ISecuritizationPool
     function startCycle(
@@ -520,70 +471,45 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
     //     );
     // }
 
-    // Increase by value
-    function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused {
-        registry.requireLoanRepaymentRouter(_msgSender());
-        reserve = reserve + amount;
-        totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
+    // // Increase by value
+    // function increaseTotalAssetRepaidCurrency(uint256 amount) external override whenNotPaused {
+    //     registry.requireLoanRepaymentRouter(_msgSender());
+    //     reserve = reserve + amount;
+    //     totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
 
-        emit UpdateReserve(reserve);
-    }
+    //     emit UpdateReserve(reserve);
+    // }
 
-    function redeem(
-        address usr,
-        address notesToken,
-        uint256 currencyAmount,
-        uint256 tokenAmount
-    ) external override whenNotPaused nonReentrant {
-        require(
-            _msgSender() == address(registry.getDistributionTranche()),
-            'SecuritizationPool: Caller must be DistributionTranche'
-        );
-        if (sotToken == notesToken) {
-            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
-            emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
-        }
+    // function redeem(
+    //     address usr,
+    //     address notesToken,
+    //     uint256 currencyAmount,
+    //     uint256 tokenAmount
+    // ) external override whenNotPaused nonReentrant {
+    //     require(
+    //         _msgSender() == address(registry.getDistributionTranche()),
+    //         'SecuritizationPool: Caller must be DistributionTranche'
+    //     );
+    //     if (sotToken == notesToken) {
+    //         paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+    //         emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
+    //     }
 
-        reserve = reserve - currencyAmount;
+    //     reserve = reserve - currencyAmount;
 
-        if (tokenAmount > 0) {
-            ERC20BurnableUpgradeable(notesToken).burn(tokenAmount);
-        }
+    //     if (tokenAmount > 0) {
+    //         ERC20BurnableUpgradeable(notesToken).burn(tokenAmount);
+    //     }
 
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-        require(
-            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
-            'SecuritizationPool: currency-transfer-failed'
-        );
+    //     require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    //     require(
+    //         IERC20Upgradeable(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
+    //         'SecuritizationPool: currency-transfer-failed'
+    //     );
 
-        emit UpdateReserve(reserve);
-    }
+    //     emit UpdateReserve(reserve);
+    // }
 
-    /// @inheritdoc ISecuritizationPool
-    function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
-        require(
-            _msgSender() == address(registry.getSecuritizationManager()) ||
-                _msgSender() == address(registry.getDistributionOperator()),
-            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
-        );
-        reserve = reserve + currencyAmount;
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-
-        emit UpdateReserve(reserve);
-    }
-
-    /// @inheritdoc ISecuritizationPool
-    function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
-        require(
-            _msgSender() == address(registry.getSecuritizationManager()) ||
-                _msgSender() == address(registry.getDistributionOperator()),
-            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
-        );
-        reserve = reserve - currencyAmount;
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-
-        emit UpdateReserve(reserve);
-    }
 
     /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
@@ -624,7 +550,3 @@ contract SecuritizationPool is SecuritizationLockDistribution, ISecuritizationPo
 
     uint256[50] private __gap;
 }
-
-// import './SecuritizationPoolFC.sol';
-
-// contract SecuritizationPool is SecuritizationPoolFC {}

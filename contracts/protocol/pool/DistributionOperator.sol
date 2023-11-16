@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts/interfaces/IERC20.sol';
-import './base/SecuritizationPoolServiceBase.sol';
-import '../../interfaces/INoteToken.sol';
-import '@openzeppelin/contracts/utils/math/Math.sol';
+import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
+import {INoteToken} from '../../interfaces/INoteToken.sol';
+import {Math} from '@openzeppelin/contracts/utils/math/Math.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {Registry} from '../../storage/Registry.sol';
 
 import {IDistributionOperator} from './IDistributionOperator.sol';
 import {IDistributionTranche} from './IDistributionTranche.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
+import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
 /// @title DistributionOperator
 /// @author Untangled Team
@@ -49,7 +51,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         require(noteToken.balanceOf(_msgSender()) >= tokenAmount, 'DistributionOperator: Invalid token amount');
 
         address poolAddress = noteToken.poolAddress();
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
 
         require(
             securitizationPool.sotToken() != address(noteToken) || securitizationPool.jotToken() != address(noteToken),
@@ -62,12 +64,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             'DistributionOperator: Invalid token allowance'
         );
 
-        uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(
-            address(securitizationPool),
-            address(noteToken)
-        );
+        uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(poolAddress, address(noteToken));
+
+        address pot = ISecuritizationTGE(poolAddress).pot();
         uint256 tokenToBeRedeemed = Math.min(
-            IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) / tokenPrice,
+            INoteToken(securitizationPool.underlyingCurrency()).balanceOf(pot) / tokenPrice,
             tokenAmount
         );
 
@@ -101,10 +102,10 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         if (currencyLocked > 0) {
             _redeem(redeemer, pool, tokenAddress, tokenRedeem, currencyLocked, registry.getDistributionTranche(), pool);
 
-            if (ISecuritizationPool(pool).sotToken() == tokenAddress) {
-                ICrowdSale(ISecuritizationPool(pool).tgeAddress()).onRedeem(currencyLocked);
-            } else if (ISecuritizationPool(pool).jotToken() == tokenAddress) {
-                ICrowdSale(ISecuritizationPool(pool).secondTGEAddress()).onRedeem(currencyLocked);
+            if (ISecuritizationTGE(pool).sotToken() == tokenAddress) {
+                ICrowdSale(ISecuritizationTGE(pool).tgeAddress()).onRedeem(currencyLocked);
+            } else if (ISecuritizationTGE(pool).jotToken() == tokenAddress) {
+                ICrowdSale(ISecuritizationTGE(pool).secondTGEAddress()).onRedeem(currencyLocked);
             }
         }
 
@@ -123,7 +124,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
         uint256 currencyLocked = _redeem(_msgSender(), pool, address(noteToken));
         address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
         if (poolOfPot != address(0)) {
-            ISecuritizationPool(poolOfPot).increaseReserve(currencyLocked);
+            ISecuritizationTGE(poolOfPot).increaseReserve(currencyLocked);
         }
         return currencyLocked;
     }
