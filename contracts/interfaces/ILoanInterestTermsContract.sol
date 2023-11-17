@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
@@ -31,18 +31,16 @@ abstract contract ILoanInterestTermsContract {
     /// @param timestamp unix timestamp
     /// @return expectedPrincipal value of loan at a specific time
     /// @return expectedInterest interest value at a specific time
-    function getExpectedRepaymentValues(bytes32 agreementId, uint256 timestamp)
-        public
-        view
-        virtual
-        returns (uint256 expectedPrincipal, uint256 expectedInterest);
+    function getExpectedRepaymentValues(
+        bytes32 agreementId,
+        uint256 timestamp
+    ) public view virtual returns (uint256 expectedPrincipal, uint256 expectedInterest);
 
     /// @notice calculates the expected repayment values (principal and interest) for a batch of loan agreements and a given timestamp
-    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
-        public
-        view
-        virtual
-        returns (uint256[] memory, uint256[] memory);
+    function getMultiExpectedRepaymentValues(
+        bytes32[] memory agreementIds,
+        uint256 timestamp
+    ) public view virtual returns (uint256[] memory, uint256[] memory);
 
     /// @dev set loan as repaid
     function registerConcludeLoan(bytes32 agreementId) external virtual returns (bool);

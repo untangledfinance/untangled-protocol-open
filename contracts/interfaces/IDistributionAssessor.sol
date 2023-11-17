@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
-import "./ISecuritizationPool.sol";
+import './ISecuritizationPool.sol';
 
 interface IDistributionAssessor {
     /// @notice current individual asset price for the "SOT" tranche at the current timestamp
@@ -16,8 +16,5 @@ interface IDistributionAssessor {
     function getCashBalance(address pool) external view returns (uint256);
 
     /// @notice calculates the corresponding total asset value for a specific token address, investor, and end time
-    function calcCorrespondingTotalAssetValue(
-        address tokenAddress,
-        address investor
-    ) external view returns (uint256);
+    function calcCorrespondingTotalAssetValue(address tokenAddress, address investor) external view returns (uint256);
 }

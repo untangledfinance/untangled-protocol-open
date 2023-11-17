@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 interface IDistributionTranche {
@@ -12,9 +12,5 @@ interface IDistributionTranche {
     ) external;
 
     /// @notice allows the distribution operator to redeem tokenAmount tokens of a specific noteToken from a given usr
-    function redeemToken(
-        address noteToken,
-        address usr,
-        uint256 tokenAmount
-    ) external;
+    function redeemToken(address noteToken, address usr, uint256 tokenAmount) external;
 }

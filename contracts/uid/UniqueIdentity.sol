@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
@@ -178,10 +178,10 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
     // unlock
     function unlockWrongToken(address token) public onlyAdmin {
         if (token == address(0)) {
-            (bool success, ) = payable(_msgSender()).call { value: IERC20(token).balanceOf(address(this)) } ("");
-            require(success, "Transfer failed.");
+            (bool success, ) = payable(_msgSender()).call{value: IERC20(token).balanceOf(address(this))}('');
+            require(success, 'Transfer failed.');
         } else {
-            require(IERC20(token).transfer(_msgSender(), IERC20(token).balanceOf(address(this))), "Transfer failed.");
+            require(IERC20(token).transfer(_msgSender(), IERC20(token).balanceOf(address(this))), 'Transfer failed.');
         }
     }
 

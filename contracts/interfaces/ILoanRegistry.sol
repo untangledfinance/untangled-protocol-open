@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
@@ -81,11 +81,10 @@ abstract contract ILoanRegistry {
 
     /// @notice retrieves information about the principal payment for a given loan agreement ID
     /// @dev Get principal payment info before start doing repayment
-    function principalPaymentInfo(bytes32 agreementId)
-        public
-        view
-        virtual
-        returns (address pTokenAddress, uint256 pAmount);
+    function principalPaymentInfo(
+        bytes32 agreementId
+    ) public view virtual returns (address pTokenAddress, uint256 pAmount);
+
     /// @notice marks a loan agreement as completed by setting the completedLoans mapping entry to true for a given agreement ID
     function setCompletedLoan(bytes32 agreementId) public virtual;
 }

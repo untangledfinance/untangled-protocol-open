@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../base/UntangledBase.sol';
@@ -9,12 +9,7 @@ import './base/LongSaleInterest.sol';
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
 /// @dev Note sale for SOT - auction
-contract MintedIncreasingInterestTGE is 
-    IMintedTGE, 
-    UntangledBase, 
-    IncreasingInterestCrowdsale, 
-    LongSaleInterest {
-
+contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInterestCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 
     bool public longSale;
@@ -65,9 +60,7 @@ contract MintedIncreasingInterestTGE is
     /// @notice Calculate token price
     /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getSOTTokenPrice(
-            address(pool)
-        );
+        return registry.getDistributionAssessor().getSOTTokenPrice(address(pool));
     }
 
     /// @notice Get amount of token can receive from an amount of currency
@@ -85,7 +78,10 @@ contract MintedIncreasingInterestTGE is
         uint256 rate_,
         uint256 cap_
     ) external whenNotPaused {
-        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "MintedIncreasingInterestTGE: Caller must be owner or pool");
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'MintedIncreasingInterestTGE: Caller must be owner or pool'
+        );
         _preValidateNewSaleRound();
 
         // call inner function for each extension
@@ -100,7 +96,11 @@ contract MintedIncreasingInterestTGE is
         require(timeInterval > 0, 'MintedIncreasingInterestTGE: Time interval increasing interest is 0');
     }
 
-    function buyTokens(address payee, address beneficiary, uint256 currencyAmount) public override(IMintedTGE, Crowdsale)  returns (uint256 tokenAmount) {
+    function buyTokens(
+        address payee,
+        address beneficiary,
+        uint256 currencyAmount
+    ) public override(IMintedTGE, Crowdsale) returns (uint256 tokenAmount) {
         tokenAmount = Crowdsale.buyTokens(payee, beneficiary, currencyAmount);
         if (_currencyRaised >= totalCap) {
             if (!this.finalized()) {

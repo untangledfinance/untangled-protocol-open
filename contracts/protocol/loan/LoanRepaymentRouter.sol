@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
@@ -21,10 +21,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
     /// @dev performs various checks to validate the repayment request, including ensuring that the token address is not null,
     /// the amount is greater than zero, and the debt agreement exists
-    function _assertRepaymentRequest(
-        bytes32 _agreementId,
-        address _tokenAddress
-    ) private returns (bool) {
+    function _assertRepaymentRequest(bytes32 _agreementId, address _tokenAddress) private returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
 
         // Ensure agreement exists.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
@@ -40,12 +40,9 @@ contract UntangledReceiverV2 is UntangledBase, CCIPReceiverUpgradeable, CCIPRece
         return 'Hello world';
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        pure
-        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public pure override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable) returns (bool) {
         return
             interfaceId == type(IAny2EVMMessageReceiver).interfaceId ||
             interfaceId == type(IERC165Upgradeable).interfaceId;

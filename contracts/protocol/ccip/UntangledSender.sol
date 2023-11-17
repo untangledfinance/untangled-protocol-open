@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {OwnerIsCreator} from '@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol';
@@ -7,7 +7,7 @@ import {LinkTokenInterface} from '@chainlink/contracts/src/v0.8/shared/interface
 import {IRouterClient} from '@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol';
 import {CCIPSenderStorage} from './storage/CCIPSenderStorage.sol';
 
-import {ICommandData, MessageType} from "./ICommandData.sol";
+import {ICommandData, MessageType} from './ICommandData.sol';
 import {UntangledBase} from '../../base/UntangledBase.sol';
 
 contract UntangledSender is UntangledBase, CCIPSenderStorage {
@@ -24,7 +24,7 @@ contract UntangledSender is UntangledBase, CCIPSenderStorage {
     ) internal onlyInitializing {
         router = router_;
         linkToken = link_;
-    } 
+    }
 
     function sendMessage(
         uint64 destinationChainSelector,
