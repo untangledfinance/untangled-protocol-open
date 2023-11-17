@@ -34,6 +34,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 penaltyChi;
         // last time the rate was accumulated
         uint48 lastUpdated;
+        // time start to penalty
+        uint48 timeStartPenalty;
         // the period after overdue to start penalty
         uint48 gracePeriod;
     }
@@ -807,6 +809,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     function changeRate(uint256 loan, uint256 newRate) internal {
         require(rates[newRate].chi != 0, "rate-group-not-set");
+        if (newRate >= WRITEOFF_RATE_GROUP_START) {
+           rates[newRate].timeStartPenalty = uint48(block.timestamp);
+        }
         uint256 currentRate = loanRates[loan];
         drip(currentRate);
         drip(newRate);
@@ -828,8 +833,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
             (uint256 chi,) =
                             compounding(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated, rates[rate].pie);
             rates[rate].chi = chi;
-            if (rates[rate].penaltyRatePerSecond != 0) {
-                (uint256 penaltyChi,) = compounding(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, rates[rate].lastUpdated, rates[rate].pie);
+            if (rates[rate].penaltyRatePerSecond != 0 && rates[rate].timeStartPenalty != 0 && block.timestamp >= rates[rate].timeStartPenalty) {
+                uint lastUpdated_ = rates[rate].lastUpdated > rates[rate].timeStartPenalty ? rates[rate].lastUpdated : rates[rate].timeStartPenalty;
+                (uint256 penaltyChi,) = compounding(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, lastUpdated_, rates[rate].pie);
                 rates[rate].penaltyChi = penaltyChi;
             }
             rates[rate].lastUpdated = uint48(block.timestamp);
