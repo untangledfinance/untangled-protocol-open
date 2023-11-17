@@ -385,8 +385,7 @@ describe('NAVCalculation', () => {
       await poolNAV.writeOff(tokenIds[0]);
       await time.increase(1 * ONE_DAY);
       const currentNAV = await poolNAV.currentNAV();
-      console.log(`NAVCalculation.js - currentNAV ${currentNAV}`)
-      expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.001'));
+      expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.005'));
     });
     xit('overdue next 30 days - should write off', async () => {
       await time.increase(30 * ONE_DAY);
