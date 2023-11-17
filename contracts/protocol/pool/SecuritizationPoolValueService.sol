@@ -185,8 +185,8 @@ contract SecuritizationPoolValueService is
         uint256 interestRate,
         uint256 timestamp
     ) public view returns (uint256) {
-        uint256 expirationTimestamp = ISecuritizationPool(assetPoolAddress).openingBlockTimestamp() +
-            ISecuritizationPool(assetPoolAddress).termLengthInSeconds();
+        uint256 expirationTimestamp = ISecuritizationTGE(assetPoolAddress).openingBlockTimestamp() +
+            ISecuritizationTGE(assetPoolAddress).termLengthInSeconds();
 
         uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
         uint256 secondTillCashflow = expirationTimestamp > timestamp ? expirationTimestamp - timestamp : 0;
@@ -461,7 +461,7 @@ contract SecuritizationPoolValueService is
         ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 seniorInterestRate = securitizationPool.interestRateSOT();
-        uint256 openingTime = ISecuritizationPool(poolAddress).openingBlockTimestamp();
+        uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
 

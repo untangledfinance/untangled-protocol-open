@@ -12,6 +12,8 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
+import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
+import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsale.sol';
 
 abstract contract SecuritizationTGE is
     PausableUpgradeable,
@@ -213,21 +215,21 @@ abstract contract SecuritizationTGE is
         state = CycleState.OPEN;
 
         if (tgeAddress != address(0)) {
-            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            mintedTokenGenrationEvent.setupLongSale(
+            IMintedTGE mintedTokenGenerationEvent = IMintedTGE(tgeAddress);
+            mintedTokenGenerationEvent.setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
             );
-            if (!mintedTokenGenrationEvent.finalized()) {
-                mintedTokenGenrationEvent.finalize(false, pot);
+            if (!IFinalizableCrowdsale(tgeAddress).finalized()) {
+                IFinalizableCrowdsale(tgeAddress).finalize(false, pot);
             }
-            interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
+            interestRateSOT = mintedTokenGenerationEvent.pickedInterest();
         }
         if (secondTGEAddress != address(0)) {
-            FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
+            IFinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
             require(
-                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
+                IFinalizableCrowdsale(secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
             );
         }

@@ -33,8 +33,6 @@ import {RegistryInjection} from './RegistryInjection.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
@@ -356,41 +354,41 @@ contract SecuritizationPool is
         }
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function startCycle(
-        uint64 _termLengthInSeconds,
-        uint256 _principalAmountForSOT,
-        uint32 _interestRateForSOT,
-        uint64 _timeStartEarningInterest
-    ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
-        require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
+    // /// @inheritdoc ISecuritizationPool
+    // function startCycle(
+    //     uint64 _termLengthInSeconds,
+    //     uint256 _principalAmountForSOT,
+    //     uint32 _interestRateForSOT,
+    //     uint64 _timeStartEarningInterest
+    // ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
+    //     require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
-        termLengthInSeconds = _termLengthInSeconds;
+    //     termLengthInSeconds = _termLengthInSeconds;
 
-        principalAmountSOT = _principalAmountForSOT;
+    //     principalAmountSOT = _principalAmountForSOT;
 
-        state = CycleState.OPEN;
+    //     state = CycleState.OPEN;
 
-        if (tgeAddress != address(0)) {
-            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
-            mintedTokenGenrationEvent.setupLongSale(
-                _interestRateForSOT,
-                _termLengthInSeconds,
-                _timeStartEarningInterest
-            );
-            if (!mintedTokenGenrationEvent.finalized()) {
-                mintedTokenGenrationEvent.finalize(false, pot);
-            }
-            interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
-        }
-        if (secondTGEAddress != address(0)) {
-            FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
-            require(
-                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
-                'SecuritizationPool: second sale is still on going'
-            );
-        }
-    }
+    //     if (tgeAddress != address(0)) {
+    //         MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
+    //         mintedTokenGenrationEvent.setupLongSale(
+    //             _interestRateForSOT,
+    //             _termLengthInSeconds,
+    //             _timeStartEarningInterest
+    //         );
+    //         if (!mintedTokenGenrationEvent.finalized()) {
+    //             mintedTokenGenrationEvent.finalize(false, pot);
+    //         }
+    //         interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
+    //     }
+    //     if (secondTGEAddress != address(0)) {
+    //         FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
+    //         require(
+    //             MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
+    //             'SecuritizationPool: second sale is still on going'
+    //         );
+    //     }
+    // }
 
     /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {

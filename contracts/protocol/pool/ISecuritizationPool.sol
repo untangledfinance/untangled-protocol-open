@@ -43,8 +43,8 @@ abstract contract ISecuritizationPool {
     // CycleState public state;
 
     uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
-    uint64 public openingBlockTimestamp;
-    uint64 public termLengthInSeconds;
+    // uint64 public openingBlockTimestamp;
+    // uint64 public termLengthInSeconds;
 
     // uint256 public reserve; // Money in pool
     uint256 public amountOwedToOriginator; // Money owed to originator
@@ -163,13 +163,13 @@ abstract contract ISecuritizationPool {
     //     Configuration.NOTE_TOKEN_TYPE _noteToken
     // ) external virtual;
 
-    /// @notice starts a new cycle and sets various parameters for the contract
-    function startCycle(
-        uint64 _termLengthInSeconds,
-        uint256 _principalAmountForSOT,
-        uint32 _interestRateForSOT,
-        uint64 _timeStartEarningInterest
-    ) external virtual;
+    // /// @notice starts a new cycle and sets various parameters for the contract
+    // function startCycle(
+    //     uint64 _termLengthInSeconds,
+    //     uint256 _principalAmountForSOT,
+    //     uint32 _interestRateForSOT,
+    //     uint64 _timeStartEarningInterest
+    // ) external virtual;
 
     // /// @notice increases the locked distribution balance for a specific investor
     // function increaseLockedDistributeBalance(

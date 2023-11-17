@@ -79,4 +79,11 @@ interface ISecuritizationTGE {
     function setInterestRateForSOT(uint32 _interestRateSOT) external;
 
     function claimCashRemain(address recipientWallet) external;
+
+    function startCycle(
+        uint64 _termLengthInSeconds,
+        uint256 _principalAmountForSOT,
+        uint32 _interestRateForSOT,
+        uint64 _timeStartEarningInterest
+    ) external;
 }
