@@ -11,11 +11,13 @@ import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
+import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 
 abstract contract SecuritizationTGE is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     RegistryInjection,
+    SecuritizationAccessControl,
     ISecuritizationTGE
 {
     using ConfigHelper for Registry;
@@ -29,6 +31,9 @@ abstract contract SecuritizationTGE is
     address public override underlyingCurrency;
     uint256 public override reserve; // Money in pool
     uint32 public override minFirstLossCushion;
+
+    uint64 public override openingBlockTimestamp;
+    uint64 public override termLengthInSeconds;
 
     // by default it is address(this)
     address public override pot;
@@ -67,7 +72,7 @@ abstract contract SecuritizationTGE is
         address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteType
     ) external override whenNotPaused onlyIssuingTokenStage {
-        registry.requireSecuritizationManager(_msgSender());
+        registry().requireSecuritizationManager(_msgSender());
         require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
@@ -90,7 +95,7 @@ abstract contract SecuritizationTGE is
         uint256 tokenAmount
     ) external virtual override {
         require(
-            _msgSender() == address(registry.getDistributionTranche()),
+            _msgSender() == address(registry().getDistributionTranche()),
             'SecuritizationPool: Caller must be DistributionTranche'
         );
         if (sotToken == notesToken) {
@@ -114,13 +119,13 @@ abstract contract SecuritizationTGE is
     }
 
     function checkMinFirstLost() public view virtual returns (bool) {
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
         return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
 
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual override whenNotPaused {
-        registry.requireLoanRepaymentRouter(_msgSender());
+        registry().requireLoanRepaymentRouter(_msgSender());
         reserve = reserve + amount;
         totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
 
@@ -139,7 +144,7 @@ abstract contract SecuritizationTGE is
     }
 
     function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
 
         require(pot != _pot, 'SecuritizationPool: Same address with current pot');
         pot = _pot;
@@ -149,13 +154,13 @@ abstract contract SecuritizationTGE is
                 'SecuritizationPool: Pot not approved'
             );
         }
-        registry.getSecuritizationManager().registerPot(pot);
+        registry().getSecuritizationManager().registerPot(pot);
     }
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry.getSecuritizationManager()) ||
-                _msgSender() == address(registry.getDistributionOperator()),
+            _msgSender() == address(registry().getSecuritizationManager()) ||
+                _msgSender() == address(registry().getDistributionOperator()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
         reserve = reserve + currencyAmount;
@@ -166,13 +171,65 @@ abstract contract SecuritizationTGE is
 
     function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry.getSecuritizationManager()) ||
-                _msgSender() == address(registry.getDistributionOperator()),
+            _msgSender() == address(registry().getSecuritizationManager()) ||
+                _msgSender() == address(registry().getDistributionOperator()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
         reserve = reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
 
         emit UpdateReserve(reserve);
+    }
+
+    function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
+        require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge can update interest');
+        interestRateSOT = _interestRateSOT;
+        emit UpdateInterestRateSOT(_interestRateSOT);
+    }
+
+    // After closed pool and redeem all not -> get remain cash to recipient wallet
+    function claimCashRemain(
+        address recipientWallet
+    ) external override whenNotPaused onlyOwner finishRedemptionValidator {
+        IERC20Upgradeable currency = IERC20Upgradeable(underlyingCurrency);
+        require(
+            currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)),
+            'SecuritizationPool: Transfer failed'
+        );
+    }
+
+    function startCycle(
+        uint64 _termLengthInSeconds,
+        uint256 _principalAmountForSOT,
+        uint32 _interestRateForSOT,
+        uint64 _timeStartEarningInterest
+    ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
+        require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
+
+        termLengthInSeconds = _termLengthInSeconds;
+
+        principalAmountSOT = _principalAmountForSOT;
+
+        state = CycleState.OPEN;
+
+        if (tgeAddress != address(0)) {
+            MintedIncreasingInterestTGE mintedTokenGenrationEvent = MintedIncreasingInterestTGE(tgeAddress);
+            mintedTokenGenrationEvent.setupLongSale(
+                _interestRateForSOT,
+                _termLengthInSeconds,
+                _timeStartEarningInterest
+            );
+            if (!mintedTokenGenrationEvent.finalized()) {
+                mintedTokenGenrationEvent.finalize(false, pot);
+            }
+            interestRateSOT = mintedTokenGenrationEvent.pickedInterest();
+        }
+        if (secondTGEAddress != address(0)) {
+            FinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
+            require(
+                MintedIncreasingInterestTGE(secondTGEAddress).finalized(),
+                'SecuritizationPool: second sale is still on going'
+            );
+        }
     }
 }

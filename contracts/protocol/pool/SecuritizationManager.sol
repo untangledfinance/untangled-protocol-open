@@ -24,6 +24,8 @@ import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEvent
 import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEventFactory.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
+import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
+
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
@@ -120,14 +122,14 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         );
 
         address poolAddress = _deployInstance(poolImplAddress, _initialData, salt);
-        ISecuritizationPool poolInstance = ISecuritizationPool(poolAddress);
+        SecuritizationAccessControl poolInstance = SecuritizationAccessControl(poolAddress);
 
         isExistingPools[poolAddress] = true;
-        pools.push(poolInstance);
+        pools.push(ISecuritizationPool(poolAddress));
 
         // ...
-        poolInstance.grantRole(poolInstance.OWNER_ROLE(), poolOwner);
-        poolInstance.renounceRole(poolInstance.OWNER_ROLE(), address(this));
+        poolInstance.grantRole(OWNER_ROLE, poolOwner);
+        poolInstance.renounceRole(OWNER_ROLE, address(this));
 
         emit NewPoolCreated(poolAddress);
 
@@ -344,7 +346,6 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
     function hasAllowedUID(address sender) public view override returns (bool) {
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
-
 
     function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
         require(validator != address(0), 'SecuritizationManager: Invalid validator address');

@@ -18,6 +18,7 @@ abstract contract SecuritizationLockDistribution is
 
     // token address -> user -> locked
     mapping(address => mapping(address => uint256)) public override lockedDistributeBalances;
+    
     uint256 public override totalLockedDistributeBalance;
 
     mapping(address => mapping(address => uint256)) public override lockedRedeemBalances;
@@ -33,7 +34,7 @@ abstract contract SecuritizationLockDistribution is
         uint256 currency,
         uint256 token
     ) external override whenNotPaused {
-        registry.requireDistributionOperator(_msgSender());
+        registry().requireDistributionOperator(_msgSender());
 
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
@@ -60,7 +61,7 @@ abstract contract SecuritizationLockDistribution is
         uint256 currency,
         uint256 token
     ) external override whenNotPaused {
-        registry.requireDistributionOperator(_msgSender());
+        registry().requireDistributionOperator(_msgSender());
 
         lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
         lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;

@@ -14,6 +14,11 @@ interface ISecuritizationTGE {
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);
+    event UpdateInterestRateSOT(uint32 _interestRateSOT);
+
+    function openingBlockTimestamp() external view returns (uint64);
+
+    function termLengthInSeconds() external view returns (uint64);
 
     function pot() external view returns (address);
 
@@ -69,4 +74,9 @@ interface ISecuritizationTGE {
 
     /// @notice checks if the redemption process has finished
     function hasFinishedRedemption() external view returns (bool);
+
+    /// @notice sets the interest rate for the senior tranche of tokens
+    function setInterestRateForSOT(uint32 _interestRateSOT) external;
+
+    function claimCashRemain(address recipientWallet) external;
 }

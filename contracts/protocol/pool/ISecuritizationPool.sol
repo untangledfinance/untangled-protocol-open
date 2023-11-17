@@ -2,17 +2,16 @@
 pragma solidity 0.8.19;
 
 import '../../storage/Registry.sol';
-import '../../base/UntangledBase.sol';
+// import '../../base/UntangledBase.sol';
 import '../../libraries/Configuration.sol';
 
-abstract contract ISecuritizationPool is UntangledBase {
+abstract contract ISecuritizationPool {
     event Withdraw(address originatorAddress, uint256 amount);
     event CollectAsset(address from, uint256 value);
     event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
-    event UpdateInterestRateSOT(uint32 _interestRateSOT);
     // event UpdateLockedDistributeBalance(
     //     address indexed tokenAddress,
     //     address indexed investor,
@@ -123,9 +122,6 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @return the length of the risk scores array
     function getRiskScoresLength() public view virtual returns (uint256);
 
-
-
-
     /// @notice sets up the risk scores for the contract for pool
     function setupRiskScores(
         uint32[] calldata _daysPastDues,
@@ -160,9 +156,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint256[] calldata amounts
     ) external virtual;
 
-    /// @notice transfers the remaining cash to a specified recipient wallet
-    function claimCashRemain(address recipientWallet) external virtual;
-
     // /// @notice injects the address of the Token Generation Event (TGE) and the associated token address
     // function injectTGEAddress(
     //     address _tgeAddress,
@@ -177,9 +170,6 @@ abstract contract ISecuritizationPool is UntangledBase {
         uint32 _interestRateForSOT,
         uint64 _timeStartEarningInterest
     ) external virtual;
-
-    /// @notice sets the interest rate for the senior tranche of tokens
-    function setInterestRateForSOT(uint32 _interestRateSOT) external virtual;
 
     // /// @notice increases the locked distribution balance for a specific investor
     // function increaseLockedDistributeBalance(
@@ -206,9 +196,12 @@ abstract contract ISecuritizationPool is UntangledBase {
     /// @notice allows the originator to withdraw from reserve
     function withdraw(uint256 amount) public virtual;
 
-
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
+
+    function pause() external virtual;
+
+    function unpause() external virtual;
 
     uint256[21] private __gap;
 }

@@ -7,6 +7,7 @@ import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/
 import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import {IERC721ReceiverUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
@@ -21,13 +22,18 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
-import {POOL_ADMIN} from './types.sol';
+import {POOL_ADMIN, ORIGINATOR_ROLE} from './types.sol';
 
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
 import {SecuritizationTGE} from './SecuritizationTGE.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
+
+import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
+import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
+
+import 'hardhat/console.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -38,9 +44,10 @@ import {RegistryInjection} from './RegistryInjection.sol';
 contract SecuritizationPool is
     RegistryInjection,
     ERC165Upgradeable,
+    SecuritizationAccessControl,
+    ISecuritizationPool,
     SecuritizationLockDistribution,
     SecuritizationTGE,
-    ISecuritizationPool,
     IERC721ReceiverUpgradeable
 {
     using ConfigHelper for Registry;
@@ -70,10 +77,12 @@ contract SecuritizationPool is
             'minFirstLossCushion is greater than 100'
         );
         require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');
-        __UntangledBase__init(_msgSender());
 
-        _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
-        registry = registry_;
+        __SecuritizationAccessControl_init_unchained(_msgSender());
+        // __UntangledBase__init(_msgSender());
+
+        // _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
+        _setRegistry(registry_);
 
         state = ISecuritizationTGE.CycleState.INITIATED;
         underlyingCurrency = newPoolParams.currency;
@@ -86,7 +95,7 @@ contract SecuritizationPool is
             IERC20Upgradeable(newPoolParams.currency).approve(pot, type(uint256).max),
             'SecuritizationPool: Currency approval failed'
         );
-        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
+        registry().getLoanAssetToken().setApprovalForAll(address(registry().getLoanKernel()), true);
     }
 
     /** GETTER */
@@ -148,7 +157,7 @@ contract SecuritizationPool is
     function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
         address token = _msgSender();
         require(
-            token == address(registry.getAcceptedInvoiceToken()) || token == address(registry.getLoanAssetToken()),
+            token == address(registry().getAcceptedInvoiceToken()) || token == address(registry().getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
         nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));
@@ -163,7 +172,7 @@ contract SecuritizationPool is
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
     ) external override whenNotPaused notClosingStage {
-        registry.requirePoolAdmin(_msgSender());
+        registry().requirePoolAdmin(_msgSender());
 
         uint256 _daysPastDuesLength = _daysPastDues.length;
         require(
@@ -202,7 +211,7 @@ contract SecuritizationPool is
         address toPoolAddress,
         uint256[] calldata tokenIds
     ) external override whenNotPaused nonReentrant notClosingStage {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
 
         uint256 tokenIdsLength = tokenIds.length;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
@@ -219,7 +228,7 @@ contract SecuritizationPool is
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds,
         address[] calldata recipients
-    ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) {
+    ) external override whenNotPaused nonReentrant onlyOwner {
         uint256 tokenIdsLength = tokenIds.length;
         require(tokenAddresses.length == tokenIdsLength, 'tokenAddresses length and tokenIds length are not equal');
         require(
@@ -246,7 +255,7 @@ contract SecuritizationPool is
             IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
         }
         uint256 expectedAssetsValue = 0;
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+        ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             expectedAssetsValue =
                 expectedAssetsValue +
@@ -284,7 +293,7 @@ contract SecuritizationPool is
     }
 
     // function checkMinFirstLost() public view returns (bool) {
-    //     ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
+    //     ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
     //     return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     // }
 
@@ -303,7 +312,7 @@ contract SecuritizationPool is
         // check
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
-                registry.getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
+                registry().getNoteTokenFactory().isExistingTokens(tokenAddresses[i]),
                 'SecuritizationPool: unknown-token-address'
             );
         }
@@ -333,7 +342,7 @@ contract SecuritizationPool is
         address[] calldata recipients,
         uint256[] calldata amounts
     ) external override whenNotPaused nonReentrant {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
 
         uint256 tokenAddressesLength = tokenAddresses.length;
         require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
@@ -347,25 +356,13 @@ contract SecuritizationPool is
         }
     }
 
-    // After closed pool and redeem all not -> get remain cash to recipient wallet
-    /// @inheritdoc ISecuritizationPool
-    function claimCashRemain(
-        address recipientWallet
-    ) external override whenNotPaused onlyRole(OWNER_ROLE) finishRedemptionValidator {
-        IERC20Upgradeable currency = IERC20Upgradeable(underlyingCurrency);
-        require(
-            currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)),
-            'SecuritizationPool: Transfer failed'
-        );
-    }
-
     /// @inheritdoc ISecuritizationPool
     function startCycle(
         uint64 _termLengthInSeconds,
         uint256 _principalAmountForSOT,
         uint32 _interestRateForSOT,
         uint64 _timeStartEarningInterest
-    ) external override whenNotPaused nonReentrant onlyRole(OWNER_ROLE) onlyIssuingTokenStage {
+    ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
         require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
         termLengthInSeconds = _termLengthInSeconds;
@@ -396,13 +393,6 @@ contract SecuritizationPool is
     }
 
     /// @inheritdoc ISecuritizationPool
-    function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
-        require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge can update interest');
-        interestRateSOT = _interestRateSOT;
-        emit UpdateInterestRateSOT(_interestRateSOT);
-    }
-
-    /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
         require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge address');
         _setUpOpeningBlockTimestamp();
@@ -426,24 +416,22 @@ contract SecuritizationPool is
     }
 
     function pause() public virtual override {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _pause();
     }
 
     function unpause() public virtual override {
-        registry.requirePoolAdminOrOwner(address(this), _msgSender());
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(AccessControlEnumerableUpgradeable, ERC165Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return
             ERC165Upgradeable.supportsInterface(interfaceId) ||
-            AccessControlEnumerableUpgradeable.supportsInterface(interfaceId) ||
             interfaceId == type(ISecuritizationPool).interfaceId ||
             interfaceId == type(ISecuritizationTGE).interfaceId ||
-            interfaceId == type(ISecuritizationLockDistribution).interfaceId;
+            interfaceId == type(ISecuritizationLockDistribution).interfaceId ||
+            interfaceId == type(ISecuritizationAccessControl).interfaceId;
     }
 
     uint256[50] private __gap;
