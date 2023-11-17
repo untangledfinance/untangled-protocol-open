@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {Client} from '@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol';
@@ -48,12 +48,9 @@ contract UntangledReceiver is UntangledBase, CCIPReceiverUpgradeable, CCIPReceiv
         return (lastReceivedMessageId, lastReceivedData);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(AccessControlEnumerableUpgradeable, CCIPReceiverUpgradeable) returns (bool) {
         return
             AccessControlEnumerableUpgradeable.supportsInterface(interfaceId) ||
             CCIPReceiverUpgradeable.supportsInterface(interfaceId);

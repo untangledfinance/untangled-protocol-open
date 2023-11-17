@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../interfaces/ILoanRegistry.sol';
@@ -126,28 +126,26 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
 
     // Update timestamp of the last repayment from Debtor
     /// @inheritdoc ILoanRegistry
-    function updateLastRepaymentTimestamp(bytes32 agreementId, uint256 newTimestamp)
-        public
-        override
-        onlyLoanInterestTermsContract
-    {
+    function updateLastRepaymentTimestamp(
+        bytes32 agreementId,
+        uint256 newTimestamp
+    ) public override onlyLoanInterestTermsContract {
         entries[agreementId].lastRepayTimestamp = newTimestamp;
     }
 
     /// @dev Get principal payment info before start doing repayment
-    function principalPaymentInfo(bytes32 agreementId)
-        public
-        view
-        override
-        returns (address pTokenAddress, uint256 pAmount)
-    {
+    function principalPaymentInfo(
+        bytes32 agreementId
+    ) public view override returns (address pTokenAddress, uint256 pAmount) {
         LoanEntry memory entry = entries[agreementId];
         pTokenAddress = entry.principalTokenAddress;
         pAmount = 0; // @TODO
     }
 
     /// @inheritdoc ILoanRegistry
-    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused nonReentrant onlyLoanInterestTermsContract {
+    function setCompletedLoan(
+        bytes32 agreementId
+    ) public override whenNotPaused nonReentrant onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
 

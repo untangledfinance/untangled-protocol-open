@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
@@ -32,11 +32,10 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
     }
 
     /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
-    function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
-        external
-        view
-        virtual
-        returns (uint256);
+    function getTotalExpectedRepaymentValue(
+        uint256 agreementId,
+        uint256 timestamp
+    ) external view virtual returns (uint256);
 
     /// @notice the expiration timestamp of an invoice/loan token
     function getExpirationTimestamp(uint256 agreementId) external view virtual returns (uint256);

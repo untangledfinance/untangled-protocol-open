@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../interfaces/ILoanKernel.sol';
@@ -142,11 +142,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     /**
      * 6 is fixed size of constant addresses list
      */
-    function _debtorsFromOrderAddresses(address[] memory _orderAddresses, uint256 _length)
-        private
-        pure
-        returns (address[] memory)
-    {
+    function _debtorsFromOrderAddresses(
+        address[] memory _orderAddresses,
+        uint256 _length
+    ) private pure returns (address[] memory) {
         address[] memory debtors = new address[](_length);
         for (uint256 i = 5; i < (5 + _length); i = UntangledMath.uncheckedInc(i)) {
             debtors[i - 5] = _orderAddresses[i];
@@ -155,11 +154,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     }
 
     // Dettach principal amounts from order values
-    function _principalAmountsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _principalAmountsFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory principalAmounts = new uint256[](_length);
         for (uint256 i = 2; i < (2 + _length); i = UntangledMath.uncheckedInc(i)) {
             principalAmounts[i - 2] = _orderValues[i];
@@ -167,11 +165,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return principalAmounts;
     }
 
-    function _expirationTimestampsFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _expirationTimestampsFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory expirationTimestamps = new uint256[](_length);
         for (uint256 i = 2 + _length; i < (2 + _length * 2); i = UntangledMath.uncheckedInc(i)) {
             expirationTimestamps[i - 2 - _length] = _orderValues[i];
@@ -179,11 +176,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return expirationTimestamps;
     }
 
-    function _saltFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint256[] memory)
-    {
+    function _saltFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint256[] memory) {
         uint256[] memory salts = new uint256[](_length);
         for (uint256 i = 2 + _length * 2; i < (2 + _length * 3); i = UntangledMath.uncheckedInc(i)) {
             salts[i - 2 - _length * 2] = _orderValues[i];
@@ -191,11 +187,10 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return salts;
     }
 
-    function _riskScoresFromOrderValues(uint256[] memory _orderValues, uint256 _length)
-        private
-        pure
-        returns (uint8[] memory)
-    {
+    function _riskScoresFromOrderValues(
+        uint256[] memory _orderValues,
+        uint256 _length
+    ) private pure returns (uint8[] memory) {
         uint8[] memory riskScores = new uint8[](_length);
         for (uint256 i = 2 + _length * 3; i < (2 + _length * 4); i = UntangledMath.uncheckedInc(i)) {
             riskScores[i - 2 - _length * 3] = uint8(_orderValues[i]);
@@ -224,11 +219,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     /// @inheritdoc ILoanKernel
     /// @dev A loan, stop lending/loan terms or allow the loan loss
-    function concludeLoan(
-        address creditor,
-        bytes32 agreementId,
-        address termContract
-    ) public override whenNotPaused {
+    function concludeLoan(address creditor, bytes32 agreementId, address termContract) public override whenNotPaused {
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
         require(termContract != address(0), 'Invalid terms contract.');

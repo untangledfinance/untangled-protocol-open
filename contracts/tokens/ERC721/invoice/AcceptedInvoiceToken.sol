@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
@@ -55,12 +55,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         return keccak256(abi.encodePacked(_payer, _receiver, _fiatAmount, _dueDate, _salt));
     }
 
-    function _transferTokensFrom(
-        address token,
-        address from,
-        address to,
-        uint256 amount
-    ) private {
+    function _transferTokensFrom(address token, address from, address to, uint256 amount) private {
         if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPool(to).pot();
         require(IERC20(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
     }
@@ -165,12 +160,10 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
         return (entries[bytes32(tokenId)].fiatAmount - entries[bytes32(tokenId)].paidAmount, 0);
     }
 
-    function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedRepaymentValue)
-    {
+    function getTotalExpectedRepaymentValue(
+        uint256 agreementId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedRepaymentValue) {
         uint256 principalAmount;
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);

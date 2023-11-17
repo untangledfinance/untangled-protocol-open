@@ -1,16 +1,15 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
 import '../tokens/ERC20/NoteToken.sol';
 
 abstract contract INoteTokenFactory {
-
     event TokenCreated(
         address indexed token,
-        address indexed poolAddress, 
-        Configuration.NOTE_TOKEN_TYPE indexed tokenType, 
-        uint8 decimals, 
+        address indexed poolAddress,
+        Configuration.NOTE_TOKEN_TYPE indexed tokenType,
+        uint8 decimals,
         string ticker
     );
 

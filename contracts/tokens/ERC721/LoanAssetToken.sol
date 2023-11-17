@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../interfaces/ILoanRegistry.sol';
@@ -27,11 +27,10 @@ contract LoanAssetToken is IUntangledERC721 {
         _revokeRole(MINTER_ROLE, _msgSender());
     }
 
-    function getExpectedRepaymentValues(uint256 tokenId, uint256 timestamp)
-        public
-        view
-        returns (uint256 expectedPrincipal, uint256 expectedInterest)
-    {
+    function getExpectedRepaymentValues(
+        uint256 tokenId,
+        uint256 timestamp
+    ) public view returns (uint256 expectedPrincipal, uint256 expectedInterest) {
         bytes32 agreementId = bytes32(tokenId);
         (expectedPrincipal, expectedInterest) = registry.getLoanInterestTermsContract().getExpectedRepaymentValues(
             agreementId,
@@ -55,12 +54,10 @@ contract LoanAssetToken is IUntangledERC721 {
         return registry.getLoanInterestTermsContract().getInterestRate(bytes32(_tokenId));
     }
 
-    function getTotalExpectedRepaymentValue(uint256 agreementId, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256 expectedRepaymentValue)
-    {
+    function getTotalExpectedRepaymentValue(
+        uint256 agreementId,
+        uint256 timestamp
+    ) public view override returns (uint256 expectedRepaymentValue) {
         uint256 principalAmount;
         uint256 interestAmount;
         (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);

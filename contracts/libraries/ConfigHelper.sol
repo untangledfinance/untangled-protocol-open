@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../storage/Registry.sol';
@@ -89,11 +89,9 @@ library ConfigHelper {
         return IDistributionTranche(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE));
     }
 
-    function getSecuritizationPoolValueService(Registry registry)
-        internal
-        view
-        returns (ISecuritizationPoolValueService)
-    {
+    function getSecuritizationPoolValueService(
+        Registry registry
+    ) internal view returns (ISecuritizationPoolValueService) {
         return
             ISecuritizationPoolValueService(
                 getAddress(registry, Configuration.CONTRACT_TYPE.SECURITIZATION_POOL_VALUE_SERVICE)
