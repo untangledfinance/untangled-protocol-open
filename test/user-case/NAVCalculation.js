@@ -85,10 +85,37 @@ describe('NAVCalculation', () => {
     await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
     await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     // Create new pool
-    const salt = utils.keccak256(Date.now());
     const transaction = await securitizationManager
       .connect(poolCreatorSigner)
-      .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, salt);
+      .newPoolInstance(
+            utils.keccak256(Date.now()),
+
+            poolCreatorSigner.address,
+            utils.defaultAbiCoder.encode([
+              {
+                type: 'tuple',
+                components: [
+                  {
+                    name: 'currency',
+                    type: 'address'
+                  },
+                  {
+                    name: 'minFirstLossCushion',
+                    type: 'uint32'
+                  },
+                  {
+                    name: "validatorRequired",
+                    type: "bool"
+                  }
+                ]
+              }
+            ], [
+              {
+                currency: stableCoin.address,
+                minFirstLossCushion: '100000',
+                validatorRequired: true
+              }
+            ]));
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

@@ -70,7 +70,38 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
+
+
+      .newPoolInstance(
+        utils.keccak256(Date.now()),
+  
+        poolCreatorSigner.address,
+        utils.defaultAbiCoder.encode([
+          {
+            type: 'tuple',
+            components: [
+              {
+                name: 'currency',
+                type: 'address'
+              },
+              {
+                name: 'minFirstLossCushion',
+                type: 'uint32'
+              },
+              {
+                name: 'validatorRequired',
+                type: 'bool'
+              }
+            ]
+          }
+        ], [
+          {
+            currency: stableCoin.address,
+            minFirstLossCushion: '100000',
+            validatorRequired: true
+          }
+        ]));
+
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -129,7 +160,38 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolACreator.address);
       const poolACreationTransaction = await securitizationManager
         .connect(poolACreator)
-        .newPoolInstance(stableCoin.address, '100000', poolACreator.address, utils.keccak256(Date.now()));
+
+
+
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+    
+          poolACreator.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: "validatorRequired",
+                  type: "bool"
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
 
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
@@ -437,7 +499,37 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCCreatorSigner.address);
       const poolCCreationTransaction = await securitizationManager
         .connect(poolCCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCCreatorSigner.address, utils.keccak256(Date.now()));
+
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+    
+          poolCCreatorSigner.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: 'validatorRequired',
+                  type: 'bool'
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
+
       const poolCCreationReceipt = await poolCCreationTransaction.wait();
       const [poolCContractAddress] = poolCCreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolCContract = await ethers.getContractAt('SecuritizationPool', poolCContractAddress);
@@ -503,7 +595,36 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolBCreatorSigner.address);
       const transaction = await securitizationManager
         .connect(poolBCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolBCreatorSigner.address, utils.keccak256(Date.now()));
+
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+    
+          poolBCreatorSigner.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: 'validatorRequired',
+                  type: 'bool'
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -569,7 +690,37 @@ describe('Pool to Pool', () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolACreatorSigner.address);
       const poolACreationTransaction = await securitizationManager
         .connect(poolACreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolACreatorSigner.address, utils.keccak256(Date.now()));
+
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+    
+          poolACreatorSigner.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: "validatorRequired",
+                  type: "bool"
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
+
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);

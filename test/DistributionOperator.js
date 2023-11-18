@@ -100,7 +100,34 @@ describe('Distribution', () => {
       // Create new pool
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+          poolCreatorSigner.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: "validatorRequired",
+                  type: "bool"
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
 
       let receipt = await transaction.wait();
       let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
@@ -112,7 +139,35 @@ describe('Distribution', () => {
 
       transaction = await securitizationManager
         .connect(poolCreatorSigner)
-        .newPoolInstance(stableCoin.address, '100000', poolCreatorSigner.address, utils.keccak256(Date.now()));
+        .newPoolInstance(
+          utils.keccak256(Date.now()),
+
+          poolCreatorSigner.address,
+          utils.defaultAbiCoder.encode([
+            {
+              type: 'tuple',
+              components: [
+                {
+                  name: 'currency',
+                  type: 'address'
+                },
+                {
+                  name: 'minFirstLossCushion',
+                  type: 'uint32'
+                },
+                {
+                  name: "validatorRequired",
+                  type: "bool"
+                }
+              ]
+            }
+          ], [
+            {
+              currency: stableCoin.address,
+              minFirstLossCushion: '100000',
+              validatorRequired: true
+            }
+          ]));
       receipt = await transaction.wait();
       [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
@@ -349,6 +404,7 @@ describe('Distribution', () => {
   const principalAmount = _.round(inputAmount * inputPrice * 100);
 
   describe('#LoanKernel', async () => {
+
     it('Execute fillDebtOrder successfully', async () => {
       const orderAddresses = [
         securitizationPoolContract.address,
@@ -410,7 +466,7 @@ describe('Distribution', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );
@@ -421,6 +477,8 @@ describe('Distribution', () => {
       const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
       expect(balanceOfPool).equal(tokenIds.length);
 
+
+
       await expect(
         loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
           await Promise.all(tokenIds.map(async (x) => ({
@@ -429,7 +487,7 @@ describe('Distribution', () => {
               defaultLoanAssetTokenValidator,
               [x],
               [(await loanAssetTokenContract.nonce(x)).toNumber()],
-              defaultLoanAssetTokenValidator.address
+              defaultLoanAssetTokenValidator.address,
             )
           })))
         )
@@ -490,7 +548,7 @@ describe('Distribution', () => {
             defaultLoanAssetTokenValidator,
             [x],
             [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
+            defaultLoanAssetTokenValidator.address,
           )
         })))
       );

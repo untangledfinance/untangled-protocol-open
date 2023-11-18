@@ -33,35 +33,6 @@ import {POOL_ADMIN} from './types.sol';
 contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     using ConfigHelper for Registry;
 
-    constructor() {
-        _disableInitializers();
-    }
-
-    /** CONSTRUCTOR */
-    function initialize(
-        Registry _registry,
-        address _currency,
-        uint32 _minFirstLossCushion
-    ) public override initializer {
-        require(_minFirstLossCushion < 100 * RATE_SCALING_FACTOR, 'minFirstLossCushion is greater than 100');
-        require(_currency != address(0), 'SecuritizationPool: Invalid currency');
-        __UntangledBase__init(_msgSender());
-
-        _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
-        registry = _registry;
-
-        state = CycleState.INITIATED;
-        underlyingCurrency = _currency;
-        minFirstLossCushion = _minFirstLossCushion;
-
-        pot = address(this);
-        require(
-            IERC20Upgradeable(_currency).approve(pot, type(uint256).max),
-            'SecuritizationPool: Currency approval failed'
-        );
-        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
-    }
-
     modifier onlyIssuingTokenStage() {
         require(state != CycleState.OPEN && state != CycleState.CLOSED, 'Not in issuing token stage');
         _;
@@ -116,6 +87,50 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             'SecuritizationPool: Only LoanRepaymentRouter'
         );
         _;
+    }
+
+    constructor() {
+        _disableInitializers();
+    }
+
+    /** CONSTRUCTOR */
+    function initialize(
+        Registry _registry,
+        bytes memory params
+    )
+        public
+        override
+        // address _currency,
+        // uint32 _minFirstLossCushion
+        initializer
+    {
+        ISecuritizationPool.NewPoolParams memory newPoolParams = abi.decode(
+            params,
+            (ISecuritizationPool.NewPoolParams)
+        );
+
+        require(
+            newPoolParams.minFirstLossCushion < 100 * RATE_SCALING_FACTOR,
+            'minFirstLossCushion is greater than 100'
+        );
+        require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');
+        __UntangledBase__init(_msgSender());
+
+        _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
+        registry = _registry;
+
+        state = CycleState.INITIATED;
+        underlyingCurrency = newPoolParams.currency;
+        minFirstLossCushion = newPoolParams.minFirstLossCushion;
+
+        pot = address(this);
+        validatorRequired = newPoolParams.validatorRequired;
+
+        require(
+            IERC20Upgradeable(newPoolParams.currency).approve(pot, type(uint256).max),
+            'SecuritizationPool: Currency approval failed'
+        );
+        registry.getLoanAssetToken().setApprovalForAll(address(registry.getLoanKernel()), true);
     }
 
     /** GETTER */
@@ -250,6 +265,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         poolNAV.file("discountRate", riskScores[0].discountRate);
     }
 
+/*
     /// @inheritdoc ISecuritizationPool
     function exportAssets(
         address tokenAddress,
@@ -265,6 +281,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
     }
+*/
 
     /// @inheritdoc ISecuritizationPool
     function withdrawAssets(
@@ -625,6 +642,10 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
 
     function unpause() public virtual override onlyPoolAdminOrOwner {
         _unpause();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return type(ISecuritizationPool).interfaceId == interfaceId || super.supportsInterface(interfaceId);
     }
 
     uint256[50] private __gap;
