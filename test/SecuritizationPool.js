@@ -7,6 +7,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { constants } = ethers;
 const { parseEther, formatEther } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
+const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const {
   unlimitedAllowance,
@@ -836,6 +837,12 @@ describe('SecuritizationPool', () => {
     });
 
     it('#withdrawAssets', async () => {
+      await impersonateAccount(securitizationPoolContract.address);
+      await setBalance(securitizationPoolContract.address, ethers.utils.parseEther('1'));
+      const signer = await ethers.getSigner(securitizationPoolContract.address);
+
+      await loanAssetTokenContract.connect(signer)["safeTransferFrom(address,address,uint256)"](signer.address, secondSecuritizationPool.address, tokenIds[1]);
+
       await secondSecuritizationPool
         .connect(poolCreatorSigner)
         .withdrawAssets([loanAssetTokenContract.address], [tokenIds[1]], [originatorSigner.address]);
