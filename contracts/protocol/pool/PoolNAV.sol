@@ -458,7 +458,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        require(maturityDate_ < nnow, "maturity-date-in-the-future");
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
+        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
+        require(maturityDate_ + riskParam.gracePeriod <= nnow, "maturity-date-in-the-future");
         // check the writeoff group based on the amount of days overdue
         uint256 writeOffGroupIndex_ = currentValidWriteOffGroup(loan);
 
