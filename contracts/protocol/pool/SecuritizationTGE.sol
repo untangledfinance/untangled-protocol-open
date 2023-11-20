@@ -15,6 +15,8 @@ import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsale.sol';
 
+import {ORIGINATOR_ROLE} from './types.sol';
+
 abstract contract SecuritizationTGE is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -24,33 +26,146 @@ abstract contract SecuritizationTGE is
 {
     using ConfigHelper for Registry;
 
-    CycleState public override state;
+    // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationTGE")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant SecuritizationTGEStorageLocation =
+        0x9aa74cbf2d9c11188ce95836d253f2de04aa615fe1ef8a4e5a1baf80987ca300;
 
-    address public override tgeAddress;
-    address public override secondTGEAddress;
-    address public override sotToken;
-    address public override jotToken;
-    address public override underlyingCurrency;
-    uint256 public override reserve; // Money in pool
-    uint32 public override minFirstLossCushion;
+    /// @custom:storage-location erc7201:untangled.storage.SecuritizationTGE
+    struct SecuritizationTGEStorage {
+        CycleState state;
+        address tgeAddress;
+        address secondTGEAddress;
+        address sotToken;
+        address jotToken;
+        address underlyingCurrency;
+        uint256 reserve; // Money in pool
+        uint32 minFirstLossCushion;
+        uint64 openingBlockTimestamp;
+        uint64 termLengthInSeconds;
+        // by default it is address(this)
+        address pot;
+        // for base (sell-loan) operation
+        uint256 principalAmountSOT;
+        uint256 paidPrincipalAmountSOT;
+        uint32 interestRateSOT; // Annually, support 4 decimals num
+        uint256 totalAssetRepaidCurrency;
+        mapping(address => uint256) paidPrincipalAmountSOTByInvestor;
+        uint256 amountOwedToOriginator;
+    }
 
-    uint64 public override openingBlockTimestamp;
-    uint64 public override termLengthInSeconds;
+    function _getSecuritizationTGEStorage() private pure returns (SecuritizationTGEStorage storage $) {
+        assembly {
+            $.slot := SecuritizationTGEStorageLocation
+        }
+    }
 
-    // by default it is address(this)
-    address public override pot;
+    function __SecuritizationTGE_init_unchained(
+        address pot_,
+        CycleState state_,
+        address underlyingCurrency_,
+        uint32 minFirstLossCushion_
+    ) internal onlyInitializing {
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.pot = pot_;
+        $.state = state_;
+        $.underlyingCurrency = underlyingCurrency_;
+        $.minFirstLossCushion = minFirstLossCushion_;
+    }
 
-    // for base (sell-loan) operation
-    uint256 public override principalAmountSOT;
-    uint256 public override paidPrincipalAmountSOT;
-    uint32 public override interestRateSOT; // Annually, support 4 decimals num
+    function state() public view override returns (CycleState) {
+        return _getSecuritizationTGEStorage().state;
+    }
 
-    uint256 public override totalAssetRepaidCurrency;
+    function tgeAddress() public view override returns (address) {
+        return _getSecuritizationTGEStorage().tgeAddress;
+    }
 
-    mapping(address => uint256) public override paidPrincipalAmountSOTByInvestor;
+    function secondTGEAddress() public view override returns (address) {
+        return _getSecuritizationTGEStorage().secondTGEAddress;
+    }
+
+    function sotToken() public view override returns (address) {
+        return _getSecuritizationTGEStorage().sotToken;
+    }
+
+    function jotToken() public view override returns (address) {
+        return _getSecuritizationTGEStorage().jotToken;
+    }
+
+    function underlyingCurrency() public view override returns (address) {
+        return _getSecuritizationTGEStorage().underlyingCurrency;
+    }
+
+    function reserve() public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().reserve;
+    }
+
+    function minFirstLossCushion() public view override returns (uint32) {
+        return _getSecuritizationTGEStorage().minFirstLossCushion;
+    }
+
+    function openingBlockTimestamp() public view override returns (uint64) {
+        return _getSecuritizationTGEStorage().openingBlockTimestamp;
+    }
+
+    function termLengthInSeconds() public view override returns (uint64) {
+        return _getSecuritizationTGEStorage().termLengthInSeconds;
+    }
+
+    function pot() public view override returns (address) {
+        return _getSecuritizationTGEStorage().pot;
+    }
+
+    function paidPrincipalAmountSOT() public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().paidPrincipalAmountSOT;
+    }
+
+    function principalAmountSOT() public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().principalAmountSOT;
+    }
+
+    function interestRateSOT() public view override returns (uint32) {
+        return _getSecuritizationTGEStorage().interestRateSOT;
+    }
+
+    function paidPrincipalAmountSOTByInvestor(address user) public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().paidPrincipalAmountSOTByInvestor[user];
+    }
+
+    function totalAssetRepaidCurrency() public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().totalAssetRepaidCurrency;
+    }
+
+    function amountOwedToOriginator() public view override returns (uint256) {
+        return _getSecuritizationTGEStorage().amountOwedToOriginator;
+    }
+
+    // address public override tgeAddress;
+    // address public override secondTGEAddress;
+    // address public override sotToken;
+    // address public override jotToken;
+    // address public override underlyingCurrency;
+    // uint256 public override reserve; // Money in pool
+    // uint32 public override minFirstLossCushion;
+
+    // uint64 public override openingBlockTimestamp;
+    // uint64 public override termLengthInSeconds;
+
+    // // by default it is address(this)
+    // address public override pot;
+
+    // // for base (sell-loan) operation
+    // uint256 public override principalAmountSOT;
+    // uint256 public override paidPrincipalAmountSOT;
+    // uint32 public override interestRateSOT; // Annually, support 4 decimals num
+
+    // uint256 public override totalAssetRepaidCurrency;
+
+    // mapping(address => uint256) public override paidPrincipalAmountSOTByInvestor;
 
     modifier onlyIssuingTokenStage() {
-        require(state != CycleState.OPEN && state != CycleState.CLOSED, 'Not in issuing token stage');
+        CycleState _state = state();
+        require(_state != CycleState.OPEN && _state != CycleState.CLOSED, 'Not in issuing token stage');
         _;
     }
 
@@ -65,7 +180,7 @@ abstract contract SecuritizationTGE is
     }
 
     function isClosedState() public view override returns (bool) {
-        return state == CycleState.CLOSED;
+        return state() == CycleState.CLOSED;
     }
 
     /// @inheritdoc ISecuritizationTGE
@@ -77,14 +192,17 @@ abstract contract SecuritizationTGE is
         registry().requireSecuritizationManager(_msgSender());
         require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
 
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
-            tgeAddress = _tgeAddress;
-            sotToken = _tokenAddress;
+            $.tgeAddress = _tgeAddress;
+            $.sotToken = _tokenAddress;
         } else {
-            secondTGEAddress = _tgeAddress;
-            jotToken = _tokenAddress;
+            $.secondTGEAddress = _tgeAddress;
+            $.jotToken = _tokenAddress;
         }
-        state = CycleState.CROWDSALE;
+
+        $.state = CycleState.CROWDSALE;
 
         emit UpdateTGEAddress(_tgeAddress, _tokenAddress, _noteType);
     }
@@ -100,12 +218,15 @@ abstract contract SecuritizationTGE is
             _msgSender() == address(registry().getDistributionTranche()),
             'SecuritizationPool: Caller must be DistributionTranche'
         );
-        if (sotToken == notesToken) {
-            paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
+
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        if ($.sotToken == notesToken) {
+            $.paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
             emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
         }
 
-        reserve = reserve - currencyAmount;
+        $.reserve = $.reserve - currencyAmount;
 
         if (tokenAmount > 0) {
             ERC20BurnableUpgradeable(notesToken).burn(tokenAmount);
@@ -113,33 +234,38 @@ abstract contract SecuritizationTGE is
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
-            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, usr, currencyAmount),
+            IERC20Upgradeable($.underlyingCurrency).transferFrom($.pot, usr, currencyAmount),
             'SecuritizationPool: currency-transfer-failed'
         );
 
-        emit UpdateReserve(reserve);
+        emit UpdateReserve($.reserve);
     }
 
     function checkMinFirstLost() public view virtual returns (bool) {
         ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
-        return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
+        return _getSecuritizationTGEStorage().minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
 
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual override whenNotPaused {
         registry().requireLoanRepaymentRouter(_msgSender());
-        reserve = reserve + amount;
-        totalAssetRepaidCurrency = totalAssetRepaidCurrency + amount;
 
-        emit UpdateReserve(reserve);
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        $.reserve = $.reserve + amount;
+        $.totalAssetRepaidCurrency = $.totalAssetRepaidCurrency + amount;
+
+        emit UpdateReserve($.reserve);
     }
 
     function hasFinishedRedemption() public view override returns (bool) {
-        if (sotToken != address(0)) {
-            require(IERC20Upgradeable(sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        if ($.sotToken != address(0)) {
+            require(IERC20Upgradeable($.sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
         }
-        if (jotToken != address(0)) {
-            require(IERC20Upgradeable(jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
+        if ($.jotToken != address(0)) {
+            require(IERC20Upgradeable($.jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
         }
 
         return true;
@@ -148,15 +274,17 @@ abstract contract SecuritizationTGE is
     function setPot(address _pot) external override whenNotPaused nonReentrant notClosingStage {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
 
-        require(pot != _pot, 'SecuritizationPool: Same address with current pot');
-        pot = _pot;
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        require($.pot != _pot, 'SecuritizationPool: Same address with current pot');
+        $.pot = _pot;
         if (_pot == address(this)) {
             require(
-                IERC20Upgradeable(underlyingCurrency).approve(pot, type(uint256).max),
+                IERC20Upgradeable($.underlyingCurrency).approve($.pot, type(uint256).max),
                 'SecuritizationPool: Pot not approved'
             );
         }
-        registry().getSecuritizationManager().registerPot(pot);
+        registry().getSecuritizationManager().registerPot($.pot);
     }
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
@@ -165,10 +293,13 @@ abstract contract SecuritizationTGE is
                 _msgSender() == address(registry().getDistributionOperator()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
-        reserve = reserve + currencyAmount;
+
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        $.reserve = $.reserve + currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
 
-        emit UpdateReserve(reserve);
+        emit UpdateReserve($.reserve);
     }
 
     function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
@@ -177,15 +308,19 @@ abstract contract SecuritizationTGE is
                 _msgSender() == address(registry().getDistributionOperator()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
-        reserve = reserve - currencyAmount;
+
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.reserve = $.reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
 
-        emit UpdateReserve(reserve);
+        emit UpdateReserve($.reserve);
     }
 
     function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
-        require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge can update interest');
-        interestRateSOT = _interestRateSOT;
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        require(_msgSender() == $.tgeAddress, 'SecuritizationPool: Only tge can update interest');
+
+        $.interestRateSOT = _interestRateSOT;
         emit UpdateInterestRateSOT(_interestRateSOT);
     }
 
@@ -193,9 +328,11 @@ abstract contract SecuritizationTGE is
     function claimCashRemain(
         address recipientWallet
     ) external override whenNotPaused onlyOwner finishRedemptionValidator {
-        IERC20Upgradeable currency = IERC20Upgradeable(underlyingCurrency);
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+
+        IERC20Upgradeable currency = IERC20Upgradeable($.underlyingCurrency);
         require(
-            currency.transferFrom(pot, recipientWallet, currency.balanceOf(pot)),
+            currency.transferFrom($.pot, recipientWallet, currency.balanceOf($.pot)),
             'SecuritizationPool: Transfer failed'
         );
     }
@@ -208,30 +345,66 @@ abstract contract SecuritizationTGE is
     ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
         require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
 
-        termLengthInSeconds = _termLengthInSeconds;
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
 
-        principalAmountSOT = _principalAmountForSOT;
+        $.termLengthInSeconds = _termLengthInSeconds;
 
-        state = CycleState.OPEN;
+        $.principalAmountSOT = _principalAmountForSOT;
 
-        if (tgeAddress != address(0)) {
-            IMintedTGE mintedTokenGenerationEvent = IMintedTGE(tgeAddress);
+        $.state = CycleState.OPEN;
+
+        if ($.tgeAddress != address(0)) {
+            IMintedTGE mintedTokenGenerationEvent = IMintedTGE($.tgeAddress);
             mintedTokenGenerationEvent.setupLongSale(
                 _interestRateForSOT,
                 _termLengthInSeconds,
                 _timeStartEarningInterest
             );
-            if (!IFinalizableCrowdsale(tgeAddress).finalized()) {
-                IFinalizableCrowdsale(tgeAddress).finalize(false, pot);
+            if (!IFinalizableCrowdsale($.tgeAddress).finalized()) {
+                IFinalizableCrowdsale($.tgeAddress).finalize(false, $.pot);
             }
-            interestRateSOT = mintedTokenGenerationEvent.pickedInterest();
+            $.interestRateSOT = mintedTokenGenerationEvent.pickedInterest();
         }
-        if (secondTGEAddress != address(0)) {
-            IFinalizableCrowdsale(secondTGEAddress).finalize(false, pot);
+        if ($.secondTGEAddress != address(0)) {
+            IFinalizableCrowdsale($.secondTGEAddress).finalize(false, $.pot);
             require(
-                IFinalizableCrowdsale(secondTGEAddress).finalized(),
+                IFinalizableCrowdsale($.secondTGEAddress).finalized(),
                 'SecuritizationPool: second sale is still on going'
             );
         }
+    }
+
+    function _setOpeningBlockTimestamp(uint64 _openingBlockTimestamp) internal {
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.openingBlockTimestamp = _openingBlockTimestamp;
+        emit UpdateOpeningBlockTimestamp(_openingBlockTimestamp);
+    }
+
+    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        uint256 _amountOwedToOriginator = $.amountOwedToOriginator;
+        if (amount <= _amountOwedToOriginator) {
+            $.amountOwedToOriginator = _amountOwedToOriginator - amount;
+        } else {
+            $.amountOwedToOriginator = 0;
+        }
+        $.reserve = $.reserve - amount;
+
+        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+        require(
+            IERC20Upgradeable(underlyingCurrency()).transferFrom(pot(), _msgSender(), amount),
+            'SecuritizationPool: Transfer failed'
+        );
+        emit Withdraw(_msgSender(), amount);
+    }
+
+    function _setAmountOwedToOriginator(uint256 _amountOwedToOriginator) internal {
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.amountOwedToOriginator = _amountOwedToOriginator;
+    }
+
+    function _setPot(address _pot) internal {
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.pot = _pot;
     }
 }

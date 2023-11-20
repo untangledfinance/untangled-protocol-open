@@ -14,18 +14,65 @@ abstract contract SecuritizationLockDistribution is
 {
     using ConfigHelper for Registry;
 
-    // Registry public override registry;
+    // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationLockDistribution")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant SecuritizationLockDistributionStorageLocation =
+        0xaa8b848cd9e2a85edbb7908b73c85a1343a78bc77e13720d307e4378313e0500;
 
-    // token address -> user -> locked
-    mapping(address => mapping(address => uint256)) public override lockedDistributeBalances;
-    
-    uint256 public override totalLockedDistributeBalance;
+    /// @custom:storage-location erc7201:untangled.storage.SecuritizationLockDistribution
+    struct SecuritizationLockDistributionStorage {
+        mapping(address => mapping(address => uint256)) lockedDistributeBalances;
+        uint256 totalLockedDistributeBalance;
+        mapping(address => mapping(address => uint256)) lockedRedeemBalances;
+        // token address -> total locked
+        mapping(address => uint256) totalLockedRedeemBalances;
+        uint256 totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
+    }
 
-    mapping(address => mapping(address => uint256)) public override lockedRedeemBalances;
-    // token address -> total locked
-    mapping(address => uint256) public override totalLockedRedeemBalances;
+    function _getSecuritizationLockDistributionStorage()
+        private
+        pure
+        returns (SecuritizationLockDistributionStorage storage $)
+    {
+        assembly {
+            $.slot := SecuritizationLockDistributionStorageLocation
+        }
+    }
 
-    uint256 public override totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
+    function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        return $.lockedDistributeBalances[tokenAddress][investor];
+    }
+
+    function lockedRedeemBalances(address tokenAddress, address investor) public view override returns (uint256) {
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        return $.lockedRedeemBalances[tokenAddress][investor];
+    }
+
+    function totalLockedRedeemBalances(address tokenAddress) public view override returns (uint256) {
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        return $.totalLockedRedeemBalances[tokenAddress];
+    }
+
+    function totalLockedDistributeBalance() public view override returns (uint256) {
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        return $.totalLockedDistributeBalance;
+    }
+
+    function totalRedeemedCurrency() public view override returns (uint256) {
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        return $.totalRedeemedCurrency;
+    }
+
+    // // token address -> user -> locked
+    // mapping(address => mapping(address => uint256)) public override lockedDistributeBalances;
+
+    // uint256 public override totalLockedDistributeBalance;
+
+    // mapping(address => mapping(address => uint256)) public override lockedRedeemBalances;
+    // // token address -> total locked
+    // mapping(address => uint256) public override totalLockedRedeemBalances;
+
+    // uint256 public override totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
 
     // Increase by value
     function increaseLockedDistributeBalance(
@@ -36,23 +83,27 @@ abstract contract SecuritizationLockDistribution is
     ) external override whenNotPaused {
         registry().requireDistributionOperator(_msgSender());
 
-        lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] + currency;
-        lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] + token;
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
 
-        totalLockedDistributeBalance = totalLockedDistributeBalance + currency;
-        totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] + token;
+        $.lockedDistributeBalances[tokenAddress][investor] =
+            $.lockedDistributeBalances[tokenAddress][investor] +
+            currency;
+        $.lockedRedeemBalances[tokenAddress][investor] = $.lockedRedeemBalances[tokenAddress][investor] + token;
+
+        $.totalLockedDistributeBalance = $.totalLockedDistributeBalance + currency;
+        $.totalLockedRedeemBalances[tokenAddress] = $.totalLockedRedeemBalances[tokenAddress] + token;
 
         emit UpdateLockedDistributeBalance(
             tokenAddress,
             investor,
-            lockedDistributeBalances[tokenAddress][investor],
-            lockedRedeemBalances[tokenAddress][investor],
-            totalLockedRedeemBalances[tokenAddress],
-            totalLockedDistributeBalance
+            $.lockedDistributeBalances[tokenAddress][investor],
+            $.lockedRedeemBalances[tokenAddress][investor],
+            $.totalLockedRedeemBalances[tokenAddress],
+            $.totalLockedDistributeBalance
         );
 
-        emit UpdateTotalRedeemedCurrency(totalRedeemedCurrency, tokenAddress);
-        emit UpdateTotalLockedDistributeBalance(totalLockedDistributeBalance, tokenAddress);
+        emit UpdateTotalRedeemedCurrency($.totalRedeemedCurrency, tokenAddress);
+        emit UpdateTotalLockedDistributeBalance($.totalLockedDistributeBalance, tokenAddress);
     }
 
     function decreaseLockedDistributeBalance(
@@ -63,23 +114,27 @@ abstract contract SecuritizationLockDistribution is
     ) external override whenNotPaused {
         registry().requireDistributionOperator(_msgSender());
 
-        lockedDistributeBalances[tokenAddress][investor] = lockedDistributeBalances[tokenAddress][investor] - currency;
-        lockedRedeemBalances[tokenAddress][investor] = lockedRedeemBalances[tokenAddress][investor] - token;
+        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
 
-        totalLockedDistributeBalance = totalLockedDistributeBalance - currency;
-        totalRedeemedCurrency = totalRedeemedCurrency + currency;
-        totalLockedRedeemBalances[tokenAddress] = totalLockedRedeemBalances[tokenAddress] - token;
+        $.lockedDistributeBalances[tokenAddress][investor] =
+            $.lockedDistributeBalances[tokenAddress][investor] -
+            currency;
+        $.lockedRedeemBalances[tokenAddress][investor] = $.lockedRedeemBalances[tokenAddress][investor] - token;
+
+        $.totalLockedDistributeBalance = $.totalLockedDistributeBalance - currency;
+        $.totalRedeemedCurrency = $.totalRedeemedCurrency + currency;
+        $.totalLockedRedeemBalances[tokenAddress] = $.totalLockedRedeemBalances[tokenAddress] - token;
 
         emit UpdateLockedDistributeBalance(
             tokenAddress,
             investor,
-            lockedDistributeBalances[tokenAddress][investor],
-            lockedRedeemBalances[tokenAddress][investor],
-            totalLockedRedeemBalances[tokenAddress],
-            totalLockedDistributeBalance
+            $.lockedDistributeBalances[tokenAddress][investor],
+            $.lockedRedeemBalances[tokenAddress][investor],
+            $.totalLockedRedeemBalances[tokenAddress],
+            $.totalLockedDistributeBalance
         );
 
-        emit UpdateTotalRedeemedCurrency(totalRedeemedCurrency, tokenAddress);
-        emit UpdateTotalLockedDistributeBalance(totalLockedDistributeBalance, tokenAddress);
+        emit UpdateTotalRedeemedCurrency($.totalRedeemedCurrency, tokenAddress);
+        emit UpdateTotalLockedDistributeBalance($.totalLockedDistributeBalance, tokenAddress);
     }
 }

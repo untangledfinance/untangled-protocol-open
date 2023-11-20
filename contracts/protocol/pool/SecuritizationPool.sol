@@ -22,7 +22,7 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
-import {POOL_ADMIN, ORIGINATOR_ROLE} from './types.sol';
+import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
@@ -32,6 +32,8 @@ import {RegistryInjection} from './RegistryInjection.sol';
 
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
+
+import {RiskScore} from './base/types.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -82,15 +84,17 @@ contract SecuritizationPool is
         // _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
         _setRegistry(registry_);
 
-        state = ISecuritizationTGE.CycleState.INITIATED;
-        underlyingCurrency = newPoolParams.currency;
-        minFirstLossCushion = newPoolParams.minFirstLossCushion;
+        __SecuritizationTGE_init_unchained(
+            address(this),
+            ISecuritizationTGE.CycleState.INITIATED,
+            newPoolParams.currency,
+            newPoolParams.minFirstLossCushion
+        );
 
-        pot = address(this);
         validatorRequired = newPoolParams.validatorRequired;
 
         require(
-            IERC20Upgradeable(newPoolParams.currency).approve(pot, type(uint256).max),
+            IERC20Upgradeable(newPoolParams.currency).approve(pot(), type(uint256).max),
             'SecuritizationPool: Currency approval failed'
         );
         registry().getLoanAssetToken().setApprovalForAll(address(registry().getLoanKernel()), true);
@@ -259,36 +263,36 @@ contract SecuritizationPool is
                 expectedAssetsValue +
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
         }
-        amountOwedToOriginator += expectedAssetsValue;
+        _setAmountOwedToOriginator(amountOwedToOriginator() + expectedAssetsValue);
         if (firstAssetTimestamp == 0) {
             firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
         }
-        if (openingBlockTimestamp == 0) {
+        if (openingBlockTimestamp() == 0) {
             // If openingBlockTimestamp is not set
-            openingBlockTimestamp = uint64(block.timestamp);
+            _setOpeningBlockTimestamp(openingBlockTimestamp());
         }
 
         emit CollectAsset(from, expectedAssetsValue);
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
-        uint256 _amountOwedToOriginator = amountOwedToOriginator;
-        if (amount <= _amountOwedToOriginator) {
-            amountOwedToOriginator = _amountOwedToOriginator - amount;
-        } else {
-            amountOwedToOriginator = 0;
-        }
-        reserve = reserve - amount;
+    // /// @inheritdoc ISecuritizationPool
+    // function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
+    //     uint256 _amountOwedToOriginator = amountOwedToOriginator;
+    //     if (amount <= _amountOwedToOriginator) {
+    //         amountOwedToOriginator = _amountOwedToOriginator - amount;
+    //     } else {
+    //         amountOwedToOriginator = 0;
+    //     }
+    //     reserve = reserve - amount;
 
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-        require(
-            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
-            'SecuritizationPool: Transfer failed'
-        );
-        emit Withdraw(_msgSender(), amount);
-    }
+    //     require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+    //     require(
+    //         IERC20Upgradeable(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
+    //         'SecuritizationPool: Transfer failed'
+    //     );
+    //     emit Withdraw(_msgSender(), amount);
+    // }
 
     // function checkMinFirstLost() public view returns (bool) {
     //     ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
@@ -326,12 +330,10 @@ contract SecuritizationPool is
             );
         }
 
-        if (openingBlockTimestamp == 0) {
+        if (openingBlockTimestamp() == 0) {
             // If openingBlockTimestamp is not set
-            openingBlockTimestamp = uint64(block.timestamp);
+            _setOpeningBlockTimestamp(uint64(block.timestamp));
         }
-
-        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -392,25 +394,25 @@ contract SecuritizationPool is
 
     /// @inheritdoc ISecuritizationPool
     function setUpOpeningBlockTimestamp() public override whenNotPaused {
-        require(_msgSender() == tgeAddress, 'SecuritizationPool: Only tge address');
+        require(_msgSender() == tgeAddress(), 'SecuritizationPool: Only tge address');
         _setUpOpeningBlockTimestamp();
     }
 
     /// @dev Set the opening block timestamp
     function _setUpOpeningBlockTimestamp() private {
-        if (tgeAddress == address(0)) return;
-        uint64 _firstNoteTokenMintedTimestamp = ICrowdSale(tgeAddress).firstNoteTokenMintedTimestamp();
+        if (tgeAddress() == address(0)) return;
+        uint64 _firstNoteTokenMintedTimestamp = ICrowdSale(tgeAddress()).firstNoteTokenMintedTimestamp();
         uint64 _firstAssetTimestamp = firstAssetTimestamp;
         if (_firstNoteTokenMintedTimestamp > 0 && _firstAssetTimestamp > 0) {
             // Pick the later
             if (_firstAssetTimestamp > _firstNoteTokenMintedTimestamp) {
-                openingBlockTimestamp = _firstAssetTimestamp;
+                _setOpeningBlockTimestamp(_firstAssetTimestamp);
             } else {
-                openingBlockTimestamp = _firstNoteTokenMintedTimestamp;
+                _setOpeningBlockTimestamp(_firstNoteTokenMintedTimestamp);
             }
         }
 
-        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp);
+        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp());
     }
 
     function pause() public virtual override {
