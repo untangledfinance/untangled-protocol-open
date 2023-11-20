@@ -52,6 +52,26 @@ contract SecuritizationPool is
 {
     using ConfigHelper for Registry;
 
+    // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationPool")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant SecuritizationPoolStorageLocation =
+        0x7b312f85bcf71b947c1556b37514c7da9b615474a5e6d949d429b3b529966500;
+
+    /// @custom:storage-location erc7201:untangled.storage.SecuritizationPool
+    struct SecuritizationPoolStorage {
+        uint64 firstAssetTimestamp;
+        RiskScore[] riskScores;
+        NFTAsset[] nftAssets;
+        address[] tokenAssetAddresses;
+        mapping(address => bool) existsTokenAssetAddress;
+        bool validatorRequired;
+    }
+
+    function _getSecuritizationPoolStorage() private pure returns (SecuritizationPoolStorage storage $) {
+        assembly {
+            $.slot := SecuritizationPoolStorageLocation
+        }
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -62,7 +82,6 @@ contract SecuritizationPool is
         bytes memory params
     )
         public
-        override
         // address _currency,
         // uint32 _minFirstLossCushion
         initializer
@@ -91,7 +110,7 @@ contract SecuritizationPool is
             newPoolParams.minFirstLossCushion
         );
 
-        validatorRequired = newPoolParams.validatorRequired;
+        _getSecuritizationPoolStorage().validatorRequired = newPoolParams.validatorRequired;
 
         require(
             IERC20Upgradeable(newPoolParams.currency).approve(pot(), type(uint256).max),
@@ -102,19 +121,19 @@ contract SecuritizationPool is
 
     /** GETTER */
     function getNFTAssetsLength() public view override returns (uint256) {
-        return nftAssets.length;
+        return _getSecuritizationPoolStorage().nftAssets.length;
     }
 
     function getTokenAssetAddresses() public view override returns (address[] memory) {
-        return tokenAssetAddresses;
+        return _getSecuritizationPoolStorage().tokenAssetAddresses;
     }
 
     function getTokenAssetAddressesLength() public view override returns (uint256) {
-        return tokenAssetAddresses.length;
+        return _getSecuritizationPoolStorage().tokenAssetAddresses.length;
     }
 
     function getRiskScoresLength() public view override returns (uint256) {
-        return riskScores.length;
+        return _getSecuritizationPoolStorage().riskScores.length;
     }
 
     // function hasFinishedRedemption() public view override returns (bool) {
@@ -130,9 +149,10 @@ contract SecuritizationPool is
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        uint256 nftAssetsLength = nftAssets.length;
+        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
+        uint256 nftAssetsLength = _nftAssets.length;
         for (uint256 i = 0; i < nftAssetsLength; i = UntangledMath.uncheckedInc(i)) {
-            if (nftAssets[i].tokenAddress == tokenAddress && nftAssets[i].tokenId == tokenId) {
+            if (_nftAssets[i].tokenAddress == tokenAddress && _nftAssets[i].tokenId == tokenId) {
                 // Remove i element from nftAssets
                 _removeNFTAssetIndex(i);
                 return true;
@@ -143,16 +163,20 @@ contract SecuritizationPool is
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
-        nftAssets[indexToRemove] = nftAssets[nftAssets.length - 1];
+        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
 
-        NFTAsset storage nft = nftAssets[nftAssets.length - 1];
+        _nftAssets[indexToRemove] = _nftAssets[_nftAssets.length - 1];
+
+        NFTAsset storage nft = _nftAssets[_nftAssets.length - 1];
         emit RemoveNFTAsset(nft.tokenAddress, nft.tokenId);
-        nftAssets.pop();
+        _nftAssets.pop();
     }
 
     function _pushTokenAssetAddress(address tokenAddress) private {
-        if (!existsTokenAssetAddress[tokenAddress]) tokenAssetAddresses.push(tokenAddress);
-        existsTokenAssetAddress[tokenAddress] = true;
+        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+
+        if (!$.existsTokenAssetAddress[tokenAddress]) $.tokenAssetAddresses.push(tokenAddress);
+        $.existsTokenAssetAddress[tokenAddress] = true;
         emit AddTokenAssetAddress(tokenAddress);
     }
 
@@ -162,7 +186,8 @@ contract SecuritizationPool is
             token == address(registry().getAcceptedInvoiceToken()) || token == address(registry().getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
-        nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));
+        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
+        _nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));
         emit InsertNFTAsset(token, tokenId);
 
         return this.onERC721Received.selector;
@@ -182,14 +207,16 @@ contract SecuritizationPool is
                 _daysPastDuesLength * 4 == _periodsAndWriteOffs.length,
             'SecuritizationPool: Riskscore params length is not equal'
         );
-        delete riskScores;
+
+        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        delete $.riskScores;
 
         for (uint256 i = 0; i < _daysPastDuesLength; i = UntangledMath.uncheckedInc(i)) {
             require(
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
                 'SecuritizationPool: Risk scores must be sorted'
             );
-            riskScores.push(
+            $.riskScores.push(
                 RiskScore({
                     daysPastDue: _daysPastDues[i],
                     advanceRate: _ratesAndDefaults[i],
@@ -264,8 +291,10 @@ contract SecuritizationPool is
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
         }
         _setAmountOwedToOriginator(amountOwedToOriginator() + expectedAssetsValue);
-        if (firstAssetTimestamp == 0) {
-            firstAssetTimestamp = uint64(block.timestamp);
+
+        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        if (firstAssetTimestamp() == 0) {
+            $.firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
         }
         if (openingBlockTimestamp() == 0) {
@@ -347,6 +376,9 @@ contract SecuritizationPool is
         uint256 tokenAddressesLength = tokenAddresses.length;
         require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
         require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
+
+        mapping(address => bool) storage existsTokenAssetAddress = _getSecuritizationPoolStorage()
+            .existsTokenAssetAddress;
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             require(
@@ -354,6 +386,10 @@ contract SecuritizationPool is
                 'SecuritizationPool: Transfer failed'
             );
         }
+    }
+
+    function firstAssetTimestamp() public view returns (uint64) {
+        return _getSecuritizationPoolStorage().firstAssetTimestamp;
     }
 
     // /// @inheritdoc ISecuritizationPool
@@ -402,7 +438,7 @@ contract SecuritizationPool is
     function _setUpOpeningBlockTimestamp() private {
         if (tgeAddress() == address(0)) return;
         uint64 _firstNoteTokenMintedTimestamp = ICrowdSale(tgeAddress()).firstNoteTokenMintedTimestamp();
-        uint64 _firstAssetTimestamp = firstAssetTimestamp;
+        uint64 _firstAssetTimestamp = firstAssetTimestamp();
         if (_firstNoteTokenMintedTimestamp > 0 && _firstAssetTimestamp > 0) {
             // Pick the later
             if (_firstAssetTimestamp > _firstNoteTokenMintedTimestamp) {
@@ -432,6 +468,22 @@ contract SecuritizationPool is
             interfaceId == type(ISecuritizationTGE).interfaceId ||
             interfaceId == type(ISecuritizationLockDistribution).interfaceId ||
             interfaceId == type(ISecuritizationAccessControl).interfaceId;
+    }
+
+    function riskScores(uint256 idx) public view virtual override returns (RiskScore memory) {
+        return _getSecuritizationPoolStorage().riskScores[idx];
+    }
+
+    function nftAssets(uint256 idx) public view virtual override returns (NFTAsset memory) {
+        return _getSecuritizationPoolStorage().nftAssets[idx];
+    }
+
+    function tokenAssetAddresses(uint256 idx) public view virtual override returns (address) {
+        return _getSecuritizationPoolStorage().tokenAssetAddresses[idx];
+    }
+
+    function validatorRequired() public view virtual override returns (bool) {
+        return _getSecuritizationPoolStorage().validatorRequired;
     }
 
     uint256[50] private __gap;

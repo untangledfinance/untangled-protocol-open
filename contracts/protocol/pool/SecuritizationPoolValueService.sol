@@ -21,7 +21,6 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-// import {ISecuritizationPoolERC721Receiver} from './ISecuritizationPoolERC721Receiver.sol';
 
 import {RiskScore} from './base/types.sol';
 
@@ -64,7 +63,7 @@ contract SecuritizationPoolValueService is
                         UntangledMath.ONE
                     )) / UntangledMath.ONE;
         }
-        RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
+        RiskScore memory riskscore = ISecuritizationPool(poolAddress).riskScores(riskScoreIdx);
         uint256 result = _calculateAssetValue(
             principalAmount,
             expectTimeEarnInterest,
@@ -157,7 +156,7 @@ contract SecuritizationPoolValueService is
                 } else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
 
                 if (hasValidRiskScore) {
-                    RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
+                    RiskScore memory riskscore = ISecuritizationPool(poolAddress).riskScores(riskScoreIdx);
                     return riskscore.interestRate;
                 }
             }
@@ -225,11 +224,12 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
-            // ISecuritizationPoolERC721Receiver.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
-            (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
+            ISecuritizationPool.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
+            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
             expectedAssetsValue =
                 expectedAssetsValue +
-                getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
+                // getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
+                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
         }
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
@@ -272,55 +272,8 @@ contract SecuritizationPoolValueService is
     }
 
     function getDaysPastDueByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        (uint32 daysPastDue, , , , , , , , , , ) = securitizationPool.riskScores(idx);
-        return daysPastDue;
-    }
-
-    function getRiskScoreByIdx(address pool, uint256 idx) private view returns (RiskScore memory) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        (
-            // uint32 daysPastDue,
-            // uint32 advanceRate,
-            // uint32 penaltyRate,
-            // uint32 interestRate,
-            // uint32 probabilityOfDefault,
-            // uint32 lossGivenDefault,
-            // uint32 gracePeriod,
-            // uint32 collectionPeriod,
-            // uint32 writeOffAfterGracePeriod,
-            // uint32 writeOffAfterCollectionPeriod,
-            // uint32 discountRate
-
-            uint32 daysPastDue,
-            uint32 advanceRate,
-            uint32 penaltyRate,
-            uint32 interestRate,
-            uint32 probabilityOfDefault,
-            uint32 lossGivenDefault,
-            uint32 writeOffAfterGracePeriod,
-            uint32 gracePeriod,
-            uint32 collectionPeriod,
-            uint32 writeOffAfterCollectionPeriod,
-            uint32 discountRate
-        ) = securitizationPool.riskScores(idx);
-
-        return
-            RiskScore({
-                daysPastDue: daysPastDue,
-                advanceRate: advanceRate,
-                penaltyRate: penaltyRate,
-                interestRate: interestRate,
-                probabilityOfDefault: probabilityOfDefault,
-                lossGivenDefault: lossGivenDefault,
-                gracePeriod: gracePeriod,
-                collectionPeriod: collectionPeriod,
-                writeOffAfterGracePeriod: writeOffAfterGracePeriod,
-                writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod,
-                discountRate: discountRate
-            });
-
-        // return securitizationPool.riskScores(idx);
+        // (uint32 daysPastDue, , , , , , , , , , ) = securitizationPool.riskScores(idx);
+        return securitizationPool.riskScores(idx).daysPastDue;
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
