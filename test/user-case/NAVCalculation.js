@@ -396,7 +396,7 @@ describe('NAVCalculation', () => {
       const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
       expect(value).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
     });
-    it('next 20 days', async () => {
+    it('next 20 days - on maturity date', async () => {
       await time.increase(20 * ONE_DAY);
       const now = await time.latest();
       // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
@@ -413,9 +413,13 @@ describe('NAVCalculation', () => {
           .connect(untangledAdminSigner)
           .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
 */
+    it('should revert if before grace period', async () => {
+      await time.increase(2 * ONE_DAY);
+      await expect(poolNAV.writeOff(tokenIds[0])).to.be.revertedWith('maturity-date-in-the-future');
+    });
 
     it('overdue 6 days - should write off', async () => {
-      await time.increase(5 * ONE_DAY);
+      await time.increase(3 * ONE_DAY);
       await poolNAV.writeOff(tokenIds[0]);
       await time.increase(1 * ONE_DAY);
       const currentNAV = await poolNAV.currentNAV();
