@@ -315,7 +315,6 @@ describe('NAVCalculation', () => {
       const salt = genSalt();
       const riskScore = '3';
       expirationTimestamps = await time.latest() + 30 * ONE_DAY_IN_SECONDS;
-      console.log("EXPIRE", expirationTimestamps);
 
       const orderValues = [
         CREDITOR_FEE,
@@ -376,7 +375,7 @@ describe('NAVCalculation', () => {
       poolNAV = await ethers.getContractAt('PoolNAV', poolNAVAddress);
     });
 
-    it('now', async () => {
+    it('after upload loan successfully', async () => {
       const currentNAV = await poolNAV.currentNAV();
 
       const debtLoan = await poolNAV.debt(tokenIds[0]);
@@ -385,7 +384,7 @@ describe('NAVCalculation', () => {
     });
 
 
-    it('after 10 days', async () => {
+    it('after 10 days - should include interest', async () => {
       await time.increase(10 * ONE_DAY);
       const now = await time.latest();
 
@@ -413,26 +412,26 @@ describe('NAVCalculation', () => {
           .connect(untangledAdminSigner)
           .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
 */
-    it('should revert if before grace period', async () => {
+    it('should revert if write off loan before grace period', async () => {
       await time.increase(2 * ONE_DAY);
       await expect(poolNAV.writeOff(tokenIds[0])).to.be.revertedWith('maturity-date-in-the-future');
     });
 
-    it('overdue 6 days - should write off', async () => {
+    it('overdue 6 days - should write off after grace period', async () => {
       await time.increase(3 * ONE_DAY);
       await poolNAV.writeOff(tokenIds[0]);
       await time.increase(1 * ONE_DAY);
       const currentNAV = await poolNAV.currentNAV();
       expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.005'));
     });
-    it('overdue next 30 days - should write off', async () => {
+    it('overdue next 30 days - should write off after collection period', async () => {
       await time.increase(30 * ONE_DAY);
       await poolNAV.writeOff(tokenIds[0]);
       const currentNAV = await poolNAV.currentNAV();
       expect(currentNAV).to.equal(parseEther('0'));
     });
 
-    it('should repay now', async () => {
+    it('should repay successfully', async () => {
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
