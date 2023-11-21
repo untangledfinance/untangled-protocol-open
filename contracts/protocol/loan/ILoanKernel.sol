@@ -37,7 +37,7 @@ abstract contract ILoanKernel {
     }
 
     enum FillingAddressesIndex {
-        CREDITOR,
+        SECURITIZATION_POOL,
         PRINCIPAL_TOKEN_ADDRESS,
         REPAYMENT_ROUTER,
         TERM_CONTRACT,

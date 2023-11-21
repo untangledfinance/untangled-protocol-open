@@ -23,7 +23,6 @@ import {ISecuritizationPoolValueService} from '../interfaces/ISecuritizationPool
 
 import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
-import {AcceptedInvoiceToken} from '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import {IGo} from '../interfaces/IGo.sol';
 
 import {POOL_ADMIN, OWNER_ROLE} from './types.sol';
@@ -68,10 +67,6 @@ library ConfigHelper {
 
     function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
         return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
-    }
-
-    function getAcceptedInvoiceToken(Registry registry) internal view returns (AcceptedInvoiceToken) {
-        return AcceptedInvoiceToken(getAddress(registry, Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN));
     }
 
     function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {

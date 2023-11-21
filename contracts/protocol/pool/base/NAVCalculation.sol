@@ -41,7 +41,6 @@ contract NAVCalculation {
     /// @param overdue overdue in seconds
     /// @param secondTillCashFlow time till expiration in seconds
     /// @param riskScore risk score applied
-    /// @param assetPurpose asset purpose, pledge or sale
     /// @return expected present asset value
     function _calculateAssetValue(
         uint256 principalAmount,
@@ -49,16 +48,14 @@ contract NAVCalculation {
         uint256 interestRate,
         uint256 overdue,
         uint256 secondTillCashFlow,
-        RiskScore memory riskScore,
-        Configuration.ASSET_PURPOSE assetPurpose
+        RiskScore memory riskScore
     ) internal pure returns (uint256) {
         uint256 morePercentDecimal = UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100;
         uint256 totalDebtAmt = 0;
 
-        if (assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
-            interestRate = riskScore.interestRate;
-            principalAmount = (principalAmount * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
-        }
+        // LAT is now PLEDGE
+        interestRate = riskScore.interestRate;
+        principalAmount = (principalAmount * riskScore.advanceRate) / ONE_HUNDRED_PERCENT;
 
         totalDebtAmt =
             (principalAmount *
