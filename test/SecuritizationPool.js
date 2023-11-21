@@ -21,7 +21,7 @@ const {
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
-const { POOL_ADMIN_ROLE } = require('./constants.js');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
 const { utils } = require('ethers');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
@@ -169,7 +169,7 @@ describe('SecuritizationPool', () => {
             securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             transaction = await securitizationManager
                 .connect(poolCreatorSigner)
@@ -214,7 +214,7 @@ describe('SecuritizationPool', () => {
             secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
-                .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
@@ -459,8 +459,8 @@ describe('SecuritizationPool', () => {
 
     let expirationTimestamps;
     const CREDITOR_FEE = '0';
-    const ASSET_PURPOSE_LOAN = '0';
-    const ASSET_PURPOSE_INVOICE = '1';
+    const ASSET_PURPOSE_SALE = '0';
+    const ASSET_PURPOSE_PLEDGE = '1';
     const inputAmount = 10;
     const inputPrice = 15;
     const principalAmount = _.round(inputAmount * inputPrice * 100);
@@ -484,7 +484,7 @@ describe('SecuritizationPool', () => {
 
             const orderValues = [
                 CREDITOR_FEE,
-                ASSET_PURPOSE_LOAN,
+                ASSET_PURPOSE_SALE,
                 parseEther(principalAmount.toString()), // token 1
                 parseEther(principalAmount.toString()), // token 2
                 expirationTimestamps,
@@ -577,7 +577,7 @@ describe('SecuritizationPool', () => {
 
             const orderValues = [
                 CREDITOR_FEE,
-                ASSET_PURPOSE_INVOICE,
+                ASSET_PURPOSE_PLEDGE,
                 // token 1
                 parseEther(principalAmount.toString()),
                 expirationTimestamps,

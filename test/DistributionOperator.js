@@ -4,9 +4,6 @@ const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
-
-const { POOL_ADMIN_ROLE } = require('./constants');
-
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
@@ -25,6 +22,7 @@ const {
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 const { constants, utils } = require('ethers');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
 
 const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
@@ -136,7 +134,7 @@ describe('Distribution', () => {
             securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             transaction = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(
                 utils.keccak256(Date.now()),
@@ -177,7 +175,7 @@ describe('Distribution', () => {
             secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
-                .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
