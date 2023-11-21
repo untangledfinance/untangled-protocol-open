@@ -12,7 +12,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         proxy: {
             proxyContract: 'OpenZeppelinTransparentProxy',
         },
-        skipIfAlreadyDeployed: true,
         log: true,
     });
 };
