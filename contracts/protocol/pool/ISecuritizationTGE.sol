@@ -10,10 +10,16 @@ interface ISecuritizationTGE {
         OPEN,
         CLOSED
     }
-
+    event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);
+    event UpdateInterestRateSOT(uint32 _interestRateSOT);
+    event Withdraw(address originatorAddress, uint256 amount);
+
+    function openingBlockTimestamp() external view returns (uint64);
+
+    function termLengthInSeconds() external view returns (uint64);
 
     function pot() external view returns (address);
 
@@ -50,6 +56,9 @@ interface ISecuritizationTGE {
 
     function minFirstLossCushion() external view returns (uint32);
 
+    // Money owed to originator
+    function amountOwedToOriginator() external view returns (uint256);
+
     /// @notice checks if the contract is in a closed state
     function isClosedState() external view returns (bool);
 
@@ -69,4 +78,19 @@ interface ISecuritizationTGE {
 
     /// @notice checks if the redemption process has finished
     function hasFinishedRedemption() external view returns (bool);
+
+    /// @notice sets the interest rate for the senior tranche of tokens
+    function setInterestRateForSOT(uint32 _interestRateSOT) external;
+
+    function claimCashRemain(address recipientWallet) external;
+
+    function startCycle(
+        uint64 _termLengthInSeconds,
+        uint256 _principalAmountForSOT,
+        uint32 _interestRateForSOT,
+        uint64 _timeStartEarningInterest
+    ) external;
+
+    /// @notice allows the originator to withdraw from reserve
+    function withdraw(uint256 amount) external;
 }

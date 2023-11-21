@@ -8,6 +8,7 @@ import {FinalizableCrowdsale} from './crowdsale/FinalizableCrowdsale.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {IMintedTGE} from './IMintedTGE.sol';
 import {LongSaleInterest} from './base/LongSaleInterest.sol';
+import {IInterestRate} from './IInterestRate.sol';
 
 /// @title MintedNormalTGE
 /// @author Untangled Team
@@ -22,7 +23,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     uint256 public yield;
     uint256 public initialAmount;
 
-    uint32 public pickedInterest;
+    uint32 public override pickedInterest;
 
     function initialize(
         Registry _registry,
@@ -51,7 +52,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public whenNotPaused securitizationPoolRestricted {
+    ) public override whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;

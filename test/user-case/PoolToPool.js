@@ -5,7 +5,7 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { presignedMintMessage } = require('../shared/uid-helper');
-const { POOL_ADMIN_ROLE } = require('../constants.js');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 const { utils } = require('ethers');
 
 /**
@@ -302,7 +302,6 @@ describe('Pool to Pool', () => {
       const jotPoolBAddress = await poolBContract.jotToken();
       jotPoolBContract = await ethers.getContractAt('NoteToken', jotPoolBAddress);
       jotAmount = await jotPoolBContract.balanceOf(poolAPot.address);
-      const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
 
       await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
       await jotPoolBContract.connect(poolAPot).approve(poolAContract.address, jotAmount);
@@ -367,7 +366,6 @@ describe('Pool to Pool', () => {
       const sotPoolBAddress = await poolBContract.sotToken();
       sotPoolBContract = await ethers.getContractAt('NoteToken', sotPoolBAddress);
       sotAmount = await sotPoolBContract.balanceOf(poolAPot.address);
-      const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
       await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
       await sotPoolBContract.connect(poolAPot).approve(poolAContract.address, sotAmount);
       await poolAContract
@@ -850,7 +848,6 @@ describe('Pool to Pool', () => {
     it('Pool A originator can transfer B-JOT from pool A pot to pool A', async () => {
       // Transfer to pool
       sotAmountABuyFromB = await jotBContract.balanceOf(poolAPotSigner.address);
-      const ORIGINATOR_ROLE = await poolAContract.ORIGINATOR_ROLE();
       await poolAContract.connect(poolACreatorSigner).grantRole(ORIGINATOR_ROLE, poolAOriginatorSigner.address);
       await jotBContract.connect(poolAPotSigner).approve(poolAContract.address, sotAmountABuyFromB);
       await poolAContract
@@ -861,7 +858,6 @@ describe('Pool to Pool', () => {
     it('Pool B originator can transfer C-JOT from pool B pot to pool B', async () => {
       // Transfer to pool
       sotAmountBBuyFromC = await jotCContract.balanceOf(poolBPotSigner.address);
-      const ORIGINATOR_ROLE = await poolBContract.ORIGINATOR_ROLE();
       await poolBContract.connect(poolBCreatorSigner).grantRole(ORIGINATOR_ROLE, poolBOriginatorSigner.address);
       await jotCContract.connect(poolBPotSigner).approve(poolBContract.address, sotAmountBBuyFromC);
       await poolBContract
