@@ -771,8 +771,12 @@ contract PoolNAV is Auth, Discounting, Initializable {
             chi_ = chargeInterest(rates[rate_].chi, rates[rate_].ratePerSecond, rates[rate_].lastUpdated);
             penaltyChi_ = chargeInterest(rates[rate_].penaltyChi, rates[rate_].penaltyRatePerSecond, rates[rate_].lastUpdated);
         }
-//        return toAmount(chi_, pie[loan]);
-        return toAmount(penaltyChi_, toAmount(chi_, pie[loan]));
+
+        if (penaltyChi_ == 0) {
+            return toAmount(chi_, pie[loan]);
+        } else {
+            return toAmount(penaltyChi_, toAmount(chi_, pie[loan]));
+        }
     }
 
     function rateDebt(uint256 rate) public view returns (uint256 totalDebt) {
@@ -784,8 +788,12 @@ contract PoolNAV is Auth, Discounting, Initializable {
             chi_ = chargeInterest(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated);
             penaltyChi_ = chargeInterest(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, rates[rate].lastUpdated);
         }
-//        return toAmount(chi_, pie_);
-        return toAmount(penaltyChi_, toAmount(chi_, pie_));
+
+        if (penaltyChi_ == 0) {
+            return toAmount(chi_, pie_);
+        } else {
+            return toAmount(penaltyChi_, toAmount(chi_, pie_));
+        }
     }
 
     function setRate(uint256 loan, uint256 rate) public auth {
