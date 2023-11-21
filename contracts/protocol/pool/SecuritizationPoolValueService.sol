@@ -39,8 +39,7 @@ contract SecuritizationPoolValueService is
         uint256 interestRate,
         uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
         uint256 overdue,
-        uint256 secondTillCashFlow,
-        Configuration.ASSET_PURPOSE assetPurpose
+        uint256 secondTillCashFlow
     ) private view returns (uint256) {
         uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
         bool hasValidRiskScore = riskScoresLength > 0;
@@ -66,8 +65,7 @@ contract SecuritizationPoolValueService is
             interestRate,
             overdue,
             secondTillCashFlow,
-            riskscore,
-            assetPurpose
+            riskscore
         );
         return result;
     }
@@ -102,15 +100,8 @@ contract SecuritizationPoolValueService is
             loanAssetToken.getInterestRate(tokenId),
             loanEntry.riskScore,
             overdue,
-            secondTillCashflow,
-            loanEntry.assetPurpose
+            secondTillCashflow
         );
-
-        /*
-        if (timestamp < loanEntry.expirationTimestamp) {
-            totalDebt = loanAssetToken.getTotalExpectedRepaymentValue(tokenId, timestamp);
-        }
-*/
 
         return presentValue;
     }
@@ -138,23 +129,21 @@ contract SecuritizationPoolValueService is
         IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
         uint256 interestRate = loanAssetToken.getInterestRate(tokenId);
 
-        if (loanAssetToken.getAssetPurpose(tokenId) == Configuration.ASSET_PURPOSE.PLEDGE) {
-            uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
+        uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
 
-            bool hasValidRiskScore = riskScoresLength > 0;
+        bool hasValidRiskScore = riskScoresLength > 0;
+        if (hasValidRiskScore) {
+            uint256 riskScoreIdx = loanAssetToken.getRiskScore(tokenId);
+
+            if (riskScoreIdx == 0) {
+                uint256 expirationTimestamp = loanAssetToken.getExpirationTimestamp(tokenId);
+                uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
+                (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
+            } else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
+
             if (hasValidRiskScore) {
-                uint256 riskScoreIdx = loanAssetToken.getRiskScore(tokenId);
-
-                if (riskScoreIdx == 0) {
-                    uint256 expirationTimestamp = loanAssetToken.getExpirationTimestamp(tokenId);
-                    uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
-                    (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
-                } else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
-
-                if (hasValidRiskScore) {
-                    RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
-                    return riskscore.interestRate;
-                }
+                RiskScore memory riskscore = getRiskScoreByIdx(poolAddress, riskScoreIdx);
+                return riskscore.interestRate;
             }
         }
 
@@ -200,8 +189,7 @@ contract SecuritizationPoolValueService is
             interestRate,
             0,
             overdue,
-            secondTillCashflow,
-            Configuration.ASSET_PURPOSE.SALE
+            secondTillCashflow
         );
 
         if (timestamp < expirationTimestamp) {

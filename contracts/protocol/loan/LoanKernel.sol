@@ -119,10 +119,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 expirationTimestampInSecs,
         uint8[] memory assetPurposeAndRiskScore
     ) private {
-        // Mint debt tokens and finalize debt agreement
-        // registry.getLoanAssetToken().safeMint(creditor, latInfo.tokenId);
-        // registry.getLoanAssetToken().safeMint(creditor, latInfo);
-
         require(
             registry.getLoanRegistry().insert(
                 bytes32(tokenId),
@@ -134,7 +130,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 expirationTimestampInSecs,
                 assetPurposeAndRiskScore
             ),
-            'AcceptedInvoiceToken: insert failure'
+            'LoanKernel: insert failure'
         );
     }
 
@@ -271,16 +267,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256[] calldata orderValues, //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
         bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
         LoanAssetInfo[] calldata latInfo // orderAddreses[0] -> latInfo[0].tokenIds[0]
-    )
-        external
-        // bytes32[] calldata tokenIds,
-        // uint256[] calldata nonces,
-        // address[] calldata validators,
-        // bytes[] memory validateSignatures
-        whenNotPaused
-        nonReentrant
-        validFillingOrderAddresses(orderAddresses)
-    {
+    ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
         require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
@@ -295,7 +282,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint x = 0;
         for (uint i = 0; i < latInfo.length; i = UntangledMath.uncheckedInc(i)) {
             registry.getLoanAssetToken().safeMint(orderAddresses[uint8(FillingAddressesIndex.CREDITOR)], latInfo[i]);
-            
+
             for (uint j = 0; j < latInfo[i].tokenIds.length; j = UntangledMath.uncheckedInc(j)) {
                 require(
                     debtOrder.issuance.agreementIds[x] == bytes32(latInfo[i].tokenIds[j]),

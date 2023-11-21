@@ -193,7 +193,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
         address token = _msgSender();
         require(
-            token == address(registry.getAcceptedInvoiceToken()) || token == address(registry.getLoanAssetToken()),
+            token == address(registry.getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
         nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));

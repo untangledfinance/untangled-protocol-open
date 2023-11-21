@@ -70,10 +70,6 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN), newAddress);
     }
 
-    function setAcceptedInvoiceToken(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN), newAddress);
-    }
-
     function setDistributionTranche(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE), newAddress);
     }
