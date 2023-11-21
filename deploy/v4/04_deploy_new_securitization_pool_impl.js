@@ -1,3 +1,5 @@
+const { registrySet } = require('../v2/utils');
+
 module.exports = async ({ getNamedAccounts, deployments }) => {
     const { readDotFile, deploy, execute, get, save } = deployments;
     const { deployer } = await getNamedAccounts();
@@ -7,6 +9,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         args: [],
         log: true,
     });
+
+    const contracts = ['SecuritizationPool'];
+
+    await registrySet(contracts);
 };
 
 module.exports.dependencies = [];
