@@ -436,7 +436,8 @@ describe('NAVCalculation', () => {
       await loanRepaymentRouter
         .connect(untangledAdminSigner)
         .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
-
+      const balanceAfterRepay = await stableCoin.balanceOf(untangledAdminSigner.address);
+      expect(balanceAfterRepay).to.closeTo(parseEther('99990.80'), parseEther('0.01'));
     });
   });
 
