@@ -59,16 +59,22 @@ contract SecuritizationPoolAsset is
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable, SecuritizationAccessControl) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bool)
+    {
         return
             super.supportsInterface(interfaceId) ||
             interfaceId == type(ISecuritizationPool).interfaceId ||
             interfaceId == type(ISecuritizationPoolStorage).interfaceId;
     }
 
-    function __SecuritizationPoolAsset_init_unchained(Registry registry_, NewPoolParams memory newPoolParams) internal {
-        _setRegistry(registry());
-
+    function __SecuritizationPoolAsset_init_unchained(NewPoolParams memory newPoolParams) internal {
         _getStorage().validatorRequired = newPoolParams.validatorRequired;
 
         require(
@@ -361,15 +367,6 @@ contract SecuritizationPoolAsset is
         emit UpdateOpeningBlockTimestamp(_openingBlockTimestamp);
     }
 
-    function pause() public virtual override {
-        registry().requirePoolAdminOrOwner(address(this), _msgSender());
-        _pause();
-    }
-
-    function unpause() public virtual override {
-        registry().requirePoolAdminOrOwner(address(this), _msgSender());
-        _unpause();
-    }
     function riskScores(uint256 idx) public view virtual override returns (RiskScore memory) {
         return _getStorage().riskScores[idx];
     }
@@ -380,5 +377,15 @@ contract SecuritizationPoolAsset is
 
     function tokenAssetAddresses(uint256 idx) public view virtual override returns (address) {
         return _getStorage().tokenAssetAddresses[idx];
+    }
+
+    function pause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _pause();
+    }
+
+    function unpause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _unpause();
     }
 }

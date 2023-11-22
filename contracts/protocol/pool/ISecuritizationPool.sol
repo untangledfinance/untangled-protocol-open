@@ -71,7 +71,4 @@ interface ISecuritizationPool {
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external;
 
-    function pause() external;
-
-    function unpause() external;
 }

@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
+
+import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {RiskScore} from './base/types.sol';
+import {RegistryInjection} from './RegistryInjection.sol';
 
-contract SecuritizationPoolStorage is ISecuritizationPoolStorage {
+contract SecuritizationPoolStorage is RegistryInjection, ERC165Upgradeable, ISecuritizationPoolStorage {
     // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationPoolStorage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant StorageLocation = 0x42988f810f621c79bb2e8db2f913a015fc39ef8eac016043863c6a0d12adbf00;
 
@@ -63,5 +67,9 @@ contract SecuritizationPoolStorage is ISecuritizationPoolStorage {
 
     function validatorRequired() public view virtual override returns (bool) {
         return _getStorage().validatorRequired;
+    }
+
+    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(_interfaceId) || type(ISecuritizationPoolStorage).interfaceId == _interfaceId;
     }
 }

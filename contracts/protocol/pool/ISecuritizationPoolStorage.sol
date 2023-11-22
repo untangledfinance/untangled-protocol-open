@@ -78,9 +78,4 @@ interface ISecuritizationPoolStorage {
     function validatorRequired() external view returns (bool);
 
     function openingBlockTimestamp() external view returns (uint64);
-
-
-    function pause() external;
-
-    function unpause() external;
 }

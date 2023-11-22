@@ -24,9 +24,9 @@ contract SecuritizationTGE is
     ERC165Upgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    ISecuritizationTGE,
     SecuritizationAccessControl,
-    SecuritizationPoolStorage
+    SecuritizationPoolStorage,
+    ISecuritizationTGE
 {
     using ConfigHelper for Registry;
 
@@ -320,7 +320,23 @@ contract SecuritizationTGE is
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC165Upgradeable, SecuritizationAccessControl) virtual returns (bool) {
+    )
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bool)
+    {
         return interfaceId == type(ISecuritizationTGE).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function pause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _pause();
+    }
+
+    function unpause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _unpause();
     }
 }

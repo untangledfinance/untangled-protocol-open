@@ -2,18 +2,31 @@
 pragma solidity 0.8.19;
 
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
+import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 
-abstract contract SecuritizationLockDistribution is
+// RegistryInjection,
+// ERC165Upgradeable,
+// PausableUpgradeable,
+// SecuritizationPoolStorage,
+// ISecuritizationLockDistribution
+
+contract SecuritizationLockDistribution is
     RegistryInjection,
+    ERC165Upgradeable,
     PausableUpgradeable,
-    ISecuritizationLockDistribution,
-    SecuritizationPoolStorage
+    ReentrancyGuardUpgradeable,
+    SecuritizationAccessControl,
+    SecuritizationPoolStorage,
+    ISecuritizationLockDistribution
 {
     using ConfigHelper for Registry;
 
@@ -115,5 +128,30 @@ abstract contract SecuritizationLockDistribution is
 
         emit UpdateTotalRedeemedCurrency($.totalRedeemedCurrency, tokenAddress);
         emit UpdateTotalLockedDistributeBalance($.totalLockedDistributeBalance, tokenAddress);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || type(ISecuritizationLockDistribution).interfaceId == interfaceId;
+    }
+
+    function pause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _pause();
+    }
+
+    function unpause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _unpause();
     }
 }

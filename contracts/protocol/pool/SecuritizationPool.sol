@@ -46,7 +46,9 @@ import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
  * @author Untangled Team
  */
 contract SecuritizationPool is
-    ReentrancyGuardUpgradeable,
+    RegistryInjection,
+    SecuritizationAccessControl,
+    SecuritizationPoolStorage,
     SecuritizationTGE,
     SecuritizationPoolAsset,
     SecuritizationLockDistribution
@@ -86,13 +88,36 @@ contract SecuritizationPool is
             newPoolParams.minFirstLossCushion
         );
 
-        __SecuritizationPoolAsset_init_unchained(registry_, newPoolParams);
+        __SecuritizationPoolAsset_init_unchained(newPoolParams);
     }
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(SecuritizationPoolAsset, SecuritizationTGE) returns (bool) {
+    )
+        public
+        view
+        virtual
+        override(
+            SecuritizationPoolAsset,
+            SecuritizationTGE,
+            SecuritizationLockDistribution,
+            SecuritizationAccessControl,
+            SecuritizationPoolStorage
+        )
+        returns (bool)
+    {
         return
-            SecuritizationPoolAsset.supportsInterface(interfaceId) || SecuritizationTGE.supportsInterface(interfaceId);
+            SecuritizationPoolStorage.supportsInterface(interfaceId) ||
+            SecuritizationPoolAsset.supportsInterface(interfaceId) ||
+            SecuritizationLockDistribution.supportsInterface(interfaceId) ||
+            SecuritizationTGE.supportsInterface(interfaceId);
+    }
+
+    function pause() public override(SecuritizationLockDistribution, SecuritizationPoolAsset, SecuritizationTGE) {
+        SecuritizationTGE.pause();
+    }
+
+    function unpause() public override(SecuritizationLockDistribution, SecuritizationPoolAsset, SecuritizationTGE) {
+        SecuritizationTGE.unpause();
     }
 }
