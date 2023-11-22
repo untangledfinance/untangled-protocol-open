@@ -132,7 +132,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _processPurchase(beneficiary, tokenAmount);
         emit TokensPurchased(_msgSender(), beneficiary, currencyAmount, tokenAmount);
 
-        _forwardFunds(ISecuritizationTGE(pool).pot(), currencyAmount);
+        _forwardFunds(ISecuritizationPoolStorage(pool).pot(), currencyAmount);
 
         return tokenAmount;
     }
@@ -228,7 +228,10 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
-        require(IERC20Upgradeable(currency).transfer(beneficiary, currencyAmount), 'Fail to transfer currency to Beneficiary');
+        require(
+            IERC20Upgradeable(currency).transfer(beneficiary, currencyAmount),
+            'Fail to transfer currency to Beneficiary'
+        );
     }
 
     /// @dev Sets the total cap to the specified amount

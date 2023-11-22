@@ -108,7 +108,7 @@ describe('SecuritizationPool', () => {
       let transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .newPoolInstance(
-          utils.keccak256(Date.now()),
+          salt,
           poolCreatorSigner.address,
           utils.defaultAbiCoder.encode([
             {

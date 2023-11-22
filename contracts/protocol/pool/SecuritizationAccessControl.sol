@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
@@ -8,7 +9,12 @@ import {OWNER_ROLE, ORIGINATOR_ROLE} from './types.sol';
 
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 
-contract SecuritizationAccessControl is ContextUpgradeable, RegistryInjection, ISecuritizationAccessControl {
+contract SecuritizationAccessControl is
+    RegistryInjection,
+    ContextUpgradeable,
+    ERC165Upgradeable,
+    ISecuritizationAccessControl
+{
     // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationAccessControl")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant SecuritizationAccessControlStorageLocation =
         0xb38e00afe21f8bf8961a30ad85d453b5f474f19414b8973dee80c89fb0d97b00;
@@ -76,5 +82,9 @@ contract SecuritizationAccessControl is ContextUpgradeable, RegistryInjection, I
     function renounceRole(bytes32 role, address account) public virtual override {
         require(account == _msgSender(), 'AccessControl: can only renounce roles for self');
         _revokeRole(role, account);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(ISecuritizationAccessControl).interfaceId == interfaceId;
     }
 }

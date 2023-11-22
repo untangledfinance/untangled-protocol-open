@@ -9,6 +9,7 @@ import {IERC721ReceiverUpgradeable} from '@openzeppelin/contracts-upgradeable/in
 import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
@@ -25,6 +26,7 @@ import {Registry} from '../../storage/Registry.sol';
 import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsale.sol';
 import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
 import {SecuritizationTGE} from './SecuritizationTGE.sol';
@@ -36,6 +38,8 @@ import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 
 import {RiskScore} from './base/types.sol';
 
+import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
+
 /**
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
@@ -46,103 +50,26 @@ contract SecuritizationPoolAsset is
     RegistryInjection,
     ERC165Upgradeable,
     PausableUpgradeable,
-    // SecuritizationAccessControl,
+    ReentrancyGuardUpgradeable,
+    IERC721ReceiverUpgradeable,
     ISecuritizationPool,
-    // SecuritizationLockDistribution,
-    // SecuritizationTGE,
-    IERC721ReceiverUpgradeable
+    SecuritizationAccessControl,
+    SecuritizationPoolStorage
 {
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
 
-    // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationPoolAsset")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant SecuritizationPoolStorageLocation =
-        // 0x7b312f85bcf71b947c1556b37514c7da9b615474a5e6d949d429b3b529966500
-        0x2cb0e52e071a451dea9d1290562ed137703eee9453909a122205fa5d773e3100;
-
-    /// @custom:storage-location erc7201:untangled.storage.SecuritizationPoolAsset
-    struct SecuritizationPoolStorage {
-        uint64 firstAssetTimestamp;
-        RiskScore[] riskScores;
-        NFTAsset[] nftAssets;
-        address[] tokenAssetAddresses;
-        mapping(address => bool) existsTokenAssetAddress;
-        bool validatorRequired;
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable, SecuritizationAccessControl) returns (bool) {
+        return
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(ISecuritizationPool).interfaceId ||
+            interfaceId == type(ISecuritizationPoolStorage).interfaceId;
     }
 
-    function _getSecuritizationPoolStorage() private pure returns (SecuritizationPoolStorage storage $) {
-        assembly {
-            $.slot := SecuritizationPoolStorageLocation
-        }
-    }
-
-    constructor() {
-        _disableInitializers();
-    }
-
-    // /** CONSTRUCTOR */
-    // function initialize(
-    //     Registry registry_,
-    //     bytes memory params
-    // )
-    //     public
-    //     // address _currency,
-    //     // uint32 _minFirstLossCushion
-    //     initializer
-    // {
-    //     ISecuritizationPool.NewPoolParams memory newPoolParams = abi.decode(
-    //         params,
-    //         (ISecuritizationPool.NewPoolParams)
-    //     );
-
-    //     require(
-    //         newPoolParams.minFirstLossCushion < 100 * RATE_SCALING_FACTOR,
-    //         'minFirstLossCushion is greater than 100'
-    //     );
-    //     require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');
-
-    //     // __SecuritizationAccessControl_init_unchained(_msgSender());
-    //     address(this).functionDelegateCall(
-    //         abi.encodeWithSignature('__SecuritizationAccessControl_init_unchained(address)', _msgSender())
-    //     );
-
-    //     // __UntangledBase__init(_msgSender());
-
-    //     // _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
-    //     _setRegistry(registry_);
-
-    //     address(this).functionDelegateCall(
-    //         abi.encodeWithSignature(
-    //             '__SecuritizationTGE_init_unchained',
-    //             address(this),
-    //             ISecuritizationTGE.CycleState.INITIATED,
-    //             newPoolParams.currency,
-    //             newPoolParams.minFirstLossCushion
-    //         )
-    //     );
-    //     // __SecuritizationTGE_init_unchained(
-    //     //     address(this),
-    //     //     ISecuritizationTGE.CycleState.INITIATED,
-    //     //     newPoolParams.currency,
-    //     //     newPoolParams.minFirstLossCushion
-    //     // );
-
-    //     _getSecuritizationPoolStorage().validatorRequired = newPoolParams.validatorRequired;
-
-    //     require(
-    //         IERC20Upgradeable(newPoolParams.currency).approve(pot(), type(uint256).max),
-    //         'SecuritizationPool: Currency approval failed'
-    //     );
-    //     registry().getLoanAssetToken().setApprovalForAll(address(registry().getLoanKernel()), true);
-    // }
-
-    function __SecuritizationPool_init_unchained(
-        Registry registry_,
-        ISecuritizationPool.NewPoolParams newPoolParams
-    ) internal {
+    function __SecuritizationPoolAsset_init_unchained(Registry registry_, NewPoolParams memory newPoolParams) internal {
         _setRegistry(registry());
 
-        _getSecuritizationPoolStorage().validatorRequired = newPoolParams.validatorRequired;
+        _getStorage().validatorRequired = newPoolParams.validatorRequired;
 
         require(
             IERC20Upgradeable(newPoolParams.currency).approve(pot(), type(uint256).max),
@@ -153,19 +80,19 @@ contract SecuritizationPoolAsset is
 
     /** GETTER */
     function getNFTAssetsLength() public view override returns (uint256) {
-        return _getSecuritizationPoolStorage().nftAssets.length;
+        return _getStorage().nftAssets.length;
     }
 
     function getTokenAssetAddresses() public view override returns (address[] memory) {
-        return _getSecuritizationPoolStorage().tokenAssetAddresses;
+        return _getStorage().tokenAssetAddresses;
     }
 
     function getTokenAssetAddressesLength() public view override returns (uint256) {
-        return _getSecuritizationPoolStorage().tokenAssetAddresses.length;
+        return _getStorage().tokenAssetAddresses.length;
     }
 
     function getRiskScoresLength() public view override returns (uint256) {
-        return _getSecuritizationPoolStorage().riskScores.length;
+        return _getStorage().riskScores.length;
     }
 
     // function hasFinishedRedemption() public view override returns (bool) {
@@ -181,7 +108,7 @@ contract SecuritizationPoolAsset is
 
     /** UTILITY FUNCTION */
     function _removeNFTAsset(address tokenAddress, uint256 tokenId) private returns (bool) {
-        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
+        NFTAsset[] storage _nftAssets = _getStorage().nftAssets;
         uint256 nftAssetsLength = _nftAssets.length;
         for (uint256 i = 0; i < nftAssetsLength; i = UntangledMath.uncheckedInc(i)) {
             if (_nftAssets[i].tokenAddress == tokenAddress && _nftAssets[i].tokenId == tokenId) {
@@ -195,7 +122,7 @@ contract SecuritizationPoolAsset is
     }
 
     function _removeNFTAssetIndex(uint256 indexToRemove) private {
-        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
+        NFTAsset[] storage _nftAssets = _getStorage().nftAssets;
 
         _nftAssets[indexToRemove] = _nftAssets[_nftAssets.length - 1];
 
@@ -205,7 +132,7 @@ contract SecuritizationPoolAsset is
     }
 
     function _pushTokenAssetAddress(address tokenAddress) private {
-        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        Storage storage $ = _getStorage();
 
         if (!$.existsTokenAssetAddress[tokenAddress]) $.tokenAssetAddresses.push(tokenAddress);
         $.existsTokenAssetAddress[tokenAddress] = true;
@@ -218,7 +145,7 @@ contract SecuritizationPoolAsset is
             token == address(registry().getAcceptedInvoiceToken()) || token == address(registry().getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
-        NFTAsset[] storage _nftAssets = _getSecuritizationPoolStorage().nftAssets;
+        NFTAsset[] storage _nftAssets = _getStorage().nftAssets;
         _nftAssets.push(NFTAsset({tokenAddress: token, tokenId: tokenId}));
         emit InsertNFTAsset(token, tokenId);
 
@@ -240,7 +167,7 @@ contract SecuritizationPoolAsset is
             'SecuritizationPool: Riskscore params length is not equal'
         );
 
-        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        Storage storage $ = _getStorage();
         delete $.riskScores;
 
         for (uint256 i = 0; i < _daysPastDuesLength; i = UntangledMath.uncheckedInc(i)) {
@@ -322,9 +249,10 @@ contract SecuritizationPoolAsset is
                 expectedAssetsValue +
                 poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
         }
-        _setAmountOwedToOriginator(amountOwedToOriginator() + expectedAssetsValue);
 
-        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        Storage storage $ = _getStorage();
+        $.amountOwedToOriginator += expectedAssetsValue;
+
         if (firstAssetTimestamp() == 0) {
             $.firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
@@ -337,27 +265,8 @@ contract SecuritizationPoolAsset is
         emit CollectAsset(from, expectedAssetsValue);
     }
 
-    // /// @inheritdoc ISecuritizationPool
-    // function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
-    //     uint256 _amountOwedToOriginator = amountOwedToOriginator;
-    //     if (amount <= _amountOwedToOriginator) {
-    //         amountOwedToOriginator = _amountOwedToOriginator - amount;
-    //     } else {
-    //         amountOwedToOriginator = 0;
-    //     }
-    //     reserve = reserve - amount;
-
-    //     require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-    //     require(
-    //         IERC20Upgradeable(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
-    //         'SecuritizationPool: Transfer failed'
-    //     );
-    //     emit Withdraw(_msgSender(), amount);
-    // }
-
-    // function checkMinFirstLost() public view returns (bool) {
-    //     ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
-    //     return minFirstLossCushion <= poolService.getJuniorRatio(address(this));
+    // function amountOwedToOriginator() public view returns (uint256) {
+    //     return _getStorage().amountOwedToOriginator;
     // }
 
     /// @inheritdoc ISecuritizationPool
@@ -409,8 +318,7 @@ contract SecuritizationPoolAsset is
         require(tokenAddressesLength == recipients.length, 'tokenAddresses length and tokenIds length are not equal');
         require(tokenAddressesLength == amounts.length, 'tokenAddresses length and recipients length are not equal');
 
-        mapping(address => bool) storage existsTokenAssetAddress = _getSecuritizationPoolStorage()
-            .existsTokenAssetAddress;
+        mapping(address => bool) storage existsTokenAssetAddress = _getStorage().existsTokenAssetAddress;
         for (uint256 i = 0; i < tokenAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             require(existsTokenAssetAddress[tokenAddresses[i]], 'SecuritizationPool: note token asset does not exist');
             require(
@@ -421,7 +329,7 @@ contract SecuritizationPoolAsset is
     }
 
     function firstAssetTimestamp() public view returns (uint64) {
-        return _getSecuritizationPoolStorage().firstAssetTimestamp;
+        return _getStorage().firstAssetTimestamp;
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -447,6 +355,12 @@ contract SecuritizationPoolAsset is
         emit UpdateOpeningBlockTimestamp(openingBlockTimestamp());
     }
 
+    function _setOpeningBlockTimestamp(uint64 _openingBlockTimestamp) internal {
+        Storage storage $ = _getStorage();
+        $.openingBlockTimestamp = _openingBlockTimestamp;
+        emit UpdateOpeningBlockTimestamp(_openingBlockTimestamp);
+    }
+
     function pause() public virtual override {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _pause();
@@ -456,31 +370,15 @@ contract SecuritizationPoolAsset is
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
     }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            ERC165Upgradeable.supportsInterface(interfaceId) ||
-            interfaceId == type(ISecuritizationPool).interfaceId ||
-            interfaceId == type(ISecuritizationTGE).interfaceId ||
-            interfaceId == type(ISecuritizationLockDistribution).interfaceId ||
-            interfaceId == type(ISecuritizationAccessControl).interfaceId;
-    }
-
     function riskScores(uint256 idx) public view virtual override returns (RiskScore memory) {
-        return _getSecuritizationPoolStorage().riskScores[idx];
+        return _getStorage().riskScores[idx];
     }
 
     function nftAssets(uint256 idx) public view virtual override returns (NFTAsset memory) {
-        return _getSecuritizationPoolStorage().nftAssets[idx];
+        return _getStorage().nftAssets[idx];
     }
 
     function tokenAssetAddresses(uint256 idx) public view virtual override returns (address) {
-        return _getSecuritizationPoolStorage().tokenAssetAddresses[idx];
+        return _getStorage().tokenAssetAddresses[idx];
     }
-
-    function validatorRequired() public view virtual override returns (bool) {
-        return _getSecuritizationPoolStorage().validatorRequired;
-    }
-
-    uint256[50] private __gap;
 }

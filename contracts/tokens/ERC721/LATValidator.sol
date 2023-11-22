@@ -6,6 +6,7 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerU
 import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
 import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {ISecuritizationPoolStorage} from '../../interfaces/ISecuritizationPoolStorage.sol';
 import './IERC5008.sol';
 import './types.sol';
 
@@ -22,7 +23,7 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
         //  requireNonceValid(latInfo) requireValidator(latInfo)
         if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (ISecuritizationPool(creditor).validatorRequired()) {
+            if (ISecuritizationPoolStorage(creditor).validatorRequired()) {
                 _checkNonceValid(info);
                 require(_checkValidator(info), 'LATValidator: invalid validator signature');
             }

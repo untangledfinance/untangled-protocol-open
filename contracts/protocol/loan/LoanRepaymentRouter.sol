@@ -11,6 +11,7 @@ import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
+import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
 
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
@@ -63,7 +64,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         // Transfer amount to creditor
         if (_payer != address(0x0)) {
             ISecuritizationTGE poolInstance = ISecuritizationTGE(beneficiary);
-            if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
+            if (registry.getSecuritizationManager().isExistingPools(beneficiary))
+                beneficiary = ISecuritizationPoolStorage(beneficiary).pot();
             uint256 repayAmount = _amount - remains;
             require(
                 IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),

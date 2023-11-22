@@ -10,6 +10,7 @@ import {ISecuritizationPool} from '../../../interfaces/ISecuritizationPool.sol';
 import {IUntangledERC721} from '../../../interfaces/IUntangledERC721.sol';
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../../../interfaces/ISecuritizationTGE.sol';
+import {ISecuritizationPoolStorage} from '../../../interfaces/ISecuritizationPoolStorage.sol';
 
 /**
  * UntangledAcceptedInvoiceToken: The representative for a payment responsibility
@@ -59,7 +60,7 @@ contract AcceptedInvoiceToken is IUntangledERC721 {
     }
 
     function _transferTokensFrom(address token, address from, address to, uint256 amount) private {
-        if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationTGE(to).pot();
+        if (registry.getSecuritizationManager().isExistingPools(to)) to = ISecuritizationPoolStorage(to).pot();
         require(IERC20Upgradeable(token).transferFrom(from, to, amount), 'AcceptedInvoiceToken: transferFrom failure');
     }
 
