@@ -80,6 +80,40 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
   return { noteTokenFactory };
 }
 
+const setUpSecuritizationPoolImpl = async (registry) => {
+  const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+  const securitizationPoolImpl = await SecuritizationPool.deploy();
+  await registry.setSecuritizationPool(securitizationPoolImpl.address);
+
+
+  // SecuritizationAccessControl,
+  // SecuritizationPoolStorage,
+  // SecuritizationTGE,
+  // SecuritizationPoolAsset,
+  // SecuritizationLockDistribution
+  const SecuritizationAccessControl = await ethers.getContractFactory('SecuritizationAccessControl');
+  const securitizationAccessControlImpl = await SecuritizationAccessControl.deploy();
+  await securitizationPoolImpl.registerExtension(securitizationAccessControlImpl.address);
+
+  const SecuritizationPoolStorage = await ethers.getContractFactory('SecuritizationPoolStorage');
+  const securitizationPoolStorageImpl = await SecuritizationPoolStorage.deploy();
+  await securitizationPoolImpl.registerExtension(securitizationPoolStorageImpl.address);
+
+  const SecuritizationPoolTGE = await ethers.getContractFactory('SecuritizationTGE');
+  const securitizationPoolTGEImpl = await SecuritizationPoolTGE.deploy();
+  await securitizationPoolImpl.registerExtension(securitizationPoolTGEImpl.address);
+
+  const SecuritizationPoolAsset = await ethers.getContractFactory('SecuritizationPoolAsset');
+  const securitizationPoolAssetImpl = await SecuritizationPoolAsset.deploy();
+  await securitizationPoolImpl.registerExtension(securitizationPoolAssetImpl.address);
+
+  const SecuritizationLockDistribution = await ethers.getContractFactory('SecuritizationLockDistribution');
+  const securitizationLockDistributionImpl = await SecuritizationLockDistribution.deploy();
+  await securitizationPoolImpl.registerExtension(securitizationLockDistributionImpl.address);
+
+  return securitizationPoolImpl;
+}
+
 async function setup() {
   await deployments.fixture(['all']);
 
@@ -160,10 +194,8 @@ async function setup() {
   const { acceptedInvoiceToken } = await setUpAcceptedInvoiceToken(registry);
   await registry.setAcceptedInvoiceToken(acceptedInvoiceToken.address);
 
-  const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
-  const securitizationPoolImpl = await SecuritizationPool.deploy();
+  const securitizationPoolImpl = await setUpSecuritizationPoolImpl(registry);
 
-  await registry.setSecuritizationPool(securitizationPoolImpl.address);
   await registry.setSecuritizationManager(securitizationManager.address);
 
   await registry.setNoteTokenFactory(noteTokenFactory.address);

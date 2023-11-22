@@ -39,6 +39,9 @@ import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 import {RiskScore} from './base/types.sol';
 
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
+import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+
+import 'hardhat/console.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -72,6 +75,12 @@ contract SecuritizationPoolAsset is
             super.supportsInterface(interfaceId) ||
             interfaceId == type(ISecuritizationPool).interfaceId ||
             interfaceId == type(ISecuritizationPoolStorage).interfaceId;
+    }
+
+    function installExtension(
+        bytes memory params
+    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) {
+        __SecuritizationPoolAsset_init_unchained(abi.decode(params, (NewPoolParams)));
     }
 
     function __SecuritizationPoolAsset_init_unchained(NewPoolParams memory newPoolParams) internal {
@@ -387,5 +396,33 @@ contract SecuritizationPoolAsset is
     function unpause() public virtual {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
+    }
+
+    function getFunctionSignatures()
+        public
+        view
+        virtual
+        override(SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory _functionSignatures = new bytes4[](15);
+
+        _functionSignatures[0] = this.getNFTAssetsLength.selector;
+        _functionSignatures[1] = this.getTokenAssetAddresses.selector;
+        _functionSignatures[2] = this.getTokenAssetAddressesLength.selector;
+        _functionSignatures[3] = this.getRiskScoresLength.selector;
+        _functionSignatures[4] = this.riskScores.selector;
+        _functionSignatures[5] = this.setupRiskScores.selector;
+        _functionSignatures[6] = this.exportAssets.selector;
+        _functionSignatures[7] = this.withdrawAssets.selector;
+        _functionSignatures[8] = this.collectAssets.selector;
+        _functionSignatures[9] = this.collectERC20Assets.selector;
+        _functionSignatures[10] = this.withdrawERC20Assets.selector;
+        _functionSignatures[11] = this.nftAssets.selector;
+        _functionSignatures[12] = this.tokenAssetAddresses.selector;
+        _functionSignatures[13] = this.setUpOpeningBlockTimestamp.selector;
+        _functionSignatures[14] = this.supportsInterface.selector;
+
+        return _functionSignatures;
     }
 }

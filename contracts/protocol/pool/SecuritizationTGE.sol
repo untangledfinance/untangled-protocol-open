@@ -16,8 +16,12 @@ import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsale.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
+import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
+
+import 'hardhat/console.sol';
 
 contract SecuritizationTGE is
     RegistryInjection,
@@ -30,17 +34,19 @@ contract SecuritizationTGE is
 {
     using ConfigHelper for Registry;
 
-    function __SecuritizationTGE_init_unchained(
-        address pot_,
-        CycleState state_,
-        address underlyingCurrency_,
-        uint32 minFirstLossCushion_
-    ) internal onlyInitializing {
+    function installExtension(
+        bytes memory params
+    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) {
+        __SecuritizationTGE_init_unchained(abi.decode(params, (NewPoolParams)));
+    }
+
+    function __SecuritizationTGE_init_unchained(NewPoolParams memory params) internal {
         Storage storage $ = _getStorage();
-        $.pot = pot_;
-        $.state = state_;
-        $.underlyingCurrency = underlyingCurrency_;
-        $.minFirstLossCushion = minFirstLossCushion_;
+        $.pot = address(this);
+        $.state = CycleState.INITIATED;
+
+        $.underlyingCurrency = params.currency;
+        $.minFirstLossCushion = params.minFirstLossCushion;
     }
 
     function sotToken() public view override returns (address) {
@@ -338,5 +344,41 @@ contract SecuritizationTGE is
     function unpause() public virtual {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
+    }
+
+    function getFunctionSignatures()
+        public
+        view
+        virtual
+        override(SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory _functionSignatures = new bytes4[](23);
+
+        _functionSignatures[0] = this.termLengthInSeconds.selector;
+        _functionSignatures[1] = this.setPot.selector;
+        _functionSignatures[2] = this.increaseReserve.selector;
+        _functionSignatures[3] = this.decreaseReserve.selector;
+        _functionSignatures[4] = this.sotToken.selector;
+        _functionSignatures[5] = this.jotToken.selector;
+        _functionSignatures[6] = this.underlyingCurrency.selector;
+        _functionSignatures[7] = this.paidPrincipalAmountSOT.selector;
+        _functionSignatures[8] = this.paidPrincipalAmountSOTByInvestor.selector;
+        _functionSignatures[9] = this.reserve.selector;
+        _functionSignatures[10] = this.principalAmountSOT.selector;
+        _functionSignatures[11] = this.interestRateSOT.selector;
+        _functionSignatures[12] = this.minFirstLossCushion.selector;
+        _functionSignatures[13] = this.totalAssetRepaidCurrency.selector;
+        _functionSignatures[14] = this.injectTGEAddress.selector;
+        _functionSignatures[15] = this.increaseTotalAssetRepaidCurrency.selector;
+        _functionSignatures[16] = this.redeem.selector;
+        _functionSignatures[17] = this.hasFinishedRedemption.selector;
+        _functionSignatures[18] = this.setInterestRateForSOT.selector;
+        _functionSignatures[19] = this.claimCashRemain.selector;
+        _functionSignatures[20] = this.startCycle.selector;
+        _functionSignatures[21] = this.withdraw.selector;
+        _functionSignatures[22] = this.supportsInterface.selector;
+
+        return _functionSignatures;
     }
 }

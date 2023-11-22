@@ -1,5 +1,5 @@
-const { ethers } = require('hardhat');
-const { utils } = require('ethers');
+const { ethers, artifacts } = require('hardhat');
+const { utils, Contract } = require('ethers');
 
 const { BigNumber } = require('bignumber.js');
 const crypto = require('crypto');
@@ -176,6 +176,26 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, 
   };
 }
 
+
+const getPoolByAddress = async (address) => {
+  const asset = await artifacts.readArtifact('ISecuritizationPool');
+  const control = await artifacts.readArtifact('SecuritizationAccessControl');
+  const distribution = await artifacts.readArtifact('SecuritizationLockDistribution');
+  const storage = await artifacts.readArtifact('SecuritizationPoolStorage');
+  const tge = await artifacts.readArtifact('SecuritizationTGE');
+
+  const abis = [
+    ...storage.abi,
+    ...asset.abi,
+    ...control.abi,
+    ...distribution.abi,
+    ...tge.abi,
+  ];
+
+  const provider = ethers.provider;
+  return new Contract(address, abis, provider);
+}
+
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
@@ -189,4 +209,5 @@ module.exports = {
   generateEntryHash,
 
   generateLATMintPayload,
+  getPoolByAddress,
 };

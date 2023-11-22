@@ -10,6 +10,7 @@ const {
   genLoanAgreementIds,
   unlimitedAllowance,
   generateLATMintPayload,
+  getPoolByAddress,
 } = require('./utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
@@ -125,7 +126,7 @@ describe('LoanInterestTermsContract', () => {
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-    securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+    securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
   });
 
   const agreementID = '0x979b5e9fab60f9433bf1aa924d2d09636ae0f5c10e2c6a8a58fe441cd1414d7f';

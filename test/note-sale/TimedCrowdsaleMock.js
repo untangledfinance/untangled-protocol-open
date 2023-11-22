@@ -17,6 +17,7 @@ describe('TimedCrowdsaleMock', () => {
     const NoteToken = await ethers.getContractFactory('NoteToken');
 
     securitizationPool = await SecuritizationPool.deploy();
+    
     const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, securitizationPool.address, 1], {
       initializer: 'initialize(string,string,uint8,address,uint8)',
     });
@@ -24,6 +25,7 @@ describe('TimedCrowdsaleMock', () => {
 
     const TimedCrowdsaleMock = await ethers.getContractFactory('TimedCrowdsaleMock');
     timedCrowdsale = await TimedCrowdsaleMock.deploy();
+
     timedCrowdsale.initialize(registry.address, securitizationPool.address, noteToken.address, currencyAddress);
   });
 

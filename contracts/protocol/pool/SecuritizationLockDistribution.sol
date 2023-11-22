@@ -10,8 +10,12 @@ import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
+import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+
+import 'hardhat/console.sol';
 
 // RegistryInjection,
 // ERC165Upgradeable,
@@ -24,11 +28,17 @@ contract SecuritizationLockDistribution is
     ERC165Upgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
+    ISecuritizationPoolExtension,
     SecuritizationAccessControl,
     SecuritizationPoolStorage,
     ISecuritizationLockDistribution
 {
     using ConfigHelper for Registry;
+
+    function installExtension(
+        bytes memory params
+    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) {
+    }
 
     function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {
         Storage storage $ = _getStorage();
@@ -153,5 +163,26 @@ contract SecuritizationLockDistribution is
     function unpause() public virtual {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
+    }
+
+    function getFunctionSignatures()
+        public
+        view
+        virtual
+        override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory _functionSignatures = new bytes4[](8);
+
+        _functionSignatures[0] = this.totalRedeemedCurrency.selector;
+        _functionSignatures[1] = this.lockedDistributeBalances.selector;
+        _functionSignatures[2] = this.lockedRedeemBalances.selector;
+        _functionSignatures[3] = this.totalLockedRedeemBalances.selector;
+        _functionSignatures[4] = this.totalLockedDistributeBalance.selector;
+        _functionSignatures[5] = this.increaseLockedDistributeBalance.selector;
+        _functionSignatures[6] = this.decreaseLockedDistributeBalance.selector;
+        _functionSignatures[7] = this.supportsInterface.selector;
+
+        return _functionSignatures;
     }
 }

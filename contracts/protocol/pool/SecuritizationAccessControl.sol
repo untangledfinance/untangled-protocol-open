@@ -2,20 +2,21 @@
 pragma solidity 0.8.19;
 
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
+import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
 import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
 import {OWNER_ROLE, ORIGINATOR_ROLE} from './types.sol';
 
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 contract SecuritizationAccessControl is
     RegistryInjection,
-    
     ContextUpgradeable,
     ERC165Upgradeable,
-
-    ISecuritizationAccessControl
+    ISecuritizationAccessControl,
+    ISecuritizationPoolExtension
 {
     // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationAccessControl")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant SecuritizationAccessControlStorageLocation =
@@ -44,7 +45,11 @@ contract SecuritizationAccessControl is
         _;
     }
 
-    function __SecuritizationAccessControl_init_unchained(address _owner) internal onlyInitializing {
+    function installExtension(bytes memory params) public virtual override {
+        __SecuritizationAccessControl_init_unchained(_msgSender());
+    }
+
+    function __SecuritizationAccessControl_init_unchained(address _owner) internal {
         _setRole(OWNER_ROLE, _owner);
     }
 
@@ -87,6 +92,31 @@ contract SecuritizationAccessControl is
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId) || type(ISecuritizationAccessControl).interfaceId == interfaceId;
+        return
+            super.supportsInterface(interfaceId) ||
+            type(ISecuritizationAccessControl).interfaceId == interfaceId ||
+            type(ISecuritizationPoolExtension).interfaceId == interfaceId;
+    }
+
+    // bytes4[] public getFunctionSignatures = [
+    //     this.hasRole.selector,
+    //     this.isOwner.selector,
+    //     this.renounceRole.selector,
+    //     this.grantRole.selector,
+    //     this.revokeRole.selector,
+    //     this.supportsInterface.selector
+    // ];
+
+    function getFunctionSignatures() public view virtual override returns (bytes4[] memory) {
+        bytes4[] memory _functionSignatures = new bytes4[](6);
+
+        _functionSignatures[0] = this.hasRole.selector;
+        _functionSignatures[1] = this.isOwner.selector;
+        _functionSignatures[2] = this.renounceRole.selector;
+        _functionSignatures[3] = this.grantRole.selector;
+        _functionSignatures[4] = this.revokeRole.selector;
+        _functionSignatures[5] = this.supportsInterface.selector;
+
+        return _functionSignatures;
     }
 }
