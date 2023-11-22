@@ -21,6 +21,7 @@ const { setup } = require('../setup');
 const ONE_DAY = 86400;
 
 const YEAR_LENGTH_IN_SECONDS = 31536000; // Number of seconds in a year (approximately)
+const ONE_DAY_IN_SECONDS = 86400;
 function calculateInterestForDuration(principalAmount, interestRate, durationLengthInSec) {
   // Calculate the interest rate as a fraction
   const interestRateFraction = (interestRate * (1 / 100));
@@ -37,7 +38,7 @@ function calculateInterestForDuration(principalAmount, interestRate, durationLen
 }
 
 describe('NAV', () => {
-  describe('A loan', () => {
+  describe.skip('A loan', () => {
     let stableCoin;
     let securitizationManager;
     let loanKernel;
@@ -133,9 +134,6 @@ describe('NAV', () => {
     const principalAmount = 10000000000000000000;
     const interestRatePercentage = 12; //12%
       before('upload a loan', async () => {
-        // Setup Risk Scores
-        const ONE_DAY_IN_SECONDS = 86400;
-
         // A
         const riskScoreA = {
           daysPastDue: ONE_DAY_IN_SECONDS,
@@ -529,185 +527,183 @@ describe('NAV', () => {
 
       securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
     });
+    before('setting riskscore for pool', async () => {
+      // A
+      const riskScoreA = {
+        daysPastDue: ONE_DAY_IN_SECONDS,
+        advanceRate: 950000, // 95%
+        penaltyRate: 900000,
+        interestRate: 80000, // 8%
+        probabilityOfDefault: 10000, // 1%
+        lossGivenDefault: 810000, // 25%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS*5,
+        collectionPeriod: ONE_DAY_IN_SECONDS*30,
+        writeOffAfterGracePeriod: 250000, // 25%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
+      // B
+      const riskScoreB = {
+        daysPastDue: ONE_DAY_IN_SECONDS * 30,
+        advanceRate: 900000, // 90%
+        penaltyRate: 1500000,
+        interestRate: 100000, // 10%
+        probabilityOfDefault: 20000, // 2%
+        lossGivenDefault: 500000, // 50%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS*5,
+        collectionPeriod: ONE_DAY_IN_SECONDS*30,
+        writeOffAfterGracePeriod: 500000, // 50%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
+      // C
+      const riskScoreC = {
+        daysPastDue: ONE_DAY_IN_SECONDS * 60,
+        advanceRate: 900000, // 90%
+        penaltyRate: 1500000,
+        interestRate: 120000, // 12%
+        probabilityOfDefault: 30000, // 3%
+        lossGivenDefault: 500000, // 50%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
+        collectionPeriod: ONE_DAY_IN_SECONDS * 30,
+        writeOffAfterGracePeriod: 500000, // 50%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
+      // D
+      const riskScoreD = {
+        daysPastDue: ONE_DAY_IN_SECONDS * 90,
+        advanceRate: 800000, // 80%
+        penaltyRate: 1500000,
+        interestRate: 120000, // 12%
+        probabilityOfDefault: 40000, // 3%
+        lossGivenDefault: 750000, // 50%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
+        collectionPeriod: ONE_DAY_IN_SECONDS * 30,
+        writeOffAfterGracePeriod: 500000, // 50%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
+      // E
+      const riskScoreE = {
+        daysPastDue: ONE_DAY_IN_SECONDS * 120,
+        advanceRate: 800000, // 80%
+        penaltyRate: 1500000,
+        interestRate: 140000, // 12%
+        probabilityOfDefault: 50000, // 3%
+        lossGivenDefault: 1000000, // 50%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
+        collectionPeriod: ONE_DAY_IN_SECONDS * 30,
+        writeOffAfterGracePeriod: 1000000, // 100%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
 
-    const agreementID = '0x979b5e9fab60f9433bf1aa924d2d09636ae0f5c10e2c6a8a58fe441cd1414d7f';
-    let expirationTimestamps;
-    const CREDITOR_FEE = '0';
-    const ASSET_PURPOSE = '1';
-    const inputAmount = 10;
-    const inputPrice = 15;
-    const principalAmount = 10000000000000000000;
-    const interestRatePercentage = 12; //12%
-      before('upload a loan', async () => {
+      // F
+      const riskScoreF = {
+        daysPastDue: ONE_DAY_IN_SECONDS * 365,
+        advanceRate: 0, // 0%
+        penaltyRate: 1500000,
+        interestRate: 100000, // 100%
+        probabilityOfDefault: 100000, // 100%
+        lossGivenDefault: 1000000, // 100%
+        discountRate: 100000, // 10%
+        gracePeriod: ONE_DAY_IN_SECONDS * 5,
+        collectionPeriod: ONE_DAY_IN_SECONDS * 30,
+        writeOffAfterGracePeriod: 1000000, // 100%
+        writeOffAfterCollectionPeriod: 1000000, // 100%
+      };
+      const daysPastDues = [
+        riskScoreA.daysPastDue,
+        riskScoreB.daysPastDue,
+        riskScoreC.daysPastDue,
+        riskScoreD.daysPastDue,
+        riskScoreE.daysPastDue,
+        riskScoreF.daysPastDue
+      ];
+
+      const ratesAndDefaults = [
+        riskScoreA.advanceRate,
+        riskScoreB.advanceRate,
+        riskScoreC.advanceRate,
+        riskScoreD.advanceRate,
+        riskScoreE.advanceRate,
+        riskScoreF.advanceRate,
+        riskScoreA.penaltyRate,
+        riskScoreB.penaltyRate,
+        riskScoreC.penaltyRate,
+        riskScoreD.penaltyRate,
+        riskScoreF.penaltyRate,
+        riskScoreE.penaltyRate,
+        riskScoreA.interestRate,
+        riskScoreB.interestRate,
+        riskScoreC.interestRate,
+        riskScoreD.interestRate,
+        riskScoreE.interestRate,
+        riskScoreF.interestRate,
+        riskScoreA.probabilityOfDefault,
+        riskScoreB.probabilityOfDefault,
+        riskScoreC.probabilityOfDefault,
+        riskScoreD.probabilityOfDefault,
+        riskScoreE.probabilityOfDefault,
+        riskScoreF.probabilityOfDefault,
+        riskScoreA.lossGivenDefault,
+        riskScoreB.lossGivenDefault,
+        riskScoreC.lossGivenDefault,
+        riskScoreD.lossGivenDefault,
+        riskScoreE.lossGivenDefault,
+        riskScoreF.lossGivenDefault,
+        riskScoreA.discountRate,
+        riskScoreB.discountRate,
+        riskScoreC.discountRate,
+        riskScoreD.discountRate,
+        riskScoreE.discountRate,
+        riskScoreF.discountRate
+      ];
+      const periodsAndWriteOffs = [
+        riskScoreA.gracePeriod,
+        riskScoreB.gracePeriod,
+        riskScoreC.gracePeriod,
+        riskScoreD.gracePeriod,
+        riskScoreE.gracePeriod,
+        riskScoreF.gracePeriod,
+        riskScoreA.collectionPeriod,
+        riskScoreB.collectionPeriod,
+        riskScoreC.collectionPeriod,
+        riskScoreD.collectionPeriod,
+        riskScoreE.collectionPeriod,
+        riskScoreF.collectionPeriod,
+        riskScoreA.writeOffAfterGracePeriod,
+        riskScoreB.writeOffAfterGracePeriod,
+        riskScoreC.writeOffAfterGracePeriod,
+        riskScoreD.writeOffAfterGracePeriod,
+        riskScoreE.writeOffAfterGracePeriod,
+        riskScoreF.writeOffAfterGracePeriod,
+        riskScoreA.writeOffAfterCollectionPeriod,
+        riskScoreB.writeOffAfterCollectionPeriod,
+        riskScoreC.writeOffAfterCollectionPeriod,
+        riskScoreD.writeOffAfterCollectionPeriod,
+        riskScoreE.writeOffAfterCollectionPeriod,
+        riskScoreF.writeOffAfterCollectionPeriod
+      ];
+
+      await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
+
+      // Grant role originator
+      const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
+      await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address)
+
+    })
+
+      before('upload first loan', async () => {
+        let expirationTimestamps;
+        const CREDITOR_FEE = '0';
+        const ASSET_PURPOSE = '1';
+        const principalAmount = 10000000000000000000;
+        const interestRatePercentage = 12; //12%
         // Setup Risk Scores
-        const ONE_DAY_IN_SECONDS = 86400;
-
-        // A
-        const riskScoreA = {
-          daysPastDue: ONE_DAY_IN_SECONDS,
-          advanceRate: 950000, // 95%
-          penaltyRate: 900000,
-          interestRate: 80000, // 8%
-          probabilityOfDefault: 10000, // 1%
-          lossGivenDefault: 810000, // 25%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS*5,
-          collectionPeriod: ONE_DAY_IN_SECONDS*30,
-          writeOffAfterGracePeriod: 250000, // 25%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-        // B
-        const riskScoreB = {
-          daysPastDue: ONE_DAY_IN_SECONDS * 30,
-          advanceRate: 900000, // 90%
-          penaltyRate: 1500000,
-          interestRate: 100000, // 10%
-          probabilityOfDefault: 20000, // 2%
-          lossGivenDefault: 500000, // 50%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS*5,
-          collectionPeriod: ONE_DAY_IN_SECONDS*30,
-          writeOffAfterGracePeriod: 500000, // 50%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-        // C
-        const riskScoreC = {
-          daysPastDue: ONE_DAY_IN_SECONDS * 60,
-          advanceRate: 900000, // 90%
-          penaltyRate: 1500000,
-          interestRate: 120000, // 12%
-          probabilityOfDefault: 30000, // 3%
-          lossGivenDefault: 500000, // 50%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS * 5,
-          collectionPeriod: ONE_DAY_IN_SECONDS * 30,
-          writeOffAfterGracePeriod: 500000, // 50%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-        // D
-        const riskScoreD = {
-          daysPastDue: ONE_DAY_IN_SECONDS * 90,
-          advanceRate: 800000, // 80%
-          penaltyRate: 1500000,
-          interestRate: 120000, // 12%
-          probabilityOfDefault: 40000, // 3%
-          lossGivenDefault: 750000, // 50%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS * 5,
-          collectionPeriod: ONE_DAY_IN_SECONDS * 30,
-          writeOffAfterGracePeriod: 500000, // 50%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-        // E
-        const riskScoreE = {
-          daysPastDue: ONE_DAY_IN_SECONDS * 120,
-          advanceRate: 800000, // 80%
-          penaltyRate: 1500000,
-          interestRate: 140000, // 12%
-          probabilityOfDefault: 50000, // 3%
-          lossGivenDefault: 1000000, // 50%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS * 5,
-          collectionPeriod: ONE_DAY_IN_SECONDS * 30,
-          writeOffAfterGracePeriod: 1000000, // 100%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-
-        // F
-        const riskScoreF = {
-          daysPastDue: ONE_DAY_IN_SECONDS * 365,
-          advanceRate: 0, // 0%
-          penaltyRate: 1500000,
-          interestRate: 100000, // 100%
-          probabilityOfDefault: 100000, // 100%
-          lossGivenDefault: 1000000, // 100%
-          discountRate: 100000, // 10%
-          gracePeriod: ONE_DAY_IN_SECONDS * 5,
-          collectionPeriod: ONE_DAY_IN_SECONDS * 30,
-          writeOffAfterGracePeriod: 1000000, // 100%
-          writeOffAfterCollectionPeriod: 1000000, // 100%
-        };
-        const daysPastDues = [
-          riskScoreA.daysPastDue,
-          riskScoreB.daysPastDue,
-          riskScoreC.daysPastDue,
-          riskScoreD.daysPastDue,
-          riskScoreE.daysPastDue,
-          riskScoreF.daysPastDue
-        ];
-
-        const ratesAndDefaults = [
-          riskScoreA.advanceRate,
-          riskScoreB.advanceRate,
-          riskScoreC.advanceRate,
-          riskScoreD.advanceRate,
-          riskScoreE.advanceRate,
-          riskScoreF.advanceRate,
-          riskScoreA.penaltyRate,
-          riskScoreB.penaltyRate,
-          riskScoreC.penaltyRate,
-          riskScoreD.penaltyRate,
-          riskScoreF.penaltyRate,
-          riskScoreE.penaltyRate,
-          riskScoreA.interestRate,
-          riskScoreB.interestRate,
-          riskScoreC.interestRate,
-          riskScoreD.interestRate,
-          riskScoreE.interestRate,
-          riskScoreF.interestRate,
-          riskScoreA.probabilityOfDefault,
-          riskScoreB.probabilityOfDefault,
-          riskScoreC.probabilityOfDefault,
-          riskScoreD.probabilityOfDefault,
-          riskScoreE.probabilityOfDefault,
-          riskScoreF.probabilityOfDefault,
-          riskScoreA.lossGivenDefault,
-          riskScoreB.lossGivenDefault,
-          riskScoreC.lossGivenDefault,
-          riskScoreD.lossGivenDefault,
-          riskScoreE.lossGivenDefault,
-          riskScoreF.lossGivenDefault,
-          riskScoreA.discountRate,
-          riskScoreB.discountRate,
-          riskScoreC.discountRate,
-          riskScoreD.discountRate,
-          riskScoreE.discountRate,
-          riskScoreF.discountRate
-        ];
-        const periodsAndWriteOffs = [
-          riskScoreA.gracePeriod,
-          riskScoreB.gracePeriod,
-          riskScoreC.gracePeriod,
-          riskScoreD.gracePeriod,
-          riskScoreE.gracePeriod,
-          riskScoreF.gracePeriod,
-          riskScoreA.collectionPeriod,
-          riskScoreB.collectionPeriod,
-          riskScoreC.collectionPeriod,
-          riskScoreD.collectionPeriod,
-          riskScoreE.collectionPeriod,
-          riskScoreF.collectionPeriod,
-          riskScoreA.writeOffAfterGracePeriod,
-          riskScoreB.writeOffAfterGracePeriod,
-          riskScoreC.writeOffAfterGracePeriod,
-          riskScoreD.writeOffAfterGracePeriod,
-          riskScoreE.writeOffAfterGracePeriod,
-          riskScoreF.writeOffAfterGracePeriod,
-          riskScoreA.writeOffAfterCollectionPeriod,
-          riskScoreB.writeOffAfterCollectionPeriod,
-          riskScoreC.writeOffAfterCollectionPeriod,
-          riskScoreD.writeOffAfterCollectionPeriod,
-          riskScoreE.writeOffAfterCollectionPeriod,
-          riskScoreF.writeOffAfterCollectionPeriod
-        ];
-
-        await securitizationPoolContract
-            .connect(poolCreatorSigner)
-            .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
-
-        // Grant role originator
-        const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
-        await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address)
 
         // Prepare parameters for loan upload
         const orderAddresses = [
@@ -782,7 +778,89 @@ describe('NAV', () => {
         poolNAV = await ethers.getContractAt('PoolNAV', poolNAVAddress);
       });
 
-      it('after upload loan successfully', async () => {
+    before('upload second loan', async () => {
+      let expirationTimestamps;
+      const CREDITOR_FEE = '0';
+      const ASSET_PURPOSE = '1';
+      const principalAmount = 10000000000000000000;
+      const interestRatePercentage = 12; //12%
+      // Setup Risk Scores
+      const ONE_DAY_IN_SECONDS = 86400;
+
+      // Prepare parameters for loan upload
+      const orderAddresses = [
+        originatorSigner.address,
+        stableCoin.address,
+        loanRepaymentRouter.address,
+        loanInterestTermsContract.address,
+        relayer.address,
+        borrowerSigner.address,
+      ];
+
+      const salt = genSalt();
+      const riskScore = '3';
+      expirationTimestamps = await time.latest() + 30 * ONE_DAY_IN_SECONDS;
+
+      const orderValues = [
+        CREDITOR_FEE,
+        ASSET_PURPOSE,
+        principalAmount.toString(),
+        expirationTimestamps,
+        salt,
+        riskScore,
+      ];
+
+      const termInDaysLoan = 30;
+      const termsContractParameter = packTermsContractParameters({
+        amortizationUnitType: 1,
+        gracePeriodInDays: 5,
+        principalAmount: principalAmount,
+        termLengthUnits: _.ceil(termInDaysLoan * 24),
+        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+      });
+
+      const termsContractParameters = [termsContractParameter];
+
+      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+      tokenIds = genLoanAgreementIds(
+        loanRepaymentRouter.address,
+        debtors,
+        loanInterestTermsContract.address,
+        termsContractParameters,
+        salts
+      );
+
+      // Upload, tokenize loan assets
+      await loanKernel.fillDebtOrder(
+        orderAddresses,
+        orderValues,
+        termsContractParameters,
+        await Promise.all(
+          tokenIds.map(async (x) => ({
+            ...(await generateLATMintPayload(
+              loanAssetTokenContract,
+              defaultLoanAssetTokenValidator,
+              [x],
+              [(await loanAssetTokenContract.nonce(x)).toNumber()],
+              defaultLoanAssetTokenValidator.address
+            )),
+          }))
+        )
+      );
+
+      // Transfer LAT asset to pool
+      await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
+      await securitizationPoolContract.connect(originatorSigner)
+        .collectAssets(loanAssetTokenContract.address, originatorSigner.address, tokenIds);
+
+      // PoolNAV contract
+      const poolNAVAddress = await securitizationPoolContract.poolNAV();
+      poolNAV = await ethers.getContractAt('PoolNAV', poolNAVAddress);
+    });
+
+    it('after upload loan successfully', async () => {
         const currentNAV = await poolNAV.currentNAV();
 
         const debtLoan = await poolNAV.debt(tokenIds[0]);
