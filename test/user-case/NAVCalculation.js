@@ -441,7 +441,7 @@ describe('NAV', () => {
     });
 
 
-  describe('Two loan', () => {
+  describe('Two loan - different interest rate & risk score', () => {
     let stableCoin;
     let securitizationManager;
     let loanKernel;
@@ -458,6 +458,7 @@ describe('NAV', () => {
     let tokenIds;
     let defaultLoanAssetTokenValidator;
     let poolNAV;
+    let uploadedLoanTime;
 
     // Wallets
     let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer,
@@ -785,6 +786,7 @@ describe('NAV', () => {
                 }))
             )
         );
+        uploadedLoanTime = await time.latest();
 
         // Transfer LAT asset to pool
         await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
@@ -807,26 +809,24 @@ describe('NAV', () => {
       });
 
 
-      xit('after 10 days - should include interest', async () => {
-        await time.increase(10 * ONE_DAY);
+      it('after 10 days - should include interest', async () => {
+        await time.increaseTo(uploadedLoanTime + 10 * ONE_DAY);
         const now = await time.latest();
 
         const currentNAV = await poolNAV.currentNAV();
         const debtLoan = await poolNAV.debt(tokenIds[0]);
         expect(debtLoan).to.closeTo(parseEther('9.029'), parseEther('0.001'));
-        expect(currentNAV).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
-        const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
-        expect(value).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+        expect(currentNAV).to.closeTo(parseEther('13.77'), parseEther('0.001'));
       });
-      xit('next 20 days - on maturity date', async () => {
-        await time.increase(20 * ONE_DAY);
+      it('after 30 days - on maturity date', async () => {
+        await time.increaseTo(uploadedLoanTime + 30 * ONE_DAY);
         const now = await time.latest();
         // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
         // console.log("ASSET", value);
         const currentNAV = await poolNAV.currentNAV();
         const debtLoan = await poolNAV.debt(tokenIds[0]);
         expect(debtLoan).to.closeTo(parseEther('9.089'), parseEther('0.001'));
-        expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
+        expect(currentNAV).to.closeTo(parseEther('13.84'), parseEther('0.01'));
       });
       /*
           xit('should repay now', async () => {
@@ -835,23 +835,28 @@ describe('NAV', () => {
                 .connect(untangledAdminSigner)
                 .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
       */
-      xit('should revert if write off loan before grace period', async () => {
-        await time.increase(2 * ONE_DAY);
-        await expect(poolNAV.writeOff(tokenIds[0])).to.be.revertedWith('maturity-date-in-the-future');
+      it('should revert if write off loan before grace period', async () => {
+        await time.increaseTo(uploadedLoanTime + 32 * ONE_DAY);
+        await expect(poolNAV.writeOff(tokenIds[1])).to.be.revertedWith('maturity-date-in-the-future');
       });
 
-      xit('overdue 6 days - should write off after grace period', async () => {
-        await time.increase(3 * ONE_DAY);
+      it('overdue 6 days - should write off loan 1 after grace period', async () => {
+        await time.increaseTo(uploadedLoanTime + 35 * ONE_DAY);
         await poolNAV.writeOff(tokenIds[0]);
-        await time.increase(1 * ONE_DAY);
+        await time.increaseTo(uploadedLoanTime + 36 * ONE_DAY);
         const currentNAV = await poolNAV.currentNAV();
-        expect(currentNAV).to.closeTo(parseEther('4.5543'), parseEther('0.005'));
+        await expect(poolNAV.writeOff(tokenIds[1])).to.be.revertedWith('maturity-date-in-the-future');
+        expect(currentNAV).to.closeTo(parseEther('9.33'), parseEther('0.001'));
       });
-      xit('overdue next 30 days - should write off after collection period', async () => {
-        await time.increase(30 * ONE_DAY);
+      it('after 65 days - write off loan 2', async () => {
+        await time.increaseTo(uploadedLoanTime + 65 * ONE_DAY);
+        await poolNAV.writeOff(tokenIds[1]);
+      })
+      it('after 66 days - should write off', async () => {
+        await time.increaseTo(uploadedLoanTime + 66 * ONE_DAY);
         await poolNAV.writeOff(tokenIds[0]);
         const currentNAV = await poolNAV.currentNAV();
-        expect(currentNAV).to.equal(parseEther('0'));
+        expect(currentNAV).to.closeTo(parseEther('3.6148'), parseEther('0.001'));
       });
 
       xit('should repay successfully', async () => {
