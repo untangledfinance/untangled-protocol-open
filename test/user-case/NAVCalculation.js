@@ -859,13 +859,13 @@ describe('NAV', () => {
         expect(currentNAV).to.closeTo(parseEther('3.6148'), parseEther('0.001'));
       });
 
-      xit('should repay successfully', async () => {
+      it('should repay successfully', async () => {
         await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
         await loanRepaymentRouter
             .connect(untangledAdminSigner)
-            .repayInBatch([tokenIds[0]], [parseEther('10')], stableCoin.address);
+            .repayInBatch(tokenIds, [parseEther('10'), parseEther('10')], stableCoin.address);
         const balanceAfterRepay = await stableCoin.balanceOf(untangledAdminSigner.address);
-        expect(balanceAfterRepay).to.closeTo(parseEther('99990.80'), parseEther('0.01'));
+        expect(balanceAfterRepay).to.closeTo(parseEther('99985.9358'), parseEther('0.05'));
       });
     });
 
