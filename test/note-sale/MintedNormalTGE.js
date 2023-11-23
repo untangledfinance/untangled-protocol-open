@@ -1,7 +1,9 @@
 const { artifacts } = require('hardhat');
-const { setup } = require('../setup');
+const { setup, initPool } = require('../setup');
 const { expect, assert } = require('chai');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
+const { POOL_ADMIN_ROLE } = require('../constants');
+const { getPoolByAddress } = require('../utils');
 
 // const ONE_DAY = 86400;
 // const DECIMAL = BigNumber.from(10).pow(18);
@@ -11,17 +13,22 @@ describe('MintedNormalTGE', () => {
   let securitizationPool;
 
   before('create fixture', async () => {
+
+
+    const [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
+      await ethers.getSigners();
+
     const [poolTest] = await ethers.getSigners();
-    ({ registry, noteTokenFactory } = await setup());
+    ({ registry, noteTokenFactory, securitizationManager, stableCoin } = await setup());
     const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
     const NoteToken = await ethers.getContractFactory('NoteToken');
 
     mintedNormalTGE = await MintedNormalTGE.deploy();
-    securitizationPool = await SecuritizationPool.deploy();
-    const currencyAddress = await securitizationPool.underlyingCurrency();
+
+    const currencyAddress = stableCoin.address; // await securitizationPool.underlyingCurrency();
     const longSale = true;
-    const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, securitizationPool.address, 1], {
+    const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, poolTest.address, 1], {
       initializer: 'initialize(string,string,uint8,address,uint8)',
     });
 

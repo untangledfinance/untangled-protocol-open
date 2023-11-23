@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import {PausableUpgradeable} from '../../base/PauseableUpgradeable.sol';
 import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 import {Registry} from '../../storage/Registry.sol';
@@ -353,7 +353,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](23);
+        bytes4[] memory _functionSignatures = new bytes4[](26);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -378,6 +378,9 @@ contract SecuritizationTGE is
         _functionSignatures[20] = this.startCycle.selector;
         _functionSignatures[21] = this.withdraw.selector;
         _functionSignatures[22] = this.supportsInterface.selector;
+        _functionSignatures[23] = this.paused.selector;
+        _functionSignatures[24] = this.pause.selector;
+        _functionSignatures[25] = this.unpause.selector;
 
         return _functionSignatures;
     }

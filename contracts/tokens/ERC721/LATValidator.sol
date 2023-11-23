@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
@@ -9,6 +9,8 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ISecuritizationPoolStorage} from '../../interfaces/ISecuritizationPoolStorage.sol';
 import './IERC5008.sol';
 import './types.sol';
+
+import 'hardhat/console.sol';
 
 contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
@@ -22,7 +24,10 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
 
     modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
         //  requireNonceValid(latInfo) requireValidator(latInfo)
+
         if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
+            console.log('check valid ok');
+
             if (ISecuritizationPoolStorage(creditor).validatorRequired()) {
                 _checkNonceValid(info);
                 require(_checkValidator(info), 'LATValidator: invalid validator signature');

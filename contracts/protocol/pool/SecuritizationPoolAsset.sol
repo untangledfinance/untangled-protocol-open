@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {AccessControlEnumerableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
@@ -7,10 +7,9 @@ import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/
 import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import {IERC721ReceiverUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC721ReceiverUpgradeable.sol';
 import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
-
+import {PausableUpgradeable} from '../../base/PauseableUpgradeable.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
@@ -73,7 +72,10 @@ contract SecuritizationPoolAsset is
     {
         return
             super.supportsInterface(interfaceId) ||
+            interfaceId == type(IERC721ReceiverUpgradeable).interfaceId ||
             interfaceId == type(ISecuritizationPool).interfaceId ||
+            interfaceId == type(ISecuritizationPoolExtension).interfaceId ||
+            interfaceId == type(ISecuritizationAccessControl).interfaceId ||
             interfaceId == type(ISecuritizationPoolStorage).interfaceId;
     }
 
@@ -405,7 +407,7 @@ contract SecuritizationPoolAsset is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](15);
+        bytes4[] memory _functionSignatures = new bytes4[](19);
 
         _functionSignatures[0] = this.getNFTAssetsLength.selector;
         _functionSignatures[1] = this.getTokenAssetAddresses.selector;
@@ -422,6 +424,10 @@ contract SecuritizationPoolAsset is
         _functionSignatures[12] = this.tokenAssetAddresses.selector;
         _functionSignatures[13] = this.setUpOpeningBlockTimestamp.selector;
         _functionSignatures[14] = this.supportsInterface.selector;
+        _functionSignatures[15] = this.onERC721Received.selector;
+        _functionSignatures[16] = this.pause.selector;
+        _functionSignatures[17] = this.unpause.selector;
+        _functionSignatures[18] = this.paused.selector;
 
         return _functionSignatures;
     }

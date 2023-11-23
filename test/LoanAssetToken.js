@@ -97,7 +97,6 @@ describe('LoanAssetToken', () => {
               validatorRequired: true
             }
           ]));
-          
 
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;

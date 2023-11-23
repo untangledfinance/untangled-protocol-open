@@ -80,11 +80,7 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
   return { noteTokenFactory };
 }
 
-const setUpSecuritizationPoolImpl = async (registry) => {
-  const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
-  const securitizationPoolImpl = await SecuritizationPool.deploy();
-  await registry.setSecuritizationPool(securitizationPoolImpl.address);
-
+const initPool = async (securitizationPoolImpl) => {
 
   // SecuritizationAccessControl,
   // SecuritizationPoolStorage,
@@ -110,6 +106,16 @@ const setUpSecuritizationPoolImpl = async (registry) => {
   const SecuritizationLockDistribution = await ethers.getContractFactory('SecuritizationLockDistribution');
   const securitizationLockDistributionImpl = await SecuritizationLockDistribution.deploy();
   await securitizationPoolImpl.registerExtension(securitizationLockDistributionImpl.address);
+
+  return securitizationPoolImpl;
+}
+
+const setUpSecuritizationPoolImpl = async (registry) => {
+  const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+  const securitizationPoolImpl = await SecuritizationPool.deploy();
+  await registry.setSecuritizationPool(securitizationPoolImpl.address);
+
+  await initPool(securitizationPoolImpl);
 
   return securitizationPoolImpl;
 }
@@ -223,9 +229,12 @@ async function setup() {
     distributionAssessor,
     distributionTranche,
     factoryAdmin,
+
   };
 }
 
 module.exports = {
   setup,
+  initPool,
+
 };

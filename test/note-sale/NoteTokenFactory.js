@@ -1,5 +1,5 @@
 const { upgrades } = require('hardhat');
-const { setup } = require('../setup');
+const { setup, initPool } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber } = require('ethers');
 
@@ -34,6 +34,7 @@ describe('NoteTokenFactory', () => {
 
   it('#createToken', async () => {
     const pool = await SecuritizationPool.deploy();
+    await initPool(pool);
 
     const [deployer] = await ethers.getSigners();
     await registry.setSecuritizationManager(deployer.address);
@@ -42,6 +43,7 @@ describe('NoteTokenFactory', () => {
 
   it('#pauseUnpauseToken', async () => {
     const pool = await SecuritizationPool.deploy();
+    await initPool(pool);
     const tx = await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
     const receipt = await tx.wait();
 
@@ -52,12 +54,14 @@ describe('NoteTokenFactory', () => {
 
   it('#pauseAllToken', async () => {
     const pool = await SecuritizationPool.deploy();
+    await initPool(pool);
     await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
     await expect(noteTokenFactory.pauseAllTokens()).to.not.be.reverted;
   });
 
   it('#unPauseAllTokens', async () => {
     const pool = await SecuritizationPool.deploy();
+    await initPool(pool);
     await noteTokenFactory.createToken(pool.address, 0, 2, 'TOKEN'); // SENIOR
     await expect(noteTokenFactory.unPauseAllTokens()).to.not.be.reverted;
   });
