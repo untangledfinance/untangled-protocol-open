@@ -398,7 +398,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 latestNAV,
                 rmul(amount, toUint128(writeOffGroups[loanRates[loan] - WRITEOFF_RATE_GROUP_START].percentage))
             );
-
+            decDebt(loan, amount);
             return amount;
         }
         uint256 _debt = safeSub(_currentDebt, amount); // Remaining
@@ -755,6 +755,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function decDebt(uint256 loan, uint256 currencyAmount) private {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
+        uint256 penaltyChi_ = rates[rate].penaltyChi;
+        if (penaltyChi_ > 0) {
+            currencyAmount = toPie(penaltyChi_, currencyAmount);
+        }
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);
 
         pie[loan] = safeSub(pie[loan], pieAmount);

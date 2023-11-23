@@ -786,12 +786,12 @@ describe('NAV', () => {
                 }))
             )
         );
-        uploadedLoanTime = await time.latest();
 
         // Transfer LAT asset to pool
         await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
         await securitizationPoolContract.connect(originatorSigner)
             .collectAssets(loanAssetTokenContract.address, originatorSigner.address, tokenIds);
+        uploadedLoanTime = await time.latest();
 
         // PoolNAV contract
         const poolNAVAddress = await securitizationPoolContract.poolNAV();
@@ -840,7 +840,7 @@ describe('NAV', () => {
         await expect(poolNAV.writeOff(tokenIds[1])).to.be.revertedWith('maturity-date-in-the-future');
       });
 
-      it('overdue 6 days - should write off loan 1 after grace period', async () => {
+      it('after 36days - should write off loan 1 after grace period', async () => {
         await time.increaseTo(uploadedLoanTime + 35 * ONE_DAY);
         await poolNAV.writeOff(tokenIds[0]);
         await time.increaseTo(uploadedLoanTime + 36 * ONE_DAY);
@@ -859,14 +859,27 @@ describe('NAV', () => {
         expect(currentNAV).to.closeTo(parseEther('3.6148'), parseEther('0.001'));
       });
 
-      it('should repay successfully', async () => {
+      it('should repay partially successfully', async () => {
         await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
         await loanRepaymentRouter
             .connect(untangledAdminSigner)
-            .repayInBatch(tokenIds, [parseEther('10'), parseEther('10')], stableCoin.address);
+            .repayInBatch(tokenIds, [parseEther('5'), parseEther('5')], stableCoin.address);
+        const debtLoan = await poolNAV.debt(tokenIds[0]);
+        expect(debtLoan).to.closeTo(parseEther('4.197'), parseEther('0.001'))
+        const debtLoan2 = await poolNAV.debt(tokenIds[1]);
+        expect(debtLoan2).to.equal(parseEther('0'));
         const balanceAfterRepay = await stableCoin.balanceOf(untangledAdminSigner.address);
-        expect(balanceAfterRepay).to.closeTo(parseEther('99985.9358'), parseEther('0.05'));
+        expect(balanceAfterRepay).to.closeTo(parseEther('99990.179'), parseEther('0.05'));
+        const currentNAV = await poolNAV.currentNAV();
       });
+    it('should repay remaining successfully', async () => {
+      await loanRepaymentRouter
+          .connect(untangledAdminSigner)
+          .repayInBatch([tokenIds[0]], [parseEther('5')], stableCoin.address);
+      const balanceAfterRepay = await stableCoin.balanceOf(untangledAdminSigner.address);
+      const currentNAV = await poolNAV.currentNAV();
+      expect(balanceAfterRepay).to.closeTo(parseEther('99985.9358'), parseEther('0.05'));
+    });
     });
 
 
