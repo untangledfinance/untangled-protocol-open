@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 import {Registry} from '../storage/Registry.sol';
 import {Configuration} from './Configuration.sol';
 
@@ -22,9 +23,10 @@ import {ISecuritizationPoolValueService} from '../interfaces/ISecuritizationPool
 
 import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
-import {AcceptedInvoiceToken} from '../tokens/ERC721/invoice/AcceptedInvoiceToken.sol';
 import {IGo} from '../interfaces/IGo.sol';
 import "../protocol/pool/IPoolNAVFactory.sol";
+
+import {POOL_ADMIN, OWNER_ROLE} from './types.sol';
 
 /**
  * @title ConfigHelper
@@ -66,10 +68,6 @@ library ConfigHelper {
 
     function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
         return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
-    }
-
-    function getAcceptedInvoiceToken(Registry registry) internal view returns (AcceptedInvoiceToken) {
-        return AcceptedInvoiceToken(getAddress(registry, Configuration.CONTRACT_TYPE.ACCEPTED_INVOICE_TOKEN));
     }
 
     function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {
@@ -121,8 +119,38 @@ library ConfigHelper {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
 
-    function getPoolNAVFactory(Registry registry) internal view returns (IPoolNAVFactory) {
-        return IPoolNAVFactory(getAddress(registry, Configuration.CONTRACT_TYPE.POOL_NAV_FACTORY));
+    function requireDistributionOperator(Registry registry, address account) internal view {
+        require(account == address(getDistributionOperator(registry)), 'Registry: Only DistributionOperator');
     }
 
+    function requirePoolAdmin(Registry registry, address account) internal view {
+        require(
+            IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account),
+            'Registry: Not an pool admin'
+        );
+    }
+
+    function requirePoolAdminOrOwner(Registry registry, address pool, address account) internal view {
+        require(
+            IAccessControlUpgradeable(address(getSecuritizationManager(registry))).hasRole(POOL_ADMIN, account) ||
+                IAccessControlUpgradeable(pool).hasRole(OWNER_ROLE, account),
+            'Registry: Not an pool admin or pool owner'
+        );
+    }
+
+    function requireSecuritizationManager(Registry registry, address account) internal view {
+        require(account == address(getSecuritizationManager(registry)), 'Registry: Only SecuritizationManager');
+    }
+
+    function requireLoanRepaymentRouter(Registry registry, address account) internal view {
+        require(account == address(getLoanRepaymentRouter(registry)), 'Registry: Only LoanRepaymentRouter');
+    }
+
+    function requireLoanKernel(Registry registry, address account) internal view {
+        require(account == address(getLoanKernel(registry)), 'Registry: Only LoanKernel');
+    }
+
+    function requireLoanInterestTermsContract(Registry registry, address account) internal view {
+        require(account == address(getLoanInterestTermsContract(registry)), 'Registry: Only LoanInterestTermsContract');
+    }
 }

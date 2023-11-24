@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import {Registry} from '../../storage/Registry.sol';
+import {IInterestRate} from './IInterestRate.sol';
 
-interface IMintedTGE {
+interface IMintedTGE is IInterestRate {
     event YieldUpdated(uint256 newYield);
     event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
     event UpdateInitialAmount(uint256 initialAmount);

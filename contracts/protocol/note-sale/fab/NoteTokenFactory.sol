@@ -22,14 +22,6 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
 
     address public override noteTokenImplementation;
 
-    modifier onlySecuritizationManager() {
-        require(
-            _msgSender() == address(registry.getSecuritizationManager()),
-            'SecuritizationPool: Only SecuritizationManager'
-        );
-        _;
-    }
-
     function initialize(Registry _registry, address _factoryAdmin) public reinitializer(3) {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
@@ -41,7 +33,8 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         _setFactoryAdmin(_factoryAdmin);
     }
 
-    function changeMinterRole(address tokenAddress, address newController) external override onlySecuritizationManager {
+    function changeMinterRole(address tokenAddress, address newController) external override {
+        registry.requireSecuritizationManager(_msgSender());
         IAccessControlUpgradeable token = IAccessControlUpgradeable(tokenAddress);
         token.grantRole(MINTER_ROLE, newController);
     }
@@ -57,7 +50,9 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         Configuration.NOTE_TOKEN_TYPE _noteTokenType,
         uint8 _nDecimals,
         string calldata ticker
-    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
+    ) external override whenNotPaused nonReentrant returns (address) {
+        registry.requireSecuritizationManager(_msgSender());
+
         string memory name;
         string memory symbol;
         if (_noteTokenType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {

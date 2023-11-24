@@ -44,7 +44,7 @@ library Configuration {
     }
 
     enum ASSET_PURPOSE {
-        SALE,
-        PLEDGE
+        LOAN,
+        INVOICE
     }
 }

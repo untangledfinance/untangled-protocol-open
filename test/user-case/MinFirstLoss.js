@@ -7,7 +7,7 @@ const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { setup } = require('../setup');
 const { presignedMintMessage } = require('../shared/uid-helper');
-const { POOL_ADMIN_ROLE } = require('../constants.js');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -86,7 +86,6 @@ describe('MinFirstLoss', () => {
     securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
 
     // Grant role originator
-    const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
     await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
     // Init JOT sale
