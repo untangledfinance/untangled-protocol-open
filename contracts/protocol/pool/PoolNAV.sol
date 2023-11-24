@@ -170,13 +170,16 @@ contract PoolNAV is Auth, Discounting, Initializable {
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
         ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
+        uint256 _convertedInterestRate;
         if (loanEntry.assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
             principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
+            _convertedInterestRate = ONE + riskParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+        } else {
+            _convertedInterestRate = ONE + loanParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
         }
 
         loanCount++;
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
-        uint256 _convertedInterestRate = ONE + loanParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
         if (rates[_convertedInterestRate].ratePerSecond == 0) { // If interest rate is not set
             file("rate", _convertedInterestRate, _convertedInterestRate);
         }
