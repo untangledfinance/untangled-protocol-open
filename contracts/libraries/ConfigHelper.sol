@@ -119,6 +119,10 @@ library ConfigHelper {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
 
+    function getPoolNAVFactory(Registry registry) internal view returns (IPoolNAVFactory) {
+        return IPoolNAVFactory(getAddress(registry, Configuration.CONTRACT_TYPE.POOL_NAV_FACTORY));
+    }
+
     function requireDistributionOperator(Registry registry, address account) internal view {
         require(account == address(getDistributionOperator(registry)), 'Registry: Only DistributionOperator');
     }

@@ -16,6 +16,8 @@ import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
+import {IPoolNAV} from "./IPoolNAV.sol";
+import {IPoolNAVFactory} from "./IPoolNAVFactory.sol";
 
 abstract contract SecuritizationTGE is
     PausableUpgradeable,
@@ -38,6 +40,7 @@ abstract contract SecuritizationTGE is
         address sotToken;
         address jotToken;
         address underlyingCurrency;
+        address poolNAV;
         uint256 reserve; // Money in pool
         uint32 minFirstLossCushion;
         uint64 openingBlockTimestamp;
@@ -114,6 +117,10 @@ abstract contract SecuritizationTGE is
 
     function pot() public view override returns (address) {
         return _getSecuritizationTGEStorage().pot;
+    }
+
+    function poolNAV() public view override returns (address) {
+        return _getSecuritizationTGEStorage().poolNAV;
     }
 
     function paidPrincipalAmountSOT() public view override returns (uint256) {
@@ -285,6 +292,15 @@ abstract contract SecuritizationTGE is
             );
         }
         registry().getSecuritizationManager().registerPot($.pot);
+    }
+
+    function setUpPoolNAV() public override {
+        require(poolNAV() == address(0), 'SecuritizationPool: PoolNAV already set');
+        IPoolNAVFactory poolNAVFactory = registry().getPoolNAVFactory();
+        require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
+        address poolNAVAddress = poolNAVFactory.createPoolNAV();
+        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        $.poolNAV = poolNAVAddress;
     }
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {

@@ -11,6 +11,7 @@ import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
+import {IPoolNAV} from '../pool/IPoolNAV.sol';
 
 // TODO A @KhanhPham Upgrade this
 /// @title LoanRepaymentRouter
@@ -53,7 +54,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address termsContract = loanRegistry.getTermContract(_agreementId);
         address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
-        ISecuritizationPool poolInstance = ISecuritizationPool(beneficiary);
+        ISecuritizationTGE poolInstance = ISecuritizationTGE(beneficiary);
         IPoolNAV poolNAV = IPoolNAV(poolInstance.poolNAV());
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
@@ -65,17 +66,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         );
         poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
 
-        // Transfer amount to creditor
-        if (_payer != address(0x0)) {
-            ISecuritizationTGE poolInstance = ISecuritizationTGE(beneficiary);
-            if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
-            uint256 repayAmount = _amount - remains;
-            require(
-                IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
-                'Unsuccessfully transferred repayment amount to Creditor.'
-            );
-            poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
-        }
         ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
 
         if (outstandingAmount == 0) {

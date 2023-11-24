@@ -23,6 +23,8 @@ interface ISecuritizationTGE {
 
     function pot() external view returns (address);
 
+    function poolNAV() external view returns (address);
+
     /// @notice sets the pot address for the contract
     function setPot(address _pot) external;
 
@@ -83,6 +85,9 @@ interface ISecuritizationTGE {
     function setInterestRateForSOT(uint32 _interestRateSOT) external;
 
     function claimCashRemain(address recipientWallet) external;
+
+    /// @dev Set pool NAV
+    function setUpPoolNAV() external virtual;
 
     function startCycle(
         uint64 _termLengthInSeconds,

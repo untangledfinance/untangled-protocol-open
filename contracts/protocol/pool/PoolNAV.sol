@@ -7,6 +7,7 @@ import {Discounting} from "./discounting.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import "../../libraries/ConfigHelper.sol";
 import "../../libraries/UnpackLoanParamtersLib.sol";
+import {RiskScore} from './base/types.sol';
 
 // TODO A @KhanhPham Deploy this
 contract PoolNAV is Auth, Discounting, Initializable {
@@ -113,70 +114,39 @@ contract PoolNAV is Auth, Discounting, Initializable {
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
 
-    function getRiskScoreByIdx(uint256 idx) private view returns (ISecuritizationPool.RiskScore memory) {
+    function getRiskScoreByIdx(uint256 idx) private view returns (RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         if (idx == 0 || securitizationPool.getRiskScoresLength() == 0) {
             // Default risk score
-            return ISecuritizationPool.RiskScore({
+            return RiskScore({
                 daysPastDue: 0,
                 advanceRate: 1000000,
                 penaltyRate: 0,
                 interestRate: 0,
                 probabilityOfDefault: 0,
                 lossGivenDefault: 0,
+                writeOffAfterGracePeriod: 0,
                 gracePeriod: 0,
                 collectionPeriod: 0,
-                writeOffAfterGracePeriod: 0,
                 writeOffAfterCollectionPeriod: 0,
                 discountRate: 0
             });
         }
         // Because risk score upload = risk score index onchain + 1
         idx = idx - 1;
-        (
-            uint32 daysPastDue,
-            uint32 advanceRate,
-            uint32 penaltyRate,
-            uint32 interestRate,
-            uint32 probabilityOfDefault,
-            uint32 lossGivenDefault,
-            uint32 gracePeriod,
-            uint32 collectionPeriod,
-            uint32 writeOffAfterGracePeriod,
-            uint32 writeOffAfterCollectionPeriod,
-            uint32 discountRate
-        ) = securitizationPool.riskScores(idx);
-
-        return
-            ISecuritizationPool.RiskScore({
-            daysPastDue: daysPastDue,
-            advanceRate: advanceRate,
-            penaltyRate: penaltyRate,
-            interestRate: interestRate,
-            probabilityOfDefault: probabilityOfDefault,
-            lossGivenDefault: lossGivenDefault,
-            gracePeriod: gracePeriod,
-            collectionPeriod: collectionPeriod,
-            writeOffAfterGracePeriod: writeOffAfterGracePeriod,
-            writeOffAfterCollectionPeriod: writeOffAfterCollectionPeriod,
-            discountRate: discountRate
-        });
+        return securitizationPool.riskScores(idx);
     }
 
     function addLoan(uint256 loan) external auth {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
-        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
+        RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         uint256 _convertedInterestRate;
-        if (loanEntry.assetPurpose == Configuration.ASSET_PURPOSE.PLEDGE) {
-            principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
-            _convertedInterestRate = ONE + riskParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
-        } else {
-            _convertedInterestRate = ONE + loanParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
-        }
+        principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
+        _convertedInterestRate = ONE + riskParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
 
         loanCount++;
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
@@ -228,7 +198,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param riskID id of a risk group
     /// @return recoveryRatePD_ recovery rate PD of the risk group
     function recoveryRatePD(uint256 riskID, uint256 termLength) public view returns (uint256 recoveryRatePD_) {
-        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(riskID);
+        RiskScore memory riskParam = getRiskScoreByIdx(riskID);
         return ONE - (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) / (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
     }
 
@@ -462,7 +432,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
-        ISecuritizationPool.RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
+        RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         require(maturityDate_ + riskParam.gracePeriod <= nnow, "maturity-date-in-the-future");
         // check the writeoff group based on the amount of days overdue
         uint256 writeOffGroupIndex_ = currentValidWriteOffGroup(loan);

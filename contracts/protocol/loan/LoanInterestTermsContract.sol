@@ -200,7 +200,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         bytes32 agreementId,
         uint256 timestamp
     ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
-        UnpackLoanParamtersLib.InterestParams memory params = _unpackParamsForAgreementID(agreementId);
+        UnpackLoanParamtersLib.InterestParams memory params = unpackParamsForAgreementID(agreementId);
 
         ILoanRegistry loanRegistry = registry.getLoanRegistry();
 
@@ -274,9 +274,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
-    function _unpackParamsForAgreementID(
+    function unpackParamsForAgreementID(
         bytes32 agreementId
-    ) private view returns (UnpackLoanParamtersLib.InterestParams memory params) {
+    ) public view override returns (UnpackLoanParamtersLib.InterestParams memory params) {
         bytes32 parameters;
         uint256 issuanceBlockTimestamp = 0;
         ILoanRegistry loanRegistry = registry.getLoanRegistry();

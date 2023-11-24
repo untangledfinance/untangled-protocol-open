@@ -219,6 +219,9 @@ contract SecuritizationPool is
                 i == 0 || _daysPastDues[i] > _daysPastDues[i - 1],
                 'SecuritizationPool: Risk scores must be sorted'
             );
+            uint32 _interestRate = _ratesAndDefaults[i + _daysPastDuesLength * 2];
+            uint32 _writeOffAfterGracePeriod = _periodsAndWriteOffs[i + _daysPastDuesLength * 2];
+            uint32 _writeOffAfterCollectionPeriod = _periodsAndWriteOffs[i + _daysPastDuesLength * 3];
             $.riskScores.push(
                 RiskScore({
                     daysPastDue: _daysPastDues[i],
@@ -234,12 +237,12 @@ contract SecuritizationPool is
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
-            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], _ratesAndDefaults[i + _daysPastDuesLength], i);
-            poolNAV.file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], _ratesAndDefaults[i + _daysPastDuesLength], i);
+            IPoolNAV(poolNAV()).file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], _ratesAndDefaults[i + _daysPastDuesLength], i);
+            IPoolNAV(poolNAV()).file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], _ratesAndDefaults[i + _daysPastDuesLength], i);
         }
 
         // Set discount rate
-        poolNAV.file("discountRate", riskScores[0].discountRate);
+        IPoolNAV(poolNAV()).file("discountRate", $.riskScores[0].discountRate);
     }
 
 /*
@@ -296,9 +299,9 @@ contract SecuritizationPool is
         uint256 expectedAssetsValue = 0;
         ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            poolNAV.addLoan(tokenIds[i]);
+            IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
             expectedAssetsValue =
-                expectedAssetsValue + poolNAV.debt(tokenIds[i]);
+                expectedAssetsValue + IPoolNAV(poolNAV()).debt(tokenIds[i]);
         }
         _setAmountOwedToOriginator(amountOwedToOriginator() + expectedAssetsValue);
 
@@ -444,14 +447,6 @@ contract SecuritizationPool is
         _setUpOpeningBlockTimestamp();
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function setUpPoolNAV() public override {
-        require(address(poolNAV) == address(0), 'SecuritizationPool: PoolNAV already set');
-        IPoolNAVFactory poolNAVFactory = registry.getPoolNAVFactory();
-        require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
-        address poolNAVAddress = poolNAVFactory.createPoolNAV();
-        poolNAV = IPoolNAV(poolNAVAddress);
-    }
 
     /// @dev Set the opening block timestamp
     function _setUpOpeningBlockTimestamp() private {

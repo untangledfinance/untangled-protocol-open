@@ -83,6 +83,7 @@ abstract contract ISecuritizationPool {
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
 
+
     function pause() external virtual;
 
     function unpause() external virtual;
