@@ -99,8 +99,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /// @inheritdoc ILoanInterestTermsContract
     function registerConcludeLoan(bytes32 agreementId) external override whenNotPaused nonReentrant returns (bool) {
         registry.requireLoanKernel(_msgSender());
-        require(completedRepayment[agreementId], 'Debtor has not completed repayment yet.');
-
         registry.getLoanRegistry().setCompletedLoan(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);

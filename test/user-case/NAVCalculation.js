@@ -38,7 +38,7 @@ function calculateInterestForDuration(principalAmount, interestRate, durationLen
 }
 
 describe('NAV', () => {
-  describe.skip('A loan', () => {
+  describe('A loan', () => {
     let stableCoin;
     let securitizationManager;
     let loanKernel;
@@ -298,7 +298,6 @@ describe('NAV', () => {
             .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
 
         // Grant role originator
-        const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
         await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address)
 
         // Prepare parameters for loan upload

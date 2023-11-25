@@ -48,7 +48,7 @@ abstract contract ISecuritizationPool {
     ) external virtual;
 
     /// @notice exports NFT assets to another pool address
-//    function exportAssets(address tokenAddress, address toPoolAddress, uint256[] calldata tokenIds) external virtual;
+    function exportAssets(address tokenAddress, address toPoolAddress, uint256[] calldata tokenIds) external virtual;
 
     /// @notice withdraws NFT assets from the contract and transfers them to recipients
     function withdrawAssets(

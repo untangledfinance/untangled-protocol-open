@@ -245,7 +245,6 @@ contract SecuritizationPool is
         IPoolNAV(poolNAV()).file("discountRate", $.riskScores[0].discountRate);
     }
 
-/*
     /// @inheritdoc ISecuritizationPool
     function exportAssets(
         address tokenAddress,
@@ -263,7 +262,6 @@ contract SecuritizationPool is
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
     }
-*/
 
     /// @inheritdoc ISecuritizationPool
     function withdrawAssets(

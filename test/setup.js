@@ -112,6 +112,7 @@ async function setup() {
     securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
     const { noteTokenFactory } = await setUpNoteTokenFactory(registry, factoryAdmin);
+  const { poolNAVFactory } = await setUpPoolNAVFactory(registry, factoryAdmin);
     const { tokenGenerationEventFactory } = await setUpTokenGenerationEventFactory(registry, factoryAdmin);
 
     const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
@@ -159,6 +160,7 @@ async function setup() {
     await registry.setSecuritizationManager(securitizationManager.address);
 
     await registry.setNoteTokenFactory(noteTokenFactory.address);
+    await registry.setPoolNAVFactory(poolNAVFactory.address);
     await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
 
     return {
@@ -177,6 +179,7 @@ async function setup() {
         go,
         uniqueIdentity,
         noteTokenFactory,
+        poolNAVFactory,
         tokenGenerationEventFactory,
         distributionOperator,
         distributionAssessor,
