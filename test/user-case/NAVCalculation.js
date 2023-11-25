@@ -14,7 +14,7 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const { time, impersonateAccount, stopImpersonatingAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
-const { POOL_ADMIN_ROLE } = require('../constants.js');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 const { parse } = require('dotenv');
 const { setup } = require('../setup');
 
@@ -693,7 +693,6 @@ describe('NAV', () => {
         .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
 
       // Grant role originator
-      const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
       await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address)
 
     })
