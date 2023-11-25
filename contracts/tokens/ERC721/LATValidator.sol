@@ -23,11 +23,7 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     mapping(uint256 => uint256) internal _nonces;
 
     modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
-        //  requireNonceValid(latInfo) requireValidator(latInfo)
-
-        if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            console.log('check valid ok');
-
+        if (creditor.supportsInterface(type(ISecuritizationPoolStorage).interfaceId)) {
             if (ISecuritizationPoolStorage(creditor).validatorRequired()) {
                 _checkNonceValid(info);
                 require(_checkValidator(info), 'LATValidator: invalid validator signature');
