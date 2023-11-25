@@ -66,8 +66,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         );
         poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
 
-        ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
-
         if (outstandingAmount == 0) {
             // Burn LAT token when repay completely
             registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);

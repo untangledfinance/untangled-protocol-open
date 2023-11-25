@@ -821,14 +821,14 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // @param chi Accumulated interest rate over time
     // @param ratePerSecond Interest rate accumulation per second in RAD(10ˆ27)
     // @param lastUpdated When the interest rate was last updated
-    // @param pie Total sum of all amounts accumulating under one interest rate, divided by that rate
+    // @param _pie Total sum of all amounts accumulating under one interest rate, divided by that rate
     // @return The new accumulated rate, as well as the difference between the debt calculated with the old and new accumulated rates.
-    function compounding(uint chi, uint ratePerSecond, uint lastUpdated, uint pie) public view returns (uint, uint) {
+    function compounding(uint chi, uint ratePerSecond, uint lastUpdated, uint _pie) public view returns (uint, uint) {
         require(block.timestamp >= lastUpdated, "tinlake-math/invalid-timestamp");
         require(chi != 0);
         // instead of a interestBearingAmount we use a accumulated interest rate index (chi)
         uint updatedChi = _chargeInterest(chi ,ratePerSecond, lastUpdated, block.timestamp);
-        return (updatedChi, safeSub(rmul(updatedChi, pie), rmul(chi, pie)));
+        return (updatedChi, safeSub(rmul(updatedChi, _pie), rmul(chi, _pie)));
     }
 
     // @notice This function charge interest on a interestBearingAmount
@@ -849,8 +849,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
 
     // convert pie to debt/savings amount
-    function toAmount(uint chi, uint pie) public pure returns (uint) {
-        return rmul(pie, chi);
+    function toAmount(uint chi, uint _pie) public pure returns (uint) {
+        return rmul(_pie, chi);
     }
 
     // convert debt/savings amount to pie

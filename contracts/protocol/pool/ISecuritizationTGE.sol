@@ -87,7 +87,7 @@ interface ISecuritizationTGE {
     function claimCashRemain(address recipientWallet) external;
 
     /// @dev Set pool NAV
-    function setUpPoolNAV() external virtual;
+    function setUpPoolNAV() external;
 
     function startCycle(
         uint64 _termLengthInSeconds,
