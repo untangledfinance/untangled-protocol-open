@@ -28,6 +28,8 @@ describe('MintedIncreasingInterestTGE', function () {
   let amountChangeEachInterval; // Your desired amount change
 
   before(async function () {
+    ({ registry, stableCoin, securitizationManager, noteTokenFactory } = await setup());
+
     MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE'); // Replace with your contract name
     // [owner, securitizationManager, ...accounts] = await ethers.getSigners();
 
@@ -35,6 +37,7 @@ describe('MintedIncreasingInterestTGE', function () {
 
     mintedIncreasingInterestTGE = await MintedIncreasingInterestTGE.deploy(/* constructor arguments */); // Replace with constructor arguments if needed
     await mintedIncreasingInterestTGE.deployed();
+
     // securitizationPool = await SecuritizationPool.deploy();
 
 
@@ -42,7 +45,8 @@ describe('MintedIncreasingInterestTGE', function () {
     [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, ...accounts] =
       await ethers.getSigners();
 
-    ({ registry, stableCoin, securitizationManager, noteTokenFactory } = await setup());
+
+
 
     const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
     await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
@@ -89,8 +93,6 @@ describe('MintedIncreasingInterestTGE', function () {
     let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
     securitizationPool = await getPoolByAddress(securitizationPoolAddress);
 
-
-
     const currencyAddress = await securitizationPool.underlyingCurrency();
     const longSale = true;
 
@@ -103,10 +105,11 @@ describe('MintedIncreasingInterestTGE', function () {
       currencyAddress,
       longSale
     );
+
   });
 
   it('Get isLongSale', async () => {
-    assert.equal(await mintedIncreasingInterestTGE.isLongSale(), true);
+    expect(await mintedIncreasingInterestTGE.isLongSale()).to.equal(true);
   });
 
   it('Set Yield', async () => {

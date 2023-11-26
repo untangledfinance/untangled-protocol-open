@@ -13,13 +13,13 @@ describe('MintedNormalTGE', () => {
   let securitizationPool;
 
   before('create fixture', async () => {
+    ({ registry, noteTokenFactory, securitizationManager, stableCoin } = await setup());
 
 
     const [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
       await ethers.getSigners();
 
     const [poolTest] = await ethers.getSigners();
-    ({ registry, noteTokenFactory, securitizationManager, stableCoin } = await setup());
     const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
     const MintedNormalTGE = await ethers.getContractFactory('MintedNormalTGE');
     const NoteToken = await ethers.getContractFactory('NoteToken');
@@ -49,7 +49,8 @@ describe('MintedNormalTGE', () => {
   });
 
   it('Setup newRoundSale', async () => {
-    const openingTime = Math.floor(Date.now() / 1000) + 60; // Starts 1 minute from now
+    const openingTime = (await ethers.provider.getBlock("latest")).timestamp + 60; // Starts 1 minute from now
+
     const closingTime = openingTime + 3600; // Ends 1 hour after opening
     const rate = 100; // Your desired rate
     const cap = ethers.utils.parseEther('1000'); // Your desired cap in ether
