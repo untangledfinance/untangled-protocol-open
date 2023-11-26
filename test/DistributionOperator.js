@@ -419,7 +419,7 @@ describe('Distribution', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -514,7 +514,7 @@ describe('Distribution', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
