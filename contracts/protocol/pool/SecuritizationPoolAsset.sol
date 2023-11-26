@@ -38,7 +38,7 @@ import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 import {RiskScore} from './base/types.sol';
 
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
-import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 
 import 'hardhat/console.sol';
 
@@ -81,7 +81,7 @@ contract SecuritizationPoolAsset is
 
     function installExtension(
         bytes memory params
-    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) {
+    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {
         __SecuritizationPoolAsset_init_unchained(abi.decode(params, (NewPoolParams)));
     }
 

@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
-import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
 import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
@@ -10,13 +9,16 @@ import {OWNER_ROLE, ORIGINATOR_ROLE} from './types.sol';
 
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
+
+import 'hardhat/console.sol';
 
 contract SecuritizationAccessControl is
     RegistryInjection,
     ContextUpgradeable,
     ERC165Upgradeable,
     ISecuritizationAccessControl,
-    ISecuritizationPoolExtension
+    SecuritizationPoolExtension
 {
     // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationAccessControl")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant SecuritizationAccessControlStorageLocation =
@@ -45,7 +47,7 @@ contract SecuritizationAccessControl is
         _;
     }
 
-    function installExtension(bytes memory params) public virtual override {
+    function installExtension(bytes memory params) public virtual override onlyCallInTargetPool {
         __SecuritizationAccessControl_init_unchained(_msgSender());
     }
 

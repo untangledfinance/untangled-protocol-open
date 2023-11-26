@@ -7,7 +7,7 @@ import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Cont
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {RiskScore} from './base/types.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
-import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 
 import 'hardhat/console.sol';
 
@@ -15,7 +15,7 @@ contract SecuritizationPoolStorage is
     RegistryInjection,
     ERC165Upgradeable,
     ISecuritizationPoolStorage,
-    ISecuritizationPoolExtension
+    SecuritizationPoolExtension
 {
     // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationPoolStorage")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant StorageLocation = 0x42988f810f621c79bb2e8db2f913a015fc39ef8eac016043863c6a0d12adbf00;
@@ -37,7 +37,7 @@ contract SecuritizationPoolStorage is
         }
     }
 
-    function installExtension(bytes memory params) public virtual override {
+    function installExtension(bytes memory params) public virtual override onlyCallInTargetPool {
         __SecuritizationPoolStorage_init_unchained(abi.decode(params, (NewPoolParams)));
     }
 

@@ -10,7 +10,7 @@ import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
-import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
@@ -28,7 +28,7 @@ contract SecuritizationLockDistribution is
     ERC165Upgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    ISecuritizationPoolExtension,
+    SecuritizationPoolExtension,
     SecuritizationAccessControl,
     SecuritizationPoolStorage,
     ISecuritizationLockDistribution
@@ -37,7 +37,7 @@ contract SecuritizationLockDistribution is
 
     function installExtension(
         bytes memory params
-    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) {
+    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {
     }
 
     function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {

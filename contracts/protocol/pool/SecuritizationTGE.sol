@@ -16,7 +16,7 @@ import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsale.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
-import {ISecuritizationPoolExtension} from './ISecuritizationPoolExtension.sol';
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
@@ -36,7 +36,7 @@ contract SecuritizationTGE is
 
     function installExtension(
         bytes memory params
-    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) {
+    ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {
         __SecuritizationTGE_init_unchained(abi.decode(params, (NewPoolParams)));
     }
 
