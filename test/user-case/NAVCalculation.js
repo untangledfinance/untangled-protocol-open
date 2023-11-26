@@ -302,7 +302,7 @@ describe('NAV', () => {
 
         // Prepare parameters for loan upload
         const orderAddresses = [
-          originatorSigner.address,
+          securitizationPoolContract.address,
           stableCoin.address,
           loanRepaymentRouter.address,
           loanInterestTermsContract.address,
@@ -364,9 +364,11 @@ describe('NAV', () => {
         );
 
         // Transfer LAT asset to pool
+/*
         await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
         await securitizationPoolContract.connect(originatorSigner)
             .collectAssets(loanAssetTokenContract.address, originatorSigner.address, tokenIds);
+*/
 
         // PoolNAV contract
         const poolNAVAddress = await securitizationPoolContract.poolNAV();
@@ -708,7 +710,7 @@ describe('NAV', () => {
 
         // Prepare parameters for loan upload
         const orderAddresses = [
-          originatorSigner.address,
+          securitizationPoolContract.address,
           stableCoin.address,
           loanRepaymentRouter.address,
           loanInterestTermsContract.address,
@@ -786,9 +788,11 @@ describe('NAV', () => {
         );
 
         // Transfer LAT asset to pool
+/*
         await loanAssetTokenContract.connect(originatorSigner).setApprovalForAll(securitizationPoolContract.address, true);
         await securitizationPoolContract.connect(originatorSigner)
             .collectAssets(loanAssetTokenContract.address, originatorSigner.address, tokenIds);
+*/
         uploadedLoanTime = await time.latest();
 
         // PoolNAV contract

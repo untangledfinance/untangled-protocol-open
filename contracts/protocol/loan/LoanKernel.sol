@@ -327,6 +327,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
                 x = UntangledMath.uncheckedInc(x);
             }
+
+            ISecuritizationPool(orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(latInfo[i].tokenIds);
         }
     }
 

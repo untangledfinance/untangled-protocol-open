@@ -6,7 +6,7 @@ import '../../storage/Registry.sol';
 import {RiskScore} from './base/types.sol';
 
 abstract contract ISecuritizationPool {
-    event CollectAsset(address from, uint256 value);
+    event CollectAsset(uint256 value);
     // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
@@ -58,7 +58,7 @@ abstract contract ISecuritizationPool {
     ) external virtual;
 
     /// @notice collects NFT assets from a specified address
-    function collectAssets(address tokenAddress, address from, uint256[] calldata tokenIds) external virtual;
+    function collectAssets(uint256[] calldata tokenIds) external virtual;
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(

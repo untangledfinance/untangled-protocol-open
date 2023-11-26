@@ -286,14 +286,10 @@ contract SecuritizationPool is
 
     /// @inheritdoc ISecuritizationPool
     function collectAssets(
-        address tokenAddress,
-        address from,
         uint256[] calldata tokenIds
-    ) external override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
+    ) external override whenNotPaused {
+        registry().requireLoanKernel(_msgSender());
         uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
-        }
         uint256 expectedAssetsValue = 0;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
@@ -312,7 +308,7 @@ contract SecuritizationPool is
             _setOpeningBlockTimestamp(openingBlockTimestamp());
         }
 
-        emit CollectAsset(from, expectedAssetsValue);
+        emit CollectAsset(expectedAssetsValue);
     }
 
     // /// @inheritdoc ISecuritizationPool
