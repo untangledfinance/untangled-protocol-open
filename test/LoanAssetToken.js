@@ -96,7 +96,7 @@ describe('LoanAssetToken', () => {
               validatorRequired: true
             }
           ]));
-          
+
 
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
@@ -168,7 +168,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -370,7 +370,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -470,7 +470,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -542,7 +542,7 @@ describe('LoanAssetToken', () => {
 
     it('getRiskScore', async () => {
       const data = await loanAssetTokenContract.getRiskScore(tokenIds[0]);
-      expect(data).equal(50);
+      expect(data).equal(1);
     });
 
     it('getAssetPurpose', async () => {
@@ -595,10 +595,10 @@ describe('LoanAssetToken', () => {
       expect(balanceOfPool).equal(tokenIds.length - 1);
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(parseEther('0')));
+      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub('14250'));
 
       const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(0);
+      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(14250);
     });
   });
 });
