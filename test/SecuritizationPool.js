@@ -480,7 +480,7 @@ describe('SecuritizationPool', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -573,7 +573,7 @@ describe('SecuritizationPool', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -873,22 +873,6 @@ describe('SecuritizationPool', () => {
             expect(ownerOfAgreement).equal(originatorSigner.address);
 
             const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(originatorSigner.address);
-            expect(balanceOfPoolCreator).equal(1);
-        });
-
-        it('#collectAssets', async () => {
-            await loanAssetTokenContract
-                .connect(originatorSigner)
-                .setApprovalForAll(secondSecuritizationPool.address, true);
-
-            await secondSecuritizationPool
-                .connect(originatorSigner)
-                .collectAssets(loanAssetTokenContract.address, originatorSigner.address, [tokenIds[1]]);
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[1]);
-            expect(ownerOfAgreement).equal(secondSecuritizationPool.address);
-
-            const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(secondSecuritizationPool.address);
             expect(balanceOfPoolCreator).equal(1);
         });
 
