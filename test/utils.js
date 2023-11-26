@@ -176,6 +176,27 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, 
   };
 }
 
+const genRiskScoreParam = (...args) => {
+  const daysPastDues = args.map(r => r.daysPastDue);
+  const advanceRates = args.map(r => r.advanceRate);
+  const penaltyRates = args.map(r => r.penaltyRate);
+  const interestRates = args.map(r => r.interestRate);
+  const probabilityOfDefaults = args.map(r => r.probabilityOfDefault);
+  const lossGivenDefaults = args.map(r => r.lossGivenDefault);
+  const discountRates = args.map(r => r.discountRate);
+  const gracePeriods = args.map(r => r.gracePeriod);
+  const collectionPeriods = args.map(r => r.collectionPeriod);
+  const writeOffAfterGracePeriods = args.map(r => r.writeOffAfterGracePeriod);
+  const writeOffAfterCollectionPeriods = args.map(r => r.writeOffAfterCollectionPeriod);
+
+  const ratesAndDefaults = [...advanceRates, ...penaltyRates, ...interestRates, ...probabilityOfDefaults, ...lossGivenDefaults, ...discountRates];
+  const periodsAndWriteOffs = [...gracePeriods, ...collectionPeriods, ...writeOffAfterGracePeriods, ...writeOffAfterCollectionPeriods];
+
+  return {
+    daysPastDues, ratesAndDefaults, periodsAndWriteOffs,
+  }
+}
+
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
@@ -189,4 +210,5 @@ module.exports = {
   generateEntryHash,
 
   generateLATMintPayload,
+  genRiskScoreParam
 };
