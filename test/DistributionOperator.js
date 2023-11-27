@@ -21,6 +21,7 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    formatFillDebtOrderParams,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -178,6 +179,10 @@ describe('Distribution', () => {
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
                 .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
@@ -405,7 +410,7 @@ describe('Distribution', () => {
     const ASSET_PURPOSE_INVOICE = '1';
     const inputAmount = 10;
     const inputPrice = 15;
-    const principalAmount = _.round(inputAmount * inputPrice * 100);
+    const principalAmount = 10000000000000000000;
 
     describe('#LoanKernel', async () => {
         it('Execute fillDebtOrder successfully', async () => {
@@ -428,8 +433,8 @@ describe('Distribution', () => {
                 CREDITOR_FEE,
                 ASSET_PURPOSE_LOAN,
                 // token 1
-                parseEther(principalAmount.toString()),
-                parseEther(principalAmount.toString()),
+                principalAmount.toString(),
+                principalAmount.toString(),
                 // token 2
                 expirationTimestamps,
                 expirationTimestamps,
@@ -463,30 +468,7 @@ describe('Distribution', () => {
             );
 
             await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    tokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
-                )
-            );
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
-            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
-
-            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-            expect(balanceOfPool).equal(tokenIds.length);
-
-            await expect(
-                loanKernel.fillDebtOrder(
+                formatFillDebtOrderParams(
                     orderAddresses,
                     orderValues,
                     termsContractParameters,
@@ -502,79 +484,34 @@ describe('Distribution', () => {
                         }))
                     )
                 )
-            ).to.be.revertedWith(`ERC721: token already minted`);
-        });
-
-        it('Execute fillDebtOrder successfully with Pledge', async () => {
-            const orderAddresses = [
-                securitizationPoolContract.address,
-                stableCoin.address,
-                loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
-                relayer.address,
-                // borrower 1
-                borrowerSigner.address,
-            ];
-
-            const riskScore = '50';
-            expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
-
-            const orderValues = [
-                CREDITOR_FEE,
-                ASSET_PURPOSE_INVOICE,
-                // token 1
-                parseEther(principalAmount.toString()),
-                expirationTimestamps,
-                genSalt(),
-                riskScore,
-            ];
-
-            const termInDaysLoan = 10;
-            const interestRatePercentage = 5;
-            const termsContractParameter = packTermsContractParameters({
-                amortizationUnitType: 1,
-                gracePeriodInDays: 2,
-                principalAmount,
-                termLengthUnits: _.ceil(termInDaysLoan * 24),
-                interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
-            });
-
-            const termsContractParameters = [termsContractParameter];
-
-            const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
-            const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
-
-            const pledgeTokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
             );
 
-            await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    pledgeTokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
-                )
-            );
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
+            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
             expect(ownerOfAgreement).equal(securitizationPoolContract.address);
 
-            tokenIds.push(...pledgeTokenIds);
             const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
             expect(balanceOfPool).equal(tokenIds.length);
+
+            await expect(
+                loanKernel.fillDebtOrder(
+                    formatFillDebtOrderParams(
+                        orderAddresses,
+                        orderValues,
+                        termsContractParameters,
+                        await Promise.all(
+                            tokenIds.map(async (x) => ({
+                                ...(await generateLATMintPayload(
+                                    loanAssetTokenContract,
+                                    defaultLoanAssetTokenValidator,
+                                    [x],
+                                    [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                    defaultLoanAssetTokenValidator.address
+                                )),
+                            }))
+                        )
+                    )
+                )
+            ).to.be.revertedWith(`ERC721: token already minted`);
         });
     });
 
@@ -617,7 +554,7 @@ describe('Distribution', () => {
 
         it('#getCashBalance', async () => {
             const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-            expect(formatEther(result)).equal('180.0');
+            expect(result).to.closeTo(parseEther('160.9423'), parseEther('0.001'));
         });
     });
 

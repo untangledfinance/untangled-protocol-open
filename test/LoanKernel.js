@@ -372,7 +372,7 @@ describe('LoanKernel', () => {
     const ASSET_PURPOSE_INVOICE = '1';
     const inputAmount = 10;
     const inputPrice = 15;
-    const principalAmount = _.round(inputAmount * inputPrice * 100);
+    const principalAmount = 10000000000000000000;
 
     describe('#LoanKernel', async () => {
         it('No one than LoanKernel can mint', async () => {
@@ -469,7 +469,7 @@ describe('LoanKernel', () => {
             const orderValues = [
                 CREDITOR_FEE,
                 ASSET_PURPOSE_LOAN,
-                parseEther(principalAmount.toString()),
+                principalAmount.toString(),
                 expirationTimestamps,
                 salt,
                 riskScore,
@@ -533,8 +533,8 @@ describe('LoanKernel', () => {
             const orderValues = [
                 CREDITOR_FEE,
                 ASSET_PURPOSE_LOAN,
-                parseEther(principalAmount.toString()), // token 1
-                parseEther(principalAmount.toString()), // token 2
+                principalAmount.toString(), // token 1
+                principalAmount.toString(), // token 2
                 expirationTimestamps,
                 expirationTimestamps,
                 genSalt(),
@@ -591,6 +591,9 @@ describe('LoanKernel', () => {
                 .connect(poolCreatorSigner)
                 .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
 
+            let stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
+            expect(formatEther(stablecoinBalanceOfAdmin)).equal('99000.0');
+
             await loanKernel.fillDebtOrder(
                 formatFillDebtOrderParams(
                     orderAddresses,
@@ -616,7 +619,7 @@ describe('LoanKernel', () => {
             const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
             expect(balanceOfPool).equal(tokenIds.length);
 
-            const stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
+            stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
             expect(formatEther(stablecoinBalanceOfAdmin)).equal('99000.000000000000028584');
         });
     });

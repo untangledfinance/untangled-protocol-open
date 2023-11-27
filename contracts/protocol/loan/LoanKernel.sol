@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
+
 import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
@@ -13,6 +15,7 @@ import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 /// @notice Upload loan and conclude loan
 contract LoanKernel is ILoanKernel, UntangledBase {
     using ConfigHelper for Registry;
+    using ERC165CheckerUpgradeable for address;
 
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init_unchained(_msgSender());
@@ -24,6 +27,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)] != address(0x0),
             'SECURITIZATION_POOL is zero address.'
         );
+        require(
+            _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)].supportsInterface(
+                type(ISecuritizationPool).interfaceId
+            ),
+            'LoanKernel: invalid pool interface'
+        );
+
         require(
             _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0),
             'REPAYMENT_ROUTER is zero address.'
@@ -269,7 +279,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         FillDebtOrderParam calldata fillDebtOrderParam
     ) external whenNotPaused nonReentrant validFillingOrderAddresses(fillDebtOrderParam.orderAddresses) {
         address poolAddress = fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)];
-        require(poolAddress != address(0), 'LoanKernel: Only LoanKernel');
         require(fillDebtOrderParam.termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
         uint256[] memory salts = _saltFromOrderValues(
@@ -319,14 +328,14 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                     'Cannot register term start'
                 );
 
-                expectedAssetsValue =
-                    expectedAssetsValue +
-                    poolService.getExpectedAssetValue(
-                        poolAddress,
-                        address(registry.getLoanAssetToken()),
-                        fillDebtOrderParam.latInfo[i].tokenIds[j],
-                        block.timestamp
-                    );
+                uint256 expectedTokenValue = poolService.getExpectedAssetValue(
+                    poolAddress,
+                    address(registry.getLoanAssetToken()),
+                    fillDebtOrderParam.latInfo[i].tokenIds[j],
+                    block.timestamp
+                );
+
+                expectedAssetsValue = expectedAssetsValue + expectedTokenValue;
 
                 emit LogDebtOrderFilled(
                     debtOrder.issuance.agreementIds[x],
@@ -343,6 +352,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         {
             ISecuritizationPool pool = ISecuritizationPool(poolAddress);
             pool.setStartCollectAsset();
+
             pool.withdraw(_msgSender(), expectedAssetsValue);
         }
     }
