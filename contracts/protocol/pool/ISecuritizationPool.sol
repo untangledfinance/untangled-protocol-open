@@ -157,8 +157,8 @@ abstract contract ISecuritizationPool is UntangledBase {
         address[] calldata recipients
     ) external virtual;
 
-    /// @notice collects NFT assets from a specified address
-    function collectAssets(address tokenAddress, address from, uint256[] calldata tokenIds) external virtual;
+    /// @notice start collects NFT assets
+    function setStartCollectAsset() external virtual;
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(
@@ -218,7 +218,7 @@ abstract contract ISecuritizationPool is UntangledBase {
     function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external virtual;
 
     /// @notice allows the originator to withdraw from reserve
-    function withdraw(uint256 amount) public virtual;
+    function withdraw(address to, uint256 amount) public virtual;
 
     /// @dev trigger update reserve when buy note token action happens
     function increaseReserve(uint256 currencyAmount) external virtual;

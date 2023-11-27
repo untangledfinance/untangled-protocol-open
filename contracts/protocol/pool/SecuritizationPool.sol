@@ -291,24 +291,9 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         }
     }
 
-    /// @inheritdoc ISecuritizationPool
-    function collectAssets(
-        address tokenAddress,
-        address from,
-        uint256[] calldata tokenIds
-    ) external override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
-        uint256 tokenIdsLength = tokenIds.length;
-        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            IUntangledERC721(tokenAddress).safeTransferFrom(from, address(this), tokenIds[i]);
-        }
-        uint256 expectedAssetsValue = 0;
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            expectedAssetsValue =
-                expectedAssetsValue +
-                poolService.getExpectedAssetValue(address(this), tokenAddress, tokenIds[i], block.timestamp);
-        }
-        amountOwedToOriginator += expectedAssetsValue;
+    function setStartCollectAsset() external override whenNotPaused {
+        require(_msgSender() == address(registry.getLoanKernel()), 'SecuritizationPool: Only LoanKernel');
+
         if (firstAssetTimestamp == 0) {
             firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
@@ -317,26 +302,19 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
             // If openingBlockTimestamp is not set
             openingBlockTimestamp = uint64(block.timestamp);
         }
-
-        emit CollectAsset(from, expectedAssetsValue);
     }
 
     /// @inheritdoc ISecuritizationPool
-    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
-        uint256 _amountOwedToOriginator = amountOwedToOriginator;
-        if (amount <= _amountOwedToOriginator) {
-            amountOwedToOriginator = _amountOwedToOriginator - amount;
-        } else {
-            amountOwedToOriginator = 0;
-        }
-        reserve = reserve - amount;
+    function withdraw(address to, uint256 amount) public override whenNotPaused {
+        require(_msgSender() == address(registry.getLoanKernel()), 'SecuritizationPool: Only LoanKernel');
+        require(hasRole(ORIGINATOR_ROLE, to), 'SecuritizationPool: Only Originator can drawdown');
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
-            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, _msgSender(), amount),
+            IERC20Upgradeable(underlyingCurrency).transferFrom(pot, to, amount),
             'SecuritizationPool: Transfer failed'
         );
-        emit Withdraw(_msgSender(), amount);
+        emit Withdraw(to, amount);
     }
 
     function checkMinFirstLost() public view returns (bool) {

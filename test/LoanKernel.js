@@ -1,421 +1,725 @@
-const { ethers, upgrades } = require('hardhat');
-const { deployments } = require('hardhat');
+const { ethers, artifacts } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
+const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { BigNumber } = ethers;
-const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
+const { constants, BigNumber } = ethers;
+const { parseEther, formatEther, formatBytes32String } = ethers.utils;
+const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const {
-  unlimitedAllowance,
-  ZERO_ADDRESS,
-  genLoanAgreementIds,
-  saltFromOrderValues,
-  debtorsFromOrderAddresses,
-  packTermsContractParameters,
-  interestRateFixedPoint,
-  genSalt,
-  generateLATMintPayload
+    unlimitedAllowance,
+    genLoanAgreementIds,
+    saltFromOrderValues,
+    debtorsFromOrderAddresses,
+    packTermsContractParameters,
+    interestRateFixedPoint,
+    genSalt,
+    generateLATMintPayload,
+    formatFillDebtOrderParams,
+    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
+const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
-const { constants, utils } = require('ethers');
+const { utils } = require('ethers');
 
-const ONE_DAY = 86400;
+const RATE_SCALING_FACTOR = 10 ** 4;
+
 describe('LoanKernel', () => {
-  let stableCoin;
-  let registry;
-  let loanAssetTokenContract;
-  let loanInterestTermsContract;
-  let defaultLoanAssetTokenValidator;
-  let loanRegistry;
-  let loanKernel;
-  let loanRepaymentRouter;
-  let securitizationManager;
-  let securitizationPoolContract;
-  let securitizationPoolValueService;
-  let securitizationPoolImpl;
-  let tokenIds;
+    let stableCoin;
+    let loanAssetTokenContract;
+    let loanInterestTermsContract;
+    let loanKernel;
+    let loanRepaymentRouter;
+    let securitizationManager;
+    let securitizationPoolContract;
+    let tokenIds;
+    let uniqueIdentity;
+    let distributionOperator;
+    let sotToken;
+    let jotToken;
+    let distributionTranche;
+    let mintedIncreasingInterestTGE;
+    let jotMintedIncreasingInterestTGE;
+    let securitizationPoolValueService;
+    let factoryAdmin;
+    let securitizationPoolImpl;
+    let defaultLoanAssetTokenValidator;
+    let loanRegistry;
 
-  // Wallets
-  let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
-  before('create fixture', async () => {
-    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
-      await ethers.getSigners();
+    // Wallets
+    let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
+    before('create fixture', async () => {
+        [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
+            await ethers.getSigners();
 
-    ({
-      stableCoin,
-      registry,
-      loanAssetTokenContract,
-      defaultLoanAssetTokenValidator,
-      loanInterestTermsContract,
-      loanRegistry,
-      loanKernel,
-      loanRepaymentRouter,
-      securitizationManager,
-      securitizationPoolValueService,
-      securitizationPoolImpl,
-    } = await setup());
-
-    await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
-
-    await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
-  });
-
-  describe('#security pool', async () => {
-    it('Create pool', async () => {
-      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
-      // Create new pool
-      const transaction = await securitizationManager
-        .connect(poolCreatorSigner)
-        .newPoolInstance(
-          utils.keccak256(Date.now()),
-
-          poolCreatorSigner.address,
-          utils.defaultAbiCoder.encode([
-            {
-              type: 'tuple',
-              components: [
-                {
-                  name: 'currency',
-                  type: 'address'
-                },
-                {
-                  name: 'minFirstLossCushion',
-                  type: 'uint32'
-                },
-                {
-                  name: 'validatorRequired',
-                  type: 'bool'
-                }
-              ]
-            }
-          ], [
-            {
-              currency: stableCoin.address,
-              minFirstLossCushion: '100000',
-              validatorRequired: true
-            }
-          ]));
-      const receipt = await transaction.wait();
-      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
-
-      securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
-    });
-  });
-
-  let expirationTimestamps;
-  const CREDITOR_FEE = '0';
-  const ASSET_PURPOSE = '0';
-  const inputAmount = 10;
-  const inputPrice = 15;
-  const principalAmount = _.round(inputAmount * inputPrice * 100);
-
-  describe('#fillDebtOrder', async () => {
-    it('No one than LoanKernel can mint', async () => {
-      await expect(
-        loanAssetTokenContract.connect(untangledAdminSigner)['mint(address,uint256)'](lenderSigner.address, 1)
-      ).to.be.revertedWith(
-        `AccessControl: account ${untangledAdminSigner.address.toLowerCase()} is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6`
-      );
-    });
-
-    it('CREDITOR is zero address', async () => {
-      const orderAddresses = [
-        ZERO_ADDRESS,
-        stableCoin.address,
-        loanRepaymentRouter.address,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-      await expect(loanKernel.fillDebtOrder(orderAddresses, [], [], [])).to.be.revertedWith(
-        `CREDITOR is zero address.`
-      );
-    });
-
-    it('REPAYMENT_ROUTER is zero address', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        stableCoin.address,
-        ZERO_ADDRESS,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-      await expect(loanKernel.fillDebtOrder(orderAddresses, [], [], [])).to.be.revertedWith(
-        `REPAYMENT_ROUTER is zero address.`
-      );
-    });
-
-    it('TERM_CONTRACT is zero address', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        stableCoin.address,
-        loanRepaymentRouter.address,
-        ZERO_ADDRESS,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-      await expect(loanKernel.fillDebtOrder(orderAddresses, [], [], [])).to.be.revertedWith(
-        `TERM_CONTRACT is zero address.`
-      );
-    });
-
-    it('PRINCIPAL_TOKEN_ADDRESS is zero address', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        ZERO_ADDRESS,
-        loanRepaymentRouter.address,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-      await expect(loanKernel.fillDebtOrder(orderAddresses, [], [], [])).to.be.revertedWith(
-        `PRINCIPAL_TOKEN_ADDRESS is zero address.`
-      );
-    });
-
-    it('LoanKernel: Invalid Term Contract params', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        stableCoin.address,
-        loanRepaymentRouter.address,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-      await expect(loanKernel.fillDebtOrder(orderAddresses, [], [], [])).to.be.revertedWith(
-        `LoanKernel: Invalid Term Contract params`
-      );
-    });
-
-    it('LoanKernel: Invalid LAT Token Id', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        stableCoin.address,
-        loanRepaymentRouter.address,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-
-      const salt = genSalt();
-      const riskScore = '50';
-      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
-
-      const orderValues = [
-        CREDITOR_FEE,
-        ASSET_PURPOSE,
-        parseEther(principalAmount.toString()),
-        expirationTimestamps,
-        salt,
-        riskScore,
-      ];
-
-      const termInDaysLoan = 10;
-      const interestRatePercentage = 5;
-      const termsContractParameter = packTermsContractParameters({
-        amortizationUnitType: 1,
-        gracePeriodInDays: 2,
-        principalAmount,
-        termLengthUnits: _.ceil(termInDaysLoan * 24),
-        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
-      });
-
-      const termsContractParameters = [termsContractParameter];
-
-      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
-      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
-
-      const tokenIds = ['0x944b447816387dc1f14b1a81dc4d95a77f588c214732772d921e146acd456b2b'];
-
-      await expect(
-        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-          await Promise.all(tokenIds.map(async (x) => ({
-            ...await generateLATMintPayload(
-              loanAssetTokenContract,
-              defaultLoanAssetTokenValidator,
-              [x],
-              [(await loanAssetTokenContract.nonce(x)).toNumber()],
-              defaultLoanAssetTokenValidator.address
-            )
-          })))
-        )
-      ).to.be.revertedWith(`LoanKernel: Invalid LAT Token Id`);
-    });
-
-    it('Execute fillDebtOrder successfully', async () => {
-      const orderAddresses = [
-        securitizationPoolContract.address,
-        stableCoin.address,
-        loanRepaymentRouter.address,
-        loanInterestTermsContract.address,
-        relayer.address,
-        borrowerSigner.address,
-      ];
-
-      const salt = genSalt();
-      const riskScore = '50';
-      expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
-
-      const orderValues = [
-        CREDITOR_FEE,
-        ASSET_PURPOSE,
-        parseEther(principalAmount.toString()),
-        expirationTimestamps,
-        salt,
-        riskScore,
-      ];
-
-      const termInDaysLoan = 10;
-      const interestRatePercentage = 5;
-      const termsContractParameter = packTermsContractParameters({
-        amortizationUnitType: 1,
-        gracePeriodInDays: 2,
-        principalAmount,
-        termLengthUnits: _.ceil(termInDaysLoan * 24),
-        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
-      });
-
-      const termsContractParameters = [termsContractParameter];
-
-      const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
-      const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
-
-      tokenIds = genLoanAgreementIds(
-        loanRepaymentRouter.address,
-        debtors,
-        loanInterestTermsContract.address,
-        termsContractParameters,
-        salts
-      );
-
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-        await Promise.all(tokenIds.map(async (x) => ({
-          ...await generateLATMintPayload(
+        ({
+            stableCoin,
             loanAssetTokenContract,
+            loanInterestTermsContract,
+            loanKernel,
+            loanRepaymentRouter,
+            securitizationManager,
+            uniqueIdentity,
+            distributionOperator,
+            distributionTranche,
+            securitizationPoolValueService,
+            factoryAdmin,
+            securitizationPoolImpl,
             defaultLoanAssetTokenValidator,
-            [x],
-            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-            defaultLoanAssetTokenValidator.address
-          )
-        })))
-      );
+            loanRegistry,
+        } = await setup());
 
-      const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
-      expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+        await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
 
-      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-      expect(balanceOfPool).equal(tokenIds.length);
+        await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
 
-      await expect(
-        loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-          await Promise.all(tokenIds.map(async (x) => ({
-            ...await generateLATMintPayload(
-              loanAssetTokenContract,
-              defaultLoanAssetTokenValidator,
-              [x],
-              [(await loanAssetTokenContract.nonce(x)).toNumber()],
-              defaultLoanAssetTokenValidator.address
-            )
-          })))
-        )
-      ).to.be.revertedWith(`ERC721: token already minted`);
-    });
-  });
+        // Gain UID
+        const UID_TYPE = 0;
+        const chainId = await getChainId();
+        const expiredAt = dayjs().unix() + 86400 * 1000;
+        const nonce = 0;
+        const ethRequired = parseEther('0.00083');
 
-  describe('Loan registry', async () => {
-    it('#getLoanDebtor', async () => {
-      const result = await loanRegistry.getLoanDebtor(tokenIds[0]);
-
-      expect(result).equal(borrowerSigner.address);
+        const uidMintMessage = presignedMintMessage(
+            lenderSigner.address,
+            UID_TYPE,
+            expiredAt,
+            uniqueIdentity.address,
+            nonce,
+            chainId
+        );
+        const signature = await untangledAdminSigner.signMessage(uidMintMessage);
+        await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
     });
 
-    it('#getLoanTermParams', async () => {
-      const result = await loanRegistry.getLoanTermParams(tokenIds[0]);
+    describe('#security pool', async () => {
+        it('Create pool', async () => {
+            const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
+            await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
 
-      expect(result).equal('0x00000000000000000000003a9800c35010000000000000000000000f00200000');
+            await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
+            await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
+
+            const salt = utils.keccak256(Date.now());
+
+            // Create new pool
+            let transaction = await securitizationManager
+                .connect(poolCreatorSigner)
+
+                .newPoolInstance(
+                    salt,
+
+                    poolCreatorSigner.address,
+                    utils.defaultAbiCoder.encode(
+                        [
+                            {
+                                type: 'tuple',
+                                components: [
+                                    {
+                                        name: 'currency',
+                                        type: 'address',
+                                    },
+                                    {
+                                        name: 'minFirstLossCushion',
+                                        type: 'uint32',
+                                    },
+                                    {
+                                        name: 'validatorRequired',
+                                        type: 'bool',
+                                    },
+                                ],
+                            },
+                        ],
+                        [
+                            {
+                                currency: stableCoin.address,
+                                minFirstLossCushion: '100000',
+                                validatorRequired: true,
+                            },
+                        ]
+                    )
+                );
+
+            let receipt = await transaction.wait();
+            let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+            // expect address, create2
+            const { bytecode } = await artifacts.readArtifact('TransparentUpgradeableProxy');
+            // abi.encodePacked(
+            //     type(TransparentUpgradeableProxy).creationCode,
+            //     abi.encode(_poolImplAddress, address(this), '')
+            // )
+            const initCodeHash = utils.keccak256(
+                utils.solidityPack(
+                    ['bytes', 'bytes'],
+                    [
+                        `${bytecode}`,
+                        utils.defaultAbiCoder.encode(
+                            ['address', 'address', 'bytes'],
+                            [securitizationPoolImpl.address, securitizationManager.address, Buffer.from([])]
+                        ),
+                    ]
+                )
+            );
+
+            const create2 = utils.getCreate2Address(securitizationManager.address, salt, initCodeHash);
+            expect(create2).to.be.eq(securitizationPoolAddress);
+
+            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+
+            const oneDayInSecs = 1 * 24 * 3600;
+            const halfOfADay = oneDayInSecs / 2;
+
+            const riskScore = {
+                daysPastDue: oneDayInSecs,
+                advanceRate: 950000,
+                penaltyRate: 900000,
+                interestRate: 910000,
+                probabilityOfDefault: 800000,
+                lossGivenDefault: 810000,
+                gracePeriod: halfOfADay,
+                collectionPeriod: halfOfADay,
+                writeOffAfterGracePeriod: halfOfADay,
+                writeOffAfterCollectionPeriod: halfOfADay,
+                discountRate: 100000,
+            };
+            const daysPastDues = [riskScore.daysPastDue];
+            const ratesAndDefaults = [
+                riskScore.advanceRate,
+                riskScore.penaltyRate,
+                riskScore.interestRate,
+                riskScore.probabilityOfDefault,
+                riskScore.lossGivenDefault,
+                riskScore.discountRate,
+            ];
+            const periodsAndWriteOffs = [
+                riskScore.gracePeriod,
+                riskScore.collectionPeriod,
+                riskScore.writeOffAfterGracePeriod,
+                riskScore.writeOffAfterCollectionPeriod,
+            ];
+
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
+        });
+
+        it('Wrong risk scores', async () => {
+            const oneDayInSecs = 1 * 24 * 3600;
+            const halfOfADay = oneDayInSecs / 2;
+
+            const riskScore = {
+                daysPastDue: oneDayInSecs,
+                advanceRate: 950000,
+                penaltyRate: 900000,
+                interestRate: 910000,
+                probabilityOfDefault: 800000,
+                lossGivenDefault: 810000,
+                discountRate: 100000,
+                gracePeriod: halfOfADay,
+                collectionPeriod: halfOfADay,
+                writeOffAfterGracePeriod: halfOfADay,
+                writeOffAfterCollectionPeriod: halfOfADay,
+            };
+            const daysPastDues = [riskScore.daysPastDue, riskScore.daysPastDue];
+            const ratesAndDefaults = [
+                riskScore.advanceRate,
+                riskScore.penaltyRate,
+                riskScore.interestRate,
+                riskScore.probabilityOfDefault,
+                riskScore.lossGivenDefault,
+                riskScore.discountRate,
+                riskScore.advanceRate,
+                riskScore.penaltyRate,
+                riskScore.interestRate,
+                riskScore.probabilityOfDefault,
+                riskScore.lossGivenDefault,
+                riskScore.discountRate,
+            ];
+            const periodsAndWriteOffs = [
+                riskScore.gracePeriod,
+                riskScore.collectionPeriod,
+                riskScore.writeOffAfterGracePeriod,
+                riskScore.writeOffAfterCollectionPeriod,
+                riskScore.gracePeriod,
+                riskScore.collectionPeriod,
+                riskScore.writeOffAfterGracePeriod,
+                riskScore.writeOffAfterCollectionPeriod,
+            ];
+
+            await expect(
+                securitizationPoolContract
+                    .connect(poolCreatorSigner)
+                    .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs)
+            ).to.be.revertedWith(`SecuritizationPool: Risk scores must be sorted`);
+        });
     });
 
-    it('#getDebtor', async () => {
-      const result = await loanRegistry.getDebtor(tokenIds[0]);
+    describe('#Securitization Manager', async () => {
+        it('Should set up TGE for SOT successfully', async () => {
+            const tokenDecimals = 18;
 
-      expect(result).equal(borrowerSigner.address);
+            const openingTime = dayjs(new Date()).unix();
+            const closingTime = dayjs(new Date()).add(7, 'days').unix();
+            const rate = 2;
+            const totalCapOfToken = parseEther('100000');
+            const initialInterest = 10000;
+            const finalInterest = 10000;
+            const timeInterval = 1 * 24 * 3600; // seconds
+            const amountChangeEachInterval = 0;
+            const prefixOfNoteTokenSaleName = 'SOT_';
+
+            const transaction = await securitizationManager
+                .connect(poolCreatorSigner)
+                .setUpTGEForSOT(
+                    untangledAdminSigner.address,
+                    securitizationPoolContract.address,
+                    [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+                    true,
+                    initialInterest,
+                    finalInterest,
+                    timeInterval,
+                    amountChangeEachInterval,
+                    { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+                    prefixOfNoteTokenSaleName
+                );
+
+            const receipt = await transaction.wait();
+
+            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            expect(tgeAddress).to.be.properAddress;
+
+            mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+            const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+            expect(sotTokenAddress).to.be.properAddress;
+
+            sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
+        });
+
+        it('Should set up TGE for JOT successfully', async () => {
+            const tokenDecimals = 18;
+
+            const openingTime = dayjs(new Date()).unix();
+            const closingTime = dayjs(new Date()).add(7, 'days').unix();
+            const rate = 2;
+            const totalCapOfToken = parseEther('100000');
+            const initialJOTAmount = parseEther('1');
+            const prefixOfNoteTokenSaleName = 'JOT_';
+
+            // JOT only has SaleType.NORMAL_SALE
+            const transaction = await securitizationManager
+                .connect(poolCreatorSigner)
+                .setUpTGEForJOT(
+                    untangledAdminSigner.address,
+                    securitizationPoolContract.address,
+                    initialJOTAmount,
+                    [SaleType.NORMAL_SALE, tokenDecimals],
+                    true,
+                    { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+                    prefixOfNoteTokenSaleName
+                );
+            const receipt = await transaction.wait();
+
+            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            expect(tgeAddress).to.be.properAddress;
+
+            jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+            const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+            expect(jotTokenAddress).to.be.properAddress;
+
+            jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
+        });
+
+        it('Should buy tokens failed if buy sot first', async () => {
+            await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+            await expect(
+                securitizationManager
+                    .connect(lenderSigner)
+                    .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+            ).to.be.revertedWith(`Crowdsale: sale not started`);
+        });
+
+        it('Should buy tokens successfully', async () => {
+            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+            await securitizationManager
+                .connect(lenderSigner)
+                .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
+
+            await securitizationManager
+                .connect(lenderSigner)
+                .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+
+            const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+            expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
+
+            expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
+        });
     });
 
-    it('#principalPaymentInfo', async () => {
-      const result = await loanRegistry.principalPaymentInfo(tokenIds[0]);
+    let expirationTimestamps;
+    const CREDITOR_FEE = '0';
+    const ASSET_PURPOSE_LOAN = '0';
+    const ASSET_PURPOSE_INVOICE = '1';
+    const inputAmount = 10;
+    const inputPrice = 15;
+    const principalAmount = _.round(inputAmount * inputPrice * 100);
 
-      expect(result.pTokenAddress).equal(stableCoin.address);
-      expect(result.pAmount.toNumber()).equal(0);
+    describe('#LoanKernel', async () => {
+        it('No one than LoanKernel can mint', async () => {
+            await expect(
+                loanAssetTokenContract.connect(untangledAdminSigner)['mint(address,uint256)'](lenderSigner.address, 1)
+            ).to.be.revertedWith(
+                `AccessControl: account ${untangledAdminSigner.address.toLowerCase()} is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6`
+            );
+        });
+
+        it('SECURITIZATION_POOL is zero address', async () => {
+            const orderAddresses = [
+                ZERO_ADDRESS,
+                stableCoin.address,
+                loanRepaymentRouter.address,
+                loanInterestTermsContract.address,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+            await expect(
+                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
+            ).to.be.revertedWith(`SECURITIZATION_POOL is zero address.`);
+        });
+
+        it('REPAYMENT_ROUTER is zero address', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                stableCoin.address,
+                ZERO_ADDRESS,
+                loanInterestTermsContract.address,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+            await expect(
+                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
+            ).to.be.revertedWith(`REPAYMENT_ROUTER is zero address.`);
+        });
+
+        it('TERM_CONTRACT is zero address', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                stableCoin.address,
+                loanRepaymentRouter.address,
+                ZERO_ADDRESS,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+            await expect(
+                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
+            ).to.be.revertedWith(`TERM_CONTRACT is zero address.`);
+        });
+
+        it('PRINCIPAL_TOKEN_ADDRESS is zero address', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                ZERO_ADDRESS,
+                loanRepaymentRouter.address,
+                loanInterestTermsContract.address,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+            await expect(
+                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
+            ).to.be.revertedWith(`PRINCIPAL_TOKEN_ADDRESS is zero address.`);
+        });
+
+        it('LoanKernel: Invalid Term Contract params', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                stableCoin.address,
+                loanRepaymentRouter.address,
+                loanInterestTermsContract.address,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+            await expect(
+                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
+            ).to.be.revertedWith(`LoanKernel: Invalid Term Contract params`);
+        });
+
+        it('LoanKernel: Invalid LAT Token Id', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                stableCoin.address,
+                loanRepaymentRouter.address,
+                loanInterestTermsContract.address,
+                relayer.address,
+                borrowerSigner.address,
+            ];
+
+            const salt = genSalt();
+            const riskScore = '50';
+            expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+            const orderValues = [
+                CREDITOR_FEE,
+                ASSET_PURPOSE_LOAN,
+                parseEther(principalAmount.toString()),
+                expirationTimestamps,
+                salt,
+                riskScore,
+            ];
+
+            const termInDaysLoan = 10;
+            const interestRatePercentage = 5;
+            const termsContractParameter = packTermsContractParameters({
+                amortizationUnitType: 1,
+                gracePeriodInDays: 2,
+                principalAmount,
+                termLengthUnits: _.ceil(termInDaysLoan * 24),
+                interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+            });
+
+            const termsContractParameters = [termsContractParameter];
+
+            const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+            const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+            const tokenIds = ['0x944b447816387dc1f14b1a81dc4d95a77f588c214732772d921e146acd456b2b'];
+
+            await expect(
+                loanKernel.fillDebtOrder(
+                    formatFillDebtOrderParams(
+                        orderAddresses,
+                        orderValues,
+                        termsContractParameters,
+                        await Promise.all(
+                            tokenIds.map(async (x) => ({
+                                ...(await generateLATMintPayload(
+                                    loanAssetTokenContract,
+                                    defaultLoanAssetTokenValidator,
+                                    [x],
+                                    [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                    defaultLoanAssetTokenValidator.address
+                                )),
+                            }))
+                        )
+                    )
+                )
+            ).to.be.revertedWith(`LoanKernel: Invalid LAT Token Id`);
+        });
+
+        it('Execute fillDebtOrder successfully', async () => {
+            const orderAddresses = [
+                securitizationPoolContract.address,
+                stableCoin.address,
+                loanRepaymentRouter.address,
+                loanInterestTermsContract.address,
+                relayer.address,
+                // borrower 1
+                borrowerSigner.address,
+                // borrower 2
+                borrowerSigner.address,
+            ];
+
+            const riskScore = '50';
+            expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
+
+            const orderValues = [
+                CREDITOR_FEE,
+                ASSET_PURPOSE_LOAN,
+                parseEther(principalAmount.toString()), // token 1
+                parseEther(principalAmount.toString()), // token 2
+                expirationTimestamps,
+                expirationTimestamps,
+                genSalt(),
+                genSalt(),
+                riskScore,
+                riskScore,
+            ];
+
+            const termInDaysLoan = 10;
+            const interestRatePercentage = 5;
+            const termsContractParameter = packTermsContractParameters({
+                amortizationUnitType: 1,
+                gracePeriodInDays: 2,
+                principalAmount,
+                termLengthUnits: _.ceil(termInDaysLoan * 24),
+                interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+            });
+
+            const termsContractParameters = [termsContractParameter, termsContractParameter];
+
+            const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
+            const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
+
+            tokenIds = genLoanAgreementIds(
+                loanRepaymentRouter.address,
+                debtors,
+                loanInterestTermsContract.address,
+                termsContractParameters,
+                salts
+            );
+
+            await expect(
+                loanKernel.fillDebtOrder(
+                    formatFillDebtOrderParams(
+                        orderAddresses,
+                        orderValues,
+                        termsContractParameters,
+                        await Promise.all(
+                            tokenIds.map(async (x) => ({
+                                ...(await generateLATMintPayload(
+                                    loanAssetTokenContract,
+                                    defaultLoanAssetTokenValidator,
+                                    [x],
+                                    [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                    defaultLoanAssetTokenValidator.address
+                                )),
+                            }))
+                        )
+                    )
+                )
+            ).to.be.revertedWith(`SecuritizationPool: Only Originator can drawdown`);
+
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
+
+            await loanKernel.fillDebtOrder(
+                formatFillDebtOrderParams(
+                    orderAddresses,
+                    orderValues,
+                    termsContractParameters,
+                    await Promise.all(
+                        tokenIds.map(async (x) => ({
+                            ...(await generateLATMintPayload(
+                                loanAssetTokenContract,
+                                defaultLoanAssetTokenValidator,
+                                [x],
+                                [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                defaultLoanAssetTokenValidator.address
+                            )),
+                        }))
+                    )
+                )
+            );
+
+            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+            expect(balanceOfPool).equal(tokenIds.length);
+
+            const stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
+            expect(formatEther(stablecoinBalanceOfAdmin)).equal('99000.000000000000028584');
+        });
     });
-  });
 
-  describe('#concludeLoan', async () => {
-    it('No one than LoanKernel contract can burn', async () => {
-      await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
-        `ERC721: caller is not token owner or approved`
-      );
+    describe('Loan registry', async () => {
+        it('#getLoanDebtor', async () => {
+            const result = await loanRegistry.getLoanDebtor(tokenIds[0]);
+
+            expect(result).equal(borrowerSigner.address);
+        });
+
+        it('#getLoanTermParams', async () => {
+            const result = await loanRegistry.getLoanTermParams(tokenIds[0]);
+
+            expect(result).equal('0x00000000000000000000003a9800c35010000000000000000000000f00200000');
+        });
+
+        it('#getDebtor', async () => {
+            const result = await loanRegistry.getDebtor(tokenIds[0]);
+
+            expect(result).equal(borrowerSigner.address);
+        });
+
+        it('#principalPaymentInfo', async () => {
+            const result = await loanRegistry.principalPaymentInfo(tokenIds[0]);
+
+            expect(result.pTokenAddress).equal(stableCoin.address);
+            expect(result.pAmount.toNumber()).equal(0);
+        });
     });
 
-    it('LoanKernel: Invalid creditor account', async () => {
-      await expect(
-        loanKernel.concludeLoans([ZERO_ADDRESS], [tokenIds[0]], loanInterestTermsContract.address)
-      ).to.be.revertedWith(`Invalid creditor account.`);
+    describe('#concludeLoan', async () => {
+        it('No one than LoanKernel contract can burn', async () => {
+            await expect(loanAssetTokenContract.connect(untangledAdminSigner).burn(tokenIds[0])).to.be.revertedWith(
+                `ERC721: caller is not token owner or approved`
+            );
+        });
+
+        it('LoanKernel: Invalid creditor account', async () => {
+            await expect(
+                loanKernel.concludeLoans([ZERO_ADDRESS], [tokenIds[0]], loanInterestTermsContract.address)
+            ).to.be.revertedWith(`Invalid creditor account.`);
+        });
+
+        it('LoanKernel: Invalid agreement id', async () => {
+            await expect(
+                loanKernel.concludeLoans(
+                    [securitizationPoolContract.address],
+                    [formatBytes32String('')],
+                    loanInterestTermsContract.address
+                )
+            ).to.be.revertedWith(`Invalid agreement id.`);
+        });
+
+        it('LoanKernel: Invalid terms contract', async () => {
+            await expect(
+                loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]], ZERO_ADDRESS)
+            ).to.be.revertedWith(`Invalid terms contract.`);
+        });
+
+        it('Cannot conclude agreement id if didnot repay', async () => {
+            await expect(
+                loanKernel.concludeLoans(
+                    [securitizationPoolContract.address],
+                    [tokenIds[0]],
+                    loanInterestTermsContract.address
+                )
+            ).to.be.revertedWith(`Debt does not exsits or Debtor have not completed repayment.`);
+        });
+
+        it('only LoanKernel contract can burn', async () => {
+            const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
+            expect(formatEther(stablecoinBalanceOfPayerBefore)).equal('99000.000000000000028584');
+
+            const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
+            expect(formatEther(stablecoinBalanceOfPoolBefore)).equal('199.999999999999971416');
+
+            await loanRepaymentRouter
+                .connect(untangledAdminSigner)
+                .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
+
+            await expect(loanAssetTokenContract.ownerOf(tokenIds[0])).to.be.revertedWith(`ERC721: invalid token ID`);
+
+            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+            expect(balanceOfPool).equal(tokenIds.length - 1);
+
+            const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
+            expect(stablecoinBalanceOfPayerAfter).equal(
+                stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount))
+            );
+
+            const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
+            expect(formatEther(stablecoinBalanceOfPoolAfter)).equal('199.999999999999986416');
+        });
+
+        it('Cannot conclude agreement id again', async () => {
+            await expect(
+                loanKernel.concludeLoans(
+                    [securitizationPoolContract.address],
+                    [tokenIds[0]],
+                    loanInterestTermsContract.address
+                )
+            ).to.be.revertedWith(`ERC721: invalid token ID`);
+        });
     });
-
-    it('LoanKernel: Invalid agreement id', async () => {
-      await expect(
-        loanKernel.concludeLoans(
-          [securitizationPoolContract.address],
-          [formatBytes32String('')],
-          loanInterestTermsContract.address
-        )
-      ).to.be.revertedWith(`Invalid agreement id.`);
-    });
-
-    it('LoanKernel: Invalid terms contract', async () => {
-      await expect(
-        loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]], ZERO_ADDRESS)
-      ).to.be.revertedWith(`Invalid terms contract.`);
-    });
-
-    it('Cannot conclude agreement id if didnot repay', async () => {
-      await expect(
-        loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]], loanInterestTermsContract.address)
-      ).to.be.revertedWith(`Debt does not exsits or Debtor have not completed repayment.`);
-    });
-
-    it('only LoanKernel contract can burn', async () => {
-      const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
-      expect(formatEther(stablecoinBalanceOfPayerBefore)).equal('99000.0');
-
-      const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
-      expect(formatEther(stablecoinBalanceOfPoolBefore)).equal('0.0');
-
-      await loanRepaymentRouter
-        .connect(untangledAdminSigner)
-        .repayInBatch([tokenIds[0]], [parseEther('100')], stableCoin.address);
-
-      await expect(loanAssetTokenContract.ownerOf(tokenIds[0])).to.be.revertedWith(`ERC721: invalid token ID`);
-
-      const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-      expect(balanceOfPool).equal(tokenIds.length - 1);
-
-      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount)));
-
-      const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(principalAmount);
-    });
-
-    it('Cannot conclude agreement id again', async () => {
-      await expect(
-        loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]], loanInterestTermsContract.address)
-      ).to.be.revertedWith(`ERC721: invalid token ID`);
-    });
-  });
 });
