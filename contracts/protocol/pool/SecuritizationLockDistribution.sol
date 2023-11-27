@@ -22,21 +22,20 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 // ISecuritizationLockDistribution
 
 contract SecuritizationLockDistribution is
-    RegistryInjection,
     ERC165Upgradeable,
+    RegistryInjection,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
+    SecuritizationPoolExtension,
     SecuritizationPoolStorage,
     SecuritizationAccessControl,
-    SecuritizationPoolExtension
-    // ISecuritizationLockDistribution
+    ISecuritizationLockDistribution
 {
     using ConfigHelper for Registry;
 
     function installExtension(
         bytes memory params
-    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {
-    }
+    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {}
 
     function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {
         Storage storage $ = _getStorage();

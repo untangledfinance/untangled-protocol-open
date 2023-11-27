@@ -12,6 +12,7 @@ import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 import {IPoolNAV} from '../pool/IPoolNAV.sol';
+import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
 
 // TODO A @KhanhPham Upgrade this
 /// @title LoanRepaymentRouter
@@ -54,8 +55,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address termsContract = loanRegistry.getTermContract(_agreementId);
         address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
-        ISecuritizationTGE poolInstance = ISecuritizationTGE(beneficiary);
-        IPoolNAV poolNAV = IPoolNAV(poolInstance.poolNAV());
+        ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
+        IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolInstance).poolNAV());
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
 
@@ -64,7 +65,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
             IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
             'Unsuccessfully transferred repayment amount to Creditor.'
         );
-        poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
+        ISecuritizationTGE(beneficiary).increaseTotalAssetRepaidCurrency(repayAmount);
 
         if (outstandingAmount == 0) {
             // Burn LAT token when repay completely

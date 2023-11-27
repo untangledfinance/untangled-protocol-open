@@ -9,6 +9,7 @@ import {IDistributionAssessor} from './IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -114,8 +115,9 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     function getCashBalance(address pool) public view override returns (uint256) {
         ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
         return
-            INoteToken(ISecuritizationTGE(pool).underlyingCurrency()).balanceOf(ISecuritizationTGE(pool).pot()) -
-            securitizationPool.totalLockedDistributeBalance();
+            INoteToken(ISecuritizationTGE(pool).underlyingCurrency()).balanceOf(
+                ISecuritizationPoolStorage(pool).pot()
+            ) - securitizationPool.totalLockedDistributeBalance();
     }
 
     uint256[50] private __gap;

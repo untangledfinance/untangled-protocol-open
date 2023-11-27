@@ -39,8 +39,8 @@ import {RiskScore} from './base/types.sol';
 
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
-
-import 'hardhat/console.sol';
+import {IPoolNAV} from './IPoolNAV.sol';
+import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -49,14 +49,14 @@ import 'hardhat/console.sol';
  * @author Untangled Team
  */
 contract SecuritizationPoolAsset is
-    RegistryInjection,
     ERC165Upgradeable,
+    RegistryInjection,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     IERC721ReceiverUpgradeable,
     ISecuritizationPool,
-    SecuritizationAccessControl,
-    SecuritizationPoolStorage
+    SecuritizationPoolStorage,
+    SecuritizationAccessControl
 {
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
@@ -159,7 +159,7 @@ contract SecuritizationPoolAsset is
     function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
         address token = _msgSender();
         require(
-            token == address(registry().getAcceptedInvoiceToken()) || token == address(registry().getLoanAssetToken()),
+            token == address(registry().getLoanAssetToken()),
             'SecuritizationPool: Must be token issued by Untangled'
         );
         NFTAsset[] storage _nftAssets = _getStorage().nftAssets;
@@ -210,12 +210,26 @@ contract SecuritizationPoolAsset is
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
-            IPoolNAV(poolNAV()).file("writeOffGroup", _interestRate, _writeOffAfterGracePeriod, _periodsAndWriteOffs[i], _ratesAndDefaults[i + _daysPastDuesLength], i);
-            IPoolNAV(poolNAV()).file("writeOffGroup", _interestRate, _writeOffAfterCollectionPeriod, _periodsAndWriteOffs[i + _daysPastDuesLength], _ratesAndDefaults[i + _daysPastDuesLength], i);
+            IPoolNAV(poolNAV()).file(
+                'writeOffGroup',
+                _interestRate,
+                _writeOffAfterGracePeriod,
+                _periodsAndWriteOffs[i],
+                _ratesAndDefaults[i + _daysPastDuesLength],
+                i
+            );
+            IPoolNAV(poolNAV()).file(
+                'writeOffGroup',
+                _interestRate,
+                _writeOffAfterCollectionPeriod,
+                _periodsAndWriteOffs[i + _daysPastDuesLength],
+                _ratesAndDefaults[i + _daysPastDuesLength],
+                i
+            );
         }
 
         // Set discount rate
-        IPoolNAV(poolNAV()).file("discountRate", $.riskScores[0].discountRate);
+        IPoolNAV(poolNAV()).file('discountRate', $.riskScores[0].discountRate);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -266,9 +280,10 @@ contract SecuritizationPoolAsset is
             IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
             expectedAssetsValue = expectedAssetsValue + IPoolNAV(poolNAV()).debt(tokenIds[i]);
         }
-        _setAmountOwedToOriginator(amountOwedToOriginator() + expectedAssetsValue);
 
-        SecuritizationPoolStorage storage $ = _getSecuritizationPoolStorage();
+        Storage storage $ = _getStorage();
+        $.amountOwedToOriginator += expectedAssetsValue;
+
         if (firstAssetTimestamp() == 0) {
             $.firstAssetTimestamp = uint64(block.timestamp);
             _setUpOpeningBlockTimestamp();
@@ -389,12 +404,12 @@ contract SecuritizationPoolAsset is
         return _getStorage().tokenAssetAddresses[idx];
     }
 
-    function pause() public virtual {
+    function pause() public virtual override {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _pause();
     }
 
-    function unpause() public virtual {
+    function unpause() public virtual override {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
         _unpause();
     }

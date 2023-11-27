@@ -7,7 +7,7 @@ import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
-import {LATValidator} from './LATValidator.sol';
+import {LATValidator, IPoolLike} from './LATValidator.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
@@ -82,7 +82,7 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         LoanAssetInfo calldata latInfo
     ) public virtual override onlyRole(MINTER_ROLE) validateCreditor(creditor, latInfo) {
         if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (ISecuritizationPool(creditor).validatorRequired()) {
+            if (IPoolLike(creditor).validatorRequired()) {
                 require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
             }
         }

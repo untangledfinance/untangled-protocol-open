@@ -25,6 +25,7 @@ import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEve
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 // TODO A @KhanhPham Upgrade this
 /// @title SecuritizationManager
@@ -324,7 +325,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
-                address sotTGEAddress = ISecuritizationTGE(tge.pool()).tgeAddress();
+                address sotTGEAddress = ISecuritizationPoolStorage(tge.pool()).tgeAddress();
                 if (sotTGEAddress != address(0)) {
                     ICrowdSale(sotTGEAddress).setHasStarted(true);
                 }

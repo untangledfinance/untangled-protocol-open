@@ -13,6 +13,7 @@ import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 /// @title DistributionOperator
 /// @author Untangled Team
@@ -66,7 +67,7 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         uint256 tokenPrice = registry.getDistributionAssessor().calcTokenPrice(poolAddress, address(noteToken));
 
-        address pot = ISecuritizationTGE(poolAddress).pot();
+        address pot = ISecuritizationPoolStorage(poolAddress).pot();
         uint256 tokenToBeRedeemed = Math.min(
             INoteToken(securitizationPool.underlyingCurrency()).balanceOf(pot) / tokenPrice,
             tokenAmount
@@ -99,9 +100,9 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
             _redeem(redeemer, pool, tokenAddress, tokenRedeem, currencyLocked, registry.getDistributionTranche(), pool);
 
             if (ISecuritizationTGE(pool).sotToken() == tokenAddress) {
-                ICrowdSale(ISecuritizationTGE(pool).tgeAddress()).onRedeem(currencyLocked);
+                ICrowdSale(ISecuritizationPoolStorage(pool).tgeAddress()).onRedeem(currencyLocked);
             } else if (ISecuritizationTGE(pool).jotToken() == tokenAddress) {
-                ICrowdSale(ISecuritizationTGE(pool).secondTGEAddress()).onRedeem(currencyLocked);
+                ICrowdSale(ISecuritizationPoolStorage(pool).secondTGEAddress()).onRedeem(currencyLocked);
             }
         }
 

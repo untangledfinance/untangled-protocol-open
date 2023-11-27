@@ -84,6 +84,4 @@ interface ISecuritizationTGE {
     function withdraw(uint256 amount) external;
 
     function setUpPoolNAV() external;
-
-    function poolNAV() external view returns (uint256);
 }

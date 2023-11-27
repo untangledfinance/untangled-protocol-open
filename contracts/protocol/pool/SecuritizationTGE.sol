@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
+
+import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import {PausableUpgradeable} from '../../base/PauseableUpgradeable.sol';
@@ -25,8 +27,9 @@ import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
 
 contract SecuritizationTGE is
-    RegistryInjection,
     ERC165Upgradeable,
+    RegistryInjection,
+    ContextUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
     SecuritizationAccessControl,
@@ -72,10 +75,6 @@ contract SecuritizationTGE is
 
     function termLengthInSeconds() public view override returns (uint64) {
         return _getStorage().termLengthInSeconds;
-    }
-
-    function poolNAV() public view override returns (address) {
-        return _getSecuritizationTGEStorage().poolNAV;
     }
 
     function paidPrincipalAmountSOT() public view override returns (uint256) {
@@ -221,7 +220,7 @@ contract SecuritizationTGE is
         IPoolNAVFactory poolNAVFactory = registry().getPoolNAVFactory();
         require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
         address poolNAVAddress = poolNAVFactory.createPoolNAV();
-        SecuritizationTGEStorage storage $ = _getSecuritizationTGEStorage();
+        Storage storage $ = _getStorage();
         $.poolNAV = poolNAVAddress;
     }
 

@@ -9,6 +9,10 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import './IERC5008.sol';
 import './types.sol';
 
+interface IPoolLike {
+    function validatorRequired() external view returns (bool);
+}
+
 contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
     using ECDSAUpgradeable for bytes32;
@@ -22,7 +26,7 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
         //  requireNonceValid(latInfo) requireValidator(latInfo)
         if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (ISecuritizationPool(creditor).validatorRequired()) {
+            if (IPoolLike(creditor).validatorRequired()) {
                 _checkNonceValid(info);
                 require(_checkValidator(info), 'LATValidator: invalid validator signature');
             }

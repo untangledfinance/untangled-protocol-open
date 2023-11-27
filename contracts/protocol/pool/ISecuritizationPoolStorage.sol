@@ -60,6 +60,7 @@ interface ISecuritizationPoolStorage {
         // token address -> total locked
         mapping(address => uint256) totalLockedRedeemBalances;
         uint256 totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
+        address poolNAV;
     }
 
     function amountOwedToOriginator() external view returns (uint256);
@@ -74,6 +75,8 @@ interface ISecuritizationPoolStorage {
     function isClosedState() external view returns (bool);
 
     function pot() external view returns (address);
+
+    function poolNAV() external view returns (address);
 
     function validatorRequired() external view returns (bool);
 
