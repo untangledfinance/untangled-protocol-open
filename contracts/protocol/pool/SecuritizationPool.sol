@@ -309,6 +309,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         require(_msgSender() == address(registry.getLoanKernel()), 'SecuritizationPool: Only LoanKernel');
         require(hasRole(ORIGINATOR_ROLE, to), 'SecuritizationPool: Only Originator can drawdown');
 
+        require(reserve >= amount, 'SecuritizationPool: not enough reserve');
         reserve = reserve - amount;
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
