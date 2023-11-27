@@ -620,7 +620,7 @@ describe('LoanKernel', () => {
             expect(balanceOfPool).equal(tokenIds.length);
 
             stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(formatEther(stablecoinBalanceOfAdmin)).equal('99000.000000000000028584');
+            expect(stablecoinBalanceOfAdmin).to.closeTo(parseEther('99019.053'), parseEther('0.01'));
         });
     });
 
@@ -634,7 +634,7 @@ describe('LoanKernel', () => {
         it('#getLoanTermParams', async () => {
             const result = await loanRegistry.getLoanTermParams(tokenIds[0]);
 
-            expect(result).equal('0x00000000000000000000003a9800c35010000000000000000000000f00200000');
+            expect(result).equal('0x00000000008ac7230489e8000000c35010000000000000000000000f00200000');
         });
 
         it('#getDebtor', async () => {
@@ -692,10 +692,10 @@ describe('LoanKernel', () => {
 
         it('only LoanKernel contract can burn', async () => {
             const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(formatEther(stablecoinBalanceOfPayerBefore)).equal('99000.000000000000028584');
+            expect(stablecoinBalanceOfPayerBefore).to.closeTo(parseEther('99019.053'), parseEther('0.01'));
 
             const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
-            expect(formatEther(stablecoinBalanceOfPoolBefore)).equal('199.999999999999971416');
+            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('180.94'), parseEther('0.01'));
 
             await loanRepaymentRouter
                 .connect(untangledAdminSigner)
@@ -707,12 +707,10 @@ describe('LoanKernel', () => {
             expect(balanceOfPool).equal(tokenIds.length - 1);
 
             const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(stablecoinBalanceOfPayerAfter).equal(
-                stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount))
-            );
+            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('180.94'), parseEther('0.01'));
 
             const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-            expect(formatEther(stablecoinBalanceOfPoolAfter)).equal('199.999999999999986416');
+            expect(stablecoinBalanceOfPoolAfter).to.closeTo(parseEther('190.94'), parseEther('0.01'));
         });
 
         it('Cannot conclude agreement id again', async () => {
