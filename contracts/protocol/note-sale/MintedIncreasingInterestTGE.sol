@@ -5,17 +5,11 @@ import '../../base/UntangledBase.sol';
 import './crowdsale/IncreasingInterestCrowdsale.sol';
 import './IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
-import './IInterestRate.sol';
 
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
 /// @dev Note sale for SOT - auction
-contract MintedIncreasingInterestTGE is
-    IMintedTGE,
-    UntangledBase,
-    IncreasingInterestCrowdsale,
-    LongSaleInterest
-{
+contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInterestCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 
     bool public longSale;
@@ -51,7 +45,7 @@ contract MintedIncreasingInterestTGE is
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public override whenNotPaused securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
@@ -66,7 +60,7 @@ contract MintedIncreasingInterestTGE is
     /// @notice Calculate token price
     /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getSOTTokenPrice(pool);
+        return registry.getDistributionAssessor().getSOTTokenPrice(ISecuritizationPool(pool));
     }
 
     /// @notice Get amount of token can receive from an amount of currency
@@ -83,7 +77,7 @@ contract MintedIncreasingInterestTGE is
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external override whenNotPaused {
+    ) external whenNotPaused override {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'MintedIncreasingInterestTGE: Caller must be owner or pool'

@@ -2,25 +2,20 @@
 pragma solidity 0.8.19;
 
 import './FinalizableCrowdsale.sol';
-import '../IInterestRate.sol';
 
 /// @title IncreasingInterestCrowdsale
 /// @author Untangled Team
-abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowdsale {
+abstract contract IncreasingInterestCrowdsale is FinalizableCrowdsale {
     using ConfigHelper for Registry;
 
-    event UpdateInterestRange(
-        uint32 initialInterest,
-        uint32 finalInterest,
-        uint32 timeInterval,
-        uint32 amountChangeEachInterval
-    );
+    event UpdateInterestRange(uint32 initialInterest, uint32 finalInterest, uint32 timeInterval, uint32 amountChangeEachInterval);
 
     uint32 public initialInterest;
     uint32 public finalInterest;
     uint32 public timeInterval;
     uint32 public amountChangeEachInterval;
-    uint32 public override pickedInterest;
+
+    uint32 public pickedInterest;
 
     function setInterestRange(
         uint32 _initialInterest,
@@ -28,10 +23,7 @@ abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowd
         uint32 _timeInterval,
         uint32 _amountChangeEachInterval
     ) public whenNotPaused {
-        require(
-            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
-            'IncreasingInterestCrowdsale: Caller must be owner or pool'
-        );
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "IncreasingInterestCrowdsale: Caller must be owner or pool");
         require(!hasStarted, 'IncreasingInterestCrowdsale: sale already started');
         require(
             _initialInterest <= _finalInterest,
@@ -44,7 +36,12 @@ abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowd
         timeInterval = _timeInterval;
         amountChangeEachInterval = _amountChangeEachInterval;
 
-        emit UpdateInterestRange(initialInterest, finalInterest, timeInterval, amountChangeEachInterval);
+        emit UpdateInterestRange(
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval
+        );
     }
 
     function getCurrentInterest() public view returns (uint32) {
@@ -56,7 +53,7 @@ abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowd
         uint256 elapsedTime = block.timestamp - openingTime;
         // uint256 numberInterval = elapsedTime / timeInterval;
         // uint32 currentInterest = uint32(amountChangeEachInterval * numberInterval + initialInterest);
-        uint32 currentInterest = uint32((amountChangeEachInterval * elapsedTime) / timeInterval + initialInterest);
+        uint32 currentInterest = uint32(amountChangeEachInterval * elapsedTime / timeInterval + initialInterest);
 
         if (currentInterest > finalInterest) {
             return finalInterest;

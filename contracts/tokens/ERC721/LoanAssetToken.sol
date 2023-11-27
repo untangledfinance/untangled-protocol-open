@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
-
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
@@ -12,14 +10,12 @@ import {Registry} from '../../storage/Registry.sol';
 import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
-import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
  */
 contract LoanAssetToken is ILoanAssetToken, LATValidator {
     using ConfigHelper for Registry;
-    using ERC165CheckerUpgradeable for address;
 
     /** CONSTRUCTOR */
     function initialize(
@@ -81,11 +77,7 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         address creditor,
         LoanAssetInfo calldata latInfo
     ) public virtual override onlyRole(MINTER_ROLE) validateCreditor(creditor, latInfo) {
-        if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (ISecuritizationPool(creditor).validatorRequired()) {
-                require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
-            }
-        }
+        require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
 
         for (uint i = 0; i < latInfo.tokenIds.length; i = UntangledMath.uncheckedInc(i)) {
             _safeMint(creditor, latInfo.tokenIds[i]);

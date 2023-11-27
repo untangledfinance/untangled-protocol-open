@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
-import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
-import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -17,8 +17,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     using ConfigHelper for Registry;
 
     function _getTokenPrice(
-        address securitizationPool,
-        INoteToken noteToken,
+        ISecuritizationPool securitizationPool,
+        ERC20 noteToken,
         uint256 asset
     ) private view returns (uint256) {
         require(address(securitizationPool) != address(0), 'DistributionAssessor: Invalid pool address');
@@ -29,23 +29,17 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         require(address(noteToken) != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
         if (noteToken.totalSupply() == 0)
-            return
-                10 ** (INoteToken(ISecuritizationTGE(securitizationPool).underlyingCurrency()).decimals() - decimals);
+            return 10 ** (ERC20(securitizationPool.underlyingCurrency()).decimals() - decimals);
 
         return asset / totalSupply;
     }
 
     // get current individual asset for SOT tranche
     /// @inheritdoc IDistributionAssessor
-    function getSOTTokenPrice(address securitizationPool) public view override returns (uint256) {
+    function getSOTTokenPrice(ISecuritizationPool securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getSeniorAsset(securitizationPool);
-        return
-            _getTokenPrice(
-                securitizationPool,
-                INoteToken(ISecuritizationTGE(securitizationPool).sotToken()),
-                seniorAsset
-            );
+        uint256 seniorAsset = poolService.getSeniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, ERC20(securitizationPool.sotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor
@@ -62,7 +56,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @return The value in pool's underlying currency
     function _calcCorrespondingAssetValue(address tokenAddress, address investor) internal view returns (uint256) {
         INoteToken notesToken = INoteToken(tokenAddress);
-        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(notesToken.poolAddress());
+        ISecuritizationPool securitizationPool = ISecuritizationPool(notesToken.poolAddress());
 
         // if (Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
         //     tokenPrice = getSOTTokenPrice(securitizationPool);
@@ -92,29 +86,24 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
     /// @inheritdoc IDistributionAssessor
     function calcTokenPrice(address pool, address tokenAddress) public view override returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
-        if (tokenAddress == securitizationPool.sotToken()) return getSOTTokenPrice(pool);
-        if (tokenAddress == securitizationPool.jotToken()) return getJOTTokenPrice(pool);
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
+        if (tokenAddress == securitizationPool.sotToken()) return getSOTTokenPrice(securitizationPool);
+        if (tokenAddress == securitizationPool.jotToken()) return getJOTTokenPrice(securitizationPool);
         return 0;
     }
 
     /// @inheritdoc IDistributionAssessor
-    function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
+    function getJOTTokenPrice(ISecuritizationPool securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getJuniorAsset(securitizationPool);
-        return
-            _getTokenPrice(
-                securitizationPool,
-                INoteToken(ISecuritizationTGE(securitizationPool).jotToken()),
-                seniorAsset
-            );
+        uint256 seniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, ERC20(securitizationPool.jotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor
     function getCashBalance(address pool) public view override returns (uint256) {
-        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
+        ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         return
-            INoteToken(ISecuritizationTGE(pool).underlyingCurrency()).balanceOf(ISecuritizationTGE(pool).pot()) -
+            IERC20(securitizationPool.underlyingCurrency()).balanceOf(securitizationPool.pot()) -
             securitizationPool.totalLockedDistributeBalance();
     }
 

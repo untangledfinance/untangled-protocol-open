@@ -11,7 +11,7 @@ abstract contract ISecuritizationManager {
     event NewNotesTokenCreated(address indexed instanceAddress);
     event NewPoolCreated(address indexed instanceAddress);
     event UpdatePotToPool(address indexed pot, address indexed pool);
-    
+
 
     mapping(address => bool) public isExistingPools;
     ISecuritizationPool[] public pools;

@@ -4,8 +4,6 @@ pragma solidity 0.8.19;
 import '../../../libraries/UntangledMath.sol';
 import '../../../libraries/Configuration.sol';
 
-import {RiskScore} from './types.sol';
-
 contract NAVCalculation {
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
     // All time units in seconds
@@ -20,19 +18,19 @@ contract NAVCalculation {
     uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
     uint256 public constant ONE_HUNDRED_PERCENT = 100 * INTEREST_RATE_SCALING_FACTOR_PERCENT;
 
-    // struct RiskScore {
-    //     uint32 daysPastDue;
-    //     uint32 advanceRate;
-    //     uint32 penaltyRate;
-    //     uint32 interestRate;
-    //     uint32 probabilityOfDefault;
-    //     uint32 lossGivenDefault;
-    //     uint32 writeOffAfterGracePeriod;
-    //     uint32 gracePeriod;
-    //     uint32 collectionPeriod;
-    //     uint32 writeOffAfterCollectionPeriod;
-    //     uint32 discountRate;
-    // }
+    struct RiskScore {
+        uint32 daysPastDue;
+        uint32 advanceRate;
+        uint32 penaltyRate;
+        uint32 interestRate;
+        uint32 probabilityOfDefault;
+        uint32 lossGivenDefault;
+        uint32 writeOffAfterGracePeriod;
+        uint32 gracePeriod;
+        uint32 collectionPeriod;
+        uint32 writeOffAfterCollectionPeriod;
+        uint32 discountRate;
+    }
 
     /// @dev Calculate the expected present asset value
     /// @param principalAmount Principal amount of asset

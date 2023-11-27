@@ -8,7 +8,7 @@ const { expect } = require('chai');
 const { setup } = require('./setup.js');
 const { unlimitedAllowance } = require('./utils.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
-const { POOL_ADMIN_ROLE, OWNER_ROLE } = require('./constants.js');
+const { POOL_ADMIN_ROLE } = require('./constants.js');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -85,7 +85,7 @@ describe('SecuritizationManager', () => {
       expect(await securitizationManager.isExistingPools(securitizationPoolAddress)).to.equal(true);
       expect(
         await securitizationPoolContract.hasRole(
-          OWNER_ROLE,
+          await securitizationPoolContract.OWNER_ROLE(),
           poolCreatorSigner.address
         )
       ).to.equal(true);

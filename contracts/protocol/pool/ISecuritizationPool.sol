@@ -2,15 +2,28 @@
 pragma solidity 0.8.19;
 
 import '../../storage/Registry.sol';
+import '../../base/UntangledBase.sol';
+import '../../libraries/Configuration.sol';
 
-import {RiskScore} from './base/types.sol';
-
-abstract contract ISecuritizationPool {
+abstract contract ISecuritizationPool is UntangledBase {
+    event Withdraw(address originatorAddress, uint256 amount);
     event CollectAsset(address from, uint256 value);
-    // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
+    event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
+    event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
+    event UpdateInterestRateSOT(uint32 _interestRateSOT);
+    event UpdateLockedDistributeBalance(
+        address indexed tokenAddress,
+        address indexed investor,
+        uint256 lockedDistributeBalance,
+        uint256 lockedRedeemBalances,
+        uint256 totalLockedRedeemBalances,
+        uint256 totalLockedDistributeBalance
+    );
+    event UpdateReserve(uint256 currencyAmount);
+    event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
 
     struct NewPoolParams {
         address currency;
@@ -18,12 +31,92 @@ abstract contract ISecuritizationPool {
         bool validatorRequired;
     }
 
+    Registry public registry;
+
+    bytes32 public constant ORIGINATOR_ROLE = keccak256('ORIGINATOR_ROLE');
+    uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
+
+    address public tgeAddress;
+    address public secondTGEAddress;
+    address public sotToken;
+    address public jotToken;
+    address public underlyingCurrency;
+
+    //CycleState
+    CycleState public state;
+
+    uint64 public firstAssetTimestamp; // Timestamp at which the first asset is collected to pool
+    uint64 public openingBlockTimestamp;
+    uint64 public termLengthInSeconds;
+
+    uint256 public reserve; // Money in pool
+    uint256 public amountOwedToOriginator; // Money owed to originator
+    uint256 public totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
+    // for lending operation
+    uint256 public totalLockedDistributeBalance;
+    // token address -> total locked
+    mapping(address => uint256) public totalLockedRedeemBalances;
+    // token address -> user -> locked
+    mapping(address => mapping(address => uint256)) public lockedDistributeBalances;
+    mapping(address => mapping(address => uint256)) public lockedRedeemBalances;
+
+    uint256 public totalAssetRepaidCurrency; // Total $ (cUSD) paid for Asset repayment - repayInBatch
+
+    // user -> amount
+    mapping(address => uint256) public paidInterestAmountSOT;
+    mapping(address => uint256) public lastRepayTimestampSOT;
+
+    // for base (sell-loan) operation
+    uint256 public principalAmountSOT;
+    uint256 public paidPrincipalAmountSOT;
+    uint32 public interestRateSOT; // Annually, support 4 decimals num
+
+    uint32 public minFirstLossCushion;
+
+    //RiskScores
+    RiskScore[] public riskScores;
+
+    //ERC721 Assets
+    NFTAsset[] public nftAssets;
+
+    address[] public tokenAssetAddresses;
+    mapping(address => bool) public existsTokenAssetAddress;
+
+    mapping(address => uint256) public paidPrincipalAmountSOTByInvestor;
+
+    // by default it is address(this)
+    address public pot;
+
+    bool public validatorRequired;
+
     /** ENUM & STRUCT */
+    enum CycleState {
+        INITIATED,
+        CROWDSALE,
+        OPEN,
+        CLOSED
+    }
 
     struct NFTAsset {
         address tokenAddress;
         uint256 tokenId;
     }
+
+    struct RiskScore {
+        uint32 daysPastDue;
+        uint32 advanceRate;
+        uint32 penaltyRate;
+        uint32 interestRate;
+        uint32 probabilityOfDefault;
+        uint32 lossGivenDefault;
+        uint32 gracePeriod;
+        uint32 collectionPeriod;
+        uint32 writeOffAfterGracePeriod;
+        uint32 writeOffAfterCollectionPeriod;
+        uint32 discountRate;
+    }
+
+    function initialize(Registry _registry, bytes memory params) public virtual;
 
     /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
     function getNFTAssetsLength() public view virtual returns (uint256);
@@ -38,7 +131,14 @@ abstract contract ISecuritizationPool {
     /// @return the length of the risk scores array
     function getRiskScoresLength() public view virtual returns (uint256);
 
-    function riskScores(uint256 index) public view virtual returns (RiskScore memory);
+    /// @notice checks if the contract is in a closed state
+    function isClosedState() public view virtual returns (bool);
+
+    /// @notice checks if the redemption process has finished
+    function hasFinishedRedemption() public view virtual returns (bool);
+
+    /// @notice sets the pot address for the contract
+    function setPot(address _pot) external virtual;
 
     /// @notice sets up the risk scores for the contract for pool
     function setupRiskScores(
@@ -74,16 +174,60 @@ abstract contract ISecuritizationPool {
         uint256[] calldata amounts
     ) external virtual;
 
-    function nftAssets(uint256 idx) public view virtual returns (NFTAsset memory);
+    /// @notice transfers the remaining cash to a specified recipient wallet
+    function claimCashRemain(address recipientWallet) external virtual;
 
-    function tokenAssetAddresses(uint256 idx) public view virtual returns (address);
+    /// @notice injects the address of the Token Generation Event (TGE) and the associated token address
+    function injectTGEAddress(
+        address _tgeAddress,
+        address _tokenAddress,
+        Configuration.NOTE_TOKEN_TYPE _noteToken
+    ) external virtual;
 
-    function validatorRequired() external view virtual returns (bool);
+    /// @notice starts a new cycle and sets various parameters for the contract
+    function startCycle(
+        uint64 _termLengthInSeconds,
+        uint256 _principalAmountForSOT,
+        uint32 _interestRateForSOT,
+        uint64 _timeStartEarningInterest
+    ) external virtual;
+
+    /// @notice sets the interest rate for the senior tranche of tokens
+    function setInterestRateForSOT(uint32 _interestRateSOT) external virtual;
+
+    /// @notice increases the locked distribution balance for a specific investor
+    function increaseLockedDistributeBalance(
+        address tokenAddress,
+        address investor,
+        uint256 currency,
+        uint256 token
+    ) external virtual;
+
+    /// @dev trigger update asset value repaid
+    function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual;
+
+    /// @notice decreases the locked distribution balance for a specific investor
+    function decreaseLockedDistributeBalance(
+        address tokenAddress,
+        address investor,
+        uint256 currency,
+        uint256 token
+    ) external virtual;
+
+    /// @notice allows the redemption of tokens
+    function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external virtual;
+
+    /// @notice allows the originator to withdraw from reserve
+    function withdraw(uint256 amount) public virtual;
+
+    /// @dev trigger update reserve when buy note token action happens
+    function increaseReserve(uint256 currencyAmount) external virtual;
+
+    /// @dev trigger update reserve
+    function decreaseReserve(uint256 currencyAmount) external virtual;
 
     /// @dev Trigger set up opening block timestamp
     function setUpOpeningBlockTimestamp() external virtual;
 
-    function pause() external virtual;
-
-    function unpause() external virtual;
+    uint256[21] private __gap;
 }
