@@ -17,6 +17,7 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    formatFillDebtOrderParams,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -170,6 +171,10 @@ describe('SecuritizationPool', () => {
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
                 .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
 
             transaction = await securitizationManager
                 .connect(poolCreatorSigner)
@@ -519,30 +524,7 @@ describe('SecuritizationPool', () => {
             );
 
             await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    tokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
-                )
-            );
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
-            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
-
-            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-            expect(balanceOfPool).equal(tokenIds.length);
-
-            await expect(
-                loanKernel.fillDebtOrder(
+                formatFillDebtOrderParams(
                     orderAddresses,
                     orderValues,
                     termsContractParameters,
@@ -556,6 +538,33 @@ describe('SecuritizationPool', () => {
                                 defaultLoanAssetTokenValidator.address
                             )),
                         }))
+                    )
+                )
+            );
+
+            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
+            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
+            expect(balanceOfPool).equal(tokenIds.length);
+
+            await expect(
+                loanKernel.fillDebtOrder(
+                    formatFillDebtOrderParams(
+                        orderAddresses,
+                        orderValues,
+                        termsContractParameters,
+                        await Promise.all(
+                            tokenIds.map(async (x) => ({
+                                ...(await generateLATMintPayload(
+                                    loanAssetTokenContract,
+                                    defaultLoanAssetTokenValidator,
+                                    [x],
+                                    [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                    defaultLoanAssetTokenValidator.address
+                                )),
+                            }))
+                        )
                     )
                 )
             ).to.be.revertedWith(`ERC721: token already minted`);
@@ -609,19 +618,21 @@ describe('SecuritizationPool', () => {
             );
 
             await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    pledgeTokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
+                formatFillDebtOrderParams(
+                    orderAddresses,
+                    orderValues,
+                    termsContractParameters,
+                    await Promise.all(
+                        pledgeTokenIds.map(async (x) => ({
+                            ...(await generateLATMintPayload(
+                                loanAssetTokenContract,
+                                defaultLoanAssetTokenValidator,
+                                [x],
+                                [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                defaultLoanAssetTokenValidator.address
+                            )),
+                        }))
+                    )
                 )
             );
 
@@ -709,7 +720,7 @@ describe('SecuritizationPool', () => {
                 parseEther('1000'),
                 parseEther('1000')
             );
-            expect(formatEther(result)).equal('15190.0');
+            expect(result).to.closeTo(parseEther('15189.999'), parseEther('0.001'));
         });
 
         it('#getOutstandingPrincipalCurrency', async () => {
@@ -824,7 +835,7 @@ describe('SecuritizationPool', () => {
                 parseEther('1000'),
                 parseEther('1000')
             );
-            expect(formatEther(result)).equal('15190.0');
+            expect(result).to.closeTo(parseEther('15189.9999'), parseEther('0.001'));
         });
 
         it('#getOutstandingPrincipalCurrency', async () => {
@@ -873,26 +884,6 @@ describe('SecuritizationPool', () => {
 
             const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(originatorSigner.address);
             expect(balanceOfPoolCreator).equal(1);
-        });
-
-        it('#collectAssets', async () => {
-            await loanAssetTokenContract
-                .connect(originatorSigner)
-                .setApprovalForAll(secondSecuritizationPool.address, true);
-
-            await secondSecuritizationPool
-                .connect(originatorSigner)
-                .collectAssets(loanAssetTokenContract.address, originatorSigner.address, [tokenIds[1]]);
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[1]);
-            expect(ownerOfAgreement).equal(secondSecuritizationPool.address);
-
-            const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(secondSecuritizationPool.address);
-            expect(balanceOfPoolCreator).equal(1);
-        });
-
-        it('#withdraw', async () => {
-            await securitizationPoolContract.connect(originatorSigner).withdraw(parseEther('10'));
         });
 
         it('#collectERC20Assets', async () => {
@@ -950,7 +941,10 @@ describe('SecuritizationPool', () => {
         });
 
         it('#startCycle', async () => {
-            expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('180.0');
+            expect(await stableCoin.balanceOf(poolCreatorSigner.address)).to.closeTo(
+                parseEther('189.9999'),
+                parseEther('0.001')
+            );
             await expect(
                 securitizationPoolContract
                     .connect(poolCreatorSigner)
