@@ -10,6 +10,7 @@ import {ISecuritizationTGE} from '../../pool/ISecuritizationTGE.sol';
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
+import {ISecuritizationPoolStorage} from '../../pool/ISecuritizationPoolStorage.sol';
 
 abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
@@ -132,7 +133,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _processPurchase(beneficiary, tokenAmount);
         emit TokensPurchased(_msgSender(), beneficiary, currencyAmount, tokenAmount);
 
-        _forwardFunds(ISecuritizationTGE(pool).pot(), currencyAmount);
+        _forwardFunds(ISecuritizationPoolStorage(pool).pot(), currencyAmount);
 
         return tokenAmount;
     }
