@@ -6,7 +6,7 @@ const { parseEther, formatEther } = ethers.utils;
 
 const { expect } = require('chai');
 const { setup } = require('./setup.js');
-const { unlimitedAllowance } = require('./utils.js');
+const { unlimitedAllowance, getPoolByAddress } = require('./utils.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 const { POOL_ADMIN_ROLE, OWNER_ROLE } = require('./constants.js');
 
@@ -79,7 +79,7 @@ describe('SecuritizationManager', () => {
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
       expect(securitizationPoolAddress).to.be.properAddress;
 
-      securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
       expect(await securitizationPoolContract.underlyingCurrency()).to.equal(stableCoin.address);
       expect(await securitizationPoolContract.minFirstLossCushion()).to.equal(minFirstLostCushion);
       expect(await securitizationManager.isExistingPools(securitizationPoolAddress)).to.equal(true);

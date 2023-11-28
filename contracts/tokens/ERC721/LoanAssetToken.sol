@@ -7,12 +7,14 @@ import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
-import {LATValidator, IPoolLike} from './LATValidator.sol';
+import {LATValidator} from './LATValidator.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
+
+import 'hardhat/console.sol';
 
 /**
  * LoanAssetToken: The representative for ownership of a Loan
@@ -81,15 +83,13 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         address creditor,
         LoanAssetInfo calldata latInfo
     ) public virtual override onlyRole(MINTER_ROLE) validateCreditor(creditor, latInfo) {
-        if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (IPoolLike(creditor).validatorRequired()) {
-                require(hasRole(VALIDATOR_ROLE, latInfo.validator), 'LoanAssetToken: invalid validator');
-            }
-        }
-
         for (uint i = 0; i < latInfo.tokenIds.length; i = UntangledMath.uncheckedInc(i)) {
             _safeMint(creditor, latInfo.tokenIds[i]);
         }
+    }
+
+    function isValidator(address sender) public view virtual override returns (bool) {
+        return hasRole(VALIDATOR_ROLE, sender);
     }
 
     uint256[50] private __gap;

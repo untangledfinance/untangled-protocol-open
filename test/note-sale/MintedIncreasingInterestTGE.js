@@ -1,15 +1,18 @@
 const { expect, assert } = require('chai');
 const { ethers } = require('hardhat');
-const { setup } = require('../setup');
+const { setup, initPool } = require('../setup');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
-const { BigNumber } = require('ethers');
+const { BigNumber, utils } = require('ethers');
+const { POOL_ADMIN_ROLE } = require('../constants');
+const { getPoolByAddress } = require('../utils');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
 describe('MintedIncreasingInterestTGE', function () {
   let MintedIncreasingInterestTGE;
   let mintedIncreasingInterestTGE;
-  let owner; // Replace with your contract owner's address
+  let untangledAdminSigner;
+  // let owner; // Replace with your contract owner's address
   let securitizationManager; // Replace with the address of the securitization manager or pool
   let accounts;
   let registry;
@@ -25,16 +28,71 @@ describe('MintedIncreasingInterestTGE', function () {
   let amountChangeEachInterval; // Your desired amount change
 
   before(async function () {
-    MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE'); // Replace with your contract name
-    [owner, securitizationManager, ...accounts] = await ethers.getSigners();
-    ({ registry, noteTokenFactory } = await setup());
+    ({ registry, stableCoin, securitizationManager, noteTokenFactory } = await setup());
 
-    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+    MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE'); // Replace with your contract name
+    // [owner, securitizationManager, ...accounts] = await ethers.getSigners();
+
     const NoteToken = await ethers.getContractFactory('NoteToken');
 
     mintedIncreasingInterestTGE = await MintedIncreasingInterestTGE.deploy(/* constructor arguments */); // Replace with constructor arguments if needed
     await mintedIncreasingInterestTGE.deployed();
-    securitizationPool = await SecuritizationPool.deploy();
+
+    // securitizationPool = await SecuritizationPool.deploy();
+
+
+    let originatorSigner, poolCreatorSigner, borrowerSigner;
+    [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, ...accounts] =
+      await ethers.getSigners();
+
+
+
+
+    const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
+    await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
+    await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
+    await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
+
+    const salt = utils.keccak256(Date.now());
+
+
+    let transaction = await securitizationManager
+      .connect(poolCreatorSigner)
+
+      .newPoolInstance(
+        salt,
+
+        poolCreatorSigner.address,
+        utils.defaultAbiCoder.encode([
+          {
+            type: 'tuple',
+            components: [
+              {
+                name: 'currency',
+                type: 'address'
+              },
+              {
+                name: 'minFirstLossCushion',
+                type: 'uint32'
+              },
+              {
+                name: 'validatorRequired',
+                type: 'bool'
+              }
+            ]
+          }
+        ], [
+          {
+            currency: stableCoin.address,
+            minFirstLossCushion: '100000',
+            validatorRequired: true
+          }
+        ]));
+
+    let receipt = await transaction.wait();
+    let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+    securitizationPool = await getPoolByAddress(securitizationPoolAddress);
+
     const currencyAddress = await securitizationPool.underlyingCurrency();
     const longSale = true;
 
@@ -42,15 +100,16 @@ describe('MintedIncreasingInterestTGE', function () {
 
     await mintedIncreasingInterestTGE.initialize(
       registry.address,
-      owner.address,
+      untangledAdminSigner.address,
       noteToken.address,
       currencyAddress,
       longSale
     );
+
   });
 
   it('Get isLongSale', async () => {
-    assert.equal(await mintedIncreasingInterestTGE.isLongSale(), true);
+    expect(await mintedIncreasingInterestTGE.isLongSale()).to.equal(true);
   });
 
   it('Set Yield', async () => {
@@ -72,7 +131,7 @@ describe('MintedIncreasingInterestTGE', function () {
 
     // The owner should be able to set the interest rate range
     await mintedIncreasingInterestTGE
-      .connect(owner)
+      .connect(untangledAdminSigner)
       .setInterestRange(initialInterest, finalInterest, timeInterval, amountChangeEachInterval);
 
     // Verify that the interest rate range was set correctly
@@ -99,7 +158,7 @@ describe('MintedIncreasingInterestTGE', function () {
     ).to.be.revertedWith('MintedIncreasingInterestTGE: Caller must be owner or pool');
 
     // The owner (or pool) should be able to start a new round sale
-    await mintedIncreasingInterestTGE.connect(owner).startNewRoundSale(openingTime, closingTime, rate, cap);
+    await mintedIncreasingInterestTGE.connect(untangledAdminSigner).startNewRoundSale(openingTime, closingTime, rate, cap);
 
     // Verify the new round sale parameters
     const _openTime = await mintedIncreasingInterestTGE.openingTime(); // Replace with the correct function for fetching round info

@@ -18,6 +18,7 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    getPoolByAddress,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -105,7 +106,7 @@ describe('LoanKernel', () => {
             const receipt = await transaction.wait();
             const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
         });
     });
 

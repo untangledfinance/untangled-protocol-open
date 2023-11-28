@@ -16,6 +16,7 @@ const {
   interestRateFixedPoint,
   genSalt,
   generateLATMintPayload,
+  getPoolByAddress,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -101,7 +102,7 @@ describe('LoanAssetToken', () => {
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-      securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
 
       const oneDayInSecs = 1 * 24 * 3600;
       const halfOfADay = oneDayInSecs / 2;
@@ -349,7 +350,7 @@ describe('LoanAssetToken', () => {
 
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         [latInfo]
-      ), "Validator not whitelisted").to.be.revertedWith('LoanAssetToken: invalid validator');
+      ), "Validator not whitelisted").to.be.revertedWith('LATValidator: invalid validator');
     });
 
     it('Only Loan Kernel can mint with AA validator', async () => {

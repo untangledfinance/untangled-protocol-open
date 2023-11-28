@@ -1,8 +1,10 @@
 const { artifacts, ethers } = require('hardhat');
 const { setup } = require('../setup');
 const { expect, assert } = require('chai');
-const { BigNumber, providers } = require('ethers');
+const { BigNumber, providers, utils } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
+const { OWNER_ROLE, POOL_ADMIN_ROLE } = require('../constants');
+const { getPoolByAddress } = require('../utils');
 
 const ONE_DAY = 86400;
 const DECIMAL = BigNumber.from(10).pow(18);
@@ -12,11 +14,62 @@ describe('TimedCrowdsaleMock', () => {
   let timedCrowdsale;
 
   before('create fixture', async () => {
-    ({ registry, noteTokenFactory } = await setup());
-    const SecuritizationPool = await ethers.getContractFactory('SecuritizationPool');
+    ({ registry, noteTokenFactory, securitizationManager, stableCoin } = await setup());
     const NoteToken = await ethers.getContractFactory('NoteToken');
 
-    securitizationPool = await SecuritizationPool.deploy();
+    const [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
+      await ethers.getSigners();
+
+
+    await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
+    await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
+    await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
+
+
+    // securitizationPool = await SecuritizationPool.deploy();
+    // await initPool(securitizationPool);
+    const salt = utils.keccak256(Date.now());
+
+    // Create new pool
+    let transaction = await securitizationManager
+      .connect(poolCreatorSigner)
+
+      .newPoolInstance(
+        salt,
+
+        poolCreatorSigner.address,
+        utils.defaultAbiCoder.encode([
+          {
+            type: 'tuple',
+            components: [
+              {
+                name: 'currency',
+                type: 'address'
+              },
+              {
+                name: 'minFirstLossCushion',
+                type: 'uint32'
+              },
+              {
+                name: 'validatorRequired',
+                type: 'bool'
+              }
+            ]
+          }
+        ], [
+          {
+            currency: stableCoin.address,
+            minFirstLossCushion: '100000',
+            validatorRequired: true
+          }
+        ]));
+
+
+    let receipt = await transaction.wait();
+    let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+
+    securitizationPool = await getPoolByAddress(securitizationPoolAddress);
+
     const noteToken = await upgrades.deployProxy(NoteToken, ['Test', 'TST', 18, securitizationPool.address, 1], {
       initializer: 'initialize(string,string,uint8,address,uint8)',
     });

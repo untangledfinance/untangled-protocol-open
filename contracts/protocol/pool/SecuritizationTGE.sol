@@ -366,7 +366,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](26);
+        bytes4[] memory _functionSignatures = new bytes4[](27);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -394,6 +394,7 @@ contract SecuritizationTGE is
         _functionSignatures[23] = this.paused.selector;
         _functionSignatures[24] = this.pause.selector;
         _functionSignatures[25] = this.unpause.selector;
+        _functionSignatures[26] = this.setUpPoolNAV.selector;
 
         return _functionSignatures;
     }

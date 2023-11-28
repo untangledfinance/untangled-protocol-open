@@ -7,6 +7,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { presignedMintMessage } = require('../shared/uid-helper');
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 const { utils } = require('ethers');
+const { getPoolByAddress } = require('../utils.js');
 
 /**
  * This file tests the case that a pool invest into another pool
@@ -105,7 +106,7 @@ describe('Pool to Pool', () => {
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-      poolBContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      poolBContract = await getPoolByAddress(securitizationPoolAddress);
       // Init JOT sale
       const jotCap = '10000000000000000000';
       const isLongSaleTGEJOT = true;
@@ -195,7 +196,7 @@ describe('Pool to Pool', () => {
 
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
-      poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
+      poolAContract = await getPoolByAddress(poolAContractAddress);
       await poolAContract.connect(poolACreator).setPot(poolAPot.address);
 
       // Init JOT sale PoolA
@@ -530,7 +531,8 @@ describe('Pool to Pool', () => {
 
       const poolCCreationReceipt = await poolCCreationTransaction.wait();
       const [poolCContractAddress] = poolCCreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
-      poolCContract = await ethers.getContractAt('SecuritizationPool', poolCContractAddress);
+      poolCContract = await getPoolByAddress(poolCContractAddress);
+      
 
       // Set pot for pool C
       await poolCContract.connect(poolCCreatorSigner).setPot(poolCPotSigner.address);
@@ -627,7 +629,7 @@ describe('Pool to Pool', () => {
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
       // Set pot for pool B
-      poolBContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      poolBContract = await getPoolByAddress(securitizationPoolAddress);
       await poolBContract.connect(poolBCreatorSigner).setPot(poolBPotSigner.address);
       await stableCoin.connect(poolBPotSigner).approve(poolBContract.address, ethers.constants.MaxUint256);
 
@@ -721,7 +723,7 @@ describe('Pool to Pool', () => {
 
       const poolACreationReceipt = await poolACreationTransaction.wait();
       const [poolAContractAddress] = poolACreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
-      poolAContract = await ethers.getContractAt('SecuritizationPool', poolAContractAddress);
+      poolAContract = await getPoolByAddress(poolAContractAddress);
       await poolAContract.connect(poolACreatorSigner).setPot(poolAPotSigner.address);
 
       // Init JOT sale PoolA

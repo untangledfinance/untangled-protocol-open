@@ -18,12 +18,14 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    getPoolByAddress,
+    getPoolAbi,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
-const { utils } = require('ethers');
+const { utils, Contract } = require('ethers');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -167,7 +169,7 @@ describe('SecuritizationPool', () => {
             const create2 = utils.getCreate2Address(securitizationManager.address, salt, initCodeHash);
             expect(create2).to.be.eq(securitizationPoolAddress);
 
-            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -212,7 +214,7 @@ describe('SecuritizationPool', () => {
             receipt = await transaction.wait();
             [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -739,10 +741,11 @@ describe('SecuritizationPool', () => {
 
             expect(spV2Impl.address).to.be.eq(newSpImpl);
 
-            securitizationPoolContract = await ethers.getContractAt(
-                'SecuritizationPoolV2',
-                securitizationPoolContract.address
-            );
+
+            securitizationPoolContract = new Contract(securitizationPoolContract.address, [
+                ...await getPoolAbi(),
+                ...(await artifacts.readArtifact('SecuritizationPoolV2')).abi,
+            ], ethers.provider);
 
             const result = await securitizationPoolContract.hello();
 
