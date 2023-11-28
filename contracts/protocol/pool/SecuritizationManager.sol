@@ -193,6 +193,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         emit NewTGECreated(tgeAddress);
         emit NewNotesTokenCreated(sotToken);
+        emit SotDeployed(sotToken, tgeAddress, address(pool));
         return tgeAddress;
     }
 
@@ -286,6 +287,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         emit NewTGECreated(tgeAddress);
         emit NewNotesTokenCreated(jotToken);
+        emit JotDeployed(jotToken, tgeAddress, address(pool));
         return tgeAddress;
     }
 
