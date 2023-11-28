@@ -213,14 +213,8 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
-            ISecuritizationPoolStorage.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
-            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
-            expectedAssetsValue =
-                expectedAssetsValue +
-                // getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
-                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
-        }
+        expectedAssetsValue =
+            expectedAssetsValue + IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {

@@ -495,6 +495,11 @@ describe('NAV', () => {
         const debtLoan2 = await poolNAV.debt(tokenIds[1]);
         expect(debtLoan2).to.equal(parseEther('4.75'));
         expect(currentNAV).to.closeTo(parseEther('13.73'), parseEther('0.01'));
+        const poolValue = await securitizationPoolValueService.getExpectedAssetsValue(
+          securitizationPoolContract.address,
+          await time.latest(),
+        );
+        expect(poolValue).to.closeTo(parseEther('13.73'), parseEther('0.01'));
       });
 
 
