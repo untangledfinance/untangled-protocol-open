@@ -41,6 +41,7 @@
     "@openzeppelin/test-helpers": "0.5.16",
     "dayjs": "1.11.10",
     "eth-gas-reporter": "0.2.25",
+    "hardhat-abi-exporter": "^2.10.1",
     "lodash": "4.17.21",
     "solidity-coverage": "0.8.4",
     "truffle-contract-size": "2.0.1"

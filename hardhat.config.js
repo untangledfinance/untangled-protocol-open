@@ -5,6 +5,7 @@ require('hardhat-contract-sizer');
 require('hardhat-deploy');
 require('@openzeppelin/hardhat-upgrades');
 require('@nomicfoundation/hardhat-chai-matchers');
+require('hardhat-abi-exporter');
 
 require('dotenv').config();
 require('./tasks');
@@ -122,4 +123,20 @@ module.exports = {
         runOnCompile: true,
         disambiguatePaths: false,
     },
+
+
+    abiExporter: [
+        {
+            path: './abi/json',
+            format: "json",
+        },
+        {
+            path: './abi/minimal',
+            format: "minimal",
+        },
+        // {
+        //     path: './abi/fullName',
+        //     format: "fullName",
+        // },
+    ]
 };
