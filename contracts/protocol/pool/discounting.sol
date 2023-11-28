@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// TODO License
-pragma solidity >=0.7.6;
+pragma solidity 0.8.19;
 
 import "./math.sol";
 
