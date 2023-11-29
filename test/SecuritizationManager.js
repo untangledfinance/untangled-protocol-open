@@ -9,6 +9,7 @@ const { setup } = require('./setup.js');
 const { unlimitedAllowance, getPoolByAddress } = require('./utils.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 const { POOL_ADMIN_ROLE } = require('./constants.js');
+const { OWNER_ROLE } = require('./constants');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -84,9 +85,7 @@ describe('SecuritizationManager', () => {
       expect(await securitizationPoolContract.minFirstLossCushion()).to.equal(minFirstLostCushion);
       expect(await securitizationManager.isExistingPools(securitizationPoolAddress)).to.equal(true);
       expect(
-        await securitizationPoolContract.hasRole(
-          await securitizationPoolContract.OWNER_ROLE(),
-          poolCreatorSigner.address
+        await securitizationPoolContract.hasRole(OWNER_ROLE, poolCreatorSigner.address
         )
       ).to.equal(true);
     });
