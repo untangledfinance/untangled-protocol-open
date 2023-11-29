@@ -350,6 +350,32 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
+    // function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+    //     pool.pause();
+    // }
+
+    // function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
+    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
+    //     pool.unpause();
+    // }
+
+    // function pauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     uint256 poolsLength = pools.length;
+    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
+    //         pools[i].pause();
+    //     }
+    // }
+
+    // function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
+    //     uint256 poolsLength = pools.length;
+    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
+    //         pools[i].unpause();
+    //     }
+    // }
+
     function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
         require(validator != address(0), 'SecuritizationManager: Invalid validator address');
         IAccessControlUpgradeable(address(registry.getLoanAssetToken())).grantRole(VALIDATOR_ROLE, validator);

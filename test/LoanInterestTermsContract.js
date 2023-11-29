@@ -16,29 +16,31 @@ const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.util
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const {
-  time,
-  impersonateAccount,
-  stopImpersonatingAccount,
-  setBalance,
+    time,
+    impersonateAccount,
+    stopImpersonatingAccount,
+    setBalance,
 } = require('@nomicfoundation/hardhat-network-helpers');
 const { parse } = require('dotenv');
 const { setup } = require('./setup.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
+const { SaleType } = require('./shared/constants.js');
+const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const ONE_DAY = 86400;
 
 const YEAR_LENGTH_IN_SECONDS = 31536000; // Number of seconds in a year (approximately)
 function calculateInterestForDuration(principalAmount, interestRate, durationLengthInSec) {
-  // Calculate the interest rate as a fraction
-  const interestRateFraction = interestRate * (1 / 100);
+    // Calculate the interest rate as a fraction
+    const interestRateFraction = interestRate * (1 / 100);
 
-  // Calculate the compound interest using the formula
-  const compoundInterest =
-    principalAmount * Math.pow(1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS, durationLengthInSec) -
-    principalAmount;
+    // Calculate the compound interest using the formula
+    const compoundInterest =
+        principalAmount * Math.pow(1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS, durationLengthInSec) -
+        principalAmount;
 
-  return compoundInterest;
+    return compoundInterest;
 }
 describe('LoanInterestTermsContract', () => {
   let stableCoin;
@@ -299,12 +301,12 @@ describe('LoanInterestTermsContract', () => {
     });
   });
 
-  describe('#getInterestRate', async () => {
-    it('should unpack interest rate correctly', async () => {
-      const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
-      expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+    describe('#getInterestRate', async () => {
+        it('should unpack interest rate correctly', async () => {
+            const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
+            expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+        });
     });
-  });
 
   describe('#getValueRepaidToDate', async () => {
     it('should return current repaid principal and interest amount of an agreementId', async () => {
@@ -314,19 +316,21 @@ describe('LoanInterestTermsContract', () => {
       expect(repaidPrincipal).to.equal(expectPrincipalAmount);
       expect(repaidInterest).to.equal(expectInterestAmount);
     });
-  });
-  describe('#getMultiExpectedRepaymentValues', async () => {
-    it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
-      const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
-      const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
-      const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
-      const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[1]);
-      const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
-      const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
-      expect(repaidPrincipal).to.equal(expectPrincipalAmount);
-      expect(repaidInterest).to.equal(expectInterestAmount);
-      expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
-      expect(repaidInterest1).to.equal(expectInterestAmount1);
+    describe('#getMultiExpectedRepaymentValues', async () => {
+        it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
+            const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
+            const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
+            const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
+            const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(
+                tokenIds[1]
+            );
+            const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
+            const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
+            expect(repaidPrincipal).to.equal(expectPrincipalAmount);
+            expect(repaidInterest).to.equal(expectInterestAmount);
+            expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
+            expect(repaidInterest1).to.equal(expectInterestAmount1);
+        });
     });
   });
 });

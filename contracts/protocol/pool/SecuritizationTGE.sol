@@ -311,22 +311,20 @@ contract SecuritizationTGE is
         }
     }
 
-    function withdraw(uint256 amount) public override whenNotPaused onlyRole(ORIGINATOR_ROLE) {
+    function withdraw(address to, uint256 amount) public override whenNotPaused {
+        registry().requireLoanKernel(_msgSender());
+        require(hasRole(ORIGINATOR_ROLE, to), 'SecuritizationPool: Only Originator can drawdown');
         Storage storage $ = _getStorage();
-        uint256 _amountOwedToOriginator = $.amountOwedToOriginator;
-        if (amount <= _amountOwedToOriginator) {
-            $.amountOwedToOriginator = _amountOwedToOriginator - amount;
-        } else {
-            $.amountOwedToOriginator = 0;
-        }
+        require($.reserve >= amount, 'SecuritizationPool: not enough reserve');
+
         $.reserve = $.reserve - amount;
 
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
         require(
-            IERC20Upgradeable(underlyingCurrency()).transferFrom(pot(), _msgSender(), amount),
+            IERC20Upgradeable(underlyingCurrency()).transferFrom(pot(), to, amount),
             'SecuritizationPool: Transfer failed'
         );
-        emit Withdraw(_msgSender(), amount);
+        emit Withdraw(to, amount);
     }
 
     // function tgeAddress() public view override(ISecuritizationTGE, SecuritizationPoolStorage) returns (address) {

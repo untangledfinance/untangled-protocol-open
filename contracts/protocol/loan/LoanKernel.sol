@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
+
 import '../../interfaces/ILoanKernel.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../tokens/ERC721/types.sol';
+import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
+import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 
 // TODO A @KhanhPham Upgrade this
 /// @title LoanKernel
@@ -13,6 +17,7 @@ import '../../tokens/ERC721/types.sol';
 /// @notice Upload loan and conclude loan
 contract LoanKernel is ILoanKernel, UntangledBase {
     using ConfigHelper for Registry;
+    using ERC165CheckerUpgradeable for address;
 
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init_unchained(_msgSender());
@@ -24,6 +29,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)] != address(0x0),
             'SECURITIZATION_POOL is zero address.'
         );
+        require(
+            _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)].supportsInterface(
+                type(ISecuritizationPool).interfaceId
+            ),
+            'LoanKernel: invalid pool interface'
+        );
+
         require(
             _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0),
             'REPAYMENT_ROUTER is zero address.'
@@ -271,40 +283,45 @@ contract LoanKernel is ILoanKernel, UntangledBase {
      *   + Debtor Fee
      */
     function fillDebtOrder(
-        address[] calldata orderAddresses, // 0-creditor, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
-        uint256[] calldata orderValues, //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
-        bytes32[] calldata termsContractParameters, // Term contract parameters from different farmers, encoded as hash strings
-        LoanAssetInfo[] calldata latInfo // orderAddreses[0] -> latInfo[0].tokenIds[0], latInfo[x].tokenId: // [x]-Loan liability token Id, [x]-Loan liability token Id
-    ) external whenNotPaused nonReentrant validFillingOrderAddresses(orderAddresses) {
-        require(termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
+        FillDebtOrderParam calldata fillDebtOrderParam
+    ) external whenNotPaused nonReentrant validFillingOrderAddresses(fillDebtOrderParam.orderAddresses) {
+        address poolAddress = fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)];
+        require(fillDebtOrderParam.termsContractParameters.length > 0, 'LoanKernel: Invalid Term Contract params');
 
-        uint256[] memory salts = _saltFromOrderValues(orderValues, termsContractParameters.length);
+        uint256[] memory salts = _saltFromOrderValues(
+            fillDebtOrderParam.orderValues,
+            fillDebtOrderParam.termsContractParameters.length
+        );
         LoanOrder memory debtOrder = _getLoanOrder(
-            _debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length),
-            orderAddresses,
-            orderValues,
-            termsContractParameters,
+            _debtorsFromOrderAddresses(
+                fillDebtOrderParam.orderAddresses,
+                fillDebtOrderParam.termsContractParameters.length
+            ),
+            fillDebtOrderParam.orderAddresses,
+            fillDebtOrderParam.orderValues,
+            fillDebtOrderParam.termsContractParameters,
             salts
         );
 
         uint x = 0;
-        for (uint i = 0; i < latInfo.length; i = UntangledMath.uncheckedInc(i)) {
-            registry.getLoanAssetToken().safeMint(
-                orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)],
-                latInfo[i]
-            );
+        uint256 expectedAssetsValue = 0;
+        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
 
-            for (uint j = 0; j < latInfo[i].tokenIds.length; j = UntangledMath.uncheckedInc(j)) {
+        // Mint to pool
+        for (uint i = 0; i < fillDebtOrderParam.latInfo.length; i = UntangledMath.uncheckedInc(i)) {
+            registry.getLoanAssetToken().safeMint(poolAddress, fillDebtOrderParam.latInfo[i]);
+
+            for (uint j = 0; j < fillDebtOrderParam.latInfo[i].tokenIds.length; j = UntangledMath.uncheckedInc(j)) {
                 require(
-                    debtOrder.issuance.agreementIds[x] == bytes32(latInfo[i].tokenIds[j]),
+                    debtOrder.issuance.agreementIds[x] == bytes32(fillDebtOrderParam.latInfo[i].tokenIds[j]),
                     'LoanKernel: Invalid LAT Token Id'
                 );
 
                 _issueDebtAgreements(
-                    latInfo[i].tokenIds[j],
-                    orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
+                    fillDebtOrderParam.latInfo[i].tokenIds[j],
+                    fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
                     debtOrder.issuance.debtors[x],
-                    termsContractParameters[x],
+                    fillDebtOrderParam.termsContractParameters[x],
                     debtOrder.principalTokenAddress,
                     salts[x],
                     debtOrder.expirationTimestampInSecs[x],
@@ -313,10 +330,19 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
                 require(
                     ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(
-                        bytes32(latInfo[i].tokenIds[j])
+                        bytes32(fillDebtOrderParam.latInfo[i].tokenIds[j])
                     ),
                     'Cannot register term start'
                 );
+
+                uint256 expectedTokenValue = poolService.getExpectedAssetValue(
+                    poolAddress,
+                    address(registry.getLoanAssetToken()),
+                    fillDebtOrderParam.latInfo[i].tokenIds[j],
+                    block.timestamp
+                );
+
+                expectedAssetsValue = expectedAssetsValue + expectedTokenValue;
 
                 emit LogDebtOrderFilled(
                     debtOrder.issuance.agreementIds[x],
@@ -328,7 +354,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 x = UntangledMath.uncheckedInc(x);
             }
 
-            ISecuritizationPool(orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(latInfo[i].tokenIds);
+            ISecuritizationPool(fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(fillDebtOrderParam.latInfo[i].tokenIds);
+        }
+
+        // Start collect asset checkpoint and withdraw
+        {
+            ISecuritizationTGE pool = ISecuritizationTGE(poolAddress);
+            pool.withdraw(_msgSender(), expectedAssetsValue);
         }
     }
 

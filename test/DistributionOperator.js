@@ -4,6 +4,9 @@ const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
+
+const { POOL_ADMIN_ROLE } = require('./constants');
+
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
@@ -23,7 +26,6 @@ const {
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 const { constants, utils } = require('ethers');
-const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
 
 const ONE_DAY = 86400;
 const RATE_SCALING_FACTOR = 10 ** 4;
@@ -135,7 +137,7 @@ describe('Distribution', () => {
             securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
 
             transaction = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(
                 utils.keccak256(Date.now()),
@@ -176,7 +178,11 @@ describe('Distribution', () => {
             secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
-                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
+                .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
@@ -404,7 +410,7 @@ describe('Distribution', () => {
     const ASSET_PURPOSE_INVOICE = '1';
     const inputAmount = 10;
     const inputPrice = 15;
-    const principalAmount = _.round(inputAmount * inputPrice * 100);
+    const principalAmount = 10000000000000000000;
 
     describe('#LoanKernel', async () => {
         it('Execute fillDebtOrder successfully', async () => {
@@ -427,8 +433,8 @@ describe('Distribution', () => {
                 CREDITOR_FEE,
                 ASSET_PURPOSE_LOAN,
                 // token 1
-                parseEther(principalAmount.toString()),
-                parseEther(principalAmount.toString()),
+                principalAmount.toString(),
+                principalAmount.toString(),
                 // token 2
                 expirationTimestamps,
                 expirationTimestamps,
@@ -462,30 +468,7 @@ describe('Distribution', () => {
             );
 
             await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    tokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
-                )
-            );
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
-            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
-
-            const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-            expect(balanceOfPool).equal(tokenIds.length);
-
-            await expect(
-                loanKernel.fillDebtOrder(
+                formatFillDebtOrderParams(
                     orderAddresses,
                     orderValues,
                     termsContractParameters,
@@ -568,12 +551,32 @@ describe('Distribution', () => {
                 )
             );
 
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
+            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
             expect(ownerOfAgreement).equal(securitizationPoolContract.address);
 
-            tokenIds.push(...pledgeTokenIds);
             const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
             expect(balanceOfPool).equal(tokenIds.length);
+
+            await expect(
+                loanKernel.fillDebtOrder(
+                    formatFillDebtOrderParams(
+                        orderAddresses,
+                        orderValues,
+                        termsContractParameters,
+                        await Promise.all(
+                            tokenIds.map(async (x) => ({
+                                ...(await generateLATMintPayload(
+                                    loanAssetTokenContract,
+                                    defaultLoanAssetTokenValidator,
+                                    [x],
+                                    [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                                    defaultLoanAssetTokenValidator.address
+                                )),
+                            }))
+                        )
+                    )
+                )
+            ).to.be.revertedWith(`ERC721: token already minted`);
         });
     });
 
@@ -616,7 +619,7 @@ describe('Distribution', () => {
 
         it('#getCashBalance', async () => {
             const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-            expect(formatEther(result)).equal('180.0');
+            expect(result).to.closeTo(parseEther('160.9423'), parseEther('0.001'));
         });
     });
 

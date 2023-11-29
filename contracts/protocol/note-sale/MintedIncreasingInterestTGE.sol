@@ -10,12 +10,7 @@ import './IInterestRate.sol';
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
 /// @dev Note sale for SOT - auction
-contract MintedIncreasingInterestTGE is
-    IMintedTGE,
-    UntangledBase,
-    IncreasingInterestCrowdsale,
-    LongSaleInterest
-{
+contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInterestCrowdsale, LongSaleInterest {
     using ConfigHelper for Registry;
 
     bool public longSale;
@@ -51,7 +46,7 @@ contract MintedIncreasingInterestTGE is
         uint256 _interestRate,
         uint256 _termLengthInSeconds,
         uint256 _timeStartEarningInterest
-    ) public override whenNotPaused securitizationPoolRestricted {
+    ) public whenNotPaused securitizationPoolRestricted {
         if (isLongSale()) {
             interestRate = _interestRate;
             timeStartEarningInterest = _timeStartEarningInterest;
@@ -83,7 +78,7 @@ contract MintedIncreasingInterestTGE is
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external override whenNotPaused {
+    ) external whenNotPaused override {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'MintedIncreasingInterestTGE: Caller must be owner or pool'

@@ -87,6 +87,7 @@ describe('MinFirstLoss', () => {
     securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
 
     // Grant role originator
+    const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
     await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
     // Init JOT sale
