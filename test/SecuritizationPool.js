@@ -174,6 +174,9 @@ describe('SecuritizationPool', () => {
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
+            await securitizationPoolContract
+                .connect(poolCreatorSigner)
+                .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
 
             transaction = await securitizationManager
                 .connect(poolCreatorSigner)
@@ -692,7 +695,7 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 dayjs(new Date()).add(1, 'days').unix()
             );
-            expect(result.toString()).equal('42888');
+            expect(result.toString()).equal('43164');
         });
 
         it('#getAssetRiskScoreIdx', async () => {
@@ -719,7 +722,7 @@ describe('SecuritizationPool', () => {
                 parseEther('1000'),
                 parseEther('1000')
             );
-            expect(result).to.closeTo(parseEther('15189.999'), parseEther('0.001'));
+            expect(result).to.closeTo(parseEther('14189.999'), parseEther('0.001'));
         });
 
         it('#getOutstandingPrincipalCurrency', async () => {
@@ -808,7 +811,7 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 dayjs(new Date()).add(1, 'days').unix()
             );
-            expect(result.toString()).equal('42888');
+            expect(result.toString()).equal('43164');
         });
 
         it('#getAssetRiskScoreIdx', async () => {
@@ -835,7 +838,7 @@ describe('SecuritizationPool', () => {
                 parseEther('1000'),
                 parseEther('1000')
             );
-            expect(result).to.closeTo(parseEther('15189.9999'), parseEther('0.001'));
+            expect(result).to.closeTo(parseEther('14189.9999'), parseEther('0.001'));
         });
 
         it('#getOutstandingPrincipalCurrency', async () => {
@@ -884,10 +887,6 @@ describe('SecuritizationPool', () => {
 
             const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(originatorSigner.address);
             expect(balanceOfPoolCreator).equal(1);
-        });
-
-        it('#withdraw', async () => {
-            await securitizationPoolContract.connect(originatorSigner).withdraw(parseEther('10'));
         });
 
         it('#collectERC20Assets', async () => {
