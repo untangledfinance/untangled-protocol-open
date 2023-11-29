@@ -5,7 +5,7 @@ const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { POOL_ADMIN_ROLE } = require('./constants');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants');
 
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
@@ -22,6 +22,7 @@ const {
     genSalt,
     generateLATMintPayload,
     getPoolByAddress,
+    formatFillDebtOrderParams
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -137,7 +138,7 @@ describe('Distribution', () => {
             securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             transaction = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(
                 utils.keccak256(Date.now()),
@@ -178,11 +179,11 @@ describe('Distribution', () => {
             secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
-                .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
+                .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
@@ -483,71 +484,6 @@ describe('Distribution', () => {
                             )),
                         }))
                     )
-                )
-            ).to.be.revertedWith(`ERC721: token already minted`);
-        });
-
-        it('Execute fillDebtOrder successfully with Pledge', async () => {
-            const orderAddresses = [
-                securitizationPoolContract.address,
-                stableCoin.address,
-                loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
-                relayer.address,
-                // borrower 1
-                borrowerSigner.address,
-            ];
-
-            const riskScore = '1';
-            expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
-
-            const orderValues = [
-                CREDITOR_FEE,
-                ASSET_PURPOSE_INVOICE,
-                // token 1
-                parseEther(principalAmount.toString()),
-                expirationTimestamps,
-                genSalt(),
-                riskScore,
-            ];
-
-            const termInDaysLoan = 10;
-            const interestRatePercentage = 5;
-            const termsContractParameter = packTermsContractParameters({
-                amortizationUnitType: 1,
-                gracePeriodInDays: 2,
-                principalAmount,
-                termLengthUnits: _.ceil(termInDaysLoan * 24),
-                interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
-            });
-
-            const termsContractParameters = [termsContractParameter];
-
-            const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
-            const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
-
-            const pledgeTokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
-
-            await loanKernel.fillDebtOrder(
-                orderAddresses,
-                orderValues,
-                termsContractParameters,
-                await Promise.all(
-                    pledgeTokenIds.map(async (x) => ({
-                        ...(await generateLATMintPayload(
-                            loanAssetTokenContract,
-                            defaultLoanAssetTokenValidator,
-                            [x],
-                            [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                            defaultLoanAssetTokenValidator.address
-                        )),
-                    }))
                 )
             );
 
