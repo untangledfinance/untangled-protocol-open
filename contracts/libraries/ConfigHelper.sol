@@ -24,6 +24,7 @@ import {ISecuritizationPoolValueService} from '../interfaces/ISecuritizationPool
 import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
 import {IGo} from '../interfaces/IGo.sol';
+import "../protocol/pool/IPoolNAVFactory.sol";
 
 import {POOL_ADMIN, OWNER_ROLE} from './types.sol';
 
@@ -116,6 +117,10 @@ library ConfigHelper {
 
     function getGo(Registry registry) internal view returns (IGo) {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
+    }
+
+    function getPoolNAVFactory(Registry registry) internal view returns (IPoolNAVFactory) {
+        return IPoolNAVFactory(getAddress(registry, Configuration.CONTRACT_TYPE.POOL_NAV_FACTORY));
     }
 
     function requireDistributionOperator(Registry registry, address account) internal view {

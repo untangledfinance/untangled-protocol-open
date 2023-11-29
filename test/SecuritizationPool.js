@@ -7,6 +7,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { constants } = ethers;
 const { parseEther, formatEther } = ethers.utils;
 const { presignedMintMessage } = require('./shared/uid-helper.js');
+const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const {
     unlimitedAllowance,
@@ -17,12 +18,14 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    getPoolByAddress,
+    getPoolAbi,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
 
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
-const { utils } = require('ethers');
+const { utils, Contract } = require('ethers');
 
 const RATE_SCALING_FACTOR = 10 ** 4;
 
@@ -166,7 +169,7 @@ describe('SecuritizationPool', () => {
             const create2 = utils.getCreate2Address(securitizationManager.address, salt, initCodeHash);
             expect(create2).to.be.eq(securitizationPoolAddress);
 
-            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -211,7 +214,7 @@ describe('SecuritizationPool', () => {
             receipt = await transaction.wait();
             [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -479,7 +482,7 @@ describe('SecuritizationPool', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -572,7 +575,7 @@ describe('SecuritizationPool', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -738,10 +741,11 @@ describe('SecuritizationPool', () => {
 
             expect(spV2Impl.address).to.be.eq(newSpImpl);
 
-            securitizationPoolContract = await ethers.getContractAt(
-                'SecuritizationPoolV2',
-                securitizationPoolContract.address
-            );
+
+            securitizationPoolContract = new Contract(securitizationPoolContract.address, [
+                ...await getPoolAbi(),
+                ...(await artifacts.readArtifact('SecuritizationPoolV2')).abi,
+            ], ethers.provider);
 
             const result = await securitizationPoolContract.hello();
 
@@ -872,22 +876,6 @@ describe('SecuritizationPool', () => {
             expect(ownerOfAgreement).equal(originatorSigner.address);
 
             const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(originatorSigner.address);
-            expect(balanceOfPoolCreator).equal(1);
-        });
-
-        it('#collectAssets', async () => {
-            await loanAssetTokenContract
-                .connect(originatorSigner)
-                .setApprovalForAll(secondSecuritizationPool.address, true);
-
-            await secondSecuritizationPool
-                .connect(originatorSigner)
-                .collectAssets(loanAssetTokenContract.address, originatorSigner.address, [tokenIds[1]]);
-
-            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[1]);
-            expect(ownerOfAgreement).equal(secondSecuritizationPool.address);
-
-            const balanceOfPoolCreator = await loanAssetTokenContract.balanceOf(secondSecuritizationPool.address);
             expect(balanceOfPoolCreator).equal(1);
         });
 

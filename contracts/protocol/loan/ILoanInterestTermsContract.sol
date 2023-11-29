@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Registry} from '../../storage/Registry.sol';
+import "../../libraries/UnpackLoanParamtersLib.sol";
 
 abstract contract ILoanInterestTermsContract {
     Registry public registry;
@@ -66,6 +67,12 @@ abstract contract ILoanInterestTermsContract {
     /// @notice the interest rate for a given loan agreement
     /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
     function getInterestRate(bytes32 agreementId) public view virtual returns (uint256);
+
+    function unpackParamsForAgreementID(bytes32 agreementId)
+    public
+    view
+    virtual
+    returns (UnpackLoanParamtersLib.InterestParams memory params);
 
     uint256[46] private __gap;
 }

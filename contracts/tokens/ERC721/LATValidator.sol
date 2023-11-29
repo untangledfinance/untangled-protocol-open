@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerUpgradeable.sol';
+import {AccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import {EIP712Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
+import {ECDSAUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
+import {SignatureCheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/SignatureCheckerUpgradeable.sol';
 import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
-import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
+import {ISecuritizationPoolStorage} from '../../interfaces/ISecuritizationPoolStorage.sol';
+import {ISecuritizationAccessControl} from '../../interfaces/ISecuritizationAccessControl.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
-import './IERC5008.sol';
-import './types.sol';
+import {IERC5008} from './IERC5008.sol';
+import {VALIDATOR_ROLE, LoanAssetInfo} from './types.sol';
 
-contract LATValidator is IERC5008, EIP712Upgradeable {
+import 'hardhat/console.sol';
+
+abstract contract LATValidator is IERC5008, EIP712Upgradeable {
     using SignatureCheckerUpgradeable for address;
     using ECDSAUpgradeable for bytes32;
     using ERC165CheckerUpgradeable for address;
@@ -21,10 +26,15 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
 
     modifier validateCreditor(address creditor, LoanAssetInfo calldata info) {
         //  requireNonceValid(latInfo) requireValidator(latInfo)
-        if (creditor.supportsInterface(type(ISecuritizationPool).interfaceId)) {
-            if (ISecuritizationPool(creditor).validatorRequired()) {
+        if (
+            creditor.supportsInterface(type(ISecuritizationPoolStorage).interfaceId) &&
+            creditor.supportsInterface(type(ISecuritizationAccessControl).interfaceId)
+        ) {
+            if (ISecuritizationPoolStorage(creditor).validatorRequired()) {
                 _checkNonceValid(info);
+
                 require(_checkValidator(info), 'LATValidator: invalid validator signature');
+                require(isValidator(info.validator), 'LATValidator: invalid validator');
             }
         }
         _;
@@ -57,6 +67,8 @@ contract LATValidator is IERC5008, EIP712Upgradeable {
     }
 
     function __LATValidator_init_unchained() internal onlyInitializing {}
+
+    function isValidator(address sender) public view virtual returns (bool);
 
     function nonce(uint256 tokenId) external view override returns (uint256) {
         return _nonces[tokenId];

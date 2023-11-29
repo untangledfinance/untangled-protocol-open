@@ -1,65 +1,64 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import {PausableUpgradeable} from '../../base/PauseableUpgradeable.sol';
+import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 
-abstract contract SecuritizationLockDistribution is
-    PausableUpgradeable,
+import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
+import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
+import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+
+// RegistryInjection,
+// ERC165Upgradeable,
+// PausableUpgradeable,
+// SecuritizationPoolStorage,
+// ISecuritizationLockDistribution
+
+contract SecuritizationLockDistribution is
+    ERC165Upgradeable,
     RegistryInjection,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    SecuritizationPoolExtension,
+    SecuritizationPoolStorage,
+    SecuritizationAccessControl,
     ISecuritizationLockDistribution
 {
     using ConfigHelper for Registry;
 
-    // keccak256(abi.encode(uint256(keccak256("untangled.storage.SecuritizationLockDistribution")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant SecuritizationLockDistributionStorageLocation =
-        0xaa8b848cd9e2a85edbb7908b73c85a1343a78bc77e13720d307e4378313e0500;
-
-    /// @custom:storage-location erc7201:untangled.storage.SecuritizationLockDistribution
-    struct SecuritizationLockDistributionStorage {
-        mapping(address => mapping(address => uint256)) lockedDistributeBalances;
-        uint256 totalLockedDistributeBalance;
-        mapping(address => mapping(address => uint256)) lockedRedeemBalances;
-        // token address -> total locked
-        mapping(address => uint256) totalLockedRedeemBalances;
-        uint256 totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
-    }
-
-    function _getSecuritizationLockDistributionStorage()
-        private
-        pure
-        returns (SecuritizationLockDistributionStorage storage $)
-    {
-        assembly {
-            $.slot := SecuritizationLockDistributionStorageLocation
-        }
-    }
+    function installExtension(
+        bytes memory params
+    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {}
 
     function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
         return $.lockedDistributeBalances[tokenAddress][investor];
     }
 
     function lockedRedeemBalances(address tokenAddress, address investor) public view override returns (uint256) {
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
         return $.lockedRedeemBalances[tokenAddress][investor];
     }
 
     function totalLockedRedeemBalances(address tokenAddress) public view override returns (uint256) {
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
         return $.totalLockedRedeemBalances[tokenAddress];
     }
 
     function totalLockedDistributeBalance() public view override returns (uint256) {
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
         return $.totalLockedDistributeBalance;
     }
 
     function totalRedeemedCurrency() public view override returns (uint256) {
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
         return $.totalRedeemedCurrency;
     }
 
@@ -83,7 +82,7 @@ abstract contract SecuritizationLockDistribution is
     ) external override whenNotPaused {
         registry().requireDistributionOperator(_msgSender());
 
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
 
         $.lockedDistributeBalances[tokenAddress][investor] =
             $.lockedDistributeBalances[tokenAddress][investor] +
@@ -114,7 +113,7 @@ abstract contract SecuritizationLockDistribution is
     ) external override whenNotPaused {
         registry().requireDistributionOperator(_msgSender());
 
-        SecuritizationLockDistributionStorage storage $ = _getSecuritizationLockDistributionStorage();
+        Storage storage $ = _getStorage();
 
         $.lockedDistributeBalances[tokenAddress][investor] =
             $.lockedDistributeBalances[tokenAddress][investor] -
@@ -136,5 +135,51 @@ abstract contract SecuritizationLockDistribution is
 
         emit UpdateTotalRedeemedCurrency($.totalRedeemedCurrency, tokenAddress);
         emit UpdateTotalLockedDistributeBalance($.totalLockedDistributeBalance, tokenAddress);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        virtual
+        override(ERC165Upgradeable, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || type(ISecuritizationLockDistribution).interfaceId == interfaceId;
+    }
+
+    function pause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _pause();
+    }
+
+    function unpause() public virtual {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _unpause();
+    }
+
+    function getFunctionSignatures()
+        public
+        view
+        virtual
+        override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage)
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory _functionSignatures = new bytes4[](8);
+
+        _functionSignatures[0] = this.totalRedeemedCurrency.selector;
+        _functionSignatures[1] = this.lockedDistributeBalances.selector;
+        _functionSignatures[2] = this.lockedRedeemBalances.selector;
+        _functionSignatures[3] = this.totalLockedRedeemBalances.selector;
+        _functionSignatures[4] = this.totalLockedDistributeBalance.selector;
+        _functionSignatures[5] = this.increaseLockedDistributeBalance.selector;
+        _functionSignatures[6] = this.decreaseLockedDistributeBalance.selector;
+        _functionSignatures[7] = this.supportsInterface.selector;
+
+        return _functionSignatures;
     }
 }

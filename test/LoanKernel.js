@@ -3,6 +3,7 @@ const { deployments } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
+const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
@@ -17,6 +18,7 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    getPoolByAddress,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -104,7 +106,7 @@ describe('LoanKernel', () => {
             const receipt = await transaction.wait();
             const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
         });
     });
 
@@ -265,7 +267,7 @@ describe('LoanKernel', () => {
             ];
 
             const salt = genSalt();
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -379,14 +381,18 @@ describe('LoanKernel', () => {
         });
 
         it('LoanKernel: Invalid creditor account', async () => {
+            await impersonateAccount(loanRepaymentRouter.address);
+            await setBalance(loanRepaymentRouter.address, ethers.utils.parseEther('1'));
+            const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-                loanKernel.concludeLoans([ZERO_ADDRESS], [tokenIds[0]], loanInterestTermsContract.address)
+        loanKernel.connect(signer).concludeLoans([ZERO_ADDRESS], [tokenIds[0]], loanInterestTermsContract.address)
             ).to.be.revertedWith(`Invalid creditor account.`);
         });
 
         it('LoanKernel: Invalid agreement id', async () => {
+            const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-                loanKernel.concludeLoans(
+        loanKernel.connect(signer).concludeLoans(
                     [securitizationPoolContract.address],
                     [formatBytes32String('')],
                     loanInterestTermsContract.address
@@ -395,19 +401,20 @@ describe('LoanKernel', () => {
         });
 
         it('LoanKernel: Invalid terms contract', async () => {
+            const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-                loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]], ZERO_ADDRESS)
+        loanKernel.connect(signer).concludeLoans([securitizationPoolContract.address], [tokenIds[0]], ZERO_ADDRESS)
             ).to.be.revertedWith(`Invalid terms contract.`);
         });
 
-        it('Cannot conclude agreement id if didnot repay', async () => {
+        it('Cannot conclude agreement id if caller is not LoanRepaymentRouter', async () => {
             await expect(
                 loanKernel.concludeLoans(
                     [securitizationPoolContract.address],
                     [tokenIds[0]],
                     loanInterestTermsContract.address
                 )
-            ).to.be.revertedWith(`Debt does not exsits or Debtor have not completed repayment.`);
+              ).to.be.revertedWith('LoanKernel: Only LoanRepaymentRouter');
         });
 
         it('only LoanKernel contract can burn', async () => {
@@ -436,12 +443,9 @@ describe('LoanKernel', () => {
         });
 
         it('Cannot conclude agreement id again', async () => {
+            const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-                loanKernel.concludeLoans(
-                    [securitizationPoolContract.address],
-                    [tokenIds[0]],
-                    loanInterestTermsContract.address
-                )
+            loanKernel.connect(signer).concludeLoans([securitizationPoolContract.address], [tokenIds[0]], loanInterestTermsContract.address)
             ).to.be.revertedWith(`ERC721: invalid token ID`);
         });
     });

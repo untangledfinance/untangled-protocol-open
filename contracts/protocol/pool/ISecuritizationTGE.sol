@@ -1,30 +1,22 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {Configuration} from '../../libraries/Configuration.sol';
 
 interface ISecuritizationTGE {
-    enum CycleState {
-        INITIATED,
-        CROWDSALE,
-        OPEN,
-        CLOSED
-    }
-    event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
+    // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event Withdraw(address originatorAddress, uint256 amount);
 
-    function openingBlockTimestamp() external view returns (uint64);
-
     function termLengthInSeconds() external view returns (uint64);
-
-    function pot() external view returns (address);
 
     /// @notice sets the pot address for the contract
     function setPot(address _pot) external;
+
+    // function pot() external view returns (address);
 
     /// @dev trigger update reserve when buy note token action happens
     function increaseReserve(uint256 currencyAmount) external;
@@ -32,17 +24,15 @@ interface ISecuritizationTGE {
     /// @dev trigger update reserve
     function decreaseReserve(uint256 currencyAmount) external;
 
-    function tgeAddress() external view returns (address);
+    // function tgeAddress() external view returns (address);
 
-    function secondTGEAddress() external view returns (address);
+    // function secondTGEAddress() external view returns (address);
 
     function sotToken() external view returns (address);
 
     function jotToken() external view returns (address);
 
     function underlyingCurrency() external view returns (address);
-
-    function state() external view returns (CycleState);
 
     function paidPrincipalAmountSOT() external view returns (uint256);
 
@@ -56,11 +46,8 @@ interface ISecuritizationTGE {
 
     function minFirstLossCushion() external view returns (uint32);
 
-    // Money owed to originator
-    function amountOwedToOriginator() external view returns (uint256);
-
-    /// @notice checks if the contract is in a closed state
-    function isClosedState() external view returns (bool);
+    // // Money owed to originator
+    // function amountOwedToOriginator() external view returns (uint256);
 
     function totalAssetRepaidCurrency() external view returns (uint256); // Total $ (cUSD) paid for Asset repayment - repayInBatch
 
@@ -84,6 +71,8 @@ interface ISecuritizationTGE {
 
     function claimCashRemain(address recipientWallet) external;
 
+    // function openingBlockTimestamp() external view returns (uint64);
+
     function startCycle(
         uint64 _termLengthInSeconds,
         uint256 _principalAmountForSOT,
@@ -93,4 +82,6 @@ interface ISecuritizationTGE {
 
     /// @notice allows the originator to withdraw from reserve
     function withdraw(uint256 amount) external;
+
+    function setUpPoolNAV() external;
 }

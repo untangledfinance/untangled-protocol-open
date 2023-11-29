@@ -16,6 +16,7 @@ const {
   interestRateFixedPoint,
   genSalt,
   generateLATMintPayload,
+  getPoolByAddress,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -96,12 +97,12 @@ describe('LoanAssetToken', () => {
               validatorRequired: true
             }
           ]));
-          
+
 
       const receipt = await transaction.wait();
       const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-      securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+      securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
 
       const oneDayInSecs = 1 * 24 * 3600;
       const halfOfADay = oneDayInSecs / 2;
@@ -168,7 +169,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -349,7 +350,7 @@ describe('LoanAssetToken', () => {
 
       await expect(loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
         [latInfo]
-      ), "Validator not whitelisted").to.be.revertedWith('LoanAssetToken: invalid validator');
+      ), "Validator not whitelisted").to.be.revertedWith('LATValidator: invalid validator');
     });
 
     it('Only Loan Kernel can mint with AA validator', async () => {
@@ -370,7 +371,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -470,7 +471,7 @@ describe('LoanAssetToken', () => {
       ];
 
       const salt = genSalt();
-      const riskScore = '50';
+      const riskScore = '1';
       expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
       const orderValues = [
@@ -542,7 +543,7 @@ describe('LoanAssetToken', () => {
 
     it('getRiskScore', async () => {
       const data = await loanAssetTokenContract.getRiskScore(tokenIds[0]);
-      expect(data).equal(50);
+      expect(data).equal(1);
     });
 
     it('getAssetPurpose', async () => {
@@ -595,10 +596,10 @@ describe('LoanAssetToken', () => {
       expect(balanceOfPool).equal(tokenIds.length - 1);
 
       const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub(BigNumber.from(principalAmount)));
+      expect(stablecoinBalanceOfPayerAfter).equal(stablecoinBalanceOfPayerBefore.sub('14250'));
 
       const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(principalAmount);
+      expect(stablecoinBalanceOfPoolAfter.toNumber()).equal(14250);
     });
   });
 });

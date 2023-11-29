@@ -11,7 +11,10 @@ import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
+import {IPoolNAV} from '../pool/IPoolNAV.sol';
+import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
 
+// TODO A @KhanhPham Upgrade this
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
 /// @dev Repay for loan
@@ -52,28 +55,19 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address termsContract = loanRegistry.getTermContract(_agreementId);
         address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
-        uint256 remains = ILoanInterestTermsContract(termsContract).registerRepayment(
-            _agreementId,
-            _payer,
-            beneficiary,
-            _amount,
-            _tokenAddress
+        ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
+        IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolInstance).poolNAV());
+        uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
+        uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
+
+        if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
+        require(
+            IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
+            'Unsuccessfully transferred repayment amount to Creditor.'
         );
+        ISecuritizationTGE(beneficiary).increaseTotalAssetRepaidCurrency(repayAmount);
 
-        // Transfer amount to creditor
-        if (_payer != address(0x0)) {
-            ISecuritizationTGE poolInstance = ISecuritizationTGE(beneficiary);
-            if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
-            uint256 repayAmount = _amount - remains;
-            require(
-                IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
-                'Unsuccessfully transferred repayment amount to Creditor.'
-            );
-            poolInstance.increaseTotalAssetRepaidCurrency(repayAmount);
-        }
-        ILoanInterestTermsContract loanTermContract = registry.getLoanInterestTermsContract();
-
-        if (loanTermContract.completedRepayment(_agreementId)) {
+        if (outstandingAmount == 0) {
             // Burn LAT token when repay completely
             registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);
         }

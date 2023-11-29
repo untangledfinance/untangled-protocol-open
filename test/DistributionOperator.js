@@ -18,6 +18,7 @@ const {
     interestRateFixedPoint,
     genSalt,
     generateLATMintPayload,
+    getPoolByAddress,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -131,7 +132,7 @@ describe('Distribution', () => {
             let receipt = await transaction.wait();
             let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            securitizationPoolContract = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -172,7 +173,7 @@ describe('Distribution', () => {
             receipt = await transaction.wait();
             [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
-            secondSecuritizationPool = await ethers.getContractAt('SecuritizationPool', securitizationPoolAddress);
+            secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
@@ -419,7 +420,7 @@ describe('Distribution', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [
@@ -514,7 +515,7 @@ describe('Distribution', () => {
                 borrowerSigner.address,
             ];
 
-            const riskScore = '50';
+            const riskScore = '1';
             expirationTimestamps = dayjs(new Date()).add(7, 'days').unix();
 
             const orderValues = [

@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { utils } = require('ethers');
+const { utils, Contract } = require('ethers');
 
 const { BigNumber } = require('bignumber.js');
 const crypto = require('crypto');
@@ -176,6 +176,71 @@ const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, 
   };
 }
 
+const genRiskScoreParam = (...args) => {
+  const daysPastDues = args.map(r => r.daysPastDue);
+  const advanceRates = args.map(r => r.advanceRate);
+  const penaltyRates = args.map(r => r.penaltyRate);
+  const interestRates = args.map(r => r.interestRate);
+  const probabilityOfDefaults = args.map(r => r.probabilityOfDefault);
+  const lossGivenDefaults = args.map(r => r.lossGivenDefault);
+  const discountRates = args.map(r => r.discountRate);
+  const gracePeriods = args.map(r => r.gracePeriod);
+  const collectionPeriods = args.map(r => r.collectionPeriod);
+  const writeOffAfterGracePeriods = args.map(r => r.writeOffAfterGracePeriod);
+  const writeOffAfterCollectionPeriods = args.map(r => r.writeOffAfterCollectionPeriod);
+
+  const ratesAndDefaults = [...advanceRates, ...penaltyRates, ...interestRates, ...probabilityOfDefaults, ...lossGivenDefaults, ...discountRates];
+  const periodsAndWriteOffs = [...gracePeriods, ...collectionPeriods, ...writeOffAfterGracePeriods, ...writeOffAfterCollectionPeriods];
+
+  return {
+    daysPastDues, ratesAndDefaults, periodsAndWriteOffs,
+  }
+}
+
+
+
+const getPoolAbi = async () => {
+  const asset = await artifacts.readArtifact('ISecuritizationPool');
+  const control = await artifacts.readArtifact('SecuritizationAccessControl');
+  const distribution = await artifacts.readArtifact('SecuritizationLockDistribution');
+  const storage = await artifacts.readArtifact('SecuritizationPoolStorage');
+  const tge = await artifacts.readArtifact('SecuritizationTGE');
+
+  const abis = [
+    ...storage.abi,
+    ...asset.abi,
+    ...control.abi,
+    ...distribution.abi,
+    ...tge.abi,
+  ];
+
+  const resultAbis = [];
+  // remove duplicate
+  for (const abi of abis) {
+    if (resultAbis.find(x => x.name == abi.name)) {
+      continue;
+    }
+
+    resultAbis.push(abi);
+  }
+
+  return resultAbis;
+}
+
+
+const getPoolByAddress = async (address) => {
+  const asset = await artifacts.readArtifact('ISecuritizationPool');
+  const control = await artifacts.readArtifact('SecuritizationAccessControl');
+  const distribution = await artifacts.readArtifact('SecuritizationLockDistribution');
+  const storage = await artifacts.readArtifact('SecuritizationPoolStorage');
+  const tge = await artifacts.readArtifact('SecuritizationTGE');
+
+  const abis = await getPoolAbi();
+
+  const provider = ethers.provider;
+  return new Contract(address, abis, provider);
+}
+
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
@@ -189,4 +254,9 @@ module.exports = {
   generateEntryHash,
 
   generateLATMintPayload,
+  genRiskScoreParam,
+
+
+  getPoolByAddress,
+  getPoolAbi,
 };

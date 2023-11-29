@@ -19,6 +19,8 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
+import {IPoolNAV} from './IPoolNAV.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
@@ -175,7 +177,7 @@ contract SecuritizationPoolValueService is
         uint256 interestRate,
         uint256 timestamp
     ) public view returns (uint256) {
-        uint256 expirationTimestamp = ISecuritizationTGE(assetPoolAddress).openingBlockTimestamp() +
+        uint256 expirationTimestamp = ISecuritizationPoolStorage(assetPoolAddress).openingBlockTimestamp() +
             ISecuritizationTGE(assetPoolAddress).termLengthInSeconds();
 
         uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
@@ -211,14 +213,8 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
-            ISecuritizationPool.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
-            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
-            expectedAssetsValue =
-                expectedAssetsValue +
-                // getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
-                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
-        }
+        expectedAssetsValue =
+            expectedAssetsValue + IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
@@ -266,12 +262,12 @@ contract SecuritizationPoolValueService is
 
     /// @inheritdoc ISecuritizationPoolValueService
     function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
         ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
         return
             crowdsale.currencyRaisedByInvestor(investor) -
-            securitizationPool.paidPrincipalAmountSOTByInvestor(investor);
+            ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor);
     }
 
     function getOutstandingPrincipalCurrencyByInvestors(
@@ -282,24 +278,24 @@ contract SecuritizationPoolValueService is
         uint256 investorsLength = investors.length;
 
         // duplicate but reduce external call
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
         ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
         for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
             address investor = investors[i];
             result += (crowdsale.currencyRaisedByInvestor(investor) -
-                securitizationPool.paidPrincipalAmountSOTByInvestor(investor));
+                ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor));
         }
 
         return result;
     }
 
     function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
         require(pool != address(0), 'Pool was not deployed');
         ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
 
-        return crowdsale.currencyRaised() - securitizationPool.paidPrincipalAmountSOT();
+        return crowdsale.currencyRaised() - ISecuritizationTGE(pool).paidPrincipalAmountSOT();
     }
 
     function getPoolValue(address poolAddress) external view returns (uint256) {
@@ -310,7 +306,9 @@ contract SecuritizationPoolValueService is
 
         // use reserve variable instead
         uint256 balancePool = ISecuritizationTGE(poolAddress).reserve();
-        uint256 poolValue = balancePool + nAVpoolValue - securitizationPool.amountOwedToOriginator();
+        uint256 poolValue = balancePool +
+            nAVpoolValue -
+            ISecuritizationPoolStorage(poolAddress).amountOwedToOriginator();
 
         return poolValue;
     }
@@ -346,9 +344,9 @@ contract SecuritizationPoolValueService is
     function getSeniorDebt(address poolAddress) external view returns (uint256) {
         uint256 beginningSeniorDebt = this.getBeginningSeniorDebt(poolAddress);
         if (beginningSeniorDebt == 0) return 0;
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
+        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 seniorInterestRate = securitizationPool.interestRateSOT();
+        uint256 seniorInterestRate = ISecuritizationTGE(poolAddress).interestRateSOT();
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
         uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
