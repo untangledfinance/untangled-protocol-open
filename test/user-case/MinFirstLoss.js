@@ -53,7 +53,7 @@ describe('MinFirstLoss', () => {
 
       .newPoolInstance(
         utils.keccak256(Date.now()),
-  
+
         poolCreatorSigner.address,
         utils.defaultAbiCoder.encode([
           {
@@ -80,14 +80,13 @@ describe('MinFirstLoss', () => {
             validatorRequired: true
           }
         ]));
-  
+
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
     securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
 
     // Grant role originator
-    const ORIGINATOR_ROLE = await securitizationPoolContract.ORIGINATOR_ROLE();
     await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
     // Init JOT sale
