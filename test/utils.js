@@ -267,4 +267,5 @@ module.exports = {
 
   getPoolByAddress,
   getPoolAbi,
+  formatFillDebtOrderParams,
 };

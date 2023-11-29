@@ -20,6 +20,7 @@ const {
     generateLATMintPayload,
     getPoolByAddress,
     getPoolAbi,
+    formatFillDebtOrderParams,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -172,11 +173,7 @@ describe('SecuritizationPool', () => {
             securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), originatorSigner.address);
-
-            await securitizationPoolContract
-                .connect(poolCreatorSigner)
-                .grantRole(await securitizationPoolContract.ORIGINATOR_ROLE(), untangledAdminSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             transaction = await securitizationManager
                 .connect(poolCreatorSigner)
@@ -221,7 +218,7 @@ describe('SecuritizationPool', () => {
             secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool
                 .connect(poolCreatorSigner)
-                .grantRole(await secondSecuritizationPool.ORIGINATOR_ROLE(), originatorSigner.address);
+                .grantRole(ORIGINATOR_ROLE, originatorSigner.address);
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
