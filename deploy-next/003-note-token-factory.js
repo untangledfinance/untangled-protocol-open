@@ -31,5 +31,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await execute('Registry', { from: deployer, log: true }, 'setNoteTokenFactory', NoteTokenFactory.address);
 };
 
-module.exports.dependencies = ['registry'];
+module.exports.dependencies = ['Registry'];
 module.exports.tags = ['next', 'mainnet', 'NoteTokenFactory'];

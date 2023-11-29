@@ -20,5 +20,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await execute('Registry', { from: deployer, log: true }, 'setLoanKernel', loanKernelProxy.address);
 };
 
-module.exports.dependencies = ['registry'];
+module.exports.dependencies = ['Registry'];
 module.exports.tags = ['next', 'mainnet', 'LoanKernel'];

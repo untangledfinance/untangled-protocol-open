@@ -1,3 +1,5 @@
+const { getChainId } = require('hardhat');
+const { networks } = require('../../networks');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
@@ -5,7 +7,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const registry = await get('Registry');
 
-  const deployResult = await deploy('DistributionAssessor', {
+  const deployResult = await deploy('LoanRepaymentRouter', {
     from: deployer,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -18,8 +20,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log: true,
   });
 
-  await execute('Registry', { from: deployer, log: true }, 'setDistributionAssessor', deployResult.address);
+  await execute('Registry', { from: deployer, log: true }, 'setLoanRepaymentRouter', deployResult.address);
 };
 
 module.exports.dependencies = ['Registry'];
-module.exports.tags = ['mainnet', 'DistributionAccessor', 'next'];
+module.exports.tags = ['mainnet', 'LoanRepaymentRouter', 'next'];
