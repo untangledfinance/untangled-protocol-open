@@ -12,6 +12,7 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ISecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
+import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
 
 import 'hardhat/console.sol';
 
@@ -72,6 +73,15 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
         ext.functionDelegateCall(abi.encodeWithSelector(0x326cd970, data));
     }
 
+    // bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    /**
+     * @dev Returns the current implementation address.
+     */
+    function _getImplementation() internal view returns (address) {
+        // EIP 1967
+        return StorageSlot.getAddressSlot(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc).value;
+    }
+
     /** CONSTRUCTOR */
     function initialize(
         Registry registry_,
@@ -84,7 +94,7 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
     {
         __ERC165_init_unchained();
 
-        address poolImpl = address(registry_.getSecuritizationPool());
+        address poolImpl = address(_getImplementation());
         require(poolImpl != address(0), 'SecuritizationPool: No pool implementation');
         original = poolImpl;
 
@@ -170,7 +180,6 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
 
         return false;
     }
-
 
     // function pause() public override(SecuritizationLockDistribution, SecuritizationPoolAsset, SecuritizationTGE) {
     //     SecuritizationTGE.pause();

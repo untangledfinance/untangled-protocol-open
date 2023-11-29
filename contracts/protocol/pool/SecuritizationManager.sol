@@ -113,6 +113,8 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         onlyRole(POOL_ADMIN)
         returns (address)
     {
+        // impl from eip1987
+        // _implementation
         address poolImplAddress = address(registry.getSecuritizationPool());
 
         bytes memory _initialData = abi.encodeWithSelector(
