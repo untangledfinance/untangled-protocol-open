@@ -1,7 +1,5 @@
 //deploy LoanKernel
 
-const { deployProxy } = require('../../utils/deployHelper');
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { get, execute, deploy } = deployments;
   const { deployer } = await getNamedAccounts();
@@ -10,9 +8,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const loanKernelProxy = await deploy('LoanKernel', {
     from: deployer,
-    args: [registry],
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [
+            registry.address
+          ],
+        },
+      }
     },
     log: true,
   });

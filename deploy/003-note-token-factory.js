@@ -1,17 +1,25 @@
-const { getChainId } = require('hardhat');
-const { registrySet } = require('./utils');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, read, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
-
-  const registry = await deployments.get('Registry');
   const proxyAdmin = await get('DefaultProxyAdmin');
 
-  await deployments.deploy('NoteTokenFactory', {
+  const registry = await get('Registry');
+
+  const noteTokenFactory = await deploy('NoteTokenFactory', {
     from: deployer,
     proxy: {
       proxyContract: "OpenZeppelinTransparentProxy",
+
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [
+            registry.address,
+            proxyAdmin.address,
+          ],
+        },
+      }
     },
     log: true,
   });
@@ -28,7 +36,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   //   from: deployer,
   //   log: true,
   // }, 'initialize', registry.address, proxyAdmin.address);
-  await execute('Registry', { from: deployer, log: true }, 'setNoteTokenFactory', NoteTokenFactory.address);
+  await execute('Registry', { from: deployer, log: true }, 'setNoteTokenFactory', noteTokenFactory.address);
 };
 
 module.exports.dependencies = ['Registry'];

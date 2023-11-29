@@ -1,13 +1,11 @@
-const { registrySet } = require('./utils');
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, read, get } = deployments;
+  const { deploy, read, get, execute } = deployments;
   const { deployer } = await getNamedAccounts();
   const proxyAdmin = await get('DefaultProxyAdmin');
 
   const registry = await get("Registry");
 
-  await deployments.deploy('SecuritizationManager', {
+  const SecuritizationManager = await deploy('SecuritizationManager', {
     from: deployer,
 
     proxy: {

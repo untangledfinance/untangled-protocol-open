@@ -1,5 +1,3 @@
-const { getChainId } = require('hardhat');
-const { networks } = require('../../networks');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
@@ -7,7 +5,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const registry = await get('Registry');
 
-  await deploy('LoanInterestTermsContract', {
+  await deploy('LoanRegistry', {
     from: deployer,
     proxy: {
       proxyContract: 'OpenZeppelinTransparentProxy',
@@ -22,4 +20,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['Registry'];
-module.exports.tags = ['mainnet', 'LoanInterestTermContract', 'next'];
+module.exports.tags = ['mainnet', 'LoanRegistry', 'next'];

@@ -1,11 +1,16 @@
-const { getChainId } = require('hardhat');
-const { registrySet } = require('./utils');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get, execute } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const NoteToken = await get('NoteToken');
+
+  const NoteToken = await deploy('NoteToken', {
+    from: deployer,
+    skipIfAlreadyDeployed: true,
+    args: [],
+    log: true,
+  });
+
   await execute(
     'NoteTokenFactory',
     {
@@ -15,6 +20,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     `setNoteTokenImplementation`,
     NoteToken.address,
   );
+
+  
 };
 
 module.exports.dependencies = ['Registry', 'NoteTokenFactory'];

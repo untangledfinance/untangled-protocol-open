@@ -3,15 +3,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get, execute, read } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  await deploy('TokenGenerationEventFactory', {
+  const registry = await get('Registry');
+  const proxyAdmin = await get('DefaultProxyAdmin');
+
+  const TokenGenerationEventFactory = await deploy('TokenGenerationEventFactory', {
     from: deployer,
     proxy: {
-      // execute: {
-      //   onUpgrade: {
-      //     methodName: 'initializeV7',
-      //     args: [registry.address, proxyAdmin.address],
-      //   },
-      // },
+      execute: {
+        init: {
+          methodName: 'initialize',
+          args: [registry.address, proxyAdmin.address],
+        },
+      },
       proxyContract: "OpenZeppelinTransparentProxy",
     },
     log: true,
