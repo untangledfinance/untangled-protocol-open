@@ -30,6 +30,15 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
     using ConfigHelper for Registry;
 
     event UpdateAllowedUIDTypes(uint256[] uids);
+    //noteSaleAddress, investor, amount, tokenAmount
+    event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
+    event NoteTokenPurchased(
+        address indexed investor,
+        address indexed tgeAddress,
+        address poolAddress,
+        uint256 amount,
+        uint256 tokenAmount
+    );
 
     bytes4 public constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
 
@@ -49,9 +58,6 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         registry = _registry;
     }
-
-    //noteSaleAddress, investor, amount, tokenAmount
-    event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
 
     modifier onlyPoolExisted(ISecuritizationPool pool) {
         require(isExistingPools[address(pool)], 'SecuritizationManager: Pool does not exist');
@@ -316,23 +322,25 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         ICrowdSale tge = ICrowdSale(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
+        ISecuritizationPool pool = ISecuritizationPool(tge.pool());
 
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
-                address sotTGEAddress = ISecuritizationPool(tge.pool()).tgeAddress();
+                address sotTGEAddress = pool.tgeAddress();
                 if (sotTGEAddress != address(0)) {
                     ICrowdSale(sotTGEAddress).setHasStarted(true);
                 }
             }
         }
 
-        ISecuritizationPool(tge.pool()).increaseReserve(currencyAmount);
-        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+        pool.increaseReserve(currencyAmount);
+        address poolOfPot = potToPool[_msgSender()];
         if (poolOfPot != address(0)) {
             ISecuritizationPool(poolOfPot).decreaseReserve(currencyAmount);
         }
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
+        emit NoteTokenPurchased(_msgSender(), tgeAddress, address(pool), currencyAmount, tokenAmount);
     }
 
     function setAllowedUIDTypes(uint256[] calldata ids) external onlyRole(DEFAULT_ADMIN_ROLE) {
