@@ -29,12 +29,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)] != address(0x0),
             'SECURITIZATION_POOL is zero address.'
         );
-        require(
-            _orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)].supportsInterface(
-                type(ISecuritizationPool).interfaceId
-            ),
-            'LoanKernel: invalid pool interface'
-        );
 
         require(
             _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0),
