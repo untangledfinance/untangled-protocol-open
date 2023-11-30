@@ -218,7 +218,7 @@ describe('SecuritizationManager', () => {
       const pools = await securitizationManager.pools(0);
       expect(pools).equal(securitizationPoolContract.address);
 
-      const poolToSOT = await securitizationManager.poolToSOT(securitizationPoolContract.address);
+      const poolToSOT = await securitizationPoolContract.sotToken(); // await securitizationManager.poolToSOT(securitizationPoolContract.address);
       expect(poolToSOT).equal(sotTokenAddress);
 
       const isExistingTGEs = await securitizationManager.isExistingTGEs(mintedIncreasingInterestTGE.address);
@@ -303,7 +303,7 @@ describe('SecuritizationManager', () => {
       const pools = await securitizationManager.pools(0);
       expect(pools).equal(securitizationPoolContract.address);
 
-      const poolToJOT = await securitizationManager.poolToJOT(securitizationPoolContract.address);
+      const poolToJOT = await securitizationPoolContract.jotToken();//await securitizationManager.poolToJOT(securitizationPoolContract.address);
       expect(poolToJOT).equal(jotTokenAddress);
 
       const isExistingTGEs = await securitizationManager.isExistingTGEs(mintedIncreasingInterestTGE.address);
