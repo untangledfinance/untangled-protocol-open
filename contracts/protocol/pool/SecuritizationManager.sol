@@ -27,6 +27,8 @@ import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
+import 'hardhat/console.sol';
+
 // TODO A @KhanhPham Upgrade this
 /// @title SecuritizationManager
 /// @author Untangled Team
@@ -196,7 +198,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         );
         noteTokenFactory.changeMinterRole(sotToken, tgeAddress);
 
-        ISecuritizationTGE(pool).injectTGEAddress(tgeAddress, sotToken, Configuration.NOTE_TOKEN_TYPE.SENIOR);
+        ISecuritizationTGE(pool).injectTGEAddress(tgeAddress, Configuration.NOTE_TOKEN_TYPE.SENIOR);
 
         isExistingTGEs[tgeAddress] = true;
 
@@ -289,7 +291,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         );
         noteTokenFactory.changeMinterRole(jotToken, tgeAddress);
 
-        ISecuritizationTGE(pool).injectTGEAddress(tgeAddress, jotToken, Configuration.NOTE_TOKEN_TYPE.JUNIOR);
+        ISecuritizationTGE(pool).injectTGEAddress(tgeAddress, Configuration.NOTE_TOKEN_TYPE.JUNIOR);
 
         isExistingTGEs[tgeAddress] = true;
 
