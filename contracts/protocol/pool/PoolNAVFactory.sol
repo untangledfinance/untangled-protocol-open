@@ -6,7 +6,7 @@ import '../../base/UntangledBase.sol';
 import '../../base/Factory.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
-import "./IPoolNAVFactory.sol";
+import './IPoolNAVFactory.sol';
 
 // TODO A @KhanhPham Deploy this
 contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
@@ -18,14 +18,14 @@ contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
 
     address public override poolNAVImplementation;
 
-    function initialize(Registry _registry, address _factoryAdmin) public reinitializer(3) {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
 
         registry = _registry;
     }
 
-    function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setFactoryAdmin(address _factoryAdmin) public onlyAdmin {
         _setFactoryAdmin(_factoryAdmin);
     }
 
@@ -35,18 +35,14 @@ contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
         emit UpdatePoolNAVImplementation(newAddress);
     }
 
-    function createPoolNAV() external override whenNotPaused nonReentrant returns (address) {
-        bytes memory _initialData = abi.encodeWithSelector(
-            POOL_NAV_INIT_FUNC_SELECTOR,
-            registry,
-            _msgSender()
-        );
-
+    function createPoolNAV() external override whenNotPaused returns (address) {
+        address pool = _msgSender();
+        bytes memory _initialData = abi.encodeWithSelector(POOL_NAV_INIT_FUNC_SELECTOR, registry, pool);
         address poolNAV = _deployInstance(poolNAVImplementation, _initialData);
-
         return poolNAV;
     }
 
-    uint256[46] private __gap0;
-    uint256[50] private __gap;
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return interfaceId == type(IPoolNAVFactory).interfaceId || super.supportsInterface(interfaceId);
+    }
 }

@@ -10,6 +10,7 @@ interface ISecuritizationTGE {
     event UpdateReserve(uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event Withdraw(address originatorAddress, uint256 amount);
+    event UpdatePoolNAV(address poolNav);
 
     function termLengthInSeconds() external view returns (uint64);
 

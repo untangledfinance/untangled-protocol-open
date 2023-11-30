@@ -222,6 +222,8 @@ contract SecuritizationTGE is
         address poolNAVAddress = poolNAVFactory.createPoolNAV();
         Storage storage $ = _getStorage();
         $.poolNAV = poolNAVAddress;
+
+        emit UpdatePoolNAV(poolNAVAddress);
     }
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {

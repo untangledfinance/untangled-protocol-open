@@ -45,6 +45,8 @@ const setUpTokenGenerationEventFactory = async (registry, factoryAdmin) => {
     await tokenGenerationEventFactory.setTGEImplAddress(1, mintedNormalTGEImpl.address);
 
     await tokenGenerationEventFactory.setTGEImplAddress(2, mintedNormalTGEImpl.address);
+    
+    await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
 
     return { tokenGenerationEventFactory };
 };
@@ -58,6 +60,8 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
     // await registry.setNoteToken(noteTokenImpl.address);
     await noteTokenFactory.setNoteTokenImplementation(noteTokenImpl.address);
 
+    await registry.setNoteTokenFactory(noteTokenFactory.address);
+
     return { noteTokenFactory };
 };
 
@@ -69,6 +73,7 @@ const setUpPoolNAVFactory = async (registry, factoryAdmin) => {
     const poolNAVImpl = await PoolNAV.deploy();
     // await registry.setNoteToken(noteTokenImpl.address);
     await poolNAVFactory.setPoolNAVImplementation(poolNAVImpl.address);
+    await registry.setPoolNAVFactory(poolNAVFactory.address);
 
     return { poolNAVFactory };
 }
@@ -200,9 +205,6 @@ async function setup() {
 
     await registry.setSecuritizationManager(securitizationManager.address);
 
-    await registry.setNoteTokenFactory(noteTokenFactory.address);
-    await registry.setPoolNAVFactory(poolNAVFactory.address);
-    await registry.setTokenGenerationEventFactory(tokenGenerationEventFactory.address);
 
     return {
         stableCoin,
