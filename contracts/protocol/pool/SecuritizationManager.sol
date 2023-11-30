@@ -81,12 +81,12 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
     }
 
     modifier doesSOTExist(address pool) {
-        require(poolToSOT[pool] == address(0), 'SecuritizationManager: Already exists SOT token');
+        require(ISecuritizationTGE(pool).sotToken() == address(0), 'SecuritizationManager: Already exists SOT token');
         _;
     }
 
     modifier doesJOTExist(address pool) {
-        require(poolToJOT[pool] == address(0), 'SecuritizationManager: Already exists JOT token');
+        require(ISecuritizationTGE(pool).jotToken() == address(0), 'SecuritizationManager: Already exists JOT token');
         _;
     }
 
@@ -177,13 +177,13 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         require(address(noteTokenFactory) != address(0), 'Note Token Factory was not registered');
         require(address(registry.getTokenGenerationEventFactory()) != address(0), 'TGE Factory was not registered');
 
-        poolToSOT[pool] = noteTokenFactory.createToken(
+        address sotToken = noteTokenFactory.createToken(
             pool,
             Configuration.NOTE_TOKEN_TYPE.SENIOR,
             saleTypeAndDecimal[1],
             ticker
         );
-        address sotToken = poolToSOT[address(pool)];
+        // poolToSOT[pool] = sotToken;
         require(sotToken != address(0), 'SOT token must be created');
 
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
@@ -269,15 +269,15 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         string memory ticker
     ) public whenNotPaused nonReentrant onlyPoolExisted(pool) doesJOTExist(pool) returns (address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
-        poolToJOT[address(pool)] = noteTokenFactory.createToken(
+
+        address jotToken = noteTokenFactory.createToken(
             address(pool),
             Configuration.NOTE_TOKEN_TYPE.JUNIOR,
             saleTypeAndDecimal[1],
             ticker
         );
 
-        address jotToken = poolToJOT[pool];
-        require(jotToken != address(0), 'JOT token must be created');
+        // poolToJOT[pool] = jotToken;
 
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
