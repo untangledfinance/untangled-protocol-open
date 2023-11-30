@@ -270,34 +270,6 @@ contract SecuritizationPoolValueService is
             ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor);
     }
 
-    function getOutstandingPrincipalCurrencyByInvestors(
-        address pool,
-        address[] calldata investors
-    ) external view returns (uint256) {
-        uint256 result = 0;
-        uint256 investorsLength = investors.length;
-
-        // duplicate but reduce external call
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
-            address investor = investors[i];
-            result += (crowdsale.currencyRaisedByInvestor(investor) -
-                ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor));
-        }
-
-        return result;
-    }
-
-    function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        require(pool != address(0), 'Pool was not deployed');
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        return crowdsale.currencyRaised() - ISecuritizationTGE(pool).paidPrincipalAmountSOT();
-    }
-
     function getPoolValue(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');

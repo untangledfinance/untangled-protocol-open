@@ -707,20 +707,6 @@ describe('SecuritizationPool', () => {
             expect(result.riskScoreIdx.toNumber()).equal(0);
         });
 
-        it('#getOutstandingPrincipalCurrencyByInvestors', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestors(
-                securitizationPoolContract.address,
-                [lenderSigner.address]
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
-
-        it('#getOutstandingPrincipalCurrency', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
-                securitizationPoolContract.address
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
     });
 
     describe('Upgradeables', async () => {
@@ -813,20 +799,6 @@ describe('SecuritizationPool', () => {
             expect(result.riskScoreIdx.toNumber()).equal(0);
         });
 
-        it('#getOutstandingPrincipalCurrencyByInvestors', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestors(
-                securitizationPoolContract.address,
-                [lenderSigner.address]
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
-
-        it('#getOutstandingPrincipalCurrency', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
-                securitizationPoolContract.address
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
     });
 
     describe('#Securitization Pool', async () => {
