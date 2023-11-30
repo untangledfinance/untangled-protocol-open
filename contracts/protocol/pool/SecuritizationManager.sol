@@ -29,11 +29,26 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 import 'hardhat/console.sol';
 
+abstract contract SecuritizationManagerBase is ISecuritizationManager {
+    Registry public override registry;
+
+    mapping(address => bool) public override isExistingPools;
+    address[] public override pools;
+
+    // mapping(address => address) public poolToSOT;
+    // mapping(address => address) public poolToJOT;
+    mapping(address => address) public override potToPool;
+
+    mapping(address => bool) public override isExistingTGEs;
+
+    uint256[44] private __gap;
+}
+
 // TODO A @KhanhPham Upgrade this
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
-contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManager, IRequiresUID {
+contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManagerBase, IRequiresUID {
     using ConfigHelper for Registry;
 
     event UpdateAllowedUIDTypes(uint256[] uids);
@@ -131,7 +146,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         SecuritizationAccessControl poolInstance = SecuritizationAccessControl(poolAddress);
 
         isExistingPools[poolAddress] = true;
-        pools.push(ISecuritizationPool(poolAddress));
+        pools.push(poolAddress);
 
         // ...
         poolInstance.grantRole(OWNER_ROLE, poolOwner);
@@ -190,7 +205,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
-            pool,
+            // pool,
             sotToken,
             ISecuritizationTGE(pool).underlyingCurrency(),
             saleTypeAndDecimal[0],
@@ -283,7 +298,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         address tgeAddress = registry.getTokenGenerationEventFactory().createNewSaleInstance(
             issuerTokenController,
-            pool,
+            // pool,
             jotToken,
             ISecuritizationTGE(pool).underlyingCurrency(),
             saleTypeAndDecimal[0],
@@ -341,7 +356,8 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
         if (poolOfPot != address(0)) {
             ISecuritizationTGE(poolOfPot).decreaseReserve(currencyAmount);
         }
-        emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
+
+        // emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
     }
 
     function setAllowedUIDTypes(uint256[] calldata ids) external onlyRole(DEFAULT_ADMIN_ROLE) {

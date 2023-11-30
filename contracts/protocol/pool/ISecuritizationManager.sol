@@ -4,27 +4,23 @@ pragma solidity 0.8.19;
 import '../../storage/Registry.sol';
 import './ISecuritizationPool.sol';
 
-abstract contract ISecuritizationManager {
-    Registry public registry;
-
+interface ISecuritizationManager {
     event NewTGECreated(address indexed instanceAddress);
     event NewNotesTokenCreated(address indexed instanceAddress);
     event NewPoolCreated(address indexed instanceAddress);
     event UpdatePotToPool(address indexed pot, address indexed pool);
-    
 
-    mapping(address => bool) public isExistingPools;
-    ISecuritizationPool[] public pools;
+    function registry() external view returns (Registry);
 
-    mapping(address => address) public poolToSOT;
-    mapping(address => address) public poolToJOT;
-    mapping(address => address) public potToPool;
+    function isExistingPools(address pool) external view returns (bool);
 
-    mapping(address => bool) public isExistingTGEs;
+    function pools(uint256 idx) external view returns (address);
+
+    function potToPool(address pot) external view returns (address);
+
+    function isExistingTGEs(address tge) external view returns (bool);
 
     /// @dev Register pot to pool instance
     /// @param pot Pool linked wallet
-    function registerPot(address pot) external virtual;
-
-    uint256[44] private __gap;
+    function registerPot(address pot) external;
 }

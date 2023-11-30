@@ -132,17 +132,17 @@ contract SecuritizationTGE is
         registry().requireSecuritizationManager(_msgSender());
 
         require(_tgeAddress != address(0), 'SecuritizationPool: Address zero');
-        // address _tokenAddress = ICrowdSaleLike(_tgeAddress).token();
-        // require(_tokenAddress != address(0), 'SecuritizationPool: Address zero');
+        address _tokenAddress = ICrowdSaleLike(_tgeAddress).token();
+        require(_tokenAddress != address(0), 'SecuritizationPool: Address zero');
 
         Storage storage $ = _getStorage();
 
         if (_noteType == Configuration.NOTE_TOKEN_TYPE.SENIOR) {
             $.tgeAddress = _tgeAddress;
-            // $.sotToken = _tokenAddress;
+            $.sotToken = _tokenAddress;
         } else {
             $.secondTGEAddress = _tgeAddress;
-            // $.jotToken = _tokenAddress;
+            $.jotToken = _tokenAddress;
         }
 
         $.state = CycleState.CROWDSALE;

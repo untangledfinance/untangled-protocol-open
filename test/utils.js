@@ -238,6 +238,7 @@ const getPoolByAddress = async (address) => {
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
+
   saltFromOrderValues,
   debtorsFromOrderAddresses,
   genLoanAgreementIds,

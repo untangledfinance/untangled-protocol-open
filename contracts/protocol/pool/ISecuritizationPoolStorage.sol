@@ -38,6 +38,7 @@ interface ISecuritizationPoolStorage {
         address secondTGEAddress;
         address sotToken;
         address jotToken;
+        
         address underlyingCurrency;
         uint256 reserve; // Money in pool
         uint32 minFirstLossCushion;

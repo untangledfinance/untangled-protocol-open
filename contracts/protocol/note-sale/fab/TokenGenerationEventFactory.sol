@@ -11,6 +11,10 @@ import {MintedIncreasingInterestTGE} from '../MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../MintedNormalTGE.sol';
 import {Registry} from '../../../storage/Registry.sol';
 
+interface INoteTokenLike {
+    function poolAddress() external view returns (address);
+}
+
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
 
@@ -47,13 +51,15 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     function createNewSaleInstance(
         address issuerTokenController,
-        address pool,
+        // address pool,
         address token,
         address currency,
         uint8 saleType,
         bool longSale
     ) external override whenNotPaused nonReentrant returns (address) {
         registry.requireSecuritizationManager(_msgSender());
+
+        address pool = INoteTokenLike(token).poolAddress();
 
         if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             return
