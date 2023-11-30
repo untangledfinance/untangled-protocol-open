@@ -362,37 +362,6 @@ contract SecuritizationPoolValueService is
         return this.getBeginningSeniorAsset(poolAddress) - this.getBeginningSeniorDebt(poolAddress);
     }
 
-    function getReserve(
-        address poolAddress,
-        uint256 JOTPrincipal,
-        uint256 SOTTokenRedeem,
-        uint256 JOTTokenRedeem
-    ) external view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
-
-        require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(poolAddress);
-        address currencyAddress = securitizationPool.underlyingCurrency();
-        // currency balance of pool Address
-        uint256 reserve = IERC20Upgradeable(currencyAddress).balanceOf(poolAddress);
-        uint256 SOTPrincipal = securitizationPool.principalAmountSOT();
-        // uint256 JOTPrincipal;
-        // uint256 SOTTokenRedeem;
-        // uint256 JOTTokenRedeem;
-
-        uint256 totalReserve = reserve +
-            SOTPrincipal +
-            JOTPrincipal -
-            SOTTokenRedeem *
-            sotPrice +
-            JOTTokenRedeem *
-            jotPrice;
-        return totalReserve;
-    }
-
     /// @inheritdoc ISecuritizationPoolValueService
     function getSeniorAsset(address poolAddress) external view returns (uint256) {
         // we need to change this value with interest rate by time
