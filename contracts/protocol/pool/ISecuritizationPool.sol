@@ -6,7 +6,7 @@ import '../../base/UntangledBase.sol';
 import '../../libraries/Configuration.sol';
 
 abstract contract ISecuritizationPool is UntangledBase {
-    event Withdraw(address originatorAddress, uint256 amount);
+    event SecuritizationPoolWithdraw(address originatorAddress, uint256 amount);
     event CollectAsset(address from, uint256 value);
     event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event AddTokenAssetAddress(address token);
