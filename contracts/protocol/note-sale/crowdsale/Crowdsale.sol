@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 
 import '../../../base/UntangledBase.sol';
+import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../pool/ISecuritizationPool.sol';
-import {ISecuritizationTGE} from '../../pool/ISecuritizationTGE.sol';
 
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
@@ -155,7 +155,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @notice Retrieves the remaining token balance held by the crowdsale contract
     function getTokenRemainAmount() public view returns (uint256) {
-        return IERC20Upgradeable(token).balanceOf(address(this));
+        return IERC20(token).balanceOf(address(this));
     }
 
     /// @notice Calculates the remaining amount of currency available for purchase
@@ -214,7 +214,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     /// @dev Transfers the currency from the payer to the crowdsale contract
     function _claimPayment(address payee, uint256 currencyAmount) internal {
         require(
-            IERC20Upgradeable(currency).transferFrom(payee, address(this), currencyAmount),
+            IERC20(currency).transferFrom(payee, address(this), currencyAmount),
             'Fail to transfer currency from payee to contract'
         );
     }
@@ -229,7 +229,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Transfers the currency funds from the crowdsale contract to the specified beneficiary
     function _forwardFunds(address beneficiary, uint256 currencyAmount) internal {
-        require(IERC20Upgradeable(currency).transfer(beneficiary, currencyAmount), 'Fail to transfer currency to Beneficiary');
+        require(IERC20(currency).transfer(beneficiary, currencyAmount), 'Fail to transfer currency to Beneficiary');
     }
 
     /// @dev Sets the total cap to the specified amount

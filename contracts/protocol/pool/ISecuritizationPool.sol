@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import '../../storage/Registry.sol';
+import '../../base/UntangledBase.sol';
+import '../../libraries/Configuration.sol';
 
 import {RiskScore} from './base/types.sol';
 
@@ -13,6 +15,18 @@ interface ISecuritizationPool {
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
+    event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
+    event UpdateInterestRateSOT(uint32 _interestRateSOT);
+    event UpdateLockedDistributeBalance(
+        address indexed tokenAddress,
+        address indexed investor,
+        uint256 lockedDistributeBalance,
+        uint256 lockedRedeemBalances,
+        uint256 totalLockedRedeemBalances,
+        uint256 totalLockedDistributeBalance
+    );
+    event UpdateReserve(uint256 currencyAmount);
+    event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
 
     /// @notice A view function that returns the length of the NFT (non-fungible token) assets array
     function getNFTAssetsLength() external view returns (uint256);

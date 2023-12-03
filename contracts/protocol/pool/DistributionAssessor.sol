@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+
 import './base/SecuritizationPoolServiceBase.sol';
 import '../../interfaces/INoteToken.sol';
 
@@ -40,13 +42,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @inheritdoc IDistributionAssessor
     function getSOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getSeniorAsset(securitizationPool);
-        return
-            _getTokenPrice(
-                securitizationPool,
-                INoteToken(ISecuritizationTGE(securitizationPool).sotToken()),
-                seniorAsset
-            );
+        uint256 seniorAsset = poolService.getSeniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, INoteToken(ISecuritizationTGE(securitizationPool).sotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor
@@ -102,13 +99,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getJuniorAsset(securitizationPool);
-        return
-            _getTokenPrice(
-                securitizationPool,
-                INoteToken(ISecuritizationTGE(securitizationPool).jotToken()),
-                seniorAsset
-            );
+        uint256 seniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        return _getTokenPrice(securitizationPool, INoteToken(ISecuritizationTGE(securitizationPool).jotToken()), seniorAsset);
     }
 
     /// @inheritdoc IDistributionAssessor

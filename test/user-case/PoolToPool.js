@@ -75,7 +75,7 @@ describe('Pool to Pool', () => {
 
       .newPoolInstance(
         utils.keccak256(Date.now()),
-  
+
         poolCreatorSigner.address,
         utils.defaultAbiCoder.encode([
           {
@@ -166,7 +166,7 @@ describe('Pool to Pool', () => {
 
         .newPoolInstance(
           utils.keccak256(Date.now()),
-    
+
           poolACreator.address,
           utils.defaultAbiCoder.encode([
             {
@@ -501,7 +501,7 @@ describe('Pool to Pool', () => {
 
         .newPoolInstance(
           utils.keccak256(Date.now()),
-    
+
           poolCCreatorSigner.address,
           utils.defaultAbiCoder.encode([
             {
@@ -532,7 +532,7 @@ describe('Pool to Pool', () => {
       const poolCCreationReceipt = await poolCCreationTransaction.wait();
       const [poolCContractAddress] = poolCCreationReceipt.events.find((e) => e.event == 'NewPoolCreated').args;
       poolCContract = await getPoolByAddress(poolCContractAddress);
-      
+
 
       // Set pot for pool C
       await poolCContract.connect(poolCCreatorSigner).setPot(poolCPotSigner.address);
@@ -598,7 +598,7 @@ describe('Pool to Pool', () => {
 
         .newPoolInstance(
           utils.keccak256(Date.now()),
-    
+
           poolBCreatorSigner.address,
           utils.defaultAbiCoder.encode([
             {
@@ -693,7 +693,7 @@ describe('Pool to Pool', () => {
 
         .newPoolInstance(
           utils.keccak256(Date.now()),
-    
+
           poolACreatorSigner.address,
           utils.defaultAbiCoder.encode([
             {

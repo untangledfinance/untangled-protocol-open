@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Registry} from '../../storage/Registry.sol';
+import '../../tokens/ERC721/types.sol';
 
 abstract contract ILoanKernel {
     Registry public registry;
@@ -90,6 +91,13 @@ abstract contract ILoanKernel {
         bytes32[] debtOrderHashes;
         uint8[] riskScores;
         uint8 assetPurpose;
+    }
+
+    struct FillDebtOrderParam {
+        address[] orderAddresses; // 0-pool, 1-principal token address, 2-repayment router, 3-term contract, 4-relayer,...
+        uint256[] orderValues; //  0-creditorFee, 1-asset purpose,..., [x] principalAmounts, [x] expirationTimestampInSecs, [x] - salts, [x] - riskScores
+        bytes32[] termsContractParameters; // Term contract parameters from different farmers, encoded as hash strings
+        LoanAssetInfo[] latInfo;
     }
 
     /*********** */

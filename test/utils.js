@@ -8,173 +8,181 @@ const unlimitedAllowance = '1157920892373161954235709850086879078532699846656405
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 function saltFromOrderValues(orderValues, length) {
-  const salts = [];
+    const salts = [];
 
-  for (let i = 2 + length * 2; i < 2 + length * 3; i++) {
-    salts[i - 2 - length * 2] = orderValues[i];
-  }
-  return salts;
+    for (let i = 2 + length * 2; i < 2 + length * 3; i++) {
+        salts[i - 2 - length * 2] = orderValues[i];
+    }
+    return salts;
 }
 
 function debtorsFromOrderAddresses(orderAddresses, length) {
-  const debtors = [];
-  for (let i = 5; i < 5 + length; i++) {
-    debtors[i - 5] = orderAddresses[i];
-  }
-  return debtors;
+    const debtors = [];
+    for (let i = 5; i < 5 + length; i++) {
+        debtors[i - 5] = orderAddresses[i];
+    }
+    return debtors;
 }
 
 function genLoanAgreementIds(version, debtors, termsContract, termsContractParameters, salts) {
-  const agreementIds = [];
-  for (let i = 0; i < 0 + salts.length; i++) {
-    agreementIds[i] = utils.keccak256(
-      ethers.utils.solidityPack(
-        ['address', 'address', 'address', 'bytes32', 'uint256'],
-        [version, debtors[i], termsContract, termsContractParameters[i], salts[i]]
-      )
-    );
-  }
-  return agreementIds;
+    const agreementIds = [];
+    for (let i = 0; i < 0 + salts.length; i++) {
+        agreementIds[i] = utils.keccak256(
+            ethers.utils.solidityPack(
+                ['address', 'address', 'address', 'bytes32', 'uint256'],
+                [version, debtors[i], termsContract, termsContractParameters[i], salts[i]]
+            )
+        );
+    }
+    return agreementIds;
 }
 
 const bitShiftLeft = (target, numPlaces) => {
-  const binaryTargetString = target.toString(2);
-  const binaryTargetStringShifted = binaryTargetString + '0'.repeat(numPlaces);
-  return new BigNumber(binaryTargetStringShifted, 2);
+    const binaryTargetString = target.toString(2);
+    const binaryTargetStringShifted = binaryTargetString + '0'.repeat(numPlaces);
+    return new BigNumber(binaryTargetStringShifted, 2);
 };
 
 const packTermsContractParameters = ({
-  principalAmount,
-  amortizationUnitType,
-  termLengthUnits,
-  gracePeriodInDays,
-  interestRateFixedPoint,
+    principalAmount,
+    amortizationUnitType,
+    termLengthUnits,
+    gracePeriodInDays,
+    interestRateFixedPoint,
 }) => {
-  const principalAmountShifted = bitShiftLeft(principalAmount, 152);
-  const interestRateShifted = bitShiftLeft(interestRateFixedPoint, 128);
-  const amortizationUnitTypeShifted = bitShiftLeft(amortizationUnitType, 124);
-  const termLengthShifted = bitShiftLeft(termLengthUnits, 28);
-  const gracePeriodInDaysShifted = bitShiftLeft(gracePeriodInDays, 20);
-  const baseTenParameters = new BigNumber('0')
-    .plus(new BigNumber(principalAmountShifted))
-    .plus(new BigNumber(interestRateShifted))
-    .plus(new BigNumber(amortizationUnitTypeShifted))
-    .plus(new BigNumber(termLengthShifted))
-    .plus(new BigNumber(gracePeriodInDaysShifted));
+    const principalAmountShifted = bitShiftLeft(principalAmount, 152);
+    const interestRateShifted = bitShiftLeft(interestRateFixedPoint, 128);
+    const amortizationUnitTypeShifted = bitShiftLeft(amortizationUnitType, 124);
+    const termLengthShifted = bitShiftLeft(termLengthUnits, 28);
+    const gracePeriodInDaysShifted = bitShiftLeft(gracePeriodInDays, 20);
+    const baseTenParameters = new BigNumber('0')
+        .plus(new BigNumber(principalAmountShifted))
+        .plus(new BigNumber(interestRateShifted))
+        .plus(new BigNumber(amortizationUnitTypeShifted))
+        .plus(new BigNumber(termLengthShifted))
+        .plus(new BigNumber(gracePeriodInDaysShifted));
 
-  let result = `0x${baseTenParameters.toString(16).padStart(64, '0')}`;
-  return result;
+    let result = `0x${baseTenParameters.toString(16).padStart(64, '0')}`;
+    return result;
 };
 
 const INTEREST_RATE_SCALING_FACTOR = new BigNumber(10 ** 4);
 const interestRateFixedPoint = (amount) => {
-  return new BigNumber(amount).times(INTEREST_RATE_SCALING_FACTOR);
+    return new BigNumber(amount).times(INTEREST_RATE_SCALING_FACTOR);
 };
 
 const genSalt = () => {
-  const saltBuffer = crypto.randomBytes(8);
-  const saltBufferHex = saltBuffer.toString('hex');
-  return new BigNumber(`0x${saltBufferHex}`).toString();
+    const saltBuffer = crypto.randomBytes(8);
+    const saltBufferHex = saltBuffer.toString('hex');
+    return new BigNumber(`0x${saltBufferHex}`).toString();
 };
 
 const generateEntryHash = (payer, receiver, fiatAmount, dueDate, salt) => {
-  return utils.keccak256(
-    ethers.utils.solidityPack(
-      ['address', 'address', 'uint256', 'uint256', 'uint256'],
-      [payer, receiver, fiatAmount, dueDate, salt]
-    )
-  );
+    return utils.keccak256(
+        ethers.utils.solidityPack(
+            ['address', 'address', 'uint256', 'uint256', 'uint256'],
+            [payer, receiver, fiatAmount, dueDate, salt]
+        )
+    );
 };
 
-
 const generateLATMintPayload = async (loanAssetToken, signer, tokenIds, nonces, validator) => {
-  await signer.provider.ready;
+    await signer.provider.ready;
 
-  const network = await signer.provider.getNetwork();
+    const network = await signer.provider.getNetwork();
 
-  const domain = {
-    name: 'UntangledLoanAssetToken',
-    version: '0.0.1',
-    chainId: network.chainId,
-    verifyingContract: loanAssetToken.address,
-  }
+    const domain = {
+        name: 'UntangledLoanAssetToken',
+        version: '0.0.1',
+        chainId: network.chainId,
+        verifyingContract: loanAssetToken.address,
+    };
 
-  const message = {
-    tokenIds,
-    nonces,
-    validator,
-  };
+    const message = {
+        tokenIds,
+        nonces,
+        validator,
+    };
 
-  const validateSignature = await signer._signTypedData(
-    domain,
-    {
-      LoanAssetToken: [
+    const validateSignature = await signer._signTypedData(
+        domain,
         {
-          name: "tokenIds",
-          type: "uint256[]"
+            LoanAssetToken: [
+                {
+                    name: 'tokenIds',
+                    type: 'uint256[]',
+                },
+                {
+                    name: 'nonces',
+                    type: 'uint256[]',
+                },
+                {
+                    name: 'validator',
+                    type: 'address',
+                },
+            ],
         },
-        {
-          name: "nonces",
-          type: "uint256[]"
-        },
-        {
-          name: "validator",
-          type: "address"
-        }
-      ],
-    },
-    message,
-  )
+        message
+    );
 
-  // const add = require('@metamask/eth-sig-util').recoverTypedSignature({
-  //   data: {
-  //     domain,
-  //     types: {
-  //       EIP712Domain: [
-  //         {
-  //           name: "name",
-  //           type: "string",
-  //         },
-  //         {
-  //           name: "version",
-  //           type: "string",
-  //         },
-  //         {
-  //           name: "chainId",
-  //           type: "uint256",
-  //         },
-  //         {
-  //           name: "verifyingContract",
-  //           type: "address",
-  //         },
-  //       ],
-  //       LoanAssetToken: [
-  //         {
-  //           name: "tokenIds",
-  //           type: "uint256[]"
-  //         },
-  //         {
-  //           name: "nonces",
-  //           type: "uint256[]"
-  //         },
-  //         {
-  //           name: "validator",
-  //           type: "address"
-  //         }
-  //       ],
-  //     },
-  //     message,
-  //     primaryType: 'LoanAssetToken',
-  //   }, signature: validateSignature, version: 'V4'
-  // })
+    // const add = require('@metamask/eth-sig-util').recoverTypedSignature({
+    //   data: {
+    //     domain,
+    //     types: {
+    //       EIP712Domain: [
+    //         {
+    //           name: "name",
+    //           type: "string",
+    //         },
+    //         {
+    //           name: "version",
+    //           type: "string",
+    //         },
+    //         {
+    //           name: "chainId",
+    //           type: "uint256",
+    //         },
+    //         {
+    //           name: "verifyingContract",
+    //           type: "address",
+    //         },
+    //       ],
+    //       LoanAssetToken: [
+    //         {
+    //           name: "tokenIds",
+    //           type: "uint256[]"
+    //         },
+    //         {
+    //           name: "nonces",
+    //           type: "uint256[]"
+    //         },
+    //         {
+    //           name: "validator",
+    //           type: "address"
+    //         }
+    //       ],
+    //     },
+    //     message,
+    //     primaryType: 'LoanAssetToken',
+    //   }, signature: validateSignature, version: 'V4'
+    // })
 
-  return {
-    validateSignature,
-    tokenIds,
-    nonces,
-    validator,
-  };
-}
+    return {
+        validateSignature,
+        tokenIds,
+        nonces,
+        validator,
+    };
+};
+
+const formatFillDebtOrderParams = (orderAddresses, orderValues, termsContractParameters, latInfo) => {
+    return {
+        orderAddresses,
+        orderValues,
+        termsContractParameters,
+        latInfo,
+    };
+};
 
 const genRiskScoreParam = (...args) => {
   const daysPastDues = args.map(r => r.daysPastDue);
@@ -259,4 +267,5 @@ module.exports = {
 
   getPoolByAddress,
   getPoolAbi,
+  formatFillDebtOrderParams,
 };

@@ -53,7 +53,7 @@ describe('MinFirstLoss', () => {
 
       .newPoolInstance(
         utils.keccak256(Date.now()),
-  
+
         poolCreatorSigner.address,
         utils.defaultAbiCoder.encode([
           {
@@ -80,7 +80,7 @@ describe('MinFirstLoss', () => {
             validatorRequired: true
           }
         ]));
-  
+
     const receipt = await transaction.wait();
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 

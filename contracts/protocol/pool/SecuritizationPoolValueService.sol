@@ -299,7 +299,7 @@ contract SecuritizationPoolValueService is
     }
 
     function getPoolValue(address poolAddress) external view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);

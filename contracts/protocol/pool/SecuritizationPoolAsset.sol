@@ -282,7 +282,6 @@ contract SecuritizationPoolAsset is
         }
 
         Storage storage $ = _getStorage();
-        $.amountOwedToOriginator += expectedAssetsValue;
 
         if (firstAssetTimestamp() == 0) {
             $.firstAssetTimestamp = uint64(block.timestamp);

@@ -16,6 +16,14 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
 
+    modifier onlySecuritizationManager() {
+        require(
+            _msgSender() == address(registry.getSecuritizationManager()),
+            'SecuritizationPool: Only SecuritizationManager'
+        );
+        _;
+    }
+
     function __TokenGenerationEventFactory_init(Registry _registry, address _factoryAdmin) internal onlyInitializing {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
@@ -52,9 +60,7 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override whenNotPaused nonReentrant returns (address) {
-        registry.requireSecuritizationManager(_msgSender());
-
+    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
         if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             return
                 _newSale(

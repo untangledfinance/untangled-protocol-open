@@ -11,34 +11,38 @@ const {
   unlimitedAllowance,
   generateLATMintPayload,
   getPoolByAddress,
+  formatFillDebtOrderParams,
 } = require('./utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const {
-  time,
-  impersonateAccount,
-  stopImpersonatingAccount,
-  setBalance,
+    time,
+    impersonateAccount,
+    stopImpersonatingAccount,
+    setBalance,
 } = require('@nomicfoundation/hardhat-network-helpers');
 const { parse } = require('dotenv');
 const { setup } = require('./setup.js');
 
 const { POOL_ADMIN_ROLE } = require('./constants.js');
+const { SaleType } = require('./shared/constants.js');
+const { presignedMintMessage } = require('./shared/uid-helper.js');
+const { ORIGINATOR_ROLE } = require('./constants');
 
 const ONE_DAY = 86400;
 
 const YEAR_LENGTH_IN_SECONDS = 31536000; // Number of seconds in a year (approximately)
 function calculateInterestForDuration(principalAmount, interestRate, durationLengthInSec) {
-  // Calculate the interest rate as a fraction
-  const interestRateFraction = interestRate * (1 / 100);
+    // Calculate the interest rate as a fraction
+    const interestRateFraction = interestRate * (1 / 100);
 
-  // Calculate the compound interest using the formula
-  const compoundInterest =
-    principalAmount * Math.pow(1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS, durationLengthInSec) -
-    principalAmount;
+    // Calculate the compound interest using the formula
+    const compoundInterest =
+        principalAmount * Math.pow(1 + interestRateFraction / YEAR_LENGTH_IN_SECONDS, durationLengthInSec) -
+        principalAmount;
 
-  return compoundInterest;
+    return compoundInterest;
 }
 describe('LoanInterestTermsContract', () => {
   let stableCoin;
@@ -55,6 +59,15 @@ describe('LoanInterestTermsContract', () => {
   let securitizationPoolContract;
   let defaultLoanAssetTokenValidator;
   let tokenIds;
+
+    let loanInterestTermsContract;
+    let secondSecuritizationPool;
+    let sotToken;
+    let jotToken;
+    let mintedIncreasingInterestTGE;
+    let jotMintedIncreasingInterestTGE;
+    let securitizationPoolValueService;
+    let distributionAssessor;
 
   // Wallets
   let untangledAdminSigner,
@@ -89,7 +102,30 @@ describe('LoanInterestTermsContract', () => {
       distributionTranche,
       registry,
       defaultLoanAssetTokenValidator,
+            securitizationPoolValueService,
+            distributionAssessor,
     } = await setup());
+        await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
+
+        await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
+
+        // Gain UID
+        const UID_TYPE = 0;
+        const chainId = await getChainId();
+        const expiredAt = dayjs().unix() + 86400;
+        const nonce = 0;
+        const ethRequired = parseEther('0.00083');
+
+        const uidMintMessage = presignedMintMessage(
+            lenderSigner.address,
+            UID_TYPE,
+            expiredAt,
+            uniqueIdentity.address,
+            nonce,
+            chainId
+        );
+        const signature = await untangledAdminSigner.signMessage(uidMintMessage);
+        await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
 
     await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
     // Create new pool
@@ -128,6 +164,121 @@ describe('LoanInterestTermsContract', () => {
     const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
     securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
+    await securitizationPoolContract
+        .connect(poolCreatorSigner)
+        .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
+  });
+
+  describe('#Securitization Manager', async () => {
+    it('Should set up TGE for SOT successfully', async () => {
+      const tokenDecimals = 18;
+
+      const openingTime = dayjs(new Date()).unix();
+      const closingTime = dayjs(new Date()).add(7, 'days').unix();
+      const rate = 2;
+      const totalCapOfToken = parseEther('100000');
+      const initialInterest = 10000;
+      const finalInterest = 10000;
+      const timeInterval = 1 * 24 * 3600; // seconds
+      const amountChangeEachInterval = 0;
+      const prefixOfNoteTokenSaleName = 'SOT_';
+
+      const transaction = await securitizationManager
+          .connect(poolCreatorSigner)
+          .setUpTGEForSOT(
+              untangledAdminSigner.address,
+              securitizationPoolContract.address,
+              [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+              true,
+              initialInterest,
+              finalInterest,
+              timeInterval,
+              amountChangeEachInterval,
+              { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+              prefixOfNoteTokenSaleName
+          );
+
+      const receipt = await transaction.wait();
+
+      const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+      expect(tgeAddress).to.be.properAddress;
+
+      mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+      const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(sotTokenAddress).to.be.properAddress;
+
+      sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
+    });
+
+    it('Should set up TGE for JOT successfully', async () => {
+      const tokenDecimals = 18;
+
+      const openingTime = dayjs(new Date()).unix();
+      const closingTime = dayjs(new Date()).add(7, 'days').unix();
+      const rate = 2;
+      const totalCapOfToken = parseEther('100000');
+      const prefixOfNoteTokenSaleName = 'JOT_';
+      const initialJotAmount = parseEther('100');
+
+      // JOT only has SaleType.NORMAL_SALE
+      const transaction = await securitizationManager
+          .connect(poolCreatorSigner)
+          .setUpTGEForJOT(
+              untangledAdminSigner.address,
+              securitizationPoolContract.address,
+              initialJotAmount,
+              [SaleType.NORMAL_SALE, tokenDecimals],
+              true,
+              { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+              prefixOfNoteTokenSaleName
+          );
+      const receipt = await transaction.wait();
+
+      const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+      expect(tgeAddress).to.be.properAddress;
+
+      jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+      const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+      expect(jotTokenAddress).to.be.properAddress;
+
+      jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
+    });
+
+    it('Should buy tokens failed if buy sot first', async () => {
+      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await expect(
+          securitizationManager
+              .connect(lenderSigner)
+              .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+      ).to.be.revertedWith(`Crowdsale: sale not started`);
+    });
+
+    it('Should buy tokens successfully', async () => {
+      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+      await securitizationManager
+          .connect(lenderSigner)
+          .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
+
+      await securitizationManager
+          .connect(lenderSigner)
+          .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+
+      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
+      expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
+
+      expect(formatEther(await stableCoin.balanceOf(securitizationPoolContract.address))).equal('200.0');
+
+      const sotValue = await distributionAssessor.calcCorrespondingTotalAssetValue(
+          sotToken.address,
+          lenderSigner.address
+      );
+      expect(formatEther(sotValue)).equal('100.0');
+    });
   });
 
   const agreementID = '0x979b5e9fab60f9433bf1aa924d2d09636ae0f5c10e2c6a8a58fe441cd1414d7f';
@@ -142,7 +293,7 @@ describe('LoanInterestTermsContract', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
         loanInterestTermsContract.connect(untangledAdminSigner).registerTermStart(agreementID)
-      ).to.be.revertedWith('Registry: Only LoanKernel');
+      ).to.be.revertedWith('LoanInterestTermsContract: Only for LoanKernel.');
     });
     it('should start loan successfully', async () => {
       await registry.setLoanKernel(impersonationKernel.address);
@@ -263,16 +414,23 @@ describe('LoanInterestTermsContract', () => {
           salts
       );
 
-      await loanKernel.fillDebtOrder(orderAddresses, orderValues, termsContractParameters,
-          await Promise.all(tokenIds.map(async (x) => ({
-            ...await generateLATMintPayload(
-                loanAssetTokenContract,
-                defaultLoanAssetTokenValidator,
-                [x],
-                [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                defaultLoanAssetTokenValidator.address
-            )
-          })))
+      await loanKernel.fillDebtOrder(
+          formatFillDebtOrderParams(
+              orderAddresses,
+              orderValues,
+              termsContractParameters,
+              await Promise.all(
+                  tokenIds.map(async (x) => ({
+                      ...(await generateLATMintPayload(
+                          loanAssetTokenContract,
+                          defaultLoanAssetTokenValidator,
+                          [x],
+                          [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                          defaultLoanAssetTokenValidator.address
+                      )),
+                  }))
+              )
+          )
       );
 
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
@@ -299,12 +457,12 @@ describe('LoanInterestTermsContract', () => {
     });
   });
 
-  describe('#getInterestRate', async () => {
-    it('should unpack interest rate correctly', async () => {
-      const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
-      expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+    describe('#getInterestRate', async () => {
+        it('should unpack interest rate correctly', async () => {
+            const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
+            expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+        });
     });
-  });
 
   describe('#getValueRepaidToDate', async () => {
     it('should return current repaid principal and interest amount of an agreementId', async () => {
@@ -314,19 +472,21 @@ describe('LoanInterestTermsContract', () => {
       expect(repaidPrincipal).to.equal(expectPrincipalAmount);
       expect(repaidInterest).to.equal(expectInterestAmount);
     });
-  });
-  describe('#getMultiExpectedRepaymentValues', async () => {
-    it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
-      const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
-      const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
-      const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
-      const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[1]);
-      const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
-      const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
-      expect(repaidPrincipal).to.equal(expectPrincipalAmount);
-      expect(repaidInterest).to.equal(expectInterestAmount);
-      expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
-      expect(repaidInterest1).to.equal(expectInterestAmount1);
+    describe('#getMultiExpectedRepaymentValues', async () => {
+        it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
+            const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
+            const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
+            const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
+            const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(
+                tokenIds[1]
+            );
+            const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
+            const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
+            expect(repaidPrincipal).to.equal(expectPrincipalAmount);
+            expect(repaidInterest).to.equal(expectInterestAmount);
+            expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
+            expect(repaidInterest1).to.equal(expectInterestAmount1);
+        });
     });
   });
 });
