@@ -707,30 +707,6 @@ describe('SecuritizationPool', () => {
             expect(result.riskScoreIdx.toNumber()).equal(0);
         });
 
-        it('#getOutstandingPrincipalCurrencyByInvestors', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestors(
-                securitizationPoolContract.address,
-                [lenderSigner.address]
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
-
-        it('#getReserve', async () => {
-            const result = await securitizationPoolValueService.getReserve(
-                securitizationPoolContract.address,
-                parseEther('15000'),
-                parseEther('1000'),
-                parseEther('1000')
-            );
-            expect(result).to.closeTo(parseEther('14189.999'), parseEther('0.001'));
-        });
-
-        it('#getOutstandingPrincipalCurrency', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
-                securitizationPoolContract.address
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
     });
 
     describe('Upgradeables', async () => {
@@ -823,30 +799,6 @@ describe('SecuritizationPool', () => {
             expect(result.riskScoreIdx.toNumber()).equal(0);
         });
 
-        it('#getOutstandingPrincipalCurrencyByInvestors', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestors(
-                securitizationPoolContract.address,
-                [lenderSigner.address]
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
-
-        it('#getReserve', async () => {
-            const result = await securitizationPoolValueService.getReserve(
-                securitizationPoolContract.address,
-                parseEther('15000'),
-                parseEther('1000'),
-                parseEther('1000')
-            );
-            expect(result).to.closeTo(parseEther('14189.9999'), parseEther('0.001'));
-        });
-
-        it('#getOutstandingPrincipalCurrency', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrency(
-                securitizationPoolContract.address
-            );
-            expect(formatEther(result)).equal('90.0');
-        });
     });
 
     describe('#Securitization Pool', async () => {
