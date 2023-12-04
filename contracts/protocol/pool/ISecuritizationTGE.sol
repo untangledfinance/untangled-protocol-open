@@ -16,6 +16,9 @@ interface ISecuritizationTGE {
     /// @notice sets the pot address for the contract
     function setPot(address _pot) external;
 
+    /// @notice sets debt ceiling value
+    function setDebtCeiling(uint256 _debtCeiling) external;
+
     // function pot() external view returns (address);
 
     /// @dev trigger update reserve when buy note token action happens
@@ -42,6 +45,8 @@ interface ISecuritizationTGE {
 
     function principalAmountSOT() external view returns (uint256);
 
+    function debtCeiling() external view returns (uint256);
+
     function interestRateSOT() external view returns (uint32); // Annually, support 4 decimals num
 
     function minFirstLossCushion() external view returns (uint32);
@@ -65,6 +70,9 @@ interface ISecuritizationTGE {
 
     /// @notice checks if the redemption process has finished
     function hasFinishedRedemption() external view returns (bool);
+
+    ///@notice check current debt ceiling is valid
+    function isDebtCeilingValid() external view returns (bool);
 
     /// @notice sets the interest rate for the senior tranche of tokens
     function setInterestRateForSOT(uint32 _interestRateSOT) external;

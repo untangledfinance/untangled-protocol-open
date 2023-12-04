@@ -24,6 +24,7 @@ interface ISecuritizationPoolStorage {
         address currency;
         uint32 minFirstLossCushion;
         bool validatorRequired;
+        uint256 debtCeiling;
     }
 
     struct Storage {
@@ -52,6 +53,7 @@ interface ISecuritizationPoolStorage {
         uint256 totalAssetRepaidCurrency;
         mapping(address => uint256) paidPrincipalAmountSOTByInvestor;
         uint256 amountOwedToOriginator;
+        uint256 debtCeiling;
         CycleState state;
         // lock distribution
         mapping(address => mapping(address => uint256)) lockedDistributeBalances;

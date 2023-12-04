@@ -132,6 +132,10 @@ describe('SecuritizationPool', () => {
                                         name: 'validatorRequired',
                                         type: 'bool',
                                     },
+                                    {
+                                        name: 'debtCeiling',
+                                        type: 'uint256',
+                                    },
                                 ],
                             },
                         ],
@@ -140,6 +144,7 @@ describe('SecuritizationPool', () => {
                                 currency: stableCoin.address,
                                 minFirstLossCushion: '100000',
                                 validatorRequired: true,
+                                debtCeiling: parseEther('1000').toString(),
                             },
                         ]
                     )
@@ -202,6 +207,10 @@ describe('SecuritizationPool', () => {
                                         name: 'validatorRequired',
                                         type: 'bool',
                                     },
+                                    {
+                                        name: 'debtCeiling',
+                                        type: 'uint256',
+                                    },
                                 ],
                             },
                         ],
@@ -210,6 +219,7 @@ describe('SecuritizationPool', () => {
                                 currency: stableCoin.address,
                                 minFirstLossCushion: '100000',
                                 validatorRequired: true,
+                                debtCeiling: parseEther('1000').toString(),
                             },
                         ]
                     )
