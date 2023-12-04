@@ -13,6 +13,7 @@ import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
 import {ISecuritizationPoolStorage} from '../../pool/ISecuritizationPoolStorage.sol';
+import "hardhat/console.sol";
 
 abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
@@ -129,7 +130,8 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _currencyRaised += currencyAmount;
         _currencyRaisedByInvestor[beneficiary] += currencyAmount;
 
-//        require(ISecuritizationTGE(pool).isDebtCeilingValid(), 'Crowdsale: Exceeds Debt Ceiling');
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        require(securitizationPool.isDebtCeilingValid(), 'Crowdsale: Exceeds Debt Ceiling');
         tokenRaised += tokenAmount;
 
         _claimPayment(payee, currencyAmount);

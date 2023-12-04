@@ -144,7 +144,7 @@ describe('SecuritizationPool', () => {
                                 currency: stableCoin.address,
                                 minFirstLossCushion: '100000',
                                 validatorRequired: true,
-                                debtCeiling: parseEther('1000').toString(),
+                                debtCeiling: parseEther('99').toString(),
                             },
                         ]
                     )
@@ -219,7 +219,7 @@ describe('SecuritizationPool', () => {
                                 currency: stableCoin.address,
                                 minFirstLossCushion: '100000',
                                 validatorRequired: true,
-                                debtCeiling: parseEther('1000').toString(),
+                                debtCeiling: parseEther('99').toString(),
                             },
                         ]
                     )
@@ -408,6 +408,20 @@ describe('SecuritizationPool', () => {
             ).to.be.revertedWith(`Crowdsale: sale not started`);
         });
 
+        it('Should buy tokens failed if exceeds debt ceiling', async () => {
+            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+            await expect(securitizationManager
+                .connect(lenderSigner)
+                .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100')))
+                .to.be.revertedWith("Crowdsale: Exceeds Debt Ceiling")
+        });
+        it('set debt ceiling', async () => {
+            await securitizationPoolContract.connect(poolCreatorSigner).setDebtCeiling(parseEther('300'));
+            expect(await securitizationPoolContract.debtCeiling()).equal(parseEther('300'));
+            // Set again
+            await securitizationPoolContract.connect(poolCreatorSigner).setDebtCeiling(parseEther('200'));
+            expect(await securitizationPoolContract.debtCeiling()).equal(parseEther('200'));
+        })
         it('Should buy tokens successfully', async () => {
             await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
             await securitizationManager

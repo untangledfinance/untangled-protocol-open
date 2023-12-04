@@ -23,6 +23,7 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
+import "hardhat/console.sol";
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
@@ -87,7 +88,7 @@ contract SecuritizationTGE is
         return _getStorage().principalAmountSOT;
     }
 
-    function debtCeiling() public view returns (uint256) {
+    function debtCeiling() public view override returns (uint256) {
         return _getStorage().debtCeiling;
     }
 
@@ -180,7 +181,7 @@ contract SecuritizationTGE is
         return _getStorage().minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
 
-    function isDebtCeilingValid() public view virtual returns (bool) {
+    function isDebtCeilingValid() public view virtual override returns (bool) {
         Storage storage $ = _getStorage();
         uint256 totalDebt = 0;
         if ($.tgeAddress != address(0)) {
@@ -391,7 +392,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](27);
+        bytes4[] memory _functionSignatures = new bytes4[](30);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -420,6 +421,9 @@ contract SecuritizationTGE is
         _functionSignatures[24] = this.pause.selector;
         _functionSignatures[25] = this.unpause.selector;
         _functionSignatures[26] = this.setUpPoolNAV.selector;
+        _functionSignatures[27] = this.isDebtCeilingValid.selector;
+        _functionSignatures[28] = this.setDebtCeiling.selector;
+        _functionSignatures[29] = this.debtCeiling.selector;
 
         return _functionSignatures;
     }
