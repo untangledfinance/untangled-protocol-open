@@ -1,4 +1,5 @@
 const { artifacts, ethers } = require('hardhat');
+const { parseEther } = ethers.utils;
 const { setup } = require('../setup');
 const { expect, assert } = require('chai');
 const { BigNumber, providers, utils } = require('ethers');
@@ -39,30 +40,36 @@ describe('TimedCrowdsaleMock', () => {
 
         poolCreatorSigner.address,
         utils.defaultAbiCoder.encode([
-          {
-            type: 'tuple',
-            components: [
-              {
-                name: 'currency',
-                type: 'address'
-              },
-              {
-                name: 'minFirstLossCushion',
-                type: 'uint32'
-              },
-              {
-                name: 'validatorRequired',
-                type: 'bool'
-              }
-            ]
-          }
-        ], [
-          {
-            currency: stableCoin.address,
-            minFirstLossCushion: '100000',
-            validatorRequired: true
-          }
-        ]));
+                {
+                  type: 'tuple',
+                  components: [
+                    {
+                      name: 'currency',
+                      type: 'address'
+                    },
+                    {
+                      name: 'minFirstLossCushion',
+                      type: 'uint32'
+                    },
+                    {
+                      name: "validatorRequired",
+                      type: "bool"
+                    },
+                    {
+                      name: 'debtCeiling',
+                      type: 'uint256',
+                    },
+
+                  ]
+                }
+              ], [
+                {
+                  currency: stableCoin.address,
+                  minFirstLossCushion: '100000',
+                  validatorRequired: true,
+                  debtCeiling: parseEther('1000').toString(),
+                }
+              ]));
 
 
     let receipt = await transaction.wait();

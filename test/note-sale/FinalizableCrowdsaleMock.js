@@ -3,6 +3,7 @@ const { setup, initPool } = require('../setup');
 // const { BigNumber } = require('ethers');
 // const { keccak256 } = require('@ethersproject/keccak256');
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
+const { parseEther } = ethers.utils;
 const { utils } = require('ethers');
 const { POOL_ADMIN_ROLE } = require('../constants');
 const { getPoolByAddress } = require('../utils');
@@ -29,37 +30,44 @@ describe('FinalizableCrowdsaleMock', () => {
     const salt = utils.keccak256(Date.now());
 
     let transaction = await securitizationManager
-      .connect(poolCreatorSigner)
-
-      .newPoolInstance(
-        salt,
-
-        poolCreatorSigner.address,
-        utils.defaultAbiCoder.encode([
-          {
-            type: 'tuple',
-            components: [
-              {
-                name: 'currency',
-                type: 'address'
-              },
-              {
-                name: 'minFirstLossCushion',
-                type: 'uint32'
-              },
-              {
-                name: 'validatorRequired',
-                type: 'bool'
-              }
-            ]
-          }
-        ], [
-          {
-            currency: stableCoin.address,
-            minFirstLossCushion: '100000',
-            validatorRequired: true
-          }
-        ]));
+        .connect(poolCreatorSigner)
+        .newPoolInstance(
+            salt,
+            poolCreatorSigner.address,
+            utils.defaultAbiCoder.encode(
+                [
+                    {
+                        type: 'tuple',
+                        components: [
+                            {
+                                name: 'currency',
+                                type: 'address',
+                            },
+                            {
+                                name: 'minFirstLossCushion',
+                                type: 'uint32',
+                            },
+                            {
+                                name: 'validatorRequired',
+                                type: 'bool',
+                            },
+                            {
+                                name: 'debtCeiling',
+                                type: 'uint256',
+                            },
+                        ],
+                    },
+                ],
+                [
+                    {
+                        currency: stableCoin.address,
+                        minFirstLossCushion: '100000',
+                        validatorRequired: true,
+                        debtCeiling: parseEther('1000').toString(),
+                    },
+                ]
+            )
+        );
 
     let receipt = await transaction.wait();
     let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
