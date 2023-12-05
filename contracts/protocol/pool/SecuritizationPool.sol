@@ -97,8 +97,6 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
     )
         public
         override
-        // address _currency,
-        // uint32 _minFirstLossCushion
         initializer
     {
         ISecuritizationPool.NewPoolParams memory newPoolParams = abi.decode(
@@ -107,7 +105,7 @@ contract SecuritizationPool is ISecuritizationPool, IERC721ReceiverUpgradeable {
         );
 
         require(
-            newPoolParams.minFirstLossCushion < 100 * RATE_SCALING_FACTOR,
+            newPoolParams.minFirstLossCushion <= 100 * RATE_SCALING_FACTOR,
             'minFirstLossCushion is greater than 100'
         );
         require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');
