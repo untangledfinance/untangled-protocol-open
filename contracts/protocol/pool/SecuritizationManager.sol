@@ -35,6 +35,14 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
     using ConfigHelper for Registry;
 
     event UpdateAllowedUIDTypes(uint256[] uids);
+    //noteSaleAddress, investor, amount, tokenAmount
+    event NoteTokenPurchased(
+        address indexed investor,
+        address indexed tgeAddress,
+        address poolAddress,
+        uint256 amount,
+        uint256 tokenAmount
+    );
 
     bytes4 public constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
 
@@ -325,6 +333,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
 
         ICrowdSale tge = ICrowdSale(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
+        ISecuritizationPool pool = ISecuritizationPool(tge.pool());
 
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
@@ -342,6 +351,7 @@ contract SecuritizationManager is UntangledBase, Factory2, ISecuritizationManage
             ISecuritizationTGE(poolOfPot).decreaseReserve(currencyAmount);
         }
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
+        emit NoteTokenPurchased(_msgSender(), tgeAddress, address(pool), currencyAmount, tokenAmount);
     }
 
     function setAllowedUIDTypes(uint256[] calldata ids) external onlyRole(DEFAULT_ADMIN_ROLE) {
