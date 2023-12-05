@@ -120,6 +120,10 @@ contract SecuritizationPoolValueService is
         return interestRates;
     }
 
+    function getExpectedLATAssetValue(address poolAddress) public view returns(uint256) {
+        return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+    }
+
     function getExpectedERC20AssetValue(
         address poolAddress,
         address assetPoolAddress,
