@@ -23,7 +23,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log: true,
     });
 
-    await execute('PoolNavFactory', { from: deployer, log: true }, 'setPoolNAVImplementation', poolNav.address);
+    await execute('PoolNAVFactory', { from: deployer, log: true }, 'setPoolNAVImplementation', poolNav.address);
     await execute('Registry', { from: deployer, log: true }, 'setPoolNAVFactory', PoolNAVFactory.address);
 };
 
