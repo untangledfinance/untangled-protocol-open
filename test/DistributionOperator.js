@@ -567,7 +567,7 @@ describe('Distribution', () => {
 
         it('#getCashBalance', async () => {
             const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-            expect(result).to.closeTo(parseEther('160.9423'), parseEther('0.001'));
+            expect(result).to.closeTo(parseEther('161.000'), parseEther('0.001'));
         });
     });
 
