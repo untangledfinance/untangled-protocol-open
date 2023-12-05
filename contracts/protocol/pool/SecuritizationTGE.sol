@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-
 import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
@@ -27,6 +26,12 @@ import "hardhat/console.sol";
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
+
+import 'hardhat/console.sol';
+
+interface ICrowdSaleLike {
+    function token() external view returns (address);
+}
 
 contract SecuritizationTGE is
     ERC165Upgradeable,
@@ -56,12 +61,20 @@ contract SecuritizationTGE is
         $.debtCeiling = params.debtCeiling;
     }
 
+    // alias
     function sotToken() public view override returns (address) {
-        return _getStorage().sotToken;
+        // return _getStorage().sotToken;
+        address tge = tgeAddress();
+        if (tge == address(0)) return address(0);
+        return ICrowdSaleLike(tge).token();
     }
 
+    // alias
     function jotToken() public view override returns (address) {
-        return _getStorage().jotToken;
+        // return _getStorage().jotToken;
+        address tge = secondTGEAddress();
+        if (tge == address(0)) return address(0);
+        return ICrowdSaleLike(tge).token();
     }
 
     function underlyingCurrency() public view override returns (address) {
@@ -121,11 +134,13 @@ contract SecuritizationTGE is
     /// @inheritdoc ISecuritizationTGE
     function injectTGEAddress(
         address _tgeAddress,
-        address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteType
     ) external override whenNotPaused onlyIssuingTokenStage {
         registry().requireSecuritizationManager(_msgSender());
-        require(_tgeAddress != address(0x0) && _tokenAddress != address(0x0), 'SecuritizationPool: Address zero');
+
+        require(_tgeAddress != address(0), 'SecuritizationPool: Address zero');
+        address _tokenAddress = ICrowdSaleLike(_tgeAddress).token();
+        require(_tokenAddress != address(0), 'SecuritizationPool: Address zero');
 
         Storage storage $ = _getStorage();
 
@@ -139,7 +154,7 @@ contract SecuritizationTGE is
 
         $.state = CycleState.CROWDSALE;
 
-        emit UpdateTGEAddress(_tgeAddress, _tokenAddress, _noteType);
+        emit UpdateTGEAddress(_tgeAddress, _noteType);
     }
 
     /// @notice allows the redemption of tokens
@@ -156,7 +171,7 @@ contract SecuritizationTGE is
 
         Storage storage $ = _getStorage();
 
-        if ($.sotToken == notesToken) {
+        if (sotToken() == notesToken) {
             $.paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
             emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
         }
@@ -207,13 +222,14 @@ contract SecuritizationTGE is
     }
 
     function hasFinishedRedemption() public view override returns (bool) {
-        Storage storage $ = _getStorage();
-
-        if ($.sotToken != address(0)) {
-            require(IERC20Upgradeable($.sotToken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
+        address stoken = sotToken();
+        if (stoken != address(0)) {
+            require(IERC20Upgradeable(stoken).totalSupply() == 0, 'SecuritizationPool: SOT still remain');
         }
-        if ($.jotToken != address(0)) {
-            require(IERC20Upgradeable($.jotToken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
+
+        address jtoken = jotToken();
+        if (jtoken != address(0)) {
+            require(IERC20Upgradeable(jtoken).totalSupply() == 0, 'SecuritizationPool: JOT still remain');
         }
 
         return true;
@@ -226,13 +242,14 @@ contract SecuritizationTGE is
 
         require($.pot != _pot, 'SecuritizationPool: Same address with current pot');
         $.pot = _pot;
+
         if (_pot == address(this)) {
             require(
-                IERC20Upgradeable($.underlyingCurrency).approve($.pot, type(uint256).max),
+                IERC20Upgradeable($.underlyingCurrency).approve(_pot, type(uint256).max),
                 'SecuritizationPool: Pot not approved'
             );
         }
-        registry().getSecuritizationManager().registerPot($.pot);
+        registry().getSecuritizationManager().registerPot(_pot);
     }
 
     function setDebtCeiling(uint256 _debtCeiling) external override whenNotPaused notClosingStage {
@@ -251,6 +268,8 @@ contract SecuritizationTGE is
         address poolNAVAddress = poolNAVFactory.createPoolNAV();
         Storage storage $ = _getStorage();
         $.poolNAV = poolNAVAddress;
+
+        emit UpdatePoolNAV(poolNAVAddress);
     }
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {

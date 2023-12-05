@@ -5,12 +5,13 @@ import {Configuration} from '../../libraries/Configuration.sol';
 
 interface ISecuritizationTGE {
     // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
-    event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
+    event UpdateTGEAddress(address tge, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event UpdateDebtCeiling(uint256 _debtCeiling);
     event Withdraw(address originatorAddress, uint256 amount);
+    event UpdatePoolNAV(address poolNav);
 
     function termLengthInSeconds() external view returns (uint64);
 
@@ -60,7 +61,7 @@ interface ISecuritizationTGE {
     /// @notice injects the address of the Token Generation Event (TGE) and the associated token address
     function injectTGEAddress(
         address _tgeAddress,
-        address _tokenAddress,
+        // address _tokenAddress,
         Configuration.NOTE_TOKEN_TYPE _noteToken
     ) external;
 

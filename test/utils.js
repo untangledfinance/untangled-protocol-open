@@ -237,12 +237,6 @@ const getPoolAbi = async () => {
 
 
 const getPoolByAddress = async (address) => {
-  const asset = await artifacts.readArtifact('ISecuritizationPool');
-  const control = await artifacts.readArtifact('SecuritizationAccessControl');
-  const distribution = await artifacts.readArtifact('SecuritizationLockDistribution');
-  const storage = await artifacts.readArtifact('SecuritizationPoolStorage');
-  const tge = await artifacts.readArtifact('SecuritizationTGE');
-
   const abis = await getPoolAbi();
 
   const provider = ethers.provider;
@@ -252,6 +246,7 @@ const getPoolByAddress = async (address) => {
 module.exports = {
   unlimitedAllowance,
   ZERO_ADDRESS,
+
   saltFromOrderValues,
   debtorsFromOrderAddresses,
   genLoanAgreementIds,

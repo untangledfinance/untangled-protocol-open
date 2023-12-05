@@ -11,18 +11,14 @@ import {MintedIncreasingInterestTGE} from '../MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../MintedNormalTGE.sol';
 import {Registry} from '../../../storage/Registry.sol';
 
+interface INoteTokenLike {
+    function poolAddress() external view returns (address);
+}
+
 contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledBase, Factory {
     using ConfigHelper for Registry;
 
     bytes4 constant TGE_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,address,address,address,bool)'));
-
-    modifier onlySecuritizationManager() {
-        require(
-            _msgSender() == address(registry.getSecuritizationManager()),
-            'SecuritizationPool: Only SecuritizationManager'
-        );
-        _;
-    }
 
     function __TokenGenerationEventFactory_init(Registry _registry, address _factoryAdmin) internal onlyInitializing {
         __UntangledBase__init(_msgSender());
@@ -55,12 +51,16 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     function createNewSaleInstance(
         address issuerTokenController,
-        address pool,
+        // address pool,
         address token,
         address currency,
         uint8 saleType,
         bool longSale
-    ) external override whenNotPaused nonReentrant onlySecuritizationManager returns (address) {
+    ) external override whenNotPaused nonReentrant returns (address) {
+        registry.requireSecuritizationManager(_msgSender());
+
+        address pool = INoteTokenLike(token).poolAddress();
+
         if (saleType == uint8(SaleType.MINTED_INCREASING_INTEREST_SOT)) {
             return
                 _newSale(

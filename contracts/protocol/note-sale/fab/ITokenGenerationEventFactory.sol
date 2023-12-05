@@ -22,7 +22,7 @@ abstract contract ITokenGenerationEventFactory {
     /// @notice creates a new TGE instance based on the provided parameters and the sale type
     function createNewSaleInstance(
         address issuerTokenController,
-        address pool,
+        // address pool,
         address token,
         address currency,
         uint8 saleType,
