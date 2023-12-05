@@ -70,14 +70,20 @@ describe('MinFirstLoss', () => {
               {
                 name: 'validatorRequired',
                 type: 'bool'
-              }
+              },
+              {
+                name: 'debtCeiling',
+                type: 'uint256',
+              },
+
             ]
           }
         ], [
           {
             currency: stableCoin.address,
             minFirstLossCushion: '100000',
-            validatorRequired: true
+            validatorRequired: true,
+            debtCeiling: parseEther('1000').toString(),
           }
         ]));
 
@@ -98,6 +104,7 @@ describe('MinFirstLoss', () => {
     const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
+      parseEther('1'),
       initialJotAmount,
       [1, 2],
       isLongSaleTGEJOT,
@@ -121,6 +128,7 @@ describe('MinFirstLoss', () => {
     const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
+      parseEther('1'),
       [0, 2],
       isLongSaleTGESOT,
       10000,

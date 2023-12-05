@@ -236,6 +236,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     function setUpTGEForSOT(
         address issuerTokenController,
         address pool,
+        uint256 minBidAmount,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
         uint32 _initialInterest,
@@ -252,6 +253,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
             tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
+        tge.setMinBidAmount(minBidAmount);
     }
 
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
@@ -265,6 +267,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     function setUpTGEForJOT(
         address issuerTokenController,
         address pool,
+        uint256 minBidAmount,
         uint256 initialJOTAmount,
         uint8[] memory saleTypeAndDecimal,
         bool longSale,
@@ -275,6 +278,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setHasStarted(true);
+        tge.setMinBidAmount(minBidAmount);
         tge.setInitialAmount(initialJOTAmount);
     }
 

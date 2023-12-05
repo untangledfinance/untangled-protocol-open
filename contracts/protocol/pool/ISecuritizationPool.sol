@@ -12,6 +12,7 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 interface ISecuritizationPool {
     event CollectAsset(uint256 value);
     // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
+    event SecuritizationPoolWithdraw(address originatorAddress, uint256 amount);
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
@@ -61,7 +62,7 @@ interface ISecuritizationPool {
     ) external;
 
     /// @notice collects NFT assets from a specified address
-    function collectAssets(uint256[] calldata tokenIds) external;
+    function collectAssets(uint256[] calldata tokenIds) external returns(uint256);
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(

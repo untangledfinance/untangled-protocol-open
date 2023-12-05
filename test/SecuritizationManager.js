@@ -66,14 +66,19 @@ describe('SecuritizationManager', () => {
                 {
                   name: 'validatorRequired',
                   type: 'bool'
-                }
+                },
+                {
+                  name: 'debtCeiling',
+                  type: 'uint256',
+                },
               ]
             }
           ], [
             {
               currency: stableCoin.address,
               minFirstLossCushion: minFirstLostCushion,
-              validatorRequired: true
+              validatorRequired: true,
+              debtCeiling: parseEther('1000').toString(),
             }
           ]));
       const receipt = await transaction.wait();
@@ -114,14 +119,19 @@ describe('SecuritizationManager', () => {
                 {
                   name: 'validatorRequired',
                   type: 'bool'
-                }
+                },
+                {
+                  name: 'debtCeiling',
+                  type: 'uint256',
+                },
               ]
             }
           ], [
             {
               currency: stableCoin.address,
               minFirstLossCushion: minFirstLostCushion,
-              validatorRequired: true
+              validatorRequired: true,
+              debtCeiling: parseEther('1000').toString(),
             }
           ]))
       ).to.be.revertedWith(`minFirstLossCushion is greater than 100`);
@@ -186,6 +196,7 @@ describe('SecuritizationManager', () => {
         .setUpTGEForSOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          parseEther('1'),
           [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
           true,
           initialInterest,
@@ -278,6 +289,7 @@ describe('SecuritizationManager', () => {
         .setUpTGEForJOT(
           untangledAdminSigner.address,
           securitizationPoolContract.address,
+          parseEther('1'),
           initialJotAmount,
           [SaleType.NORMAL_SALE, tokenDecimals],
           true,

@@ -5,6 +5,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { BigNumber, utils } = require('ethers');
 const { POOL_ADMIN_ROLE } = require('../constants');
 const { getPoolByAddress } = require('../utils');
+const { parseEther } = ethers.utils;
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -78,14 +79,19 @@ describe('MintedIncreasingInterestTGE', function () {
               {
                 name: 'validatorRequired',
                 type: 'bool'
-              }
+              },
+              {
+                name: 'debtCeiling',
+                type: 'uint256',
+              },
             ]
           }
         ], [
           {
             currency: stableCoin.address,
             minFirstLossCushion: '100000',
-            validatorRequired: true
+            validatorRequired: true,
+            debtCeiling: parseEther('1000').toString(),
           }
         ]));
 

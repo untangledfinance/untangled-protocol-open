@@ -104,7 +104,7 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
         );
 
         require(
-            newPoolParams.minFirstLossCushion < 100 * RATE_SCALING_FACTOR,
+            newPoolParams.minFirstLossCushion <= 100 * RATE_SCALING_FACTOR,
             'minFirstLossCushion is greater than 100'
         );
         require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');

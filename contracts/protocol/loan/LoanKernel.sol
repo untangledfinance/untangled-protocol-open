@@ -299,7 +299,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
         uint x = 0;
         uint256 expectedAssetsValue = 0;
-        ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
 
         // Mint to pool
         for (uint i = 0; i < fillDebtOrderParam.latInfo.length; i = UntangledMath.uncheckedInc(i)) {
@@ -329,15 +328,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                     'Cannot register term start'
                 );
 
-                uint256 expectedTokenValue = poolService.getExpectedAssetValue(
-                    poolAddress,
-                    address(registry.getLoanAssetToken()),
-                    fillDebtOrderParam.latInfo[i].tokenIds[j],
-                    block.timestamp
-                );
-
-                expectedAssetsValue = expectedAssetsValue + expectedTokenValue;
-
                 emit LogDebtOrderFilled(
                     debtOrder.issuance.agreementIds[x],
                     debtOrder.principalAmounts[x],
@@ -348,7 +338,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 x = UntangledMath.uncheckedInc(x);
             }
 
-            ISecuritizationPool(fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(fillDebtOrderParam.latInfo[i].tokenIds);
+            expectedAssetsValue += ISecuritizationPool(fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(fillDebtOrderParam.latInfo[i].tokenIds);
         }
 
         // Start collect asset checkpoint and withdraw

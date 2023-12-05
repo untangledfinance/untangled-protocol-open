@@ -119,6 +119,10 @@ describe('Distribution', () => {
                                     name: 'validatorRequired',
                                     type: 'bool',
                                 },
+                                {
+                                    name: 'debtCeiling',
+                                    type: 'uint256',
+                                },
                             ],
                         },
                     ],
@@ -127,6 +131,7 @@ describe('Distribution', () => {
                             currency: stableCoin.address,
                             minFirstLossCushion: '100000',
                             validatorRequired: true,
+                            debtCeiling: parseEther('1000').toString(),
                         },
                     ]
                 )
@@ -161,6 +166,10 @@ describe('Distribution', () => {
                                     name: 'validatorRequired',
                                     type: 'bool',
                                 },
+                                {
+                                    name: 'debtCeiling',
+                                    type: 'uint256',
+                                },
                             ],
                         },
                     ],
@@ -169,6 +178,7 @@ describe('Distribution', () => {
                             currency: stableCoin.address,
                             minFirstLossCushion: '100000',
                             validatorRequired: true,
+                            debtCeiling: parseEther('1000').toString(),
                         },
                     ]
                 )
@@ -292,6 +302,7 @@ describe('Distribution', () => {
                 .setUpTGEForSOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
                     true,
                     initialInterest,
@@ -331,6 +342,7 @@ describe('Distribution', () => {
                 .setUpTGEForJOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     initialJotAmount,
                     [SaleType.NORMAL_SALE, tokenDecimals],
                     true,
@@ -555,7 +567,7 @@ describe('Distribution', () => {
 
         it('#getCashBalance', async () => {
             const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-            expect(result).to.closeTo(parseEther('160.9423'), parseEther('0.001'));
+            expect(result).to.closeTo(parseEther('161.000'), parseEther('0.001'));
         });
     });
 

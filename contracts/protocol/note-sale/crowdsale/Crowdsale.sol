@@ -6,16 +6,20 @@ import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/
 import '../../../base/UntangledBase.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../pool/ISecuritizationPool.sol';
+import {ISecuritizationTGE} from '../../pool/ISecuritizationTGE.sol';
+
 
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
 import {ISecuritizationPoolStorage} from '../../pool/ISecuritizationPoolStorage.sol';
+import "hardhat/console.sol";
 
 abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
 
     event UpdateTotalCap(uint256 totalCap);
+    event UpdateMinBidAmount(uint256 minBidAmount);
 
     Registry public registry;
 
@@ -44,6 +48,9 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @dev Target raised currency amount
     uint256 public totalCap;
+
+    /// @dev Minimum currency bid amount for note token
+    uint256 public minBidAmount;
 
     mapping(address => uint256) public _currencyRaisedByInvestor;
 
@@ -92,6 +99,18 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         emit UpdateTotalCap(totalCap);
     }
 
+    /// @notice Setup minimum bid amount in currency for note token
+    /// @param _minBidAmount Expected minimum amount
+    function setMinBidAmount(uint256 _minBidAmount) external whenNotPaused {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'MintedNormalTGE: Caller must be owner or pool'
+        );
+        minBidAmount = _minBidAmount;
+        emit UpdateMinBidAmount(_minBidAmount);
+    }
+
+
     /// @notice Set hasStarted variable
     function setHasStarted(bool _hasStarted) public {
         require(
@@ -119,6 +138,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         address beneficiary,
         uint256 currencyAmount
     ) public virtual whenNotPaused nonReentrant smpRestricted returns (uint256) {
+        require(currencyAmount >= minBidAmount, 'Crowdsale: Less than minBidAmount');
         uint256 tokenAmount = getTokenAmount(currencyAmount);
 
         _preValidatePurchase(beneficiary, currencyAmount, tokenAmount);
@@ -127,6 +147,8 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _currencyRaised += currencyAmount;
         _currencyRaisedByInvestor[beneficiary] += currencyAmount;
 
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        require(securitizationPool.isDebtCeilingValid(), 'Crowdsale: Exceeds Debt Ceiling');
         tokenRaised += tokenAmount;
 
         _claimPayment(payee, currencyAmount);
