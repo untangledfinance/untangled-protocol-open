@@ -6,7 +6,6 @@ import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 
-import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
@@ -84,7 +83,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address tokenAddress
     ) external override whenNotPaused nonReentrant returns (bool) {
         uint256 agreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
+        for (uint256 i = 0; i < agreementIdsLength; i++) {
             require(
                 _assertRepaymentRequest(agreementIds[i], tokenAddress),
                 'LoanRepaymentRouter: Invalid repayment request'

@@ -213,14 +213,8 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        for (uint256 i = 0; i < securitizationPool.getNFTAssetsLength(); i = UntangledMath.uncheckedInc(i)) {
-            ISecuritizationPoolStorage.NFTAsset memory nftAsset = securitizationPool.nftAssets(i);
-            // (address assetTokenAddress, uint256 assetTokenId) = securitizationPool.nftAssets(i);
-            expectedAssetsValue =
-                expectedAssetsValue +
-                // getExpectedAssetValue(poolAddress, assetTokenAddress, assetTokenId, timestamp);
-                getExpectedAssetValue(poolAddress, nftAsset.tokenAddress, nftAsset.tokenId, timestamp);
-        }
+        expectedAssetsValue =
+            expectedAssetsValue + IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
@@ -276,36 +270,8 @@ contract SecuritizationPoolValueService is
             ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor);
     }
 
-    function getOutstandingPrincipalCurrencyByInvestors(
-        address pool,
-        address[] calldata investors
-    ) external view returns (uint256) {
-        uint256 result = 0;
-        uint256 investorsLength = investors.length;
-
-        // duplicate but reduce external call
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        for (uint256 i = 0; i < investorsLength; i = UntangledMath.uncheckedInc(i)) {
-            address investor = investors[i];
-            result += (crowdsale.currencyRaisedByInvestor(investor) -
-                ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor));
-        }
-
-        return result;
-    }
-
-    function getOutstandingPrincipalCurrency(address pool) external view returns (uint256) {
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        require(pool != address(0), 'Pool was not deployed');
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        return crowdsale.currencyRaised() - ISecuritizationTGE(pool).paidPrincipalAmountSOT();
-    }
-
     function getPoolValue(address poolAddress) external view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         uint256 currentTimestamp = block.timestamp;
         uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
@@ -366,37 +332,6 @@ contract SecuritizationPoolValueService is
     // @notice get beginning senior asset, then calculate ratio reserve on pools.Finaly multiple them
     function getSeniorBalance(address poolAddress) external view returns (uint256) {
         return this.getBeginningSeniorAsset(poolAddress) - this.getBeginningSeniorDebt(poolAddress);
-    }
-
-    function getReserve(
-        address poolAddress,
-        uint256 JOTPrincipal,
-        uint256 SOTTokenRedeem,
-        uint256 JOTTokenRedeem
-    ) external view returns (uint256) {
-        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
-        require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        IDistributionAssessor distributorAssessorInstance = registry.getDistributionAssessor();
-
-        require(address(distributorAssessorInstance) != address(0), 'Distributor was not deployed');
-        uint256 sotPrice = distributorAssessorInstance.getSOTTokenPrice(poolAddress);
-        uint256 jotPrice = distributorAssessorInstance.getJOTTokenPrice(poolAddress);
-        address currencyAddress = securitizationPool.underlyingCurrency();
-        // currency balance of pool Address
-        uint256 reserve = IERC20Upgradeable(currencyAddress).balanceOf(poolAddress);
-        uint256 SOTPrincipal = securitizationPool.principalAmountSOT();
-        // uint256 JOTPrincipal;
-        // uint256 SOTTokenRedeem;
-        // uint256 JOTTokenRedeem;
-
-        uint256 totalReserve = reserve +
-            SOTPrincipal +
-            JOTPrincipal -
-            SOTTokenRedeem *
-            sotPrice +
-            JOTTokenRedeem *
-            jotPrice;
-        return totalReserve;
     }
 
     /// @inheritdoc ISecuritizationPoolValueService

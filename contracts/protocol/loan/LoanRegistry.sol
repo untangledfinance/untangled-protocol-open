@@ -19,6 +19,19 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         registry = _registry;
     }
 
+    modifier onlyLoanKernel() {
+        require(_msgSender() == address(registry.getLoanKernel()), 'LoanRegistry: Only LoanKernel');
+        _;
+    }
+
+    modifier onlyLoanInterestTermsContract() {
+        require(
+            _msgSender() == address(registry.getLoanInterestTermsContract()),
+            'Invoice Debt Registry: Only LoanInterestTermsContract'
+        );
+        _;
+    }
+
     /**
      * Record new Loan to blockchain
      */
@@ -32,8 +45,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
         uint256 _salt,
         uint256 expirationTimestampInSecs,
         uint8[] calldata assetPurposeAndRiskScore
-    ) external override whenNotPaused returns (bool) {
-        registry.requireLoanKernel(_msgSender());
+    ) external override whenNotPaused onlyLoanKernel returns (bool) {
         require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
         LoanEntry memory newEntry = LoanEntry({
             loanTermContract: termContract,
@@ -126,8 +138,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     function updateLastRepaymentTimestamp(
         bytes32 agreementId,
         uint256 newTimestamp
-    ) public override {
-        registry.requireLoanInterestTermsContract(_msgSender());
+    ) public override onlyLoanInterestTermsContract {
         entries[agreementId].lastRepayTimestamp = newTimestamp;
         emit UpdateLoanEntry(agreementId, entries[agreementId]);
     }
@@ -142,8 +153,7 @@ contract LoanRegistry is UntangledBase, ILoanRegistry {
     }
 
     /// @inheritdoc ILoanRegistry
-    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused {
-        registry.requireLoanInterestTermsContract(_msgSender());
+    function setCompletedLoan(bytes32 agreementId) public override whenNotPaused onlyLoanInterestTermsContract {
         completedLoans[agreementId] = true;
     }
 

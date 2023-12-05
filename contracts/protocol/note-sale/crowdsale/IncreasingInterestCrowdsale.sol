@@ -9,12 +9,7 @@ import '../IInterestRate.sol';
 abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowdsale {
     using ConfigHelper for Registry;
 
-    event UpdateInterestRange(
-        uint32 initialInterest,
-        uint32 finalInterest,
-        uint32 timeInterval,
-        uint32 amountChangeEachInterval
-    );
+    event UpdateInterestRange(uint32 initialInterest, uint32 finalInterest, uint32 timeInterval, uint32 amountChangeEachInterval);
 
     uint32 public initialInterest;
     uint32 public finalInterest;
@@ -28,10 +23,7 @@ abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowd
         uint32 _timeInterval,
         uint32 _amountChangeEachInterval
     ) public whenNotPaused {
-        require(
-            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
-            'IncreasingInterestCrowdsale: Caller must be owner or pool'
-        );
+        require(hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()), "IncreasingInterestCrowdsale: Caller must be owner or pool");
         require(!hasStarted, 'IncreasingInterestCrowdsale: sale already started');
         require(
             _initialInterest <= _finalInterest,
@@ -44,7 +36,12 @@ abstract contract IncreasingInterestCrowdsale is IInterestRate, FinalizableCrowd
         timeInterval = _timeInterval;
         amountChangeEachInterval = _amountChangeEachInterval;
 
-        emit UpdateInterestRange(initialInterest, finalInterest, timeInterval, amountChangeEachInterval);
+        emit UpdateInterestRange(
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval
+        );
     }
 
     function getCurrentInterest() public view returns (uint32) {

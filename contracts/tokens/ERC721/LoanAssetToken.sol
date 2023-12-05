@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ERC165CheckerUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol';
-
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
@@ -12,7 +10,6 @@ import {Registry} from '../../storage/Registry.sol';
 import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/types.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
-import {ISecuritizationPool} from '../../interfaces/ISecuritizationPool.sol';
 
 import 'hardhat/console.sol';
 
@@ -21,7 +18,6 @@ import 'hardhat/console.sol';
  */
 contract LoanAssetToken is ILoanAssetToken, LATValidator {
     using ConfigHelper for Registry;
-    using ERC165CheckerUpgradeable for address;
 
     /** CONSTRUCTOR */
     function initialize(
