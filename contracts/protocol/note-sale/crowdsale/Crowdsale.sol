@@ -6,11 +6,14 @@ import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/
 import '../../../base/UntangledBase.sol';
 import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../pool/ISecuritizationPool.sol';
+import {ISecuritizationTGE} from '../../pool/ISecuritizationTGE.sol';
+
 
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
 import {ISecuritizationPoolStorage} from '../../pool/ISecuritizationPoolStorage.sol';
+import "hardhat/console.sol";
 
 abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;
@@ -127,6 +130,8 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         _currencyRaised += currencyAmount;
         _currencyRaisedByInvestor[beneficiary] += currencyAmount;
 
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(pool);
+        require(securitizationPool.isDebtCeilingValid(), 'Crowdsale: Exceeds Debt Ceiling');
         tokenRaised += tokenAmount;
 
         _claimPayment(payee, currencyAmount);

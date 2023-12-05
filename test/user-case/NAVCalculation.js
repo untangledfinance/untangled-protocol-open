@@ -137,14 +137,20 @@ describe('NAV', () => {
                     {
                       name: "validatorRequired",
                       type: "bool"
-                    }
+                    },
+                    {
+                      name: 'debtCeiling',
+                      type: 'uint256',
+                    },
+
                   ]
                 }
               ], [
                 {
                   currency: stableCoin.address,
                   minFirstLossCushion: '100000',
-                  validatorRequired: true
+                  validatorRequired: true,
+                  debtCeiling: parseEther('1000').toString(),
                 }
               ]));
       const receipt = await transaction.wait();
@@ -529,14 +535,19 @@ describe('NAV', () => {
                     {
                       name: "validatorRequired",
                       type: "bool"
-                    }
+                    },
+                    {
+                      name: 'debtCeiling',
+                      type: 'uint256',
+                    },
                   ]
                 }
               ], [
                 {
                   currency: stableCoin.address,
                   minFirstLossCushion: '100000',
-                  validatorRequired: true
+                  validatorRequired: true,
+                  debtCeiling: parseEther('1000').toString(),
                 }
               ]));
       const receipt = await transaction.wait();

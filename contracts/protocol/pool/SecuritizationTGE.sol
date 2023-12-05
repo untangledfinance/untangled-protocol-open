@@ -20,8 +20,10 @@ import {IFinalizableCrowdsale} from '../note-sale/crowdsale/IFinalizableCrowdsal
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
+import "hardhat/console.sol";
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
@@ -51,6 +53,7 @@ contract SecuritizationTGE is
 
         $.underlyingCurrency = params.currency;
         $.minFirstLossCushion = params.minFirstLossCushion;
+        $.debtCeiling = params.debtCeiling;
     }
 
     function sotToken() public view override returns (address) {
@@ -83,6 +86,10 @@ contract SecuritizationTGE is
 
     function principalAmountSOT() public view override returns (uint256) {
         return _getStorage().principalAmountSOT;
+    }
+
+    function debtCeiling() public view override returns (uint256) {
+        return _getStorage().debtCeiling;
     }
 
     function interestRateSOT() public view override returns (uint32) {
@@ -174,6 +181,19 @@ contract SecuritizationTGE is
         return _getStorage().minFirstLossCushion <= poolService.getJuniorRatio(address(this));
     }
 
+    function isDebtCeilingValid() public view virtual override returns (bool) {
+        Storage storage $ = _getStorage();
+        uint256 totalDebt = 0;
+        if ($.tgeAddress != address(0)) {
+            totalDebt += ICrowdSale($.tgeAddress).currencyRaised();
+        }
+        if ($.secondTGEAddress != address(0)) {
+            totalDebt += ICrowdSale($.secondTGEAddress).currencyRaised();
+        }
+        return $.debtCeiling >= totalDebt;
+    }
+
+
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual override whenNotPaused {
         registry().requireLoanRepaymentRouter(_msgSender());
@@ -213,6 +233,15 @@ contract SecuritizationTGE is
             );
         }
         registry().getSecuritizationManager().registerPot($.pot);
+    }
+
+    function setDebtCeiling(uint256 _debtCeiling) external override whenNotPaused notClosingStage {
+        registry().requirePoolAdminOrOwner(address(this), _msgSender());
+
+        Storage storage $ = _getStorage();
+        $.debtCeiling = _debtCeiling;
+        require(isDebtCeilingValid(), 'SecuritizationPool: Debt ceiling is not valid');
+        emit UpdateDebtCeiling(_debtCeiling);
     }
 
     function setUpPoolNAV() public override {
@@ -364,7 +393,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](27);
+        bytes4[] memory _functionSignatures = new bytes4[](30);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -393,6 +422,9 @@ contract SecuritizationTGE is
         _functionSignatures[24] = this.pause.selector;
         _functionSignatures[25] = this.unpause.selector;
         _functionSignatures[26] = this.setUpPoolNAV.selector;
+        _functionSignatures[27] = this.isDebtCeilingValid.selector;
+        _functionSignatures[28] = this.setDebtCeiling.selector;
+        _functionSignatures[29] = this.debtCeiling.selector;
 
         return _functionSignatures;
     }

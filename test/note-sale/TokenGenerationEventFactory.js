@@ -3,6 +3,8 @@ const { setup } = require('../setup');
 const { expect } = require('chai');
 const { BigNumber, utils } = require('ethers');
 const { keccak256 } = require('@ethersproject/keccak256');
+const { parseEther } = ethers.utils;
+
 const { POOL_ADMIN_ROLE } = require('../constants.js');
 
 describe('TokenGenerationEventFactory', () => {
@@ -42,14 +44,19 @@ describe('TokenGenerationEventFactory', () => {
             {
               name: 'validatorRequired',
               type: 'bool'
-            }
+            },
+            {
+              name: 'debtCeiling',
+              type: 'uint256',
+            },
           ]
         }
       ], [
         {
           currency: stableCoin.address,
           minFirstLossCushion: 0,
-          validatorRequired: true
+          validatorRequired: true,
+          debtCeiling: parseEther('1000').toString(),
         }
       ]));
 

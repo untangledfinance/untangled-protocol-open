@@ -133,6 +133,10 @@ describe('LoanKernel', () => {
                                         name: 'validatorRequired',
                                         type: 'bool',
                                     },
+                                    {
+                                        name: 'debtCeiling',
+                                        type: 'uint256',
+                                    },
                                 ],
                             },
                         ],
@@ -141,6 +145,7 @@ describe('LoanKernel', () => {
                                 currency: stableCoin.address,
                                 minFirstLossCushion: '100000',
                                 validatorRequired: true,
+                                debtCeiling: parseEther('1000').toString(),
                             },
                         ]
                     )
