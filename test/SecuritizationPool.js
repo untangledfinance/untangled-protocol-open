@@ -340,6 +340,7 @@ describe('SecuritizationPool', () => {
                 .setUpTGEForSOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('50'),
                     [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
                     true,
                     initialInterest,
@@ -379,6 +380,7 @@ describe('SecuritizationPool', () => {
                 .setUpTGEForJOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('50'),
                     initialJOTAmount,
                     [SaleType.NORMAL_SALE, tokenDecimals],
                     true,
@@ -422,6 +424,13 @@ describe('SecuritizationPool', () => {
             await securitizationPoolContract.connect(poolCreatorSigner).setDebtCeiling(parseEther('200'));
             expect(await securitizationPoolContract.debtCeiling()).equal(parseEther('200'));
         })
+        it('Should buy tokens failed if under min bid amount', async () => {
+            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
+            await expect(securitizationManager
+              .connect(lenderSigner)
+              .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('30')))
+              .to.be.revertedWith('Crowdsale: Less than minBidAmount')
+        });
         it('Should buy tokens successfully', async () => {
             await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
             await securitizationManager

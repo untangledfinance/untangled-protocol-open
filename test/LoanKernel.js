@@ -288,6 +288,7 @@ describe('LoanKernel', () => {
                 .setUpTGEForSOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
                     true,
                     initialInterest,
@@ -327,6 +328,7 @@ describe('LoanKernel', () => {
                 .setUpTGEForJOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     initialJOTAmount,
                     [SaleType.NORMAL_SALE, tokenDecimals],
                     true,

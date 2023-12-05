@@ -188,6 +188,7 @@ describe('NAV', () => {
             .setUpTGEForSOT(
                 untangledAdminSigner.address,
                 securitizationPoolContract.address,
+                parseEther('1'),
                 [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
                 true,
                 initialInterest,
@@ -227,6 +228,7 @@ describe('NAV', () => {
             .setUpTGEForJOT(
                 untangledAdminSigner.address,
                 securitizationPoolContract.address,
+                parseEther('1'),
                 initialJotAmount,
                 [SaleType.NORMAL_SALE, tokenDecimals],
                 true,
@@ -591,6 +593,7 @@ describe('NAV', () => {
           .setUpTGEForSOT(
               untangledAdminSigner.address,
               securitizationPoolContract.address,
+              parseEther('1'),
               [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
               true,
               initialInterest,
@@ -630,6 +633,7 @@ describe('NAV', () => {
           .setUpTGEForJOT(
               untangledAdminSigner.address,
               securitizationPoolContract.address,
+              parseEther('1'),
               initialJotAmount,
               [SaleType.NORMAL_SALE, tokenDecimals],
               true,

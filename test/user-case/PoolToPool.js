@@ -120,6 +120,7 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
         poolCreatorSigner.address,
         poolBContract.address,
+        parseEther('1'),
         initialJOTAmount,
         [1, 2],
         isLongSaleTGEJOT,
@@ -141,6 +142,7 @@ describe('Pool to Pool', () => {
       const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
         poolCreatorSigner.address,
         poolBContract.address,
+        parseEther('1'),
         [0, 2],
         isLongSaleTGESOT,
         10000,
@@ -219,6 +221,7 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForJOT(
         poolACreator.address,
         poolAContract.address,
+        parseEther('1'),
         initialJOTAmountPoolA,
         [1, 2],
         isLongSaleTGEJOTPoolA,
@@ -240,6 +243,7 @@ describe('Pool to Pool', () => {
       const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForSOT(
         poolACreator.address,
         poolAContract.address,
+        parseEther('1'),
         [0, 2],
         isLongSaleTGESOTPoolA,
         10000,
@@ -562,6 +566,7 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForJOT(
         poolCCreatorSigner.address,
         poolCContract.address,
+        parseEther('1'),
         initialJOTAmountPoolC,
         [1, 2],
         isLongSaleTGEJOTPoolC,
@@ -585,6 +590,7 @@ describe('Pool to Pool', () => {
       const setUpTGESOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForSOT(
         poolCCreatorSigner.address,
         poolCContract.address,
+        parseEther('1'),
         [0, 2],
         isLongSaleTGESOTPoolC,
         10000,
@@ -662,6 +668,7 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForJOT(
         poolBCreatorSigner.address,
         poolBContract.address,
+        parseEther('1'),
         initialJOTAmountPoolB,
         [1, 2],
         isLongSaleTGEJOTPoolB,
@@ -685,6 +692,7 @@ describe('Pool to Pool', () => {
       const setUpTGESOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForSOT(
         poolBCreatorSigner.address,
         poolBContract.address,
+        parseEther('1'),
         [0, 2],
         isLongSaleTGESOTPoolB,
         10000,
@@ -761,6 +769,7 @@ describe('Pool to Pool', () => {
       const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForJOT(
         poolACreatorSigner.address,
         poolAContract.address,
+        parseEther('1'),
         initialJOTAmountPoolA,
         [1, 2],
         isLongSaleTGEJOTPoolA,
@@ -782,6 +791,7 @@ describe('Pool to Pool', () => {
       const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForSOT(
         poolACreatorSigner.address,
         poolAContract.address,
+        parseEther('1'),
         [0, 2],
         isLongSaleTGESOTPoolA,
         10000,
