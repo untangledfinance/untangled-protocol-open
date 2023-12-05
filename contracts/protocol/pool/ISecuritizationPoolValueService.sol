@@ -24,14 +24,6 @@ interface ISecuritizationPoolValueService {
     /// @notice returns the rate that belongs to Junior investors at the current time
     function getJuniorRatio(address poolAddress) external view returns (uint256);
 
-    /// @notice calculates the expected value of an asset in the securitization pool at a given timestamp
-    function getExpectedAssetValue(
-        address poolAddress,
-        address tokenAddress,
-        uint256 tokenId,
-        uint256 timestamp
-    ) external view returns (uint256);
-
     /// @notice calculates the expected value of an ERC20 asset in the securitization pool at a given timestamp
     function getExpectedERC20AssetValue(
         address poolAddress,

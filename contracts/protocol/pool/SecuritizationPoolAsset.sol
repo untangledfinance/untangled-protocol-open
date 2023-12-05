@@ -272,7 +272,7 @@ contract SecuritizationPoolAsset is
     }
 
     /// @inheritdoc ISecuritizationPool
-    function collectAssets(uint256[] calldata tokenIds) external override whenNotPaused {
+    function collectAssets(uint256[] calldata tokenIds) external override  whenNotPaused returns(uint256) {
         registry().requireLoanKernel(_msgSender());
         uint256 tokenIdsLength = tokenIds.length;
         uint256 expectedAssetsValue = 0;
@@ -293,6 +293,7 @@ contract SecuritizationPoolAsset is
         }
 
         emit CollectAsset(expectedAssetsValue);
+        return expectedAssetsValue;
     }
 
     // function amountOwedToOriginator() public view returns (uint256) {
