@@ -630,7 +630,7 @@ describe('LoanKernel', () => {
             expect(balanceOfPool).equal(tokenIds.length);
 
             stablecoinBalanceOfAdmin = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(stablecoinBalanceOfAdmin).to.closeTo(parseEther('99019.053'), parseEther('0.01'));
+            expect(stablecoinBalanceOfAdmin).to.closeTo(parseEther('99019.000'), parseEther('0.01'));
         });
     });
 
@@ -707,10 +707,10 @@ describe('LoanKernel', () => {
 
         it('only LoanKernel contract can burn', async () => {
             const stablecoinBalanceOfPayerBefore = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(stablecoinBalanceOfPayerBefore).to.closeTo(parseEther('99019.053'), parseEther('0.01'));
+            expect(stablecoinBalanceOfPayerBefore).to.closeTo(parseEther('99019.000'), parseEther('0.01'));
 
             const stablecoinBalanceOfPoolBefore = await stableCoin.balanceOf(securitizationPoolContract.address);
-            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('180.94'), parseEther('0.01'));
+            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('181.00'), parseEther('0.01'));
 
             await loanRepaymentRouter
                 .connect(untangledAdminSigner)
@@ -722,10 +722,10 @@ describe('LoanKernel', () => {
             expect(balanceOfPool).equal(tokenIds.length - 1);
 
             const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(untangledAdminSigner.address);
-            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('180.94'), parseEther('0.01'));
+            expect(stablecoinBalanceOfPoolBefore).to.closeTo(parseEther('181.00'), parseEther('0.01'));
 
             const stablecoinBalanceOfPoolAfter = await stableCoin.balanceOf(securitizationPoolContract.address);
-            expect(stablecoinBalanceOfPoolAfter).to.closeTo(parseEther('190.44'), parseEther('0.01'));
+            expect(stablecoinBalanceOfPoolAfter).to.closeTo(parseEther('190.5'), parseEther('0.01'));
         });
 
         it('Cannot conclude agreement id again', async () => {

@@ -681,16 +681,6 @@ describe('SecuritizationPool', () => {
     });
 
     describe('Pool value after loan kernel executed', async () => {
-        it('#getExpectedAssetValues', async () => {
-            const result = await securitizationPoolValueService.getExpectedAssetValues(
-                securitizationPoolContract.address,
-                [loanAssetTokenContract.address],
-                [tokenIds[0]],
-                dayjs(new Date()).add(1, 'days').unix()
-            );
-
-            expect(result.toString()).equal('14296');
-        });
 
         it('#getAssetInterestRate', async () => {
             const result = await securitizationPoolValueService.getAssetInterestRate(
@@ -773,17 +763,6 @@ describe('SecuritizationPool', () => {
     });
 
     describe('Get Info after Upgrade', async () => {
-        it('#getExpectedAssetValues', async () => {
-            const result = await securitizationPoolValueService.getExpectedAssetValues(
-                securitizationPoolContract.address,
-                [loanAssetTokenContract.address],
-                [tokenIds[0]],
-                dayjs(new Date()).add(1, 'days').unix()
-            );
-
-            expect(result.toString()).equal('14296');
-        });
-
         it('#getAssetInterestRate', async () => {
             const result = await securitizationPoolValueService.getAssetInterestRate(
                 securitizationPoolContract.address,

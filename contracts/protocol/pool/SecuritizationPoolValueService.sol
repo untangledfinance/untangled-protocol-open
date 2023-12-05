@@ -76,56 +76,6 @@ contract SecuritizationPoolValueService is
         return result;
     }
 
-    function getExpectedAssetValue(
-        address poolAddress,
-        address tokenAddress,
-        uint256 tokenId,
-        uint256 timestamp
-    ) public view returns (uint256) {
-        IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
-        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenId));
-
-        uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
-        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp
-            ? loanEntry.expirationTimestamp - timestamp
-            : 0;
-        uint256 principalAmount;
-        uint256 expectedTimeEarningInterest = loanEntry.expirationTimestamp -
-            (
-                loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp
-                    ? loanEntry.lastRepayTimestamp
-                    : loanEntry.issuanceBlockTimestamp
-            );
-
-        (principalAmount, ) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
-
-        uint256 presentValue = getPresentValueWithNAVCalculation(
-            poolAddress,
-            principalAmount,
-            expectedTimeEarningInterest,
-            loanAssetToken.getInterestRate(tokenId),
-            loanEntry.riskScore,
-            overdue,
-            secondTillCashflow
-        );
-
-        return presentValue;
-    }
-
-    function getExpectedAssetValues(
-        address poolAddress,
-        address[] calldata tokenAddresses,
-        uint256[] calldata tokenIds,
-        uint256 timestamp
-    ) external view returns (uint256[] memory) {
-        uint256 tokenIdsLength = tokenIds.length;
-        uint256[] memory balances = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
-            balances[i] = getExpectedAssetValue(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
-        }
-        return balances;
-    }
-
     function getAssetInterestRate(
         address poolAddress,
         address tokenAddress,
@@ -168,6 +118,10 @@ contract SecuritizationPoolValueService is
             interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
         }
         return interestRates;
+    }
+
+    function getExpectedLATAssetValue(address poolAddress) public view returns(uint256) {
+        return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
     }
 
     function getExpectedERC20AssetValue(
