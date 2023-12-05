@@ -12,6 +12,7 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 interface ISecuritizationPool {
     event CollectAsset(uint256 value);
     // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
+    event SecuritizationPoolWithdraw(address originatorAddress, uint256 amount);
     event AddTokenAssetAddress(address token);
     event InsertNFTAsset(address token, uint256 tokenId);
     event RemoveNFTAsset(address token, uint256 tokenId);
