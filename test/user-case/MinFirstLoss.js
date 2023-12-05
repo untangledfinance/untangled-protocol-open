@@ -104,6 +104,7 @@ describe('MinFirstLoss', () => {
     const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
+      parseEther('1'),
       initialJotAmount,
       [1, 2],
       isLongSaleTGEJOT,
@@ -127,6 +128,7 @@ describe('MinFirstLoss', () => {
     const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
       poolCreatorSigner.address,
       securitizationPoolContract.address,
+      parseEther('1'),
       [0, 2],
       isLongSaleTGESOT,
       10000,

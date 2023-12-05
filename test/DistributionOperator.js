@@ -302,6 +302,7 @@ describe('Distribution', () => {
                 .setUpTGEForSOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
                     true,
                     initialInterest,
@@ -341,6 +342,7 @@ describe('Distribution', () => {
                 .setUpTGEForJOT(
                     untangledAdminSigner.address,
                     securitizationPoolContract.address,
+                    parseEther('1'),
                     initialJotAmount,
                     [SaleType.NORMAL_SALE, tokenDecimals],
                     true,
