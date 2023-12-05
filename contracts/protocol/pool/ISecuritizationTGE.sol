@@ -9,6 +9,7 @@ interface ISecuritizationTGE {
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
+    event UpdateDebtCeiling(uint256 _debtCeiling);
     event Withdraw(address originatorAddress, uint256 amount);
 
     function termLengthInSeconds() external view returns (uint64);

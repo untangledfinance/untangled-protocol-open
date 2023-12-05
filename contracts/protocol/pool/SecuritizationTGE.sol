@@ -241,6 +241,7 @@ contract SecuritizationTGE is
         Storage storage $ = _getStorage();
         $.debtCeiling = _debtCeiling;
         require(isDebtCeilingValid(), 'SecuritizationPool: Debt ceiling is not valid');
+        emit UpdateDebtCeiling(_debtCeiling);
     }
 
     function setUpPoolNAV() public override {
