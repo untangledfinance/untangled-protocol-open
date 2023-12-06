@@ -62,6 +62,21 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         uint256 rate;
         uint256 cap;
     }
+    struct TGEParam {
+        address issuerTokenController;
+        address pool;
+        uint256 minBidAmount;
+        bool longSale;
+        string ticker;
+        uint8[] saleTypeAndDecimal;
+    }
+
+    struct IncreasingInterestParam {
+        uint32 _initialInterest;
+        uint32 _finalInterest;
+        uint32 _timeInterval;
+        uint32 _amountChangeEachInterval;
+    }
 
     function initialize(Registry _registry, address _factoryAdmin) public reinitializer(2) {
         __UntangledBase__init(_msgSender());
@@ -222,62 +237,38 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     }
 
     /// @notice Sets up the token generation event (TGE) for the senior tranche (SOT) of a securitization pool with additional configuration parameters
-    /// @param issuerTokenController Who acts as owner of note sale
-    /// @param pool SecuritizationPool address where this sale belongs to
-    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
-    /// @param longSale Define this sale is long sale. Default true
-    /// @param _initialInterest For SOT auction token sale. An initial interest rate is defined
-    /// @param _finalInterest For SOT auction token sale. This is the largest interest rate
-    /// @param _timeInterval For SOT auction token sale. After every time interval, the current interest rate will increase from initial interest value
-    /// @param _amountChangeEachInterval For SOT auction token sale. After every time interval, the current interest rate will increase a value of amountChangeEachInterval
+    /// @param increasingInterestParam Increasing interest parameters
+    /// @param tgeParam TGE parameters
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
-    /// @param ticker Prefix for note token symbol name. Ex: Saff_SOT
     function setUpTGEForSOT(
-        address issuerTokenController,
-        address pool,
-        uint256 minBidAmount,
-        uint8[] memory saleTypeAndDecimal,
-        bool longSale,
-        uint32 _initialInterest,
-        uint32 _finalInterest,
-        uint32 _timeInterval,
-        uint32 _amountChangeEachInterval,
-        NewRoundSaleParam memory saleParam,
-        string calldata ticker
-    ) public onlyIssuer(pool) {
-        address tgeAddress = _initialTGEForSOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
+        IncreasingInterestParam memory increasingInterestParam,
+        TGEParam memory tgeParam,
+        NewRoundSaleParam memory saleParam
+    ) public onlyIssuer(tgeParam.pool) {
+        address tgeAddress = _initialTGEForSOT(tgeParam.issuerTokenController, tgeParam.pool, tgeParam.saleTypeAndDecimal, tgeParam.longSale, tgeParam.ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-        uint8 saleType = saleTypeAndDecimal[0];
+        uint8 saleType = tgeParam.saleTypeAndDecimal[0];
         if (saleType == uint8(ITokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
-            tge.setInterestRange(_initialInterest, _finalInterest, _timeInterval, _amountChangeEachInterval);
+            tge.setInterestRange(increasingInterestParam._initialInterest, increasingInterestParam._finalInterest, increasingInterestParam._timeInterval, increasingInterestParam._amountChangeEachInterval);
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
-        tge.setMinBidAmount(minBidAmount);
+        tge.setMinBidAmount(tgeParam.minBidAmount);
     }
 
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
-    /// @param issuerTokenController who acts as owner of note sale
-    /// @param pool SecuritizationPool address where this sale belongs to
+    /// @param tgeParam Parameters for TGE
     /// @param initialJOTAmount Minimum amount of JOT raised in currency before SOT can start
-    /// @param saleTypeAndDecimal Contains sale type parameter and decimal value of note token
-    /// @param longSale Define this sale is long sale. Default true
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
-    /// @param ticker Prefix for note token symbol name. Ex: Saff_JOT
     function setUpTGEForJOT(
-        address issuerTokenController,
-        address pool,
-        uint256 minBidAmount,
         uint256 initialJOTAmount,
-        uint8[] memory saleTypeAndDecimal,
-        bool longSale,
-        NewRoundSaleParam memory saleParam,
-        string calldata ticker
-    ) public onlyIssuer(pool) {
-        address tgeAddress = _initialTGEForJOT(issuerTokenController, pool, saleTypeAndDecimal, longSale, ticker);
+        TGEParam memory tgeParam,
+        NewRoundSaleParam memory saleParam
+    ) public onlyIssuer(tgeParam.pool) {
+        address tgeAddress = _initialTGEForJOT(tgeParam.issuerTokenController, tgeParam.pool, tgeParam.saleTypeAndDecimal, tgeParam.longSale, tgeParam.ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setHasStarted(true);
-        tge.setMinBidAmount(minBidAmount);
+        tge.setMinBidAmount(tgeParam.minBidAmount);
         tge.setInitialAmount(initialJOTAmount);
     }
 
