@@ -8,7 +8,6 @@ import "../../libraries/ConfigHelper.sol";
 import "../../libraries/UnpackLoanParamtersLib.sol";
 import {RiskScore} from './base/types.sol';
 
-// TODO A @KhanhPham Deploy this
 contract PoolNAV is Auth, Discounting, Initializable {
     using ConfigHelper for Registry;
 

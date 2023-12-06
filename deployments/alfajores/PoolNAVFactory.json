@@ -1,5 +1,5 @@
 {
-  "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+  "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
   "abi": [
     {
       "anonymous": false,
@@ -142,112 +142,6 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "address[]",
-          "name": "debtor",
-          "type": "address[]"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256[]",
-          "name": "loanTokenIds",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "IssuedNewInputLoans",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint8",
-          "name": "_errorId",
-          "type": "uint8"
-        },
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "_orderHash",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "desc",
-          "type": "string"
-        }
-      ],
-      "name": "LogDebtKernelError",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "_agreementId",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_principal",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_principalToken",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "_relayer",
-          "type": "address"
-        }
-      ],
-      "name": "LogDebtOrderFilled",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "payer",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "token",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "beneficiary",
-          "type": "address"
-        }
-      ],
-      "name": "LogFeeTransfer",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
           "internalType": "address",
           "name": "account",
           "type": "address"
@@ -345,47 +239,21 @@
       "type": "event"
     },
     {
-      "inputs": [],
-      "name": "DEFAULT_ADMIN_ROLE",
-      "outputs": [
+      "anonymous": false,
+      "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "NULL_ADDRESS",
-      "outputs": [
-        {
+          "indexed": true,
           "internalType": "address",
-          "name": "",
+          "name": "newAddress",
           "type": "address"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "name": "UpdatePoolNAVImplementation",
+      "type": "event"
     },
     {
       "inputs": [],
-      "name": "NULL_COLLATERAL_INFO_HASH",
-      "outputs": [
-        {
-          "internalType": "bytes16",
-          "name": "",
-          "type": "bytes16"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "NULL_ISSUANCE_HASH",
+      "name": "DEFAULT_ADMIN_ROLE",
       "outputs": [
         {
           "internalType": "bytes32",
@@ -410,144 +278,29 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "creditor",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "agreementId",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "termContract",
-          "type": "address"
-        }
-      ],
-      "name": "concludeLoan",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address[]",
-          "name": "creditors",
-          "type": "address[]"
-        },
-        {
-          "internalType": "bytes32[]",
-          "name": "agreementIds",
-          "type": "bytes32[]"
-        },
-        {
-          "internalType": "address",
-          "name": "termContract",
-          "type": "address"
-        }
-      ],
-      "name": "concludeLoans",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "debtOrderCancelled",
+      "inputs": [],
+      "name": "createPoolNAV",
       "outputs": [
         {
-          "internalType": "bool",
+          "internalType": "address",
           "name": "",
-          "type": "bool"
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factoryAdmin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "debtOrderCompleted",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "address[]",
-              "name": "orderAddresses",
-              "type": "address[]"
-            },
-            {
-              "internalType": "uint256[]",
-              "name": "orderValues",
-              "type": "uint256[]"
-            },
-            {
-              "internalType": "bytes32[]",
-              "name": "termsContractParameters",
-              "type": "bytes32[]"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "uint256[]",
-                  "name": "tokenIds",
-                  "type": "uint256[]"
-                },
-                {
-                  "internalType": "uint256[]",
-                  "name": "nonces",
-                  "type": "uint256[]"
-                },
-                {
-                  "internalType": "address",
-                  "name": "validator",
-                  "type": "address"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "validateSignature",
-                  "type": "bytes"
-                }
-              ],
-              "internalType": "struct LoanAssetInfo[]",
-              "name": "latInfo",
-              "type": "tuple[]"
-            }
-          ],
-          "internalType": "struct ILoanKernel.FillDebtOrderParam",
-          "name": "fillDebtOrderParam",
-          "type": "tuple"
-        }
-      ],
-      "name": "fillDebtOrder",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -673,6 +426,11 @@
           "internalType": "contract Registry",
           "name": "_registry",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_factoryAdmin",
+          "type": "address"
         }
       ],
       "name": "initialize",
@@ -683,25 +441,6 @@
     {
       "inputs": [],
       "name": "isAdmin",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "issuanceCancelled",
       "outputs": [
         {
           "internalType": "bool",
@@ -727,6 +466,19 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolNAVImplementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -777,6 +529,32 @@
         }
       ],
       "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_factoryAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "setFactoryAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setPoolNAVImplementation",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -847,35 +625,35 @@
       "type": "constructor"
     }
   ],
-  "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
+  "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
   "receipt": {
     "to": null,
     "from": "0xC52a72eDdcA008580b4Efc89eA9f343AfF11FeA3",
-    "contractAddress": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+    "contractAddress": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
     "transactionIndex": 0,
-    "gasUsed": "975956",
-    "logsBloom": "0x00000004000000000880000000000000480080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000020000400000000000000800000000800000000000000000000000000000000000000004000000000000000000000000000080000200000000800000002000000000000000000000000400000000000800000000001000000000000000000020000000000000000000040000000080000402000102000000000020000000002000000000000000000000001008000000000000000000000000000000",
-    "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6",
-    "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
+    "gasUsed": "1024220",
+    "logsBloom": "0x00000004000000000800000000000000480080000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000020000400000000000000800000000800800000000200000000000000000000000000000000000000000200000000000000080000000000000800000002000000000000000000000000400000001000800000000001000000000000000000020000000000000000000040000000000000400000102000000000020000000000000000000000000000000009008000000000000000000000000000000",
+    "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52",
+    "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
     "logs": [
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b",
-          "0x000000000000000000000000626ee01c8d7d7db902d1649003c6e8f7c68b62b0"
+          "0x000000000000000000000000251bb07e2da6933545d69428238ec182df782dc5"
         ],
         "data": "0x",
         "logIndex": 0,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       },
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -884,13 +662,13 @@
         ],
         "data": "0x",
         "logIndex": 1,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       },
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
           "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e",
@@ -899,13 +677,13 @@
         ],
         "data": "0x",
         "logIndex": 2,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       },
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff",
           "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e",
@@ -914,42 +692,42 @@
         ],
         "data": "0x",
         "logIndex": 3,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       },
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0x7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498"
         ],
         "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
         "logIndex": 4,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       },
       {
         "transactionIndex": 0,
-        "blockNumber": 21288809,
-        "transactionHash": "0xcc82cc1e4476dc511911cf211b59a73043e1a58d01d5768b69e83afcd18fe363",
-        "address": "0xb9d185E61FB61689e8F43962Fd9276482D8c8FFA",
+        "blockNumber": 21288873,
+        "transactionHash": "0xf1010490b066c645d7187f564e2c5c40ccc28bf8839ebf6aabe81e3f6c8e33bc",
+        "address": "0x9b2ED09bd85b149956C9a509A674732B259B845c",
         "topics": [
           "0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f"
         ],
         "data": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000cb8adbfdfa11529f69b199fe9779ec19c54ffc8f",
         "logIndex": 5,
-        "blockHash": "0x4186d4816927b0ba1aa573b9fe4446a7af29e5ad0716f745a688bd6117fdb2f6"
+        "blockHash": "0xf207ef1b9f787ecb9fdbb646d9df2928e426259420e23c19cfcca7e7ca4e0e52"
       }
     ],
-    "blockNumber": 21288809,
-    "cumulativeGasUsed": "975956",
+    "blockNumber": 21288873,
+    "cumulativeGasUsed": "1024220",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x626eE01c8D7D7dB902D1649003C6e8f7C68b62B0",
+    "0x251BB07e2da6933545d69428238EC182Df782Dc5",
     "0xCB8aDbfdFA11529F69b199fE9779ec19c54fFc8f",
-    "0xc4d66de8000000000000000000000000d9a530aff568b9537f2292dda2fb59ab213f56e8"
+    "0x485cc955000000000000000000000000d9a530aff568b9537f2292dda2fb59ab213f56e8000000000000000000000000cb8adbfdfa11529f69b199fe9779ec19c54ffc8f"
   ],
   "numDeployments": 1,
   "solcInputHash": "0e89febeebc7444140de8e67c9067d2c",
@@ -959,10 +737,11 @@
   "execute": {
     "methodName": "initialize",
     "args": [
-      "0xD9a530aFf568b9537f2292dDa2fb59ab213f56E8"
+      "0xD9a530aFf568b9537f2292dDa2fb59ab213f56E8",
+      "0xCB8aDbfdFA11529F69b199fE9779ec19c54fFc8f"
     ]
   },
-  "implementation": "0x626eE01c8D7D7dB902D1649003C6e8f7C68b62B0",
+  "implementation": "0x251BB07e2da6933545d69428238EC182Df782Dc5",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin. To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand: 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\". These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation. Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.",
     "kind": "dev",

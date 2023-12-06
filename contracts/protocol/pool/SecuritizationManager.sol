@@ -44,7 +44,6 @@ abstract contract SecuritizationManagerBase is ISecuritizationManager {
     uint256[44] private __gap;
 }
 
-// TODO A @KhanhPham Upgrade this
 /// @title SecuritizationManager
 /// @author Untangled Team
 /// @notice You can use this contract for creating new pool, setting up note toke sale, buying note token
