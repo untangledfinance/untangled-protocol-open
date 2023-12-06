@@ -13,7 +13,6 @@ import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 import {IPoolNAV} from '../pool/IPoolNAV.sol';
 import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
 
-// TODO A @KhanhPham Upgrade this
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
 /// @dev Repay for loan

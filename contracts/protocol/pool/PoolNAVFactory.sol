@@ -8,7 +8,6 @@ import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
 import './IPoolNAVFactory.sol';
 
-// TODO A @KhanhPham Deploy this
 contract PoolNAVFactory is UntangledBase, Factory, IPoolNAVFactory {
     using ConfigHelper for Registry;
 

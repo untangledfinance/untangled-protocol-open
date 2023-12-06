@@ -7,7 +7,6 @@ import '../../libraries/UnpackLoanParamtersLib.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../libraries/ConfigHelper.sol';
 
-// TODO A @KhanhPham Upgrade this
 /// @title LoanKernel
 /// @author Untangled Team
 /// @dev Upload loan and conclude loan
@@ -347,7 +346,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 x = UntangledMath.ONE +
                         (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
                         YEAR_LENGTH_IN_SECONDS;
-        
+
         return
             (_principalAmount *
                 UntangledMath.rpow(x,
@@ -447,7 +446,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
                 interest = _calculateInterestForDuration(_principalAmount, _annualInterestRate, elapseTimeFromStart);
             }
         }
-        
+
         return interest;
     }
 

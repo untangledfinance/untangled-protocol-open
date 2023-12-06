@@ -11,7 +11,6 @@ import '../../tokens/ERC721/types.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 
-// TODO A @KhanhPham Upgrade this
 /// @title LoanKernel
 /// @author Untangled Team
 /// @notice Upload loan and conclude loan
