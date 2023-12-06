@@ -118,19 +118,21 @@ describe('Pool to Pool', () => {
       const now = dayjs().unix();
       const initialJOTAmount = parseEther('1')
       const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
-        poolCreatorSigner.address,
-        poolBContract.address,
-        parseEther('1'),
-        initialJOTAmount,
-        [1, 2],
-        isLongSaleTGEJOT,
+        {
+          issuerTokenController: poolCreatorSigner.address,
+          pool: poolBContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [1, 2],
+          longSale: isLongSaleTGEJOT,
+          ticker: 'Ticker',
+        },
         {
           openingTime: now,
           closingTime: now + ONE_DAY,
           rate: 10000,
           cap: jotCap,
         },
-        'Ticker'
+        initialJOTAmount,
       );
       const setUpTGEJOTReceipt = await setUpTGEJOTTransaction.wait();
       const [jotTGEAddress] = setUpTGEJOTReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -140,22 +142,26 @@ describe('Pool to Pool', () => {
       const sotCap = '10000000000000000000';
       const isLongSaleTGESOT = true;
       const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
-        poolCreatorSigner.address,
-        poolBContract.address,
-        parseEther('1'),
-        [0, 2],
-        isLongSaleTGESOT,
-        10000,
-        90000,
-        86400,
-        10000,
+        {
+          issuerTokenController: poolCreatorSigner.address,
+          pool: poolBContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [0, 2],
+          longSale: isLongSaleTGESOT,
+          ticker: 'Ticker',
+        },
         {
           openingTime: now,
           closingTime: now + 2 * ONE_DAY,
           rate: 10000,
           cap: sotCap,
         },
-        'Ticker'
+        {
+          initialInterest: 10000,
+          finalInterest: 90000,
+          timeInterval: 86400,
+          amountChangeEachInterval: 10000,
+        },
       );
       const setUpTGESOTReceipt = await setUpTGESOTTransaction.wait();
       const [sotTGEAddress] = setUpTGESOTReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -219,19 +225,22 @@ describe('Pool to Pool', () => {
       const nowPoolA = dayjs().unix();
       const initialJOTAmountPoolA = parseEther('1')
       const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForJOT(
-        poolACreator.address,
-        poolAContract.address,
-        parseEther('1'),
-        initialJOTAmountPoolA,
-        [1, 2],
-        isLongSaleTGEJOTPoolA,
+          {
+            issuerTokenController: poolACreator.address,
+            pool: poolAContract.address,
+            minBidAmount: parseEther ('1'),
+            saleTypeAndDecimal: [1, 2],
+            longSale: isLongSaleTGEJOTPoolA,
+            ticker: 'Ticker',
+        },
         {
           openingTime: nowPoolA,
           closingTime: nowPoolA + ONE_DAY,
           rate: 10000,
           cap: jotCapPoolA,
+
         },
-        'Ticker'
+        initialJOTAmountPoolA
       );
       const setUpTGEJOTReceiptPoolA = await setUpTGEJOTTransactionPoolA.wait();
       const [jotTGEAddressPoolA] = setUpTGEJOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
@@ -241,22 +250,26 @@ describe('Pool to Pool', () => {
       const sotCapPoolA = '10000000000000000000';
       const isLongSaleTGESOTPoolA = true;
       const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreator).setUpTGEForSOT(
-        poolACreator.address,
-        poolAContract.address,
-        parseEther('1'),
-        [0, 2],
-        isLongSaleTGESOTPoolA,
-        10000,
-        90000,
-        86400,
-        10000,
+        {
+          issuerTokenController: poolACreator.address,
+          pool: poolAContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [0, 2],
+          longSale: isLongSaleTGESOTPoolA,
+          ticker: 'Ticker',
+        },
         {
           openingTime: now,
           closingTime: now + 2 * ONE_DAY,
           rate: 10000,
           cap: sotCapPoolA,
         },
-        'Ticker'
+        {
+          initialInterest: 10000,
+          finalInterest: 90000,
+          timeInterval: 86400,
+          amountChangeEachInterval: 10000,
+        }
       );
       const setUpTGESOTReceiptPoolA = await setUpTGESOTTransactionPoolA.wait();
       const [sotTGEAddressPoolA] = setUpTGESOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
@@ -564,19 +577,21 @@ describe('Pool to Pool', () => {
       const isLongSaleTGEJOTPoolC = true;
       const initialJOTAmountPoolC = parseEther('1');
       const setUpTGEJOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForJOT(
-        poolCCreatorSigner.address,
-        poolCContract.address,
-        parseEther('1'),
-        initialJOTAmountPoolC,
-        [1, 2],
-        isLongSaleTGEJOTPoolC,
+        {
+          issuerTokenController: poolCCreatorSigner.address,
+          pool: poolCContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [1, 2],
+          longSale: isLongSaleTGEJOTPoolC,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + ONE_DAY,
           rate: 10000,
           cap: jotCapPoolC,
         },
-        'Ticker'
+        initialJOTAmountPoolC,
       );
       const setUpTGEJOTPoolCReceipt = await setUpTGEJOTTransactionPoolC.wait();
       const [jotTGEPoolCAddress] = setUpTGEJOTPoolCReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -588,22 +603,26 @@ describe('Pool to Pool', () => {
       const sotCapPoolC = '10000000000000000000';
       const isLongSaleTGESOTPoolC = true;
       const setUpTGESOTTransactionPoolC = await securitizationManager.connect(poolCCreatorSigner).setUpTGEForSOT(
-        poolCCreatorSigner.address,
-        poolCContract.address,
-        parseEther('1'),
-        [0, 2],
-        isLongSaleTGESOTPoolC,
-        10000,
-        90000,
-        86400,
-        10000,
+        {
+          issuerTokenController: poolCCreatorSigner.address,
+          pool: poolCContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [0, 2],
+          longSale: isLongSaleTGESOTPoolC,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + 2 * ONE_DAY,
           rate: 10000,
           cap: sotCapPoolC,
         },
-        'Ticker'
+        {
+          initialInterest: 10000,
+          finalInterest: 90000,
+          timeInterval: 86400,
+          amountChangeEachInterval: 10000,
+        }
       );
       const setUpTGESOTPoolCReceipt = await setUpTGESOTTransactionPoolC.wait();
       const [sotTGEPoolCAddress] = setUpTGESOTPoolCReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -666,19 +685,21 @@ describe('Pool to Pool', () => {
       const isLongSaleTGEJOTPoolB = true;
       const initialJOTAmountPoolB = parseEther('1');
       const setUpTGEJOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForJOT(
-        poolBCreatorSigner.address,
-        poolBContract.address,
-        parseEther('1'),
-        initialJOTAmountPoolB,
-        [1, 2],
-        isLongSaleTGEJOTPoolB,
+        {
+          issuerTokenController: poolBCreatorSigner.address,
+          pool: poolBContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [1, 2],
+          longSale: isLongSaleTGEJOTPoolB,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + ONE_DAY,
           rate: 10000,
           cap: jotCapPoolB,
         },
-        'Ticker'
+        initialJOTAmountPoolB,
       );
       const setUpTGEJOTPoolBReceipt = await setUpTGEJOTTransactionPoolB.wait();
       const [jotTGEPoolBAddress] = setUpTGEJOTPoolBReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -690,22 +711,26 @@ describe('Pool to Pool', () => {
       const sotCapPoolB = '10000000000000000000';
       const isLongSaleTGESOTPoolB = true;
       const setUpTGESOTTransactionPoolB = await securitizationManager.connect(poolBCreatorSigner).setUpTGEForSOT(
-        poolBCreatorSigner.address,
-        poolBContract.address,
-        parseEther('1'),
-        [0, 2],
-        isLongSaleTGESOTPoolB,
-        10000,
-        90000,
-        86400,
-        10000,
+        {
+          issuerTokenController: poolBCreatorSigner.address,
+          pool: poolBContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [0, 2],
+          longSale: isLongSaleTGESOTPoolB,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + 2 * ONE_DAY,
           rate: 10000,
           cap: sotCapPoolB,
         },
-        'Ticker'
+        {
+          initialInterest: 10000,
+          finalInterest: 90000,
+          timeInterval: 86400,
+          amountChangeEachInterval: 10000,
+        }
       );
       const setUpTGESOTPoolBReceipt = await setUpTGESOTTransactionPoolB.wait();
       const [sotTGEPoolBAddress] = setUpTGESOTPoolBReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -767,19 +792,21 @@ describe('Pool to Pool', () => {
       const isLongSaleTGEJOTPoolA = true;
       const initialJOTAmountPoolA = parseEther('1')
       const setUpTGEJOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForJOT(
-        poolACreatorSigner.address,
-        poolAContract.address,
-        parseEther('1'),
-        initialJOTAmountPoolA,
-        [1, 2],
-        isLongSaleTGEJOTPoolA,
+        {
+          issuerTokenController: poolACreatorSigner.address,
+          pool: poolAContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [1, 2],
+          longSale: isLongSaleTGEJOTPoolA,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + ONE_DAY,
           rate: 10000,
           cap: jotCapPoolA,
         },
-        'Ticker'
+        initialJOTAmountPoolA,
       );
       const setUpTGEJOTReceiptPoolA = await setUpTGEJOTTransactionPoolA.wait();
       const [jotTGEAddressPoolA] = setUpTGEJOTReceiptPoolA.events.find((e) => e.event == 'NewTGECreated').args;
@@ -789,22 +816,27 @@ describe('Pool to Pool', () => {
       const sotCapPoolA = '10000000000000000000';
       const isLongSaleTGESOTPoolA = true;
       const setUpTGESOTTransactionPoolA = await securitizationManager.connect(poolACreatorSigner).setUpTGEForSOT(
-        poolACreatorSigner.address,
-        poolAContract.address,
-        parseEther('1'),
-        [0, 2],
-        isLongSaleTGESOTPoolA,
-        10000,
-        90000,
-        86400,
-        10000,
+        {
+          issuerTokenController: poolACreatorSigner.address,
+          pool: poolAContract.address,
+          minBidAmount: parseEther('1'),
+          saleTypeAndDecimal: [0, 2],
+          longSale: isLongSaleTGESOTPoolA,
+          ticker: 'Ticker',
+        },
         {
           openingTime: NOW,
           closingTime: NOW + 2 * ONE_DAY,
           rate: 10000,
           cap: sotCapPoolA,
         },
-        'Ticker'
+        {
+
+          initialInterest: 10000,
+          finalInterest: 90000,
+          timeInterval: 86400,
+          amountChangeEachInterval: 10000,
+        },
       );
 
       // Anonymous investor gain UID

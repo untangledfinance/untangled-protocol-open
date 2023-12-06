@@ -194,17 +194,21 @@ describe('SecuritizationManager', () => {
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .setUpTGEForSOT(
-          untangledAdminSigner.address,
-          securitizationPoolContract.address,
-          parseEther('1'),
-          [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
-          true,
-          initialInterest,
-          finalInterest,
-          timeInterval,
-          amountChangeEachInterval,
+          {
+            issuerTokenController: untangledAdminSigner.address,
+            pool: securitizationPoolContract.address,
+            minBidAmount: parseEther('1'),
+            saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+            longSale: true,
+            ticker: prefixOfNoteTokenSaleName,
+          },
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-          prefixOfNoteTokenSaleName
+          {
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval,
+          },
         );
 
       const receipt = await transaction.wait();
@@ -281,20 +285,22 @@ describe('SecuritizationManager', () => {
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
       const prefixOfNoteTokenSaleName = 'JOT_';
-      const initialJotAmount = parseEther('100');
+      const initialJOTAmount = parseEther('100');
 
       // JOT only has SaleType.NORMAL_SALE
       const transaction = await securitizationManager
         .connect(poolCreatorSigner)
         .setUpTGEForJOT(
-          untangledAdminSigner.address,
-          securitizationPoolContract.address,
-          parseEther('1'),
-          initialJotAmount,
-          [SaleType.NORMAL_SALE, tokenDecimals],
-          true,
+          {
+            issuerTokenController: untangledAdminSigner.address,
+            pool: securitizationPoolContract.address,
+            minBidAmount: parseEther('50'),
+            saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+            longSale: true,
+            ticker: prefixOfNoteTokenSaleName,
+          },
           { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-          prefixOfNoteTokenSaleName
+          initialJOTAmount,
         );
       const receipt = await transaction.wait();
 

@@ -72,10 +72,10 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     }
 
     struct IncreasingInterestParam {
-        uint32 _initialInterest;
-        uint32 _finalInterest;
-        uint32 _timeInterval;
-        uint32 _amountChangeEachInterval;
+        uint32 initialInterest;
+        uint32 finalInterest;
+        uint32 timeInterval;
+        uint32 amountChangeEachInterval;
     }
 
     function initialize(Registry _registry, address _factoryAdmin) public reinitializer(2) {
@@ -241,15 +241,15 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     /// @param tgeParam TGE parameters
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
     function setUpTGEForSOT(
-        IncreasingInterestParam memory increasingInterestParam,
         TGEParam memory tgeParam,
-        NewRoundSaleParam memory saleParam
+        NewRoundSaleParam memory saleParam,
+        IncreasingInterestParam memory increasingInterestParam
     ) public onlyIssuer(tgeParam.pool) {
         address tgeAddress = _initialTGEForSOT(tgeParam.issuerTokenController, tgeParam.pool, tgeParam.saleTypeAndDecimal, tgeParam.longSale, tgeParam.ticker);
         MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
         uint8 saleType = tgeParam.saleTypeAndDecimal[0];
         if (saleType == uint8(ITokenGenerationEventFactory.SaleType.MINTED_INCREASING_INTEREST_SOT)) {
-            tge.setInterestRange(increasingInterestParam._initialInterest, increasingInterestParam._finalInterest, increasingInterestParam._timeInterval, increasingInterestParam._amountChangeEachInterval);
+            tge.setInterestRange(increasingInterestParam.initialInterest, increasingInterestParam.finalInterest, increasingInterestParam.timeInterval, increasingInterestParam.amountChangeEachInterval);
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setMinBidAmount(tgeParam.minBidAmount);
@@ -260,9 +260,9 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     /// @param initialJOTAmount Minimum amount of JOT raised in currency before SOT can start
     /// @param saleParam Some parameters for new round token sale. Ex: openingTime, closeTime, totalCap...
     function setUpTGEForJOT(
-        uint256 initialJOTAmount,
         TGEParam memory tgeParam,
-        NewRoundSaleParam memory saleParam
+        NewRoundSaleParam memory saleParam,
+        uint256 initialJOTAmount
     ) public onlyIssuer(tgeParam.pool) {
         address tgeAddress = _initialTGEForJOT(tgeParam.issuerTokenController, tgeParam.pool, tgeParam.saleTypeAndDecimal, tgeParam.longSale, tgeParam.ticker);
         MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
