@@ -102,19 +102,21 @@ describe('MinFirstLoss', () => {
     const initialJotAmount = stableCoinAmountToBuyJOT;
 
     const setUpTGEJOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
-      poolCreatorSigner.address,
-      securitizationPoolContract.address,
-      parseEther('1'),
-      initialJotAmount,
-      [1, 2],
-      isLongSaleTGEJOT,
+      {
+        issuerTokenController: poolCreatorSigner.address,
+        pool: securitizationPoolContract.address,
+        minBidAmount: parseEther('1'),
+        saleTypeAndDecimal: [1, 2],
+        longSale: isLongSaleTGEJOT,
+        ticker: 'Ticker',
+      },
       {
         openingTime: now,
         closingTime: now + ONE_DAY_IN_SECONDS,
         rate: 10000,
         cap: jotCap,
       },
-      'Ticker'
+      initialJotAmount,
     );
     const setUpTGEJOTReceipt = await setUpTGEJOTTransaction.wait();
     const [jotTGEAddress] = setUpTGEJOTReceipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -126,22 +128,26 @@ describe('MinFirstLoss', () => {
     const sotCap = parseEther('1000'); // $1000
     const isLongSaleTGESOT = true;
     const setUpTGESOTTransaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
-      poolCreatorSigner.address,
-      securitizationPoolContract.address,
-      parseEther('1'),
-      [0, 2],
-      isLongSaleTGESOT,
-      10000,
-      90000,
-      86400,
-      10000,
+      {
+        issuerTokenController: poolCreatorSigner.address,
+        pool: securitizationPoolContract.address,
+        minBidAmount: parseEther('1'),
+        saleTypeAndDecimal: [0, 2],
+        longSale: isLongSaleTGESOT,
+        ticker: 'Ticker',
+      },
       {
         openingTime: now,
         closingTime: now + 2 * ONE_DAY_IN_SECONDS,
         rate: 10000,
         cap: sotCap,
       },
-      'Ticker'
+      {
+        initialInterest: 10000,
+        finalInterest: 90000,
+        timeInterval: 86400,
+        amountChangeEachInterval: 10000,
+      },
     );
     const setUpTGESOTReceipt = await setUpTGESOTTransaction.wait();
     const [sotTGEAddress] = setUpTGESOTReceipt.events.find((e) => e.event == 'NewTGECreated').args;

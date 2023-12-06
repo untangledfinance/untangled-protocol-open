@@ -184,20 +184,24 @@ describe('NAV', () => {
         const prefixOfNoteTokenSaleName = 'SOT_';
 
         const transaction = await securitizationManager
-            .connect(poolCreatorSigner)
-            .setUpTGEForSOT(
-                untangledAdminSigner.address,
-                securitizationPoolContract.address,
-                parseEther('1'),
-                [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
-                true,
-                initialInterest,
-                finalInterest,
-                timeInterval,
-                amountChangeEachInterval,
-                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                prefixOfNoteTokenSaleName
-            );
+          .connect(poolCreatorSigner)
+          .setUpTGEForSOT(
+            {
+              issuerTokenController: untangledAdminSigner.address,
+              pool: securitizationPoolContract.address,
+              minBidAmount: parseEther('1'),
+              saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+              longSale: true,
+              ticker: prefixOfNoteTokenSaleName,
+            },
+            { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+            {
+              initialInterest,
+              finalInterest,
+              timeInterval,
+              amountChangeEachInterval,
+            }
+          );
 
         const receipt = await transaction.wait();
 
@@ -224,17 +228,19 @@ describe('NAV', () => {
 
         // JOT only has SaleType.NORMAL_SALE
         const transaction = await securitizationManager
-            .connect(poolCreatorSigner)
-            .setUpTGEForJOT(
-                untangledAdminSigner.address,
-                securitizationPoolContract.address,
-                parseEther('1'),
-                initialJotAmount,
-                [SaleType.NORMAL_SALE, tokenDecimals],
-                true,
-                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                prefixOfNoteTokenSaleName
-            );
+          .connect(poolCreatorSigner)
+          .setUpTGEForJOT(
+            {
+              issuerTokenController: untangledAdminSigner.address,
+              pool: securitizationPoolContract.address,
+              minBidAmount: parseEther('1'),
+              saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+              longSale: true,
+              ticker: prefixOfNoteTokenSaleName,
+            },
+            { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+            initialJotAmount,
+          );
         const receipt = await transaction.wait();
 
         const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -629,17 +635,19 @@ describe('NAV', () => {
 
       // JOT only has SaleType.NORMAL_SALE
       const transaction = await securitizationManager
-          .connect(poolCreatorSigner)
-          .setUpTGEForJOT(
-              untangledAdminSigner.address,
-              securitizationPoolContract.address,
-              parseEther('1'),
-              initialJotAmount,
-              [SaleType.NORMAL_SALE, tokenDecimals],
-              true,
-              { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-              prefixOfNoteTokenSaleName
-          );
+        .connect(poolCreatorSigner)
+        .setUpTGEForJOT(
+          {
+            issuerTokenController: untangledAdminSigner.address,
+            pool: securitizationPoolContract.address,
+            minBidAmount: parseEther('1'),
+            saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+            longSale: true,
+            ticker: prefixOfNoteTokenSaleName,
+          },
+          { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+          initialJotAmount,
+        );
       const receipt = await transaction.wait();
 
       const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;

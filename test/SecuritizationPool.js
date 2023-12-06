@@ -336,20 +336,24 @@ describe('SecuritizationPool', () => {
             const prefixOfNoteTokenSaleName = 'SOT_';
 
             const transaction = await securitizationManager
-                .connect(poolCreatorSigner)
-                .setUpTGEForSOT(
-                    untangledAdminSigner.address,
-                    securitizationPoolContract.address,
-                    parseEther('50'),
-                    [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
-                    true,
+              .connect(poolCreatorSigner)
+              .setUpTGEForSOT(
+                {
+                    issuerTokenController: untangledAdminSigner.address,
+                    pool: securitizationPoolContract.address,
+                    minBidAmount: parseEther('50'),
+                    saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+                    longSale: true,
+                    ticker: prefixOfNoteTokenSaleName,
+                },
+                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+                {
                     initialInterest,
                     finalInterest,
                     timeInterval,
                     amountChangeEachInterval,
-                    { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                    prefixOfNoteTokenSaleName
-                );
+                },
+              );
 
             const receipt = await transaction.wait();
 
@@ -376,17 +380,19 @@ describe('SecuritizationPool', () => {
 
             // JOT only has SaleType.NORMAL_SALE
             const transaction = await securitizationManager
-                .connect(poolCreatorSigner)
-                .setUpTGEForJOT(
-                    untangledAdminSigner.address,
-                    securitizationPoolContract.address,
-                    parseEther('50'),
-                    initialJOTAmount,
-                    [SaleType.NORMAL_SALE, tokenDecimals],
-                    true,
-                    { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                    prefixOfNoteTokenSaleName
-                );
+              .connect(poolCreatorSigner)
+              .setUpTGEForJOT(
+                {
+                    issuerTokenController: untangledAdminSigner.address,
+                    pool: securitizationPoolContract.address,
+                    minBidAmount: parseEther('50'),
+                    saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+                    longSale: true,
+                    ticker: prefixOfNoteTokenSaleName,
+                },
+                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+                initialJOTAmount,
+              );
             const receipt = await transaction.wait();
 
             const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
