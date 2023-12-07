@@ -259,14 +259,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         }
     }
 
-    function _tokenIdsValidate(
-        bytes32[] calldata tokenIds,
-        address[] calldata validators,
-        bytes[] memory validateSignatures
-    ) private {
-        // ...
-    }
-
     /**
      * Filling new Debt Order
      * Notice:
@@ -337,7 +329,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 x = UntangledMath.uncheckedInc(x);
             }
 
-            expectedAssetsValue += ISecuritizationPool(fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.SECURITIZATION_POOL)]).collectAssets(fillDebtOrderParam.latInfo[i].tokenIds);
+            expectedAssetsValue += ISecuritizationPool(poolAddress).collectAssets(fillDebtOrderParam.latInfo[i].tokenIds);
         }
 
         // Start collect asset checkpoint and withdraw
