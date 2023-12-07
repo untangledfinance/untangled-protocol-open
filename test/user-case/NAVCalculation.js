@@ -190,7 +190,7 @@ describe('NAV', () => {
               issuerTokenController: untangledAdminSigner.address,
               pool: securitizationPoolContract.address,
               minBidAmount: parseEther('1'),
-              saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+              saleType: SaleType.MINTED_INCREASING_INTEREST,
               longSale: true,
               ticker: prefixOfNoteTokenSaleName,
             },
@@ -234,7 +234,7 @@ describe('NAV', () => {
               issuerTokenController: untangledAdminSigner.address,
               pool: securitizationPoolContract.address,
               minBidAmount: parseEther('1'),
-              saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+              saleType: SaleType.NORMAL_SALE,
               longSale: true,
               ticker: prefixOfNoteTokenSaleName,
             },
@@ -595,20 +595,24 @@ describe('NAV', () => {
       const prefixOfNoteTokenSaleName = 'SOT_';
 
       const transaction = await securitizationManager
-          .connect(poolCreatorSigner)
-          .setUpTGEForSOT(
-              untangledAdminSigner.address,
-              securitizationPoolContract.address,
-              parseEther('1'),
-              [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
-              true,
-              initialInterest,
-              finalInterest,
-              timeInterval,
-              amountChangeEachInterval,
-              { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-              prefixOfNoteTokenSaleName
-          );
+        .connect(poolCreatorSigner)
+        .setUpTGEForSOT(
+          {
+            issuerTokenController: untangledAdminSigner.address,
+            pool: securitizationPoolContract.address,
+            minBidAmount: parseEther('1'),
+            saleType: SaleType.MINTED_INCREASING_INTEREST,
+            longSale: true,
+            ticker: prefixOfNoteTokenSaleName,
+          },
+          { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+          {
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval,
+          },
+        );
 
       const receipt = await transaction.wait();
 
@@ -641,7 +645,7 @@ describe('NAV', () => {
             issuerTokenController: untangledAdminSigner.address,
             pool: securitizationPoolContract.address,
             minBidAmount: parseEther('1'),
-            saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+            saleType: SaleType.NORMAL_SALE,
             longSale: true,
             ticker: prefixOfNoteTokenSaleName,
           },

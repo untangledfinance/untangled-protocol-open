@@ -290,7 +290,7 @@ describe('LoanKernel', () => {
                     issuerTokenController: untangledAdminSigner.address,
                     pool: securitizationPoolContract.address,
                     minBidAmount: parseEther('1'),
-                    saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+                    saleType: SaleType.MINTED_INCREASING_INTEREST,
                     longSale: true,
                     ticker: prefixOfNoteTokenSaleName,
                 },
@@ -334,7 +334,7 @@ describe('LoanKernel', () => {
                     issuerTokenController: untangledAdminSigner.address,
                     pool: securitizationPoolContract.address,
                     minBidAmount: parseEther('1'),
-                    saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+                    saleType: SaleType.NORMAL_SALE,
                     longSale: true,
                     ticker: prefixOfNoteTokenSaleName,
 
