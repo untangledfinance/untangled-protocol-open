@@ -8,6 +8,8 @@ const { presignedMintMessage } = require('../shared/uid-helper');
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 const { utils } = require('ethers');
 const { getPoolByAddress } = require('../utils.js');
+const { SaleType } = require('../shared/constants.js');
+const { getContractAt } = require('@nomiclabs/hardhat-ethers/internal/helpers.js');
 
 /**
  * This file tests the case that a pool invest into another pool
@@ -122,7 +124,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolCreatorSigner.address,
           pool: poolBContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [1, 2],
+          saleType: SaleType.NORMAL_SALE,
           longSale: isLongSaleTGEJOT,
           ticker: 'Ticker',
         },
@@ -146,7 +148,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolCreatorSigner.address,
           pool: poolBContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [0, 2],
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
           longSale: isLongSaleTGESOT,
           ticker: 'Ticker',
         },
@@ -229,7 +231,7 @@ describe('Pool to Pool', () => {
             issuerTokenController: poolACreator.address,
             pool: poolAContract.address,
             minBidAmount: parseEther ('1'),
-            saleTypeAndDecimal: [1, 2],
+            saleType: SaleType.NORMAL_SALE,
             longSale: isLongSaleTGEJOTPoolA,
             ticker: 'Ticker',
         },
@@ -254,7 +256,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolACreator.address,
           pool: poolAContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [0, 2],
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
           longSale: isLongSaleTGESOTPoolA,
           ticker: 'Ticker',
         },
@@ -357,7 +359,7 @@ describe('Pool to Pool', () => {
         .connect(poolACreator)
         .withdrawERC20Assets([jotPoolBContract.address], [poolAPot.address], [jotAmount]);
       const investorPoolPotJotBalance = await jotPoolBContract.balanceOf(poolAPot.address);
-      expect(investorPoolPotJotBalance).equal('100');
+      expect(investorPoolPotJotBalance).equal(parseEther('1'));
     });
     it('Pool A pot can make JOT redeem request to pool B', async () => {
       // Redeem
@@ -365,7 +367,7 @@ describe('Pool to Pool', () => {
       await jotPoolBContract.connect(poolAPot).approve(distributionTranche.address, investorPoolPotJotBalance);
       await distributionOperator
         .connect(poolAPot)
-        .makeRedeemRequestAndRedeem(poolBContract.address, jotPoolBContract.address, '100');
+        .makeRedeemRequestAndRedeem(poolBContract.address, jotPoolBContract.address, parseEther('1'));
       const investorPoolPotJotBalanceAfterRedeem = await jotPoolBContract.balanceOf(poolAPot.address);
       const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
       expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(parseEther('1'));
@@ -420,7 +422,7 @@ describe('Pool to Pool', () => {
         .connect(poolACreator)
         .withdrawERC20Assets([sotPoolBContract.address], [poolAPot.address], [sotAmount]);
       const investorPoolPotJotBalance = await sotPoolBContract.balanceOf(poolAPot.address);
-      expect(investorPoolPotJotBalance).equal('200');
+      expect(investorPoolPotJotBalance).equal(parseEther('2'));
     });
     it('Pool A pot can make SOT redeem request to pool B', async () => {
       // Redeem
@@ -484,8 +486,8 @@ describe('Pool to Pool', () => {
     const stableCoinAmountToBuyBJOT = parseEther('2'); // $2
     const stableCoinAmountToBuyCJOT = parseEther('1'); // $1
     const poolAPotInitialBalance = parseEther('100');
-    const expectSOTAmountABuyFromB = '200';
-    const expectSOTAmountBBuyFromC = '100';
+    const expectSOTAmountABuyFromB = parseEther('2');
+    const expectSOTAmountBBuyFromC = parseEther('1');
     const NOW = dayjs().unix();
     before('init sale', async () => {
       const chainId = await getChainId();
@@ -581,7 +583,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolCCreatorSigner.address,
           pool: poolCContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [1, 2],
+          saleType: SaleType.NORMAL_SALE,
           longSale: isLongSaleTGEJOTPoolC,
           ticker: 'Ticker',
         },
@@ -607,7 +609,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolCCreatorSigner.address,
           pool: poolCContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [0, 2],
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
           longSale: isLongSaleTGESOTPoolC,
           ticker: 'Ticker',
         },
@@ -689,7 +691,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolBCreatorSigner.address,
           pool: poolBContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [1, 2],
+          saleType: SaleType.NORMAL_SALE,
           longSale: isLongSaleTGEJOTPoolB,
           ticker: 'Ticker',
         },
@@ -715,7 +717,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolBCreatorSigner.address,
           pool: poolBContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [0, 2],
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
           longSale: isLongSaleTGESOTPoolB,
           ticker: 'Ticker',
         },
@@ -796,7 +798,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolACreatorSigner.address,
           pool: poolAContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [1, 2],
+          saleType: SaleType.NORMAL_SALE,
           longSale: isLongSaleTGEJOTPoolA,
           ticker: 'Ticker',
         },
@@ -820,7 +822,7 @@ describe('Pool to Pool', () => {
           issuerTokenController: poolACreatorSigner.address,
           pool: poolAContract.address,
           minBidAmount: parseEther('1'),
-          saleTypeAndDecimal: [0, 2],
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
           longSale: isLongSaleTGESOTPoolA,
           ticker: 'Ticker',
         },
@@ -903,7 +905,7 @@ describe('Pool to Pool', () => {
         .connect(poolAPotSigner)
         .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyBJOT);
       expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal('0');
-      expect(await jotBContract.balanceOf(poolAPotSigner.address)).equal('200');
+      expect(await jotBContract.balanceOf(poolAPotSigner.address)).equal(parseEther('2'));
     });
     it('Pool B pot invests into pool C for JOT', async () => {
       await stableCoin
@@ -915,7 +917,7 @@ describe('Pool to Pool', () => {
       expect(await stableCoin.balanceOf(poolBPotSigner.address)).equal(
         stableCoinAmountToBuyBJOT.sub(stableCoinAmountToBuyCJOT)
       );
-      expect(await jotCContract.balanceOf(poolBPotSigner.address)).equal('100');
+      expect(await jotCContract.balanceOf(poolBPotSigner.address)).equal(parseEther('1'));
     });
     it('Pool A originator can transfer B-JOT from pool A pot to pool A', async () => {
       // Transfer to pool
