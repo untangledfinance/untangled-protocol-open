@@ -88,8 +88,6 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
         bytes memory params
     )
         public
-        // address _currency,
-        // uint32 _minFirstLossCushion
         initializer
     {
         __ERC165_init_unchained();
@@ -108,23 +106,6 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
             'minFirstLossCushion is greater than 100'
         );
         require(newPoolParams.currency != address(0), 'SecuritizationPool: Invalid currency');
-
-        // __ReentrancyGuard_init_unchained();
-
-        // __SecuritizationAccessControl_init_unchained(_msgSender());
-        // // __UntangledBase__init(_msgSender());
-
-        // // _setRoleAdmin(ORIGINATOR_ROLE, OWNER_ROLE);
-        // _setRegistry(registry_);
-
-        // __SecuritizationTGE_init_unchained(
-        //     address(this),
-        //     CycleState.INITIATED,
-        //     newPoolParams.currency,
-        //     newPoolParams.minFirstLossCushion
-        // );
-
-        // __SecuritizationPoolAsset_init_unchained(newPoolParams);
 
         _setRegistry(registry_);
 
