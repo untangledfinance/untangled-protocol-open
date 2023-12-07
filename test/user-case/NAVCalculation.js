@@ -171,7 +171,6 @@ describe('NAV', () => {
     const principalAmount = 10000000000000000000;
     const interestRatePercentage = 12; //12%
       before('Should set up TGE for SOT successfully', async () => {
-        const tokenDecimals = 18;
 
         const openingTime = dayjs(new Date()).unix();
         const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -190,7 +189,7 @@ describe('NAV', () => {
               issuerTokenController: untangledAdminSigner.address,
               pool: securitizationPoolContract.address,
               minBidAmount: parseEther('1'),
-              saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+              saleType: SaleType.MINTED_INCREASING_INTEREST,
               longSale: true,
               ticker: prefixOfNoteTokenSaleName,
             },
@@ -217,7 +216,6 @@ describe('NAV', () => {
       });
 
       before('Should set up TGE for JOT successfully', async () => {
-        const tokenDecimals = 18;
 
         const openingTime = dayjs(new Date()).unix();
         const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -234,7 +232,7 @@ describe('NAV', () => {
               issuerTokenController: untangledAdminSigner.address,
               pool: securitizationPoolContract.address,
               minBidAmount: parseEther('1'),
-              saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+              saleType: SaleType.NORMAL_SALE,
               longSale: true,
               ticker: prefixOfNoteTokenSaleName,
             },
@@ -582,7 +580,6 @@ describe('NAV', () => {
     })
 
     before('Should set up TGE for SOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -601,7 +598,7 @@ describe('NAV', () => {
             issuerTokenController: untangledAdminSigner.address,
             pool: securitizationPoolContract.address,
             minBidAmount: parseEther('1'),
-            saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+            saleType: SaleType.MINTED_INCREASING_INTEREST,
             longSale: true,
             ticker: prefixOfNoteTokenSaleName,
           },
@@ -628,7 +625,6 @@ describe('NAV', () => {
     });
 
     before('Should set up TGE for JOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -645,7 +641,7 @@ describe('NAV', () => {
             issuerTokenController: untangledAdminSigner.address,
             pool: securitizationPoolContract.address,
             minBidAmount: parseEther('1'),
-            saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+            saleType: SaleType.NORMAL_SALE,
             longSale: true,
             ticker: prefixOfNoteTokenSaleName,
           },

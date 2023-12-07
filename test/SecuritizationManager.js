@@ -179,7 +179,6 @@ describe('SecuritizationManager', () => {
     let sotTokenAddress;
 
     it('Should set up TGE for SOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -198,7 +197,7 @@ describe('SecuritizationManager', () => {
             issuerTokenController: untangledAdminSigner.address,
             pool: securitizationPoolContract.address,
             minBidAmount: parseEther('1'),
-            saleTypeAndDecimal: [SaleType.MINTED_INCREASING_INTEREST, tokenDecimals],
+            saleType: SaleType.MINTED_INCREASING_INTEREST,
             longSale: true,
             ticker: prefixOfNoteTokenSaleName,
           },
@@ -278,7 +277,6 @@ describe('SecuritizationManager', () => {
     let jotTokenAddress;
 
     it('Should set up TGE for JOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -295,7 +293,7 @@ describe('SecuritizationManager', () => {
             issuerTokenController: untangledAdminSigner.address,
             pool: securitizationPoolContract.address,
             minBidAmount: parseEther('50'),
-            saleTypeAndDecimal: [SaleType.NORMAL_SALE, tokenDecimals],
+            saleType: SaleType.NORMAL_SALE,
             longSale: true,
             ticker: prefixOfNoteTokenSaleName,
           },

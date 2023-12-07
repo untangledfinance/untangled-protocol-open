@@ -9,6 +9,7 @@ const { setup } = require('../setup');
 const { presignedMintMessage } = require('../shared/uid-helper');
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
 const { getPoolByAddress } = require('../utils');
+const { SaleType } = require('../shared/constants.js');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -106,7 +107,7 @@ describe('MinFirstLoss', () => {
         issuerTokenController: poolCreatorSigner.address,
         pool: securitizationPoolContract.address,
         minBidAmount: parseEther('1'),
-        saleTypeAndDecimal: [1, 2],
+        saleType: SaleType.NORMAL_SALE,
         longSale: isLongSaleTGEJOT,
         ticker: 'Ticker',
       },
@@ -132,7 +133,7 @@ describe('MinFirstLoss', () => {
         issuerTokenController: poolCreatorSigner.address,
         pool: securitizationPoolContract.address,
         minBidAmount: parseEther('1'),
-        saleTypeAndDecimal: [0, 2],
+        saleType: SaleType.MINTED_INCREASING_INTEREST,
         longSale: isLongSaleTGESOT,
         ticker: 'Ticker',
       },
