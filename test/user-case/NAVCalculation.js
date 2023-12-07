@@ -171,7 +171,6 @@ describe('NAV', () => {
     const principalAmount = 10000000000000000000;
     const interestRatePercentage = 12; //12%
       before('Should set up TGE for SOT successfully', async () => {
-        const tokenDecimals = 18;
 
         const openingTime = dayjs(new Date()).unix();
         const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -217,7 +216,6 @@ describe('NAV', () => {
       });
 
       before('Should set up TGE for JOT successfully', async () => {
-        const tokenDecimals = 18;
 
         const openingTime = dayjs(new Date()).unix();
         const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -582,7 +580,6 @@ describe('NAV', () => {
     })
 
     before('Should set up TGE for SOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -628,7 +625,6 @@ describe('NAV', () => {
     });
 
     before('Should set up TGE for JOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();

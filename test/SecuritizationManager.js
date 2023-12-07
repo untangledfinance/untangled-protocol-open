@@ -179,7 +179,6 @@ describe('SecuritizationManager', () => {
     let sotTokenAddress;
 
     it('Should set up TGE for SOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -278,7 +277,6 @@ describe('SecuritizationManager', () => {
     let jotTokenAddress;
 
     it('Should set up TGE for JOT successfully', async () => {
-      const tokenDecimals = 18;
 
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
