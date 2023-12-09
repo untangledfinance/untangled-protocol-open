@@ -25,14 +25,23 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         string memory name,
         string memory symbol,
         string memory baseTokenURI
-    ) public reinitializer(2) {
+    ) public initializer {
         __UntangledERC721__init(name, symbol, baseTokenURI);
         __LATValidator_init();
 
         registry = _registry;
 
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+
+        require(
+            address(registry.getSecuritizationManager()) != address(0x0),
+            'SECURITIZATION_MANAGER is zero address.'
+        );
+
         _setupRole(VALIDATOR_ADMIN_ROLE, address(registry.getSecuritizationManager()));
         _setRoleAdmin(VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE);
+
+        require(address(registry.getLoanKernel()) != address(0x0), 'LOAN_KERNEL is zero address.');
 
         _setupRole(MINTER_ROLE, address(registry.getLoanKernel()));
         _revokeRole(MINTER_ROLE, _msgSender());
