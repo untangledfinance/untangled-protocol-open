@@ -11,8 +11,6 @@ import {LoanAssetInfo, VALIDATOR_ROLE, VALIDATOR_ADMIN_ROLE} from '../ERC721/typ
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * LoanAssetToken: The representative for ownership of a Loan
  */

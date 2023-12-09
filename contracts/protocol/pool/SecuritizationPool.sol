@@ -14,8 +14,6 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ISecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Untangled's SecuritizationPool contract
  * @notice Main entry point for senior LPs (a.k.a. capital providers)
@@ -83,13 +81,7 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
     }
 
     /** CONSTRUCTOR */
-    function initialize(
-        Registry registry_,
-        bytes memory params
-    )
-        public
-        initializer
-    {
+    function initialize(Registry registry_, bytes memory params) public initializer {
         __ERC165_init_unchained();
 
         address poolImpl = address(_getImplementation());

@@ -22,12 +22,10 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
-import "hardhat/console.sol";
+import 'hardhat/console.sol';
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
-
-import 'hardhat/console.sol';
 
 interface ICrowdSaleLike {
     function token() external view returns (address);
@@ -198,7 +196,6 @@ contract SecuritizationTGE is
         }
         return $.debtCeiling >= totalDebt;
     }
-
 
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual override whenNotPaused {
