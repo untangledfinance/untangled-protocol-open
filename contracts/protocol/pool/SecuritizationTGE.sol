@@ -22,7 +22,6 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
-import 'hardhat/console.sol';
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';

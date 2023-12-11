@@ -332,10 +332,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         }
 
         // Start collect asset checkpoint and withdraw
-        {
-            ISecuritizationTGE pool = ISecuritizationTGE(poolAddress);
-            pool.withdraw(_msgSender(), expectedAssetsValue);
-        }
+        ISecuritizationTGE(poolAddress).withdraw(_msgSender(), expectedAssetsValue);
     }
 
     function _getDebtOrderHash(

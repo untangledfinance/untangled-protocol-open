@@ -266,8 +266,7 @@ contract SecuritizationPoolAsset is
         uint256 tokenIdsLength = tokenIds.length;
         uint256 expectedAssetsValue = 0;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
-            expectedAssetsValue = expectedAssetsValue + IPoolNAV(poolNAV()).debt(tokenIds[i]);
+            expectedAssetsValue = expectedAssetsValue + IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
         }
 
         Storage storage $ = _getStorage();
@@ -284,10 +283,6 @@ contract SecuritizationPoolAsset is
         emit CollectAsset(expectedAssetsValue);
         return expectedAssetsValue;
     }
-
-    // function amountOwedToOriginator() public view returns (uint256) {
-    //     return _getStorage().amountOwedToOriginator;
-    // }
 
     /// @inheritdoc ISecuritizationPool
     function collectERC20Assets(
