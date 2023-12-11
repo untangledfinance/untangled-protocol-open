@@ -26,6 +26,15 @@ import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
 import {RiskScore} from './base/types.sol';
 
+interface IDiscountingLike {
+    function calcDiscount(
+        uint256 discountRate,
+        uint256 fv,
+        uint256 normalizedBlockTimestamp,
+        uint256 maturityDate
+    ) external view returns (uint256);
+}
+
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
@@ -120,7 +129,7 @@ contract SecuritizationPoolValueService is
         return interestRates;
     }
 
-    function getExpectedLATAssetValue(address poolAddress) public view returns(uint256) {
+    function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
     }
 
@@ -164,35 +173,9 @@ contract SecuritizationPoolValueService is
         address tokenAddress,
         uint256 tokenId,
         uint256 timestamp
-    ) public view returns(uint256) {
-        IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
-        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenId));
-
-        uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
-        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp
-            ? loanEntry.expirationTimestamp - timestamp
-            : 0;
-        uint256 principalAmount;
-        uint256 expectedTimeEarningInterest = loanEntry.expirationTimestamp -
-            (
-                loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp
-                    ? loanEntry.lastRepayTimestamp
-                    : loanEntry.issuanceBlockTimestamp
-            );
-
-        (principalAmount, ) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
-
-        uint256 presentValue = getPresentValueWithNAVCalculation(
-            poolAddress,
-            principalAmount,
-            expectedTimeEarningInterest,
-            loanAssetToken.getInterestRate(tokenId),
-            loanEntry.riskScore,
-            overdue,
-            secondTillCashflow
-        );
-
-        return presentValue;
+    ) public view returns (uint256) {
+        IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        return poolNav.currentNAVAsset(bytes32(tokenId));
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
@@ -204,7 +187,8 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         expectedAssetsValue =
-            expectedAssetsValue + IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+            expectedAssetsValue +
+            IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
