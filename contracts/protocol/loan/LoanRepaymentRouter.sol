@@ -57,13 +57,14 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolInstance).poolNAV());
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
+        ISecuritizationTGE poolTGE = ISecuritizationTGE(beneficiary);
 
         if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
         require(
             IERC20Upgradeable(_tokenAddress).transferFrom(_payer, beneficiary, repayAmount),
             'Unsuccessfully transferred repayment amount to Creditor.'
         );
-        ISecuritizationTGE(beneficiary).increaseTotalAssetRepaidCurrency(repayAmount);
+        poolTGE.increaseTotalAssetRepaidCurrency(repayAmount);
 
         if (outstandingAmount == 0) {
             // Burn LAT token when repay completely
