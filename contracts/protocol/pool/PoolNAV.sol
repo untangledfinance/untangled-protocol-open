@@ -555,7 +555,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         latestNAV = safeAdd(latestNAV_, rmul(debt(loan), writeOffGroups[writeOffGroupIndex_].percentage));
 
         if (latestNAV > beforeNAV) {
-            navAssets[nftID_] += safeAdd(latestNAV, beforeNAV);
+            navAssets[nftID_] += (latestNAV - beforeNAV);
         } else {
             navAssets[nftID_] = secureSub(navAssets[nftID_], beforeNAV - latestNAV);
         }
