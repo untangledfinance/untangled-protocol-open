@@ -1,4 +1,3 @@
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy, execute, get } = deployments;
     const { deployer } = await getNamedAccounts();
@@ -15,19 +14,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
                 init: {
                     methodName: 'initialize',
                     args: [registry.address, proxyAdmin.address],
-                }
+                },
             },
-
         },
         log: true,
     });
 
-    const poolNav = await deploy('PoolNAV', {
-        from: deployer,
-        log: true,
-    });
-
-    await execute('PoolNAVFactory', { from: deployer, log: true }, 'setPoolNAVImplementation', poolNav.address);
     await execute('Registry', { from: deployer, log: true }, 'setPoolNAVFactory', PoolNAVFactory.address);
 };
 
