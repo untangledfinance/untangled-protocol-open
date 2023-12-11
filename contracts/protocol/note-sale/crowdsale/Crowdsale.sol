@@ -13,7 +13,6 @@ import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
 import {ISecuritizationPoolStorage} from '../../pool/ISecuritizationPoolStorage.sol';
-import "hardhat/console.sol";
 
 abstract contract Crowdsale is UntangledBase, ICrowdSale {
     using ConfigHelper for Registry;

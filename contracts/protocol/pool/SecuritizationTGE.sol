@@ -22,7 +22,6 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE} from './types.sol';
-import 'hardhat/console.sol';
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
@@ -120,6 +119,15 @@ contract SecuritizationTGE is
         _;
     }
 
+    // modifier notClosingStage() {
+    //     require(!isClosedState(), 'SecuritizationPool: Pool in closed state');
+    //     _;
+    // }
+
+    // function isClosedState() public view override returns (bool) {
+    //     return state() == CycleState.CLOSED;
+    // }
+
     /// @inheritdoc ISecuritizationTGE
     function injectTGEAddress(
         address _tgeAddress,
@@ -196,6 +204,7 @@ contract SecuritizationTGE is
         }
         return $.debtCeiling >= totalDebt;
     }
+
 
     // Increase by value
     function increaseTotalAssetRepaidCurrency(uint256 amount) external virtual override whenNotPaused {
@@ -362,6 +371,14 @@ contract SecuritizationTGE is
         );
         emit Withdraw(to, amount);
     }
+
+    // function tgeAddress() public view override(ISecuritizationTGE, SecuritizationPoolStorage) returns (address) {
+    //     return super.tgeAddress();
+    // }
+
+    // function secondTGEAddress() public view override(ISecuritizationTGE, SecuritizationPoolStorage) returns (address) {
+    //     return super.secondTGEAddress();
+    // }
 
     function supportsInterface(
         bytes4 interfaceId

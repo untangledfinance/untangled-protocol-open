@@ -159,6 +159,42 @@ contract SecuritizationPoolValueService is
         return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
+    function getExpectedAssetValue(
+        address poolAddress,
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 timestamp
+    ) public view returns(uint256) {
+        IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(tokenId));
+
+        uint256 overdue = timestamp > loanEntry.expirationTimestamp ? timestamp - loanEntry.expirationTimestamp : 0;
+        uint256 secondTillCashflow = loanEntry.expirationTimestamp > timestamp
+            ? loanEntry.expirationTimestamp - timestamp
+            : 0;
+        uint256 principalAmount;
+        uint256 expectedTimeEarningInterest = loanEntry.expirationTimestamp -
+            (
+                loanEntry.lastRepayTimestamp > loanEntry.issuanceBlockTimestamp
+                    ? loanEntry.lastRepayTimestamp
+                    : loanEntry.issuanceBlockTimestamp
+            );
+
+        (principalAmount, ) = loanAssetToken.getExpectedRepaymentValues(tokenId, loanEntry.expirationTimestamp);
+
+        uint256 presentValue = getPresentValueWithNAVCalculation(
+            poolAddress,
+            principalAmount,
+            expectedTimeEarningInterest,
+            loanAssetToken.getInterestRate(tokenId),
+            loanEntry.riskScore,
+            overdue,
+            secondTillCashflow
+        );
+
+        return presentValue;
+    }
+
     /// @inheritdoc ISecuritizationPoolValueService
     function getExpectedAssetsValue(
         address poolAddress,

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import "./auth.sol";
-import {Discounting} from "./discounting.sol";
+import './auth.sol';
+import {Discounting} from './discounting.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import "../../libraries/ConfigHelper.sol";
-import "../../libraries/UnpackLoanParamtersLib.sol";
+import '../../libraries/ConfigHelper.sol';
+import '../../libraries/UnpackLoanParamtersLib.sol';
 import {RiskScore} from './base/types.sol';
 
 contract PoolNAV is Auth, Discounting, Initializable {
@@ -106,6 +106,9 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // overdue loans are loans which passed the maturity date but are not written-off
     uint256 public overdueLoans;
 
+    // tokenId => navValue
+    mapping(bytes32 => uint256) public navAssets;
+
     // events
     event Depend(bytes32 indexed name, address addr);
     event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
@@ -117,19 +120,20 @@ contract PoolNAV is Auth, Discounting, Initializable {
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
         if (idx == 0 || securitizationPool.getRiskScoresLength() == 0) {
             // Default risk score
-            return RiskScore({
-                daysPastDue: 0,
-                advanceRate: 1000000,
-                penaltyRate: 0,
-                interestRate: 0,
-                probabilityOfDefault: 0,
-                lossGivenDefault: 0,
-                writeOffAfterGracePeriod: 0,
-                gracePeriod: 0,
-                collectionPeriod: 0,
-                writeOffAfterCollectionPeriod: 0,
-                discountRate: 0
-            });
+            return
+                RiskScore({
+                    daysPastDue: 0,
+                    advanceRate: 1000000,
+                    penaltyRate: 0,
+                    interestRate: 0,
+                    probabilityOfDefault: 0,
+                    lossGivenDefault: 0,
+                    writeOffAfterGracePeriod: 0,
+                    gracePeriod: 0,
+                    collectionPeriod: 0,
+                    writeOffAfterCollectionPeriod: 0,
+                    discountRate: 0
+                });
         }
         // Because risk score upload = risk score index onchain + 1
         idx = idx - 1;
@@ -137,19 +141,25 @@ contract PoolNAV is Auth, Discounting, Initializable {
     }
 
     function addLoan(uint256 loan) external auth {
-        UnpackLoanParamtersLib.InterestParams memory loanParam = registry.getLoanInterestTermsContract().unpackParamsForAgreementID(bytes32(loan));
+        UnpackLoanParamtersLib.InterestParams memory loanParam = registry
+            .getLoanInterestTermsContract()
+            .unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         uint256 _convertedInterestRate;
         principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
-        _convertedInterestRate = ONE + riskParam.interestRate * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+        _convertedInterestRate =
+            ONE +
+            (riskParam.interestRate * ONE) /
+            (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
 
         loanCount++;
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
-        if (rates[_convertedInterestRate].ratePerSecond == 0) { // If interest rate is not set
-            file("rate", _convertedInterestRate, _convertedInterestRate);
+        if (rates[_convertedInterestRate].ratePerSecond == 0) {
+            // If interest rate is not set
+            file('rate', _convertedInterestRate, _convertedInterestRate);
         }
         setRate(loan, _convertedInterestRate);
         accrue(loan);
@@ -170,6 +180,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function maturityDate(bytes32 nft_) public view returns (uint256 maturityDate_) {
         return uint256(details[nft_].maturityDate);
     }
+
     /// @notice getter function for the risk group
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
     /// @return risk_ the risk group of the nft
@@ -177,6 +188,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     function risk(bytes32 nft_) public view returns (uint256 risk_) {
         return uint256(details[nft_].risk);
     }
+
     /// @notice getter function for the nft value
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
     /// @return nftValue_ the value of the nft
@@ -197,7 +209,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @return recoveryRatePD_ recovery rate PD of the risk group
     function recoveryRatePD(uint256 riskID, uint256 termLength) public view returns (uint256 recoveryRatePD_) {
         RiskScore memory riskParam = getRiskScoreByIdx(riskID);
-        return ONE - (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) / (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
+        return
+            ONE -
+            (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) /
+            (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
     }
 
     /// @notice getter function for the borrowed amount
@@ -232,7 +247,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     }
 
     function setLoanMaturityDate(bytes32 nftID_, uint256 maturityDate_) public auth {
-        require((futureValue(nftID_) == 0), "can-not-change-maturityDate-outstanding-debt");
+        require((futureValue(nftID_) == 0), 'can-not-change-maturityDate-outstanding-debt');
         details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
         emit SetLoanMaturity(nftID_, maturityDate_);
     }
@@ -241,16 +256,16 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param name name of the parameter
     /// @param value new value of the parameter
     function file(bytes32 name, uint256 value) public auth {
-        if (name == "discountRate") {
+        if (name == 'discountRate') {
             uint256 oldDiscountRate = discountRate;
-            discountRate = ONE + value * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+            discountRate = ONE + (value * ONE) / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             // the nav needs to be re-calculated based on the new discount rate
             // no need to recalculate it if initialized the first time
             if (oldDiscountRate != 0) {
                 reCalcNAV();
             }
         } else {
-            revert("unknown config parameter");
+            revert('unknown config parameter');
         }
     }
 
@@ -258,18 +273,35 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param name name of the parameter group
     /// @param writeOffPercentage_ the write off rate in percent
     /// @param overdueDays_ the number of days after which a loan is considered overdue
-    function file(bytes32 name, uint256 rate_, uint256 writeOffPercentage_, uint256 overdueDays_, uint256 penaltyRate_, uint256 riskIndex) public auth {
-        if (name == "writeOffGroup") {
+    function file(
+        bytes32 name,
+        uint256 rate_,
+        uint256 writeOffPercentage_,
+        uint256 overdueDays_,
+        uint256 penaltyRate_,
+        uint256 riskIndex
+    ) public auth {
+        if (name == 'writeOffGroup') {
             uint256 index = writeOffGroups.length;
-            uint256 _convertedInterestRate = ONE + rate_ * ONE / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
-            uint256 _convertedWriteOffPercentage = ONE - writeOffPercentage_ * ONE / ONE_HUNDRED_PERCENT;
-            uint256 _convertedPenaltyRate = ONE + (ONE * penaltyRate_ * rate_) / (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
+            uint256 _convertedInterestRate = ONE +
+                (rate_ * ONE) /
+                (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+            uint256 _convertedWriteOffPercentage = ONE - (writeOffPercentage_ * ONE) / ONE_HUNDRED_PERCENT;
+            uint256 _convertedPenaltyRate = ONE +
+                (ONE * penaltyRate_ * rate_) /
+                (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
             uint256 _convertedOverdueDays = overdueDays_ / 1 days;
-            writeOffGroups.push(WriteOffGroup(toUint128(_convertedWriteOffPercentage), toUint128(_convertedOverdueDays), toUint128(riskIndex)));
-            file("rate", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
-            file("penalty", safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedPenaltyRate);
+            writeOffGroups.push(
+                WriteOffGroup(
+                    toUint128(_convertedWriteOffPercentage),
+                    toUint128(_convertedOverdueDays),
+                    toUint128(riskIndex)
+                )
+            );
+            file('rate', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
+            file('penalty', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedPenaltyRate);
         } else {
-            revert("unknown name");
+            revert('unknown name');
         }
     }
 
@@ -279,8 +311,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param rate the interest rate group
     /// @param value the value to change
     function file(bytes32 what, uint256 rate, uint256 value) public auth {
-        if (what == "rate") {
-            require(value != 0, "rate-per-second-can-not-be-0");
+        if (what == 'rate') {
+            require(value != 0, 'rate-per-second-can-not-be-0');
             if (rates[rate].chi == 0) {
                 rates[rate].chi = ONE;
                 rates[rate].lastUpdated = uint48(block.timestamp);
@@ -288,8 +320,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 drip(rate);
             }
             rates[rate].ratePerSecond = value;
-        } else if (what == "penalty") {
-            require(value != 0, "penalty-per-second-can-not-be-0");
+        } else if (what == 'penalty') {
+            require(value != 0, 'penalty-per-second-can-not-be-0');
             if (rates[rate].penaltyChi == 0) {
                 rates[rate].penaltyChi = ONE;
                 rates[rate].lastUpdated = uint48(block.timestamp);
@@ -299,9 +331,8 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
             rates[rate].penaltyRatePerSecond = value;
         } else {
-            revert("unknown parameter");
+            revert('unknown parameter');
         }
-
     }
 
     /// @notice borrow updates the NAV for a new borrowed loan
@@ -313,19 +344,25 @@ contract PoolNAV is Auth, Discounting, Initializable {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
 
-        require(maturityDate_ > nnow, "maturity-date-is-not-in-the-future");
+        require(maturityDate_ > nnow, 'maturity-date-is-not-in-the-future');
 
         if (nnow > lastNAVUpdate) {
             calcUpdateNAV();
         }
+
+        // uint256 beforeNAV = latestNAV;
 
         // calculate amount including fixed fee if applicatable
         Rate memory _rate = rates[loanRates[loan]];
 
         // calculate future value FV
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
-        uint256 fv =
-                        calcFutureValue(_rate.ratePerSecond, amount, maturityDate_, recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+        uint256 fv = calcFutureValue(
+            _rate.ratePerSecond,
+            amount,
+            maturityDate_,
+            recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+        );
         details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
         // add future value to the bucket of assets with the same maturity date
@@ -336,9 +373,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
         // return increase NAV amount
         navIncrease = calcDiscount(discountRate, fv, nnow, maturityDate_);
+        navAssets[nftID_] += navIncrease;
 
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestNAV = safeAdd(latestNAV, navIncrease);
+
         return navIncrease;
     }
 
@@ -346,7 +385,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @param loan the id of the loan
     /// @param amount the amount repaid
     function repayLoan(uint256 loan, uint256 amount) external returns (uint256) {
-        require(address(registry.getLoanRepaymentRouter()) == msg.sender, "not authorized");
+        require(address(registry.getLoanRepaymentRouter()) == msg.sender, 'not authorized');
         accrue(loan);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         if (nnow > lastNAVUpdate) {
@@ -356,7 +395,6 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // In case of successful repayment the latestNAV is decreased by the repaid amount
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
-
 
         uint256 _currentDebt = this.debt(loan);
         if (amount > _currentDebt) {
@@ -380,7 +418,12 @@ contract PoolNAV is Auth, Discounting, Initializable {
         if (_debt != 0) {
             Rate memory _rate = rates[loanRates[loan]];
             ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
-            fv = calcFutureValue(_rate.ratePerSecond, _debt, maturityDate_, recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp));
+            fv = calcFutureValue(
+                _rate.ratePerSecond,
+                _debt,
+                maturityDate_,
+                recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+            );
             if (preFV >= fv) {
                 fvDecrease = safeSub(preFV, fv);
             } else {
@@ -389,18 +432,32 @@ contract PoolNAV is Auth, Discounting, Initializable {
         }
 
         details[nftID_].futureValue = toUint128(fv);
-        // case 2: repayment of a loan before or on maturity date
-        if (maturityDate_ >= nnow) {
-            // remove future value decrease from bucket
-            buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
-            uint256 discountDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
-            latestDiscount = secureSub(latestDiscount, discountDecrease);
-            latestNAV = secureSub(latestNAV, discountDecrease);
-        } else {
-            // case 3: repayment of an overdue loan
-            overdueLoans = safeSub(overdueLoans, fvDecrease);
-            latestNAV = secureSub(latestNAV, fvDecrease);
+
+        {
+            // uint256 beforeNAV = latestNAV;
+
+            // case 2: repayment of a loan before or on maturity date
+            if (maturityDate_ >= nnow) {
+                // remove future value decrease from bucket
+                buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
+                uint256 discountDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
+                navAssets[nftID_] = secureSub(navAssets[nftID_], discountDecrease);
+
+                latestDiscount = secureSub(latestDiscount, discountDecrease);
+                latestNAV = secureSub(latestNAV, discountDecrease);
+            } else {
+                // case 3: repayment of an overdue loan
+                overdueLoans = safeSub(overdueLoans, fvDecrease);
+                latestNAV = secureSub(latestNAV, fvDecrease);
+            }
+
+            // if (beforeNAV > latestNAV) {
+            //     navAssets[nftID_] -= beforeNAV - latestNAV;
+            // } else {
+            //     navAssets[nftID_] += latestNAV - beforeNAV;
+            // }
         }
+
         decDebt(loan, amount);
         return amount;
     }
@@ -421,23 +478,23 @@ contract PoolNAV is Auth, Discounting, Initializable {
     /// @notice writeOff writes off a loan if it is overdue
     /// @param loan the id of the loan
     function writeOff(uint256 loan) public {
-        require(!loanDetails[loan].authWriteOff, "only-auth-write-off");
+        require(!loanDetails[loan].authWriteOff, 'only-auth-write-off');
 
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
-        require(maturityDate_ > 0, "loan-does-not-exist");
+        require(maturityDate_ > 0, 'loan-does-not-exist');
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
-        require(maturityDate_ + riskParam.gracePeriod <= nnow, "maturity-date-in-the-future");
+        require(maturityDate_ + riskParam.gracePeriod <= nnow, 'maturity-date-in-the-future');
         // check the writeoff group based on the amount of days overdue
         uint256 writeOffGroupIndex_ = currentValidWriteOffGroup(loan);
 
         if (
-            writeOffGroupIndex_ < type(uint128).max
-                && loanRates[loan] != WRITEOFF_RATE_GROUP_START + writeOffGroupIndex_
+            writeOffGroupIndex_ < type(uint128).max &&
+            loanRates[loan] != WRITEOFF_RATE_GROUP_START + writeOffGroupIndex_
         ) {
             _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
             emit WriteOff(loan, writeOffGroupIndex_, false);
@@ -452,7 +509,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        require(maturityDate_ < nnow, "maturity-date-in-the-future");
+        require(maturityDate_ < nnow, 'maturity-date-in-the-future');
 
         if (loanDetails[loan].authWriteOff == false) {
             loanDetails[loan].authWriteOff = true;
@@ -482,16 +539,20 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 // write off after the maturity date
                 overdueLoans = secureSub(overdueLoans, fv);
                 latestNAV_ = secureSub(latestNAV_, fv);
+                navAssets[bytes32(loan)] = secureSub(navAssets[bytes32(loan)], fv);
             } else {
                 // write off before or on the maturity date
                 buckets[maturityDate_] = safeSub(buckets[maturityDate_], fv);
                 uint256 pv = rmul(fv, rpow(discountRate, safeSub(uniqueDayTimestamp(maturityDate_), nnow), ONE));
                 latestDiscount = secureSub(latestDiscount, pv);
+
                 latestNAV_ = secureSub(latestNAV_, pv);
+                navAssets[bytes32(loan)] = secureSub(navAssets[bytes32(loan)], fv);
             }
         }
 
         changeRate(loan, WRITEOFF_RATE_GROUP_START + writeOffGroupIndex_);
+
         latestNAV = safeAdd(latestNAV_, rmul(debt(loan), writeOffGroups[writeOffGroupIndex_].percentage));
     }
 
@@ -549,16 +610,43 @@ contract PoolNAV is Auth, Discounting, Initializable {
         for (uint256 i = 0; i < writeOffGroups.length; i++) {
             // multiply writeOffGroupDebt with the writeOff rate
 
-            sum =
-                safeAdd(sum, rmul(rateDebt(WRITEOFF_RATE_GROUP_START + i), uint256(writeOffGroups[i].percentage)));
+            sum = safeAdd(sum, rmul(rateDebt(WRITEOFF_RATE_GROUP_START + i), uint256(writeOffGroups[i].percentage)));
         }
         return sum;
     }
+
+    
 
     /// @notice calculates and returns the current NAV and updates the state
     /// @return nav_ current NAV
     function calcUpdateNAV() public returns (uint256 nav_) {
         (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentPVs();
+
+        // // calc navAssets
+        // uint256 errPV = 0;
+        // uint256 nnow = uniqueDayTimestamp(block.timestamp);
+
+
+        // // find assets overdue
+        // for (uint256 i = 0; i < .length; i++) {
+        //     uint256 b = navAssets[i];
+        //     if (b != 0) {
+        //         errPV = safeAdd(errPV, rmul(b, rpow(discountRate, safeSub(nnow, i), ONE)));
+        //         overdue = safeAdd(overdue, b);
+        //     }
+        // }
+
+        // // find all new overdue loans since the last update
+        // // calculate the discount of the overdue loans which is needed
+        // // for the total discount calculation
+        // for (uint256 i = lastNAVUpdate; i < nnow; i = i + 1 days) {
+        //     uint256 b = buckets[i];
+        //     if (b != 0) {
+
+        //         // errPV = safeAdd(errPV, rmul(b, rpow(discountRate, safeSub(nnow, i), ONE)));
+        //         // overdue = safeAdd(overdue, b);
+        //     }
+        // }
 
         overdueLoans = overdue;
         latestDiscount = totalDiscount;
@@ -572,18 +660,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
     ///  the method is not updating the NAV to latest block.timestamp
     /// @return nav_ current NAV
     function reCalcNAV() public returns (uint256 nav_) {
-        uint256 latestDiscount_ = reCalcTotalDiscount();
-
-        latestNAV = safeAdd(latestDiscount_, safeSub(latestNAV, latestDiscount));
-        latestDiscount = latestDiscount_;
-        return latestNAV;
-    }
-
-    /// @notice re-calculates the totalDiscount in a non-optimized way based on lastNAVUpdate
-    /// @return latestDiscount_ returns the total discount of the active loans
-    function reCalcTotalDiscount() public view returns (uint256 latestDiscount_) {
-        latestDiscount_ = 0;
-
+        // reCalcTotalDiscount
+        /// @notice re-calculates the totalDiscount in a non-optimized way based on lastNAVUpdate
+        /// @return latestDiscount_ returns the total discount of the active loans
+        uint256 latestDiscount_ = 0;
         for (uint256 loanID = 1; loanID < loanCount; loanID++) {
             bytes32 nftID_ = nftID(loanID);
             uint256 maturityDate_ = maturityDate(nftID_);
@@ -592,10 +672,16 @@ contract PoolNAV is Auth, Discounting, Initializable {
                 continue;
             }
 
-            latestDiscount_ =
-                            safeAdd(latestDiscount_, calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_));
+            uint256 discountIncrease_ = calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_);
+            latestDiscount_ = safeAdd(latestDiscount_, discountIncrease_);
+
+            // TODO:
+            // navAssets[nftID_] = safeAdd(navAssets[nftID_], discountIncrease_);
         }
-        return latestDiscount_;
+
+        latestNAV = safeAdd(latestDiscount_, safeSub(latestNAV, latestDiscount));
+        latestDiscount = latestDiscount_;
+        return latestNAV;
     }
 
     /// @notice update the value (apprasial) of the collateral NFT
@@ -642,8 +728,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // New interest rate leads to a future value.
         // recalculation required
         uint256 fvDecrease = futureValue(nftID_);
+
         uint256 navDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
+
         buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
+
         latestDiscount = safeSub(latestDiscount, navDecrease);
         latestNAV = safeSub(latestNAV, navDecrease);
 
@@ -652,14 +741,23 @@ contract PoolNAV is Auth, Discounting, Initializable {
         Rate memory _rate = rates[loanRates[loan]];
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
         details[nftID_].futureValue = toUint128(
-            calcFutureValue(_rate.ratePerSecond, debt(loan), maturityDate(nftID_), recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp))
+            calcFutureValue(
+                _rate.ratePerSecond,
+                debt(loan),
+                maturityDate(nftID_),
+                recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+            )
         );
 
         uint256 fvIncrease = futureValue(nftID_);
         uint256 navIncrease = calcDiscount(discountRate, fvIncrease, nnow, maturityDate_);
+
         buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestNAV = safeAdd(latestNAV, navIncrease);
+
+        navAssets[nftID_] += navIncrease;
+        navAssets[nftID_] -= navDecrease;
     }
 
     /// @notice returns the nftID for the underlying collateral nft
@@ -702,7 +800,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
         // it is not guaranteed that writeOff groups are sorted by overdue days
         for (uint128 i = 0; i < writeOffGroups.length; i++) {
             uint128 overdueDays = writeOffGroups[i].overdueDays;
-            if (writeOffGroups[i].riskIndex == _loanRiskIndex && overdueDays >= highestOverdueDays && nnow >= maturityDate_ + overdueDays * 1 days) {
+            if (
+                writeOffGroups[i].riskIndex == _loanRiskIndex &&
+                overdueDays >= highestOverdueDays &&
+                nnow >= maturityDate_ + overdueDays * 1 days
+            ) {
                 lastValidWriteOff = i;
                 highestOverdueDays = overdueDays;
             }
@@ -714,7 +816,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     function incDebt(uint256 loan, uint256 currencyAmount) public auth {
         uint256 rate = loanRates[loan];
-        require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
+        require(block.timestamp == rates[rate].lastUpdated, 'rate-group-not-updated');
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);
 
         pie[loan] = safeAdd(pie[loan], pieAmount);
@@ -725,7 +827,7 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     function decDebt(uint256 loan, uint256 currencyAmount) private {
         uint256 rate = loanRates[loan];
-        require(block.timestamp == rates[rate].lastUpdated, "rate-group-not-updated");
+        require(block.timestamp == rates[rate].lastUpdated, 'rate-group-not-updated');
         uint256 penaltyChi_ = rates[rate].penaltyChi;
         if (penaltyChi_ > 0) {
             currencyAmount = toPie(penaltyChi_, currencyAmount);
@@ -744,7 +846,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
         uint256 penaltyChi_ = rates[rate_].penaltyChi;
         if (block.timestamp >= rates[rate_].lastUpdated) {
             chi_ = chargeInterest(rates[rate_].chi, rates[rate_].ratePerSecond, rates[rate_].lastUpdated);
-            penaltyChi_ = chargeInterest(rates[rate_].penaltyChi, rates[rate_].penaltyRatePerSecond, rates[rate_].lastUpdated);
+            penaltyChi_ = chargeInterest(
+                rates[rate_].penaltyChi,
+                rates[rate_].penaltyRatePerSecond,
+                rates[rate_].lastUpdated
+            );
         }
 
         if (penaltyChi_ == 0) {
@@ -761,7 +867,11 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
         if (block.timestamp >= rates[rate].lastUpdated) {
             chi_ = chargeInterest(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated);
-            penaltyChi_ = chargeInterest(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, rates[rate].lastUpdated);
+            penaltyChi_ = chargeInterest(
+                rates[rate].penaltyChi,
+                rates[rate].penaltyRatePerSecond,
+                rates[rate].lastUpdated
+            );
         }
 
         if (penaltyChi_ == 0) {
@@ -772,17 +882,17 @@ contract PoolNAV is Auth, Discounting, Initializable {
     }
 
     function setRate(uint256 loan, uint256 rate) public auth {
-        require(pie[loan] == 0, "non-zero-debt");
+        require(pie[loan] == 0, 'non-zero-debt');
         // rate category has to be initiated
-        require(rates[rate].chi != 0, "rate-group-not-set");
+        require(rates[rate].chi != 0, 'rate-group-not-set');
         loanRates[loan] = rate;
         emit SetRate(loan, rate);
     }
 
     function changeRate(uint256 loan, uint256 newRate) internal {
-        require(rates[newRate].chi != 0, "rate-group-not-set");
+        require(rates[newRate].chi != 0, 'rate-group-not-set');
         if (newRate >= WRITEOFF_RATE_GROUP_START) {
-           rates[newRate].timeStartPenalty = uint48(block.timestamp);
+            rates[newRate].timeStartPenalty = uint48(block.timestamp);
         }
         uint256 currentRate = loanRates[loan];
         drip(currentRate);
@@ -802,12 +912,27 @@ contract PoolNAV is Auth, Discounting, Initializable {
 
     function drip(uint256 rate) public {
         if (block.timestamp >= rates[rate].lastUpdated) {
-            (uint256 chi,) =
-                            compounding(rates[rate].chi, rates[rate].ratePerSecond, rates[rate].lastUpdated, rates[rate].pie);
+            (uint256 chi, ) = compounding(
+                rates[rate].chi,
+                rates[rate].ratePerSecond,
+                rates[rate].lastUpdated,
+                rates[rate].pie
+            );
             rates[rate].chi = chi;
-            if (rates[rate].penaltyRatePerSecond != 0 && rates[rate].timeStartPenalty != 0 && block.timestamp >= rates[rate].timeStartPenalty) {
-                uint lastUpdated_ = rates[rate].lastUpdated > rates[rate].timeStartPenalty ? rates[rate].lastUpdated : rates[rate].timeStartPenalty;
-                (uint256 penaltyChi,) = compounding(rates[rate].penaltyChi, rates[rate].penaltyRatePerSecond, lastUpdated_, rates[rate].pie);
+            if (
+                rates[rate].penaltyRatePerSecond != 0 &&
+                rates[rate].timeStartPenalty != 0 &&
+                block.timestamp >= rates[rate].timeStartPenalty
+            ) {
+                uint lastUpdated_ = rates[rate].lastUpdated > rates[rate].timeStartPenalty
+                    ? rates[rate].lastUpdated
+                    : rates[rate].timeStartPenalty;
+                (uint256 penaltyChi, ) = compounding(
+                    rates[rate].penaltyChi,
+                    rates[rate].penaltyRatePerSecond,
+                    lastUpdated_,
+                    rates[rate].pie
+                );
                 rates[rate].penaltyChi = penaltyChi;
             }
             rates[rate].lastUpdated = uint48(block.timestamp);
@@ -822,10 +947,10 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // @param _pie Total sum of all amounts accumulating under one interest rate, divided by that rate
     // @return The new accumulated rate, as well as the difference between the debt calculated with the old and new accumulated rates.
     function compounding(uint chi, uint ratePerSecond, uint lastUpdated, uint _pie) public view returns (uint, uint) {
-        require(block.timestamp >= lastUpdated, "tinlake-math/invalid-timestamp");
+        require(block.timestamp >= lastUpdated, 'tinlake-math/invalid-timestamp');
         require(chi != 0);
         // instead of a interestBearingAmount we use a accumulated interest rate index (chi)
-        uint updatedChi = _chargeInterest(chi ,ratePerSecond, lastUpdated, block.timestamp);
+        uint updatedChi = _chargeInterest(chi, ratePerSecond, lastUpdated, block.timestamp);
         return (updatedChi, safeSub(rmul(updatedChi, _pie), rmul(chi, _pie)));
     }
 
@@ -834,17 +959,25 @@ contract PoolNAV is Auth, Discounting, Initializable {
     // @param ratePerSecond Interest rate accumulation per second in RAD(10ˆ27)
     // @param lastUpdated last time the interest has been charged
     // @return interestBearingAmount + interest
-    function chargeInterest(uint interestBearingAmount, uint ratePerSecond, uint lastUpdated) public view returns (uint) {
+    function chargeInterest(
+        uint interestBearingAmount,
+        uint ratePerSecond,
+        uint lastUpdated
+    ) public view returns (uint) {
         if (block.timestamp >= lastUpdated) {
             interestBearingAmount = _chargeInterest(interestBearingAmount, ratePerSecond, lastUpdated, block.timestamp);
         }
         return interestBearingAmount;
     }
 
-    function _chargeInterest(uint interestBearingAmount, uint ratePerSecond, uint lastUpdated, uint current) internal pure returns (uint) {
+    function _chargeInterest(
+        uint interestBearingAmount,
+        uint ratePerSecond,
+        uint lastUpdated,
+        uint current
+    ) internal pure returns (uint) {
         return rmul(rpow(ratePerSecond, current - lastUpdated, ONE), interestBearingAmount);
     }
-
 
     // convert pie to debt/savings amount
     function toAmount(uint chi, uint _pie) public pure returns (uint) {
