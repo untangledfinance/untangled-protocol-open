@@ -134,6 +134,7 @@ async function setup() {
     let distributionAssessor;
     let distributionOperator;
     let distributionTranche;
+    let noteTokenVault;
     let factoryAdmin;
 
     const [untangledAdminSigner] = await ethers.getSigners();
@@ -182,6 +183,8 @@ async function setup() {
     distributionOperator = await upgrades.deployProxy(DistributionOperator, [registry.address]);
     const DistributionTranche = await ethers.getContractFactory('DistributionTranche');
     distributionTranche = await upgrades.deployProxy(DistributionTranche, [registry.address]);
+    const NoteTokenVault = await ethers.getContractFactory('NoteTokenVault');
+    noteTokenVault = await upgrades.deployProxy(NoteTokenVault, []);
 
     await registry.setSecuritizationManager(securitizationManager.address);
     await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
@@ -221,6 +224,7 @@ async function setup() {
         distributionOperator,
         distributionAssessor,
         distributionTranche,
+        noteTokenVault,
         factoryAdmin,
     };
 }
