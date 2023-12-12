@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import './auth.sol';
+import {Auth} from './auth.sol';
 import {Discounting} from './discounting.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '../../libraries/ConfigHelper.sol';
-import '../../libraries/UnpackLoanParamtersLib.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {UnpackLoanParamtersLib} from '../../libraries/UnpackLoanParamtersLib.sol';
 import {RiskScore} from './base/types.sol';
-
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {ILoanRegistry} from '../loan/ILoanRegistry.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
-
-import "hardhat/console.sol";
 
 contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     using ConfigHelper for Registry;
@@ -146,7 +146,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         return securitizationPool.riskScores(idx);
     }
 
-    function addLoan(uint256 loan) external auth {
+    function addLoan(uint256 loan) external auth returns (uint256) {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry
             .getLoanInterestTermsContract()
             .unpackParamsForAgreementID(bytes32(loan));
@@ -155,6 +155,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         uint256 _convertedInterestRate;
+
         principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
         _convertedInterestRate =
             ONE +
@@ -178,6 +179,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         incDebt(loan, principalAmount);
 
         emit AddLoan(loan, principalAmount, loanParam.termEndUnixTimestamp);
+
+        return principalAmount;
     }
 
     /// @notice getter function for the maturityDate
@@ -402,7 +405,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
 
-        uint256 _currentDebt = this.debt(loan);
+        uint256 _currentDebt = debt(loan);
         if (amount > _currentDebt) {
             amount = _currentDebt;
         }
@@ -608,14 +611,11 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
     function currentAV(
         bytes32 tokenId
-    ) public view returns (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) {        
+    ) public view returns (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) {
         uint256 _currentWriteOffs = 0;
         if (isLoanWrittenOff(uint256(tokenId))) {
             uint256 writeOffGroupIndex = currentValidWriteOffGroup(uint256(tokenId));
-            _currentWriteOffs = rmul(
-                debt(uint256(tokenId)),
-                uint256(writeOffGroups[writeOffGroupIndex].percentage)
-            );
+            _currentWriteOffs = rmul(debt(uint256(tokenId)), uint256(writeOffGroups[writeOffGroupIndex].percentage));
         }
 
         if (latestDiscountOfNavAssets[tokenId] == 0) {

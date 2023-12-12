@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 import '../../pool/ISecuritizationPool.sol';
 import {ISecuritizationTGE} from '../../pool/ISecuritizationTGE.sol';
 
-
 import {ConfigHelper} from '../../../libraries/ConfigHelper.sol';
 import '../../../interfaces/INoteToken.sol';
 import '../../../interfaces/ICrowdSale.sol';
@@ -108,7 +107,6 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
         minBidAmount = _minBidAmount;
         emit UpdateMinBidAmount(_minBidAmount);
     }
-
 
     /// @notice Set hasStarted variable
     function setHasStarted(bool _hasStarted) public {
