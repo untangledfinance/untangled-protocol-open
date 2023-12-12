@@ -23,7 +23,6 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         uint128 futureValue;
         uint128 maturityDate;
         uint128 risk;
-
         uint256 bucket;
     }
 
@@ -119,6 +118,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     mapping(bytes32 => uint256) public latestDiscountOfNavAssets;
     mapping(bytes32 => uint256) public overdueLoansOfNavAssets;
 
+    mapping(uint256 => bytes32) public loanToNFT;
+
     // events
     event Depend(bytes32 indexed name, address addr);
     event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
@@ -166,6 +167,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             (riskParam.interestRate * ONE) /
             (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
 
+        loanToNFT[loanCount] = _tokenId;
         loanCount++;
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
         if (rates[_convertedInterestRate].ratePerSecond == 0) {
@@ -390,9 +392,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestDiscountOfNavAssets[nftID_] += navIncrease;
 
-
-        console.log("latest", latestDiscount);
-        console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+        console.log('latest', latestDiscount);
+        console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
 
         latestNAV = safeAdd(latestNAV, navIncrease);
 
@@ -462,9 +463,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             latestDiscount = secureSub(latestDiscount, discountDecrease);
             latestDiscountOfNavAssets[nftID_] = secureSub(latestDiscountOfNavAssets[nftID_], discountDecrease);
 
-
-        console.log("latest", latestDiscount);
-        console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+            console.log('latest', latestDiscount);
+            console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
 
             latestNAV = secureSub(latestNAV, discountDecrease);
         } else {
@@ -512,6 +512,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             writeOffGroupIndex_ < type(uint128).max &&
             loanRates[loan] != WRITEOFF_RATE_GROUP_START + writeOffGroupIndex_
         ) {
+            console.log(':xprepre', latestDiscountOfNavAssets[nftID_]);
             _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
             emit WriteOff(loan, writeOffGroupIndex_, false);
         }
@@ -542,9 +543,12 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     function _writeOff(uint256 loan, uint256 writeOffGroupIndex_, bytes32 nftID_, uint256 maturityDate_) internal {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         // Ensure we have an up to date NAV
+        console.log('prennow', latestDiscountOfNavAssets[nftID_]);
+        console.log('oa', uint256(nftID_), loan);
         if (nnow > lastNAVUpdate) {
             calcUpdateNAV();
         }
+        console.log('fr', latestDiscountOfNavAssets[nftID_]);
 
         uint256 latestNAV_ = latestNAV;
 
@@ -565,9 +569,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
                 latestDiscount = secureSub(latestDiscount, pv);
                 latestDiscountOfNavAssets[nftID_] = secureSub(latestDiscountOfNavAssets[nftID_], pv);
 
-
-        console.log("latest", latestDiscount);
-        console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+                console.log('latest', latestDiscount);
+                console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
 
                 latestNAV_ = secureSub(latestNAV_, pv);
             }
@@ -614,12 +617,15 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         for (uint256 i = lastNAVUpdate; i < nnow; i = i + 1 days) {
             uint256 b = buckets[i];
             if (b != 0) {
+                console.log('yzzzz1', b);
+                console.log('time', i);
+                console.log('lastNavUpdate', lastNAVUpdate);
                 errPV = safeAdd(errPV, rmul(b, rpow(discountRate, safeSub(nnow, i), ONE)));
                 overdue = safeAdd(overdue, b);
             }
         }
 
-        console.log("errPV", errPV);
+        console.log('latestDiscount', latestDiscount, 'errPV', errPV);
 
         return (
             // calculate current totalDiscount based on the previous totalDiscount (optimized calculation)
@@ -643,11 +649,12 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         bytes32 tokenId
     ) public view returns (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) {
         uint256 _currentWriteOffs = 0;
+
         if (isLoanWrittenOff(uint256(tokenId))) {
             uint256 writeOffGroupIndex = currentValidWriteOffGroup(uint256(tokenId));
             _currentWriteOffs = rmul(debt(uint256(tokenId)), uint256(writeOffGroups[writeOffGroupIndex].percentage));
         }
-        
+
         if (latestDiscountOfNavAssets[tokenId] == 0) {
             // all loans are overdue or writtenOff
             return (0, overdueLoansOfNavAssets[tokenId], _currentWriteOffs);
@@ -657,15 +664,15 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
         // loan is overdue since lastNAVUpdate
-        uint256 mat = maturityDate(tokenId);
+        uint256 mat = uniqueDayTimestamp(maturityDate(tokenId));
+        // console.log('mat', mat, 'lastNavUpdate', lastNAVUpdate);
+        // console.log('now', nnow);
         if (mat >= lastNAVUpdate && mat < nnow) {
             uint256 b = futureValue(tokenId);
             // uint256 b = details[tokenId].bucket;
             errPV = rmul(b, rpow(discountRate, safeSub(nnow, mat), ONE));
             overdue = b;
         }
-
-        console.log("latestDiscountOfNavAssets[tokenId]", latestDiscountOfNavAssets[tokenId]);
 
         return (
             secureSub(
@@ -691,12 +698,24 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice calculates and returns the current NAV and updates the state
     /// @return nav_ current NAV
     function calcUpdateNAV() public returns (uint256 nav_) {
+        console.log(
+            'calcUpdateNAV/latestDiscountOfNavAssets[tokenId]',
+            latestDiscountOfNavAssets[0x3ee85322c325ca226bfedc6b9ccc513148103c9a97bc753beaebe565d513b34a]
+        );
         (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentPVs();
+
+        console.log('total dis', totalDiscount);
+        console.log('overdue', overdue);
+        console.log('writeOff', writeOffs);
+        console.log('latestDiscountOfNavAssets[tokenId]', latestDiscountOfNavAssets[0]);
 
         // TODO: update currentNAVAsset
         for (uint i = 0; i < loanCount; ++i) {
-            bytes32 _nftID = nftID(i);
-            (uint256 td, uint256 ol, ) = currentAV(_nftID);
+            bytes32 _nftID = loanToNFT[i];
+            // console.log('la bef', _nftID, latestDiscountOfNavAssets[_nftID]);
+
+            (uint256 td, uint256 ol, uint er) = currentAV(_nftID);
+            console.log('TD', td, ol, er);
             overdueLoansOfNavAssets[_nftID] = ol;
             latestDiscountOfNavAssets[_nftID] = td;
         }
@@ -704,12 +723,12 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         overdueLoans = overdue;
         latestDiscount = totalDiscount;
 
-
-        console.log("latest", latestDiscount);
+        console.log('latest', latestDiscount);
 
         for (uint i = 0; i < loanCount; ++i) {
-            bytes32 nftID_ = nftID(i);
-            console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+            // bytes32 nftID_ = nftID(i);
+            bytes32 nftID_ = loanToNFT[i];
+            console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
         }
 
         latestNAV = safeAdd(safeAdd(totalDiscount, overdue), writeOffs);
@@ -741,12 +760,11 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         latestNAV = safeAdd(latestDiscount_, safeSub(latestNAV, latestDiscount));
         latestDiscount = latestDiscount_;
 
-
-        console.log("latest", latestDiscount);
+        console.log('latest', latestDiscount);
 
         for (uint i = 0; i < loanCount; ++i) {
             bytes32 nftID_ = nftID(i);
-            console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+            console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
         }
 
         return latestNAV;
@@ -805,8 +823,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         latestDiscount = safeSub(latestDiscount, navDecrease);
         latestDiscountOfNavAssets[nftID_] -= navDecrease;
 
-        console.log("latest", latestDiscount);
-        console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+        console.log('latest', latestDiscount);
+        console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
 
         latestNAV = safeSub(latestNAV, navDecrease);
 
@@ -832,8 +850,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         latestDiscount = safeAdd(latestDiscount, navIncrease);
         latestDiscountOfNavAssets[nftID_] += navIncrease;
 
-        console.log("latest", latestDiscount);
-        console.log("byID", latestDiscountOfNavAssets[nftID_], "ID", uint256(nftID_));
+        console.log('latest', latestDiscount);
+        console.log('byID', latestDiscountOfNavAssets[nftID_], 'ID', uint256(nftID_));
 
         latestNAV = safeAdd(latestNAV, navIncrease);
     }
