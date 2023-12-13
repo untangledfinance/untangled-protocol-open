@@ -8,12 +8,12 @@ import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/toke
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
-import {INoteTokenVault} from "./INoteTokenVault.sol";
+import {INoteTokenVault} from './INoteTokenVault.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-import { BACKEND_ADMIN } from './types.sol';
-import "../../storage/Registry.sol";
-import "../../libraries/ConfigHelper.sol";
+import {BACKEND_ADMIN} from './types.sol';
+import '../../storage/Registry.sol';
+import '../../libraries/ConfigHelper.sol';
 
 /// @title NoteTokenVault
 /// @author Untangled Team
@@ -34,10 +34,7 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     /// @dev Checks if redeeming is allowed for a given pool.
     /// @param pool The address of the pool to check.
     modifier orderAllowed(address pool) {
-        require(
-            poolRedeemDisabled[pool] == false,
-            "redeem-not-allowed"
-        );
+        require(poolRedeemDisabled[pool] == false, 'redeem-not-allowed');
         _;
     }
 
@@ -48,31 +45,39 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     }
 
     /// @inheritdoc INoteTokenVault
-    function redeemOrder(address pool, address noteTokenAddress, uint256 noteTokenRedeemAmount) public orderAllowed(pool) {
+    function redeemOrder(
+        address pool,
+        address noteTokenAddress,
+        uint256 noteTokenRedeemAmount
+    ) public orderAllowed(pool) {
         address jotTokenAddress = ISecuritizationTGE(pool).jotToken();
         address sotTokenAddress = ISecuritizationTGE(pool).sotToken();
-        require(noteTokenAddress == jotTokenAddress || noteTokenAddress == sotTokenAddress, "NoteTokenVault: Invalid token address");
+        require(
+            _isJotToken(noteTokenAddress, jotTokenAddress) || _isSotToken(noteTokenAddress, sotTokenAddress),
+            'NoteTokenVault: Invalid token address'
+        );
         address usr = _msgSender();
 
-        if (noteTokenAddress == jotTokenAddress) {
+        uint256 noteTokenPrice;
+        if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
             uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemJOTAmount;
-            require(currentRedeemAmount == 0, "NoteTokenVault: User already created redeem order");
+            require(currentRedeemAmount == 0, 'NoteTokenVault: User already created redeem order');
             poolUserRedeems[pool][usr].redeemJOTAmount = noteTokenRedeemAmount;
             poolTotalJOTRedeem[pool] = poolTotalJOTRedeem[pool] + noteTokenRedeemAmount;
-            require(INoteToken(jotTokenAddress).transferFrom(usr, address(this), noteTokenRedeemAmount), "token-transfer-to-pool-failed");
-            uint256 noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
-
-            emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
-        } else if (noteTokenAddress == sotTokenAddress) {
+            noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
+        } else {
             uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemSOTAmount;
-            require(currentRedeemAmount == 0, "NoteTokenVault: User already created redeem order");
+            require(currentRedeemAmount == 0, 'NoteTokenVault: User already created redeem order');
             poolUserRedeems[pool][usr].redeemSOTAmount = noteTokenRedeemAmount;
             poolTotalSOTRedeem[pool] = poolTotalSOTRedeem[pool] + noteTokenRedeemAmount;
-            require(INoteToken(sotTokenAddress).transferFrom(usr, address(this), noteTokenRedeemAmount), "token-transfer-to-pool-failed");
-            uint256 noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
-
-            emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
+            noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
         }
+
+        require(
+            INoteToken(noteTokenAddress).transferFrom(usr, address(this), noteTokenRedeemAmount),
+            'token-transfer-to-pool-failed'
+        );
+        emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
     }
 
     /// @inheritdoc INoteTokenVault
@@ -82,37 +87,37 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         address[] memory toAddresses,
         uint256[] memory currencyAmounts,
         uint256[] memory redeemedNoteAmounts
-    ) onlyRole(BACKEND_ADMIN) public {
+    ) public onlyRole(BACKEND_ADMIN) {
         ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
         address jotTokenAddress = poolTGE.jotToken();
         address sotTokenAddress = poolTGE.sotToken();
-        require(noteTokenAddress == jotTokenAddress || noteTokenAddress == sotTokenAddress, "NoteTokenVault: Invalid token address");
+        require(
+            _isJotToken(noteTokenAddress, jotTokenAddress) || _isSotToken(noteTokenAddress, sotTokenAddress),
+            'NoteTokenVault: Invalid token address'
+        );
 
         uint256 totalCurrencyAmount = 0;
         uint256 userLength = toAddresses.length;
 
-        if (noteTokenAddress == jotTokenAddress) {
-            uint256 totalJOTRedeemed = 0;
-            for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
-                totalCurrencyAmount += currencyAmounts[i];
-                totalJOTRedeemed += redeemedNoteAmounts[i];
-                poolTGE.disburse(toAddresses[i], currencyAmounts[i]);
+        uint256 totalNoteRedeemed = 0;
+        for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
+            totalCurrencyAmount += currencyAmounts[i];
+            totalNoteRedeemed += redeemedNoteAmounts[i];
+            poolTGE.disburse(toAddresses[i], currencyAmounts[i]);
+
+            if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
                 poolUserRedeems[pool][toAddresses[i]].redeemJOTAmount -= redeemedNoteAmounts[i];
-                ERC20BurnableUpgradeable(jotTokenAddress).burn(redeemedNoteAmounts[i]);
-            }
-
-            poolTotalJOTRedeem[pool] -= totalJOTRedeemed;
-        } else if (noteTokenAddress == sotTokenAddress) {
-            uint256 totalSOTRedeemed = 0;
-            for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
-                totalCurrencyAmount += currencyAmounts[i];
-                totalSOTRedeemed += redeemedNoteAmounts[i];
-                poolTGE.disburse(toAddresses[i], currencyAmounts[i]);
+            } else {
                 poolUserRedeems[pool][toAddresses[i]].redeemSOTAmount -= redeemedNoteAmounts[i];
-                ERC20BurnableUpgradeable(sotTokenAddress).burn(redeemedNoteAmounts[i]);
             }
 
-            poolTotalSOTRedeem[pool] -= totalSOTRedeemed;
+            ERC20BurnableUpgradeable(noteTokenAddress).burn(redeemedNoteAmounts[i]);
+        }
+
+        if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
+            poolTotalJOTRedeem[pool] -= totalNoteRedeemed;
+        } else {
+            poolTotalSOTRedeem[pool] -= totalNoteRedeemed;
         }
 
         poolTGE.decreaseReserve(totalCurrencyAmount);
@@ -120,7 +125,7 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     }
 
     /// @inheritdoc INoteTokenVault
-    function setRedeemDisabled(address pool, bool _redeemDisabled) onlyRole(BACKEND_ADMIN) public {
+    function setRedeemDisabled(address pool, bool _redeemDisabled) public onlyRole(BACKEND_ADMIN) {
         poolRedeemDisabled[pool] = _redeemDisabled;
         emit SetRedeemDisabled(pool, _redeemDisabled);
     }
@@ -148,6 +153,14 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     /// @inheritdoc INoteTokenVault
     function userRedeemSOTOrder(address pool, address usr) public view override returns (uint256) {
         return poolUserRedeems[pool][usr].redeemSOTAmount;
+    }
+
+    function _isJotToken(address noteToken, address jotToken) internal pure returns (bool) {
+        return noteToken == jotToken;
+    }
+
+    function _isSotToken(address noteToken, address sotToken) internal pure returns (bool) {
+        return noteToken == sotToken;
     }
 
     uint256[49] private __gap;
