@@ -5,6 +5,7 @@ interface INoteTokenVault {
     event RedeemSOTOrder(address pool, address usr, uint256 newRedeemAmount);
     event RedeemJOTOrder(address pool, address usr, uint256 newRedeemAmount);
     event DisburseSOTOrder(address pool, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
+    event DisburseJOTOrder(address pool, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
     event SetRedeemDisabled(address pool, bool _redeemDisabled);
 
     struct UserOrder {
@@ -22,7 +23,7 @@ interface INoteTokenVault {
 
     function disburseAllForSOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
 
-//    function disburseAllForJOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
+    function disburseAllForJOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
 
     /// @notice Pause redeem request
     function setRedeemDisabled(address pool, bool _redeemDisabled) external;

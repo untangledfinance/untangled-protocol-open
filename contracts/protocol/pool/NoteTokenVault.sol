@@ -108,6 +108,31 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         emit DisburseSOTOrder(pool, toAddresses, amounts, redeemedAmounts);
     }
 
+    /// @inheritdoc INoteTokenVault
+    function disburseAllForJOT(
+        address pool,
+        address[] memory toAddresses,
+        uint256[] memory amounts,
+        uint256[] memory redeemedAmounts
+    ) onlyRole(BACKEND_ADMIN) public {
+        ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
+        uint256 userLength = toAddresses.length;
+        uint256 totalAmount = 0;
+        uint256 totalJOTRedeemed = 0;
+
+        for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
+            totalAmount += amounts[i];
+            totalJOTRedeemed += redeemedAmounts[i];
+            poolTGE.disburse(toAddresses[i], amounts[i]);
+            poolUserRedeems[pool][toAddresses[i]].redeemJOTAmount -= redeemedAmounts[i];
+            ERC20BurnableUpgradeable(poolTGE.jotToken()).burn(redeemedAmounts[i]);
+        }
+
+        poolTotalJOTRedeem[pool] -= totalJOTRedeemed;
+        poolTGE.decreaseReserve(totalAmount);
+        emit DisburseJOTOrder(pool, toAddresses, amounts, redeemedAmounts);
+    }
+
     function setRedeemDisabled(address pool, bool _redeemDisabled) onlyRole(BACKEND_ADMIN) public {
         poolRedeemDisabled[pool] = _redeemDisabled;
         emit SetRedeemDisabled(pool, _redeemDisabled);

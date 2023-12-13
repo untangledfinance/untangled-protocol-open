@@ -366,7 +366,6 @@ describe('NoteTokenVault', () => {
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
             )
-/*
         const totalSOTRedeem = await noteTokenVault.totalSOTRedeem(securitizationPoolContract.address);
         expect(totalSOTRedeem).to.equal(parseEther('0.5'));
         const sotRedeemOrderLenderA = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerA.address);
@@ -375,32 +374,33 @@ describe('NoteTokenVault', () => {
         expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
         const reserve = await securitizationPoolContract.reserve();
         expect(reserve).to.equal(parseEther('2.5')); // $2 SOT raised + $2 JOT raised - $1.5 redeemed
-*/
       });
 
-      it.skip('JOT: should revert if not backend admin', async () => {
-        await expect(securitizationPoolContract
+      it('JOT: should revert if not backend admin', async () => {
+        await expect(noteTokenVault
             .connect(poolCreatorSigner)
             .disburseAllForJOT(
+                securitizationPoolContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
-            )).to.be.revertedWith("AccessControl: caller is not an originator")
+            )).to.be.revertedWith("AccessControl: account 0xd92773f3b1b4967399792c0a0d37045d0875da78 is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194")
       });
 
-      it.skip('JOT: should run successfully', async () => {
-        await securitizationPoolContract
+      it('JOT: should run successfully', async () => {
+        await noteTokenVault
             .connect(backendAdminSigner)
             .disburseAllForJOT(
+                securitizationPoolContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
             )
-        const totalJOTRedeem = await securitizationPoolContract.totalJOTRedeem();
+        const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
         expect(totalJOTRedeem).to.equal(parseEther('0.5'));
-        const sotRedeemOrderLenderA = await securitizationPoolContract.userRedeemJOTOrder(lenderSignerA.address);
+        const sotRedeemOrderLenderA = await noteTokenVault.userRedeemJOTOrder(securitizationPoolContract.address, lenderSignerA.address);
         expect(sotRedeemOrderLenderA).to.equal(parseEther('0.5'));
-        const sotRedeemOrderLenderB = await securitizationPoolContract.userRedeemJOTOrder(lenderSignerB.address);
+        const sotRedeemOrderLenderB = await noteTokenVault.userRedeemJOTOrder(securitizationPoolContract.address, lenderSignerB.address);
         expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
         const reserve = await securitizationPoolContract.reserve();
         expect(reserve).to.equal(parseEther('1'));
