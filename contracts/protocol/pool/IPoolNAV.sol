@@ -26,4 +26,12 @@ interface IPoolNAV {
     /// @notice calculates and returns the current NAV
     /// @return nav_ current NAV
     function currentNAV() external view returns (uint256 nav_);
+
+    function currentNAVAsset(bytes32 tokenId) external view returns (uint256);
+
+    function futureValue(bytes32 nft_) external view returns (uint256);
+
+    function maturityDate(bytes32 nft_) external view returns (uint256);
+
+    function discountRate() external view returns (uint256);
 }

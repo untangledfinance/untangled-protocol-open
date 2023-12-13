@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import './auth.sol';
+import {Auth} from './auth.sol';
 import {Discounting} from './discounting.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '../../libraries/ConfigHelper.sol';
-import '../../libraries/UnpackLoanParamtersLib.sol';
+import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
+import {UnpackLoanParamtersLib} from '../../libraries/UnpackLoanParamtersLib.sol';
 import {RiskScore} from './base/types.sol';
+import {ISecuritizationPool} from './ISecuritizationPool.sol';
+import {Registry} from '../../storage/Registry.sol';
+import {ILoanRegistry} from '../loan/ILoanRegistry.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
 
 contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
@@ -79,6 +82,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
     // nft => details
     mapping(bytes32 => NFTDetails) public details;
+
     // loan => details
     mapping(uint256 => LoanDetails) public loanDetails;
     // timestamp => bucket
@@ -95,7 +99,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     // Discount rate applied on every asset's fv depending on its maturityDate.
     // The discount decreases with the maturityDate approaching.
     // denominated in (10^27)
-    uint256 public discountRate;
+    uint256 public override discountRate;
 
     // latestNAV is calculated in case of borrows & repayments between epoch executions.
     // It decreases/increases the NAV by the repaid/borrowed amount without running the NAV calculation routine.
@@ -106,6 +110,12 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
     // overdue loans are loans which passed the maturity date but are not written-off
     uint256 public overdueLoans;
+
+    // tokenId => latestDiscount
+    mapping(bytes32 => uint256) public latestDiscountOfNavAssets;
+    mapping(bytes32 => uint256) public overdueLoansOfNavAssets;
+
+    mapping(uint256 => bytes32) public loanToNFT;
 
     // events
     event Depend(bytes32 indexed name, address addr);
@@ -154,6 +164,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             (riskParam.interestRate * ONE) /
             (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
 
+        loanToNFT[loanCount] = _tokenId;
         loanCount++;
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
         if (rates[_convertedInterestRate].ratePerSecond == 0) {
@@ -178,7 +189,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice getter function for the maturityDate
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
     /// @return maturityDate_ the maturityDate of the nft
-    function maturityDate(bytes32 nft_) public view returns (uint256 maturityDate_) {
+    function maturityDate(bytes32 nft_) public view override returns (uint256 maturityDate_) {
         return uint256(details[nft_].maturityDate);
     }
 
@@ -201,7 +212,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice getter function for the future value
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
     /// @return fv_ future value of the loan
-    function futureValue(bytes32 nft_) public view returns (uint256 fv_) {
+    function futureValue(bytes32 nft_) public view override returns (uint256 fv_) {
         return uint256(details[nft_].futureValue);
     }
 
@@ -256,7 +267,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice file allows governance to change parameters of the contract
     /// @param name name of the parameter
     /// @param value new value of the parameter
-    function file(bytes32 name, uint256 value) public auth {
+    function file(bytes32 name, uint256 value) public override auth {
         if (name == 'discountRate') {
             uint256 oldDiscountRate = discountRate;
             discountRate = ONE + (value * ONE) / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
@@ -281,7 +292,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         uint256 overdueDays_,
         uint256 penaltyRate_,
         uint256 riskIndex
-    ) public auth {
+    ) public override auth {
         if (name == 'writeOffGroup') {
             uint256 index = writeOffGroups.length;
             uint256 _convertedInterestRate = ONE +
@@ -351,6 +362,8 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             calcUpdateNAV();
         }
 
+        // uint256 beforeNAV = latestNAV;
+
         // calculate amount including fixed fee if applicatable
         Rate memory _rate = rates[loanRates[loan]];
 
@@ -372,9 +385,11 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
         // return increase NAV amount
         navIncrease = calcDiscount(discountRate, fv, nnow, maturityDate_);
-
         latestDiscount = safeAdd(latestDiscount, navIncrease);
+        latestDiscountOfNavAssets[nftID_] += navIncrease;
+
         latestNAV = safeAdd(latestNAV, navIncrease);
+
         return navIncrease;
     }
 
@@ -429,18 +444,25 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         }
 
         details[nftID_].futureValue = toUint128(fv);
+
         // case 2: repayment of a loan before or on maturity date
         if (maturityDate_ >= nnow) {
             // remove future value decrease from bucket
             buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
+
             uint256 discountDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
+
             latestDiscount = secureSub(latestDiscount, discountDecrease);
+            latestDiscountOfNavAssets[nftID_] = secureSub(latestDiscountOfNavAssets[nftID_], discountDecrease);
+
             latestNAV = secureSub(latestNAV, discountDecrease);
         } else {
             // case 3: repayment of an overdue loan
             overdueLoans = safeSub(overdueLoans, fvDecrease);
+            overdueLoansOfNavAssets[nftID_] = safeSub(overdueLoansOfNavAssets[nftID_], fvDecrease);
             latestNAV = secureSub(latestNAV, fvDecrease);
         }
+
         decDebt(loan, amount);
         return amount;
     }
@@ -521,12 +543,16 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
             if (uniqueDayTimestamp(lastNAVUpdate) > maturityDate_) {
                 // write off after the maturity date
                 overdueLoans = secureSub(overdueLoans, fv);
+                overdueLoansOfNavAssets[nftID_] = secureSub(overdueLoansOfNavAssets[nftID_], fv);
                 latestNAV_ = secureSub(latestNAV_, fv);
             } else {
                 // write off before or on the maturity date
                 buckets[maturityDate_] = safeSub(buckets[maturityDate_], fv);
+
                 uint256 pv = rmul(fv, rpow(discountRate, safeSub(uniqueDayTimestamp(maturityDate_), nnow), ONE));
                 latestDiscount = secureSub(latestDiscount, pv);
+                latestDiscountOfNavAssets[nftID_] = secureSub(latestDiscountOfNavAssets[nftID_], pv);
+
                 latestNAV_ = secureSub(latestNAV_, pv);
             }
         }
@@ -543,8 +569,13 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
     /// @notice calculates and returns the current NAV
     /// @return nav_ current NAV
-    function currentNAV() public view returns (uint256 nav_) {
+    function currentNAV() public view override returns (uint256 nav_) {
         (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentPVs();
+        return safeAdd(totalDiscount, safeAdd(overdue, writeOffs));
+    }
+
+    function currentNAVAsset(bytes32 tokenId) public view override returns (uint256) {
+        (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentAV(tokenId);
         return safeAdd(totalDiscount, safeAdd(overdue, writeOffs));
     }
 
@@ -583,6 +614,49 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         );
     }
 
+    function currentWriteOffAsset(bytes32 tokenId) public view returns (uint256) {
+        uint256 _currentWriteOffs = 0;
+        uint256 writeOffGroupIndex = currentValidWriteOffGroup(uint256(tokenId));
+        _currentWriteOffs = rmul(debt(uint256(tokenId)), uint256(writeOffGroups[writeOffGroupIndex].percentage));
+        return _currentWriteOffs;
+    }
+
+    function currentAV(
+        bytes32 tokenId
+    ) public view returns (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) {
+        uint256 _currentWriteOffs = 0;
+
+        if (isLoanWrittenOff(uint256(tokenId))) {
+            uint256 writeOffGroupIndex = currentValidWriteOffGroup(uint256(tokenId));
+            _currentWriteOffs = rmul(debt(uint256(tokenId)), uint256(writeOffGroups[writeOffGroupIndex].percentage));
+        }
+
+        if (latestDiscountOfNavAssets[tokenId] == 0) {
+            // all loans are overdue or writtenOff
+            return (0, overdueLoansOfNavAssets[tokenId], _currentWriteOffs);
+        }
+
+        uint256 errPV = 0;
+        uint256 nnow = uniqueDayTimestamp(block.timestamp);
+
+        // loan is overdue since lastNAVUpdate
+        uint256 mat = uniqueDayTimestamp(maturityDate(tokenId));
+        if (mat >= lastNAVUpdate && mat < nnow) {
+            uint256 b = futureValue(tokenId);
+            errPV = rmul(b, rpow(discountRate, safeSub(nnow, mat), ONE));
+            overdue = b;
+        }
+
+        return (
+            secureSub(
+                rmul(latestDiscountOfNavAssets[tokenId], rpow(discountRate, safeSub(nnow, lastNAVUpdate), ONE)),
+                errPV
+            ),
+            safeAdd(overdueLoansOfNavAssets[tokenId], overdue),
+            _currentWriteOffs
+        );
+    }
+
     /// @notice returns the sum of all write off loans
     /// @return sum of all write off loans
     function currentWriteOffs() public view returns (uint256 sum) {
@@ -599,6 +673,15 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     function calcUpdateNAV() public returns (uint256 nav_) {
         (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentPVs();
 
+        // TODO: update currentNAVAsset
+        for (uint i = 0; i < loanCount; ++i) {
+            bytes32 _nftID = loanToNFT[i];
+
+            (uint256 td, uint256 ol, uint er) = currentAV(_nftID);
+            overdueLoansOfNavAssets[_nftID] = ol;
+            latestDiscountOfNavAssets[_nftID] = td;
+        }
+
         overdueLoans = overdue;
         latestDiscount = totalDiscount;
 
@@ -611,18 +694,10 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     ///  the method is not updating the NAV to latest block.timestamp
     /// @return nav_ current NAV
     function reCalcNAV() public returns (uint256 nav_) {
-        uint256 latestDiscount_ = reCalcTotalDiscount();
-
-        latestNAV = safeAdd(latestDiscount_, safeSub(latestNAV, latestDiscount));
-        latestDiscount = latestDiscount_;
-        return latestNAV;
-    }
-
-    /// @notice re-calculates the totalDiscount in a non-optimized way based on lastNAVUpdate
-    /// @return latestDiscount_ returns the total discount of the active loans
-    function reCalcTotalDiscount() public view returns (uint256 latestDiscount_) {
-        latestDiscount_ = 0;
-
+        // reCalcTotalDiscount
+        /// @notice re-calculates the totalDiscount in a non-optimized way based on lastNAVUpdate
+        /// @return latestDiscount_ returns the total discount of the active loans
+        uint256 latestDiscount_ = 0;
         for (uint256 loanID = 1; loanID < loanCount; loanID++) {
             bytes32 nftID_ = nftID(loanID);
             uint256 maturityDate_ = maturityDate(nftID_);
@@ -631,12 +706,15 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
                 continue;
             }
 
-            latestDiscount_ = safeAdd(
-                latestDiscount_,
-                calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_)
-            );
+            uint256 discountIncrease_ = calcDiscount(discountRate, futureValue(nftID_), lastNAVUpdate, maturityDate_);
+            latestDiscount_ = safeAdd(latestDiscount_, discountIncrease_);
+            latestDiscountOfNavAssets[nftID_] = discountIncrease_;
         }
-        return latestDiscount_;
+
+        latestNAV = safeAdd(latestDiscount_, safeSub(latestNAV, latestDiscount));
+        latestDiscount = latestDiscount_;
+
+        return latestNAV;
     }
 
     /// @notice update the value (apprasial) of the collateral NFT
@@ -683,9 +761,14 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         // New interest rate leads to a future value.
         // recalculation required
         uint256 fvDecrease = futureValue(nftID_);
+
         uint256 navDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
+
         buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
+
         latestDiscount = safeSub(latestDiscount, navDecrease);
+        latestDiscountOfNavAssets[nftID_] -= navDecrease;
+
         latestNAV = safeSub(latestNAV, navDecrease);
 
         // update latest NAV
@@ -703,8 +786,12 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
         uint256 fvIncrease = futureValue(nftID_);
         uint256 navIncrease = calcDiscount(discountRate, fvIncrease, nnow, maturityDate_);
+
         buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
+
         latestDiscount = safeAdd(latestDiscount, navIncrease);
+        latestDiscountOfNavAssets[nftID_] += navIncrease;
+
         latestNAV = safeAdd(latestNAV, navIncrease);
     }
 
@@ -740,7 +827,9 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
+
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(nftID_);
+
         uint8 _loanRiskIndex = loanEntry.riskScore - 1;
 
         uint128 lastValidWriteOff = type(uint128).max;
@@ -788,7 +877,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         emit DecreaseDebt(loan, currencyAmount);
     }
 
-    function debt(uint256 loan) public view returns (uint256 loanDebt) {
+    function debt(uint256 loan) public view override returns (uint256 loanDebt) {
         uint256 rate_ = loanRates[loan];
         uint256 chi_ = rates[rate_].chi;
         uint256 penaltyChi_ = rates[rate_].penaltyChi;

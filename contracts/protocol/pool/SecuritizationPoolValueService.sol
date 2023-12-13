@@ -26,6 +26,15 @@ import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 
 import {RiskScore} from './base/types.sol';
 
+interface IDiscountingLike {
+    function calcDiscount(
+        uint256 discountRate,
+        uint256 fv,
+        uint256 normalizedBlockTimestamp,
+        uint256 maturityDate
+    ) external view returns (uint256);
+}
+
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
@@ -120,7 +129,7 @@ contract SecuritizationPoolValueService is
         return interestRates;
     }
 
-    function getExpectedLATAssetValue(address poolAddress) public view returns(uint256) {
+    function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
     }
 
@@ -159,6 +168,16 @@ contract SecuritizationPoolValueService is
         return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
+    function getExpectedAssetValue(
+        address poolAddress,
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 timestamp
+    ) public view returns (uint256) {
+        IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        return poolNav.currentNAVAsset(bytes32(tokenId));
+    }
+
     /// @inheritdoc ISecuritizationPoolValueService
     function getExpectedAssetsValue(
         address poolAddress,
@@ -168,7 +187,8 @@ contract SecuritizationPoolValueService is
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
         expectedAssetsValue =
-            expectedAssetsValue + IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+            expectedAssetsValue +
+            IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
