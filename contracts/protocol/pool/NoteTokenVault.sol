@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 
@@ -18,7 +19,7 @@ import '../../libraries/ConfigHelper.sol';
 /// @title NoteTokenVault
 /// @author Untangled Team
 /// @notice NoteToken redemption
-contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable, INoteTokenVault {
+contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable, ReentrancyGuardUpgradeable, INoteTokenVault {
     using ConfigHelper for Registry;
     Registry public registry;
 
@@ -40,6 +41,8 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
 
     function initialize(Registry _registry) public initializer {
         __Pausable_init_unchained();
+        __ReentrancyGuard_init_unchained();
+        __AccessControlEnumerable_init_unchained();
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         registry = _registry;
     }
@@ -87,7 +90,7 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         address[] memory toAddresses,
         uint256[] memory currencyAmounts,
         uint256[] memory redeemedNoteAmounts
-    ) public onlyRole(BACKEND_ADMIN) {
+    ) public onlyRole(BACKEND_ADMIN) nonReentrant {
         ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
         address jotTokenAddress = poolTGE.jotToken();
         address sotTokenAddress = poolTGE.sotToken();
