@@ -331,12 +331,13 @@ describe('NoteTokenVault', () => {
 
     });
 
-    describe.skip('Disburse', () => {
+    describe('Disburse', () => {
       it('SOT: should revert if not backend admin', async () => {
         await expect(noteTokenVault
             .connect(poolCreatorSigner)
-            .disburseAllForSOT(
+            .disburseAll(
                 securitizationPoolContract.address,
+                sotContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
@@ -346,8 +347,9 @@ describe('NoteTokenVault', () => {
       it('SOT: should run successfully', async () => {
         await noteTokenVault
             .connect(backendAdminSigner)
-            .disburseAllForSOT(
+            .disburseAll(
                 securitizationPoolContract.address,
+                sotContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
@@ -365,8 +367,9 @@ describe('NoteTokenVault', () => {
       it('JOT: should revert if not backend admin', async () => {
         await expect(noteTokenVault
             .connect(poolCreatorSigner)
-            .disburseAllForJOT(
+            .disburseAll(
                 securitizationPoolContract.address,
+                jotContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
@@ -376,8 +379,9 @@ describe('NoteTokenVault', () => {
       it('JOT: should run successfully', async () => {
         await noteTokenVault
             .connect(backendAdminSigner)
-            .disburseAllForJOT(
+            .disburseAll(
                 securitizationPoolContract.address,
+                jotContract.address,
                 [lenderSignerA.address, lenderSignerB.address],
                 [parseEther('0.5'), parseEther('1')],
                 [parseEther('0.5'), parseEther('1')]
