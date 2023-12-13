@@ -349,6 +349,7 @@ contract SecuritizationTGE is
     function withdraw(address to, uint256 amount) public override whenNotPaused {
         registry().requireLoanKernel(_msgSender());
         require(hasRole(ORIGINATOR_ROLE, to), 'SecuritizationPool: Only Originator can drawdown');
+        require(!registry().getNoteTokenVault().redeemDisabled(address(this)), "SecuritizationPool: withdraw paused");
         Storage storage $ = _getStorage();
         require($.reserve >= amount, 'SecuritizationPool: not enough reserve');
 

@@ -298,7 +298,7 @@ describe('NoteTokenVault', () => {
 
       });
 
-      it.skip('should revert if buy note token when redeem disabled', async () => {
+      it('should revert if buy note token when redeem disabled', async () => {
         await stableCoin.connect(lenderSignerA).approve(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT);
         await expect(securitizationManager
             .connect(lenderSignerA)
@@ -314,7 +314,7 @@ describe('NoteTokenVault', () => {
             .to.be.revertedWith("SM: Buy token paused")
 
       });
-      it.skip('should revert if drawdown when redeem disabled', async () => {
+      it('should revert if drawdown when redeem disabled', async () => {
         await impersonateAccount(loanKernel.address);
         await setBalance(loanKernel.address, ethers.utils.parseEther('1'));
         const signer = await ethers.getSigner(loanKernel.address);
@@ -323,23 +323,23 @@ describe('NoteTokenVault', () => {
         ).to.be.revertedWith("SecuritizationPool: withdraw paused");
 
       });
-      it.skip('enable redeem order', async () => {
-        await securitizationPoolContract.connect(backendAdminSigner).setRedeemDisabled(false);
+      it('enable redeem order', async () => {
+        await noteTokenVault.connect(backendAdminSigner).setRedeemDisabled(securitizationPoolContract.address, false);
       });
-      it.skip('Investor A should change redeem order for 1 JOT', async () => {
-        await securitizationPoolContract.connect(lenderSignerA).redeemJOTOrder(parseEther('1'));
-        const totalJOTRedeem = await securitizationPoolContract.totalJOTRedeem();
+      it('Investor A should change redeem order for 1 JOT', async () => {
+        await noteTokenVault.connect(lenderSignerA).redeemJOTOrder(securitizationPoolContract.address, parseEther('1'));
+        const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
         expect(totalJOTRedeem).to.equal(parseEther('2'));
-        const jotRedeemOrderLenderA = await securitizationPoolContract.userRedeemJOTOrder(lenderSignerA.address);
+        const jotRedeemOrderLenderA = await noteTokenVault.userRedeemJOTOrder(securitizationPoolContract.address, lenderSignerA.address);
         expect(jotRedeemOrderLenderA).to.equal(parseEther('1'));
         const jotLenderABalance = await jotContract.balanceOf(lenderSignerA.address);
         expect(jotLenderABalance).to.equal(parseEther('0'));
       });
-      it.skip('Investor A change redeem order for 1 SOT', async () => {
-        await securitizationPoolContract.connect(lenderSignerA).redeemSOTOrder(parseEther('1'));
-        const totalSOTRedeem = await securitizationPoolContract.totalSOTRedeem();
+      it('Investor A change redeem order for 1 SOT', async () => {
+        await noteTokenVault.connect(lenderSignerA).redeemSOTOrder(securitizationPoolContract.address, parseEther('1'));
+        const totalSOTRedeem = await noteTokenVault.totalSOTRedeem(securitizationPoolContract.address);
         expect(totalSOTRedeem).to.equal(parseEther('2'));
-        const sotRedeemOrderLenderA = await securitizationPoolContract.userRedeemSOTOrder(lenderSignerA.address);
+        const sotRedeemOrderLenderA = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerA.address);
         expect(sotRedeemOrderLenderA).to.equal(parseEther('1'));
       });
 

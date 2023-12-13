@@ -195,6 +195,7 @@ async function setup() {
     await registry.setDistributionAssessor(distributionAssessor.address);
     await registry.setDistributionOperator(distributionOperator.address);
     await registry.setDistributionTranche(distributionTranche.address);
+    await registry.setNoteTokenVault(noteTokenVault.address);
 
     const { loanAssetTokenContract, defaultLoanAssetTokenValidator } = await setUpLoanAssetToken(
         registry,

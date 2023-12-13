@@ -338,6 +338,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         ICrowdSale tge = ICrowdSale(tgeAddress);
         uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
         address pool = tge.pool();
+        require(registry.getNoteTokenVault().redeemDisabled(pool) == false, 'SM: Buy token paused');
 
         if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
