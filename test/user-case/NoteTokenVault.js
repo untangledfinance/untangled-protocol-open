@@ -284,7 +284,11 @@ describe('NoteTokenVault', () => {
         expect(sotRedeemOrderLenderB).to.equal(parseEther('1'));
       });
       it('only pool creator can disable redeem request', async () => {
-        await expect(noteTokenVault.connect(lenderSignerA).setRedeemDisabled(securitizationPoolContract.address, true)).to.be.revertedWith(`AccessControl: account ${lenderSignerA.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`);
+        await expect(
+            noteTokenVault.connect(lenderSignerA).setRedeemDisabled(securitizationPoolContract.address, true)
+        ).to.be.revertedWith(
+            `AccessControl: account ${lenderSignerA.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`
+        );
         await noteTokenVault.connect(untangledAdminSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
         await noteTokenVault.connect(backendAdminSigner).setRedeemDisabled(securitizationPoolContract.address, true);
 
@@ -341,15 +345,19 @@ describe('NoteTokenVault', () => {
 
     describe('Disburse', () => {
       it('SOT: should revert if not backend admin', async () => {
-        await expect(noteTokenVault
-            .connect(poolCreatorSigner)
-            .disburseAll(
-                securitizationPoolContract.address,
-                sotContract.address,
-                [lenderSignerA.address, lenderSignerB.address],
-                [parseEther('0.5'), parseEther('1')],
-                [parseEther('0.5'), parseEther('1')]
-            )).to.be.revertedWith(`AccessControl: account ${poolCreatorSigner.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`)
+        await expect(
+            noteTokenVault
+                .connect(poolCreatorSigner)
+                .disburseAll(
+                    securitizationPoolContract.address,
+                    sotContract.address,
+                    [lenderSignerA.address, lenderSignerB.address],
+                    [parseEther('0.5'), parseEther('1')],
+                    [parseEther('0.5'), parseEther('1')]
+                )
+        ).to.be.revertedWith(
+            `AccessControl: account ${poolCreatorSigner.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`
+        );
       });
 
       it('SOT: should run successfully', async () => {
