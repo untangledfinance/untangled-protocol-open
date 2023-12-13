@@ -673,11 +673,10 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     function calcUpdateNAV() public returns (uint256 nav_) {
         (uint256 totalDiscount, uint256 overdue, uint256 writeOffs) = currentPVs();
 
-        // TODO: update currentNAVAsset
         for (uint i = 0; i < loanCount; ++i) {
             bytes32 _nftID = loanToNFT[i];
 
-            (uint256 td, uint256 ol, uint er) = currentAV(_nftID);
+            (uint256 td, uint256 ol, ) = currentAV(_nftID);
             overdueLoansOfNavAssets[_nftID] = ol;
             latestDiscountOfNavAssets[_nftID] = td;
         }
