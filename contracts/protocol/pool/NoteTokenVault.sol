@@ -26,6 +26,8 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     /// @dev Pool user redeem order
     mapping(address => mapping(address => UserOrder)) public poolUserRedeems;
 
+    /// @dev Checks if redeeming is allowed for a given pool.
+    /// @param pool The address of the pool to check.
     modifier orderAllowed(address pool) {
         require(
             poolRedeemDisabled[pool] == false,
@@ -133,27 +135,33 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         emit DisburseJOTOrder(pool, toAddresses, amounts, redeemedAmounts);
     }
 
+    /// @inheritdoc INoteTokenVault
     function setRedeemDisabled(address pool, bool _redeemDisabled) onlyRole(BACKEND_ADMIN) public {
         poolRedeemDisabled[pool] = _redeemDisabled;
         emit SetRedeemDisabled(pool, _redeemDisabled);
     }
 
+    /// @inheritdoc INoteTokenVault
     function redeemDisabled(address pool) public view returns (bool) {
         return poolRedeemDisabled[pool];
     }
 
+    /// @inheritdoc INoteTokenVault
     function totalJOTRedeem(address pool) public view override returns (uint256) {
         return poolTotalJOTRedeem[pool];
     }
 
+    /// @inheritdoc INoteTokenVault
     function totalSOTRedeem(address pool) public view override returns (uint256) {
         return poolTotalSOTRedeem[pool];
     }
 
+    /// @inheritdoc INoteTokenVault
     function userRedeemJOTOrder(address pool, address usr) public view override returns (uint256) {
         return poolUserRedeems[pool][usr].redeemJOTAmount;
     }
 
+    /// @inheritdoc INoteTokenVault
     function userRedeemSOTOrder(address pool, address usr) public view override returns (uint256) {
         return poolUserRedeems[pool][usr].redeemSOTAmount;
     }

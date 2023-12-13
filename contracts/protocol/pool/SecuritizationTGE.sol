@@ -179,6 +179,7 @@ contract SecuritizationTGE is
         emit UpdateReserve($.reserve);
     }
 
+    /// @inheritdoc ISecuritizationTGE
     function disburse(
         address usr,
         uint256 currencyAmount
