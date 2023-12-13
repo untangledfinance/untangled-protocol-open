@@ -3,16 +3,17 @@ pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 
 import {INoteTokenVault} from "./INoteTokenVault.sol";
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
+import { BACKEND_ADMIN } from './types.sol';
 
 /// @title NoteTokenVault
 /// @author Untangled Team
 /// @notice NoteToken redemption
-contract NoteTokenVault is Initializable, PausableUpgradeable, INoteTokenVault {
-
+contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable, INoteTokenVault {
     /// @dev Pool redeem disabled value
     mapping(address => bool) public poolRedeemDisabled;
     /// @dev Pool total SOT redeem
@@ -32,6 +33,7 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, INoteTokenVault {
 
     function initialize() public initializer {
         __Pausable_init_unchained();
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     /// @inheritdoc INoteTokenVault
@@ -76,6 +78,15 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, INoteTokenVault {
         }
 
         emit RedeemSOTOrder(pool, usr, newRedeemAmount);
+    }
+
+    function setRedeemDisabled(address pool, bool _redeemDisabled) onlyRole(BACKEND_ADMIN) public {
+        poolRedeemDisabled[pool] = _redeemDisabled;
+        emit SetRedeemDisabled(pool, _redeemDisabled);
+    }
+
+    function redeemDisabled(address pool) public view returns (bool) {
+        return poolRedeemDisabled[pool];
     }
 
     function totalJOTRedeem(address pool) public view override returns (uint256) {

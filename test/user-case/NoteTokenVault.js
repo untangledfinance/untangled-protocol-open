@@ -105,7 +105,6 @@ describe('NoteTokenVault', () => {
 
     // Grant role originator
     await securitizationPoolContract.connect(poolCreatorSigner).grantRole(ORIGINATOR_ROLE, originatorSigner.address);
-    await securitizationPoolContract.connect(poolCreatorSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
 
     // Init JOT sale
     const jotCap = parseEther('1000'); // $1000
@@ -282,18 +281,19 @@ describe('NoteTokenVault', () => {
         const sotRedeemOrderLenderB = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerB.address);
         expect(sotRedeemOrderLenderB).to.equal(parseEther('1'));
       });
-      it.skip('only pool creator can disable redeem request', async () => {
-        await expect(securitizationPoolContract.connect(lenderSignerA).setRedeemDisabled(true)).to.be.revertedWith('AccessControl: caller is not an originator');
-        await securitizationPoolContract.connect(backendAdminSigner).setRedeemDisabled(true);
+      it('only pool creator can disable redeem request', async () => {
+        await expect(noteTokenVault.connect(lenderSignerA).setRedeemDisabled(securitizationPoolContract.address, true)).to.be.revertedWith('AccessControl: account 0xe874840a8e05ec11307c6b567426616f056e0b3d is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194');
+        await noteTokenVault.connect(untangledAdminSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
+        await noteTokenVault.connect(backendAdminSigner).setRedeemDisabled(securitizationPoolContract.address, true);
 
       });
-      it.skip('should revert if request redemption when redeem disabled', async () => {
+      it('should revert if request redemption when redeem disabled', async () => {
         await expect(
-            securitizationPoolContract.connect(lenderSignerB).redeemJOTOrder(parseEther('1'))
+            noteTokenVault.connect(lenderSignerB).redeemJOTOrder(securitizationPoolContract.address, parseEther('1'))
         ).to.be.revertedWith('redeem-not-allowed');
 
         await expect(
-            securitizationPoolContract.connect(lenderSignerB).redeemSOTOrder(parseEther('1'))
+            noteTokenVault.connect(lenderSignerB).redeemSOTOrder(securitizationPoolContract.address, parseEther('1'))
         ).to.be.revertedWith('redeem-not-allowed');
 
       });
