@@ -2,10 +2,8 @@
 pragma solidity 0.8.19;
 
 interface INoteTokenVault {
-    event RedeemSOTOrder(address pool, address usr, uint256 newRedeemAmount);
-    event RedeemJOTOrder(address pool, address usr, uint256 newRedeemAmount);
-    event DisburseSOTOrder(address pool, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
-    event DisburseJOTOrder(address pool, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
+    event RedeemOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount, uint256 noteTokenPrice);
+    event DisburseOrder(address pool, address noteTokenAddress, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
     event SetRedeemDisabled(address pool, bool _redeemDisabled);
 
     /// @title UserOrder
@@ -16,28 +14,15 @@ interface INoteTokenVault {
     }
 
     /// @notice redeemJOTOrder function can be used to place or revoke a redeem
-    /// @param newRedeemAmount new amount of tokens to be redeemed
-    function redeemJOTOrder(address pool, uint256 newRedeemAmount) external;
-
-    /// @notice redeemSOTOrder function can be used to place or revoke a redeem
-    /// @param newRedeemAmount new amount of tokens to be redeemed
-    function redeemSOTOrder(address pool, uint256 newRedeemAmount) external;
-
-    /// @dev Disburses funds and handles SOT redemptions for a pool.
-    /// @param pool The address of the pool contract.
-    /// @param toAddresses An array of recipient addresses.
-    /// @param amounts An array of amounts to disburse to each recipient.
-    /// @param redeemedAmounts An array of SOT amounts redeemed by each recipient.
-    /// @notice Only accessible by BACKEND_ADMIN role.
-    function disburseAllForSOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmounts) external;
+    function redeemOrder(address pool, address noteTokenAddress, uint256 newRedeemAmount) external;
 
     /// @dev Disburses funds and handles JOT redemptions for a pool.
     /// @param pool The address of the pool contract.
     /// @param toAddresses An array of recipient addresses.
-    /// @param amounts An array of amounts to disburse to each recipient.
-    /// @param redeemedAmounts An array of JOT amounts redeemed by each recipient.
+    /// @param currencyAmounts An array of amounts to disburse to each recipient.
+    /// @param redeemedNoteAmounts An array of JOT amounts redeemed by each recipient.
     /// @notice Only accessible by BACKEND_ADMIN role.
-    function disburseAllForJOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmounts) external;
+    function disburseAll(address pool, address noteTokenAddress, address[] memory toAddresses, uint256[] memory currencyAmounts, uint256[] memory redeemedNoteAmounts) external;
 
     /// @notice Pause redeem request
     function setRedeemDisabled(address pool, bool _redeemDisabled) external;

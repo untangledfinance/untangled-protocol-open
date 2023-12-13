@@ -184,7 +184,7 @@ async function setup() {
     const DistributionTranche = await ethers.getContractFactory('DistributionTranche');
     distributionTranche = await upgrades.deployProxy(DistributionTranche, [registry.address]);
     const NoteTokenVault = await ethers.getContractFactory('NoteTokenVault');
-    noteTokenVault = await upgrades.deployProxy(NoteTokenVault, []);
+    noteTokenVault = await upgrades.deployProxy(NoteTokenVault, [registry.address]);
 
     await registry.setSecuritizationManager(securitizationManager.address);
     await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);

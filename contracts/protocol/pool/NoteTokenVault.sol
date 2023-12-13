@@ -12,11 +12,16 @@ import {INoteTokenVault} from "./INoteTokenVault.sol";
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import { BACKEND_ADMIN } from './types.sol';
+import "../../storage/Registry.sol";
+import "../../libraries/ConfigHelper.sol";
 
 /// @title NoteTokenVault
 /// @author Untangled Team
 /// @notice NoteToken redemption
 contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable, INoteTokenVault {
+    using ConfigHelper for Registry;
+    Registry public registry;
+
     /// @dev Pool redeem disabled value
     mapping(address => bool) public poolRedeemDisabled;
     /// @dev Pool total SOT redeem
@@ -36,103 +41,82 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         _;
     }
 
-    function initialize() public initializer {
+    function initialize(Registry _registry) public initializer {
         __Pausable_init_unchained();
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        registry = _registry;
     }
 
     /// @inheritdoc INoteTokenVault
-    function redeemJOTOrder(address pool, uint256 newRedeemAmount) public orderAllowed(pool) {
+    function redeemOrder(address pool, address noteTokenAddress, uint256 noteTokenRedeemAmount) public orderAllowed(pool) {
+        address jotTokenAddress = ISecuritizationTGE(pool).jotToken();
+        address sotTokenAddress = ISecuritizationTGE(pool).sotToken();
+        require(noteTokenAddress == jotTokenAddress || noteTokenAddress == sotTokenAddress, "NoteTokenVault: Invalid token address");
         address usr = _msgSender();
-        uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemJOTAmount;
-        poolUserRedeems[pool][usr].redeemJOTAmount = newRedeemAmount;
-        poolTotalJOTRedeem[pool] = poolTotalJOTRedeem[pool] - currentRedeemAmount + newRedeemAmount;
 
-        uint256 delta;
-        if (newRedeemAmount > currentRedeemAmount) {
-            delta = newRedeemAmount - currentRedeemAmount;
-            require(INoteToken(ISecuritizationTGE(pool).jotToken()).transferFrom(usr, address(this), delta), "token-transfer-to-pool-failed");
-            return;
+        if (noteTokenAddress == jotTokenAddress) {
+            uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemJOTAmount;
+            require(currentRedeemAmount == 0, "NoteTokenVault: User already created redeem order");
+            poolUserRedeems[pool][usr].redeemJOTAmount = noteTokenRedeemAmount;
+            poolTotalJOTRedeem[pool] = poolTotalJOTRedeem[pool] + noteTokenRedeemAmount;
+            require(INoteToken(jotTokenAddress).transferFrom(usr, address(this), noteTokenRedeemAmount), "token-transfer-to-pool-failed");
+            uint256 noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
+
+            emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
+        } else if (noteTokenAddress == sotTokenAddress) {
+            uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemSOTAmount;
+            require(currentRedeemAmount == 0, "NoteTokenVault: User already created redeem order");
+            poolUserRedeems[pool][usr].redeemSOTAmount = noteTokenRedeemAmount;
+            poolTotalSOTRedeem[pool] = poolTotalSOTRedeem[pool] + noteTokenRedeemAmount;
+            require(INoteToken(sotTokenAddress).transferFrom(usr, address(this), noteTokenRedeemAmount), "token-transfer-to-pool-failed");
+            uint256 noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
+
+            emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
         }
-
-        delta = currentRedeemAmount - newRedeemAmount;
-        if (delta > 0) {
-            require(INoteToken(ISecuritizationTGE(pool).jotToken()).transfer(usr, delta), "token-transfer-out-failed");
-        }
-
-        emit RedeemJOTOrder(pool, usr, newRedeemAmount);
     }
 
     /// @inheritdoc INoteTokenVault
-    function redeemSOTOrder(address pool, uint256 newRedeemAmount) public orderAllowed(pool) {
-        address usr = _msgSender();
-        uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemSOTAmount;
-        poolUserRedeems[pool][usr].redeemSOTAmount = newRedeemAmount;
-        poolTotalSOTRedeem[pool] = poolTotalSOTRedeem[pool] - currentRedeemAmount + newRedeemAmount;
-
-        uint256 delta;
-        if (newRedeemAmount > currentRedeemAmount) {
-            delta = newRedeemAmount - currentRedeemAmount;
-            require(INoteToken(ISecuritizationTGE(pool).sotToken()).transferFrom(usr, address(this), delta), "token-transfer-to-pool-failed");
-            return;
-        }
-
-        delta = currentRedeemAmount - newRedeemAmount;
-        if (delta > 0) {
-            require(INoteToken(ISecuritizationTGE(pool).sotToken()).transfer(usr, delta), "token-transfer-out-failed");
-        }
-
-        emit RedeemSOTOrder(pool, usr, newRedeemAmount);
-    }
-
-    /// @inheritdoc INoteTokenVault
-    function disburseAllForSOT(
+    function disburseAll(
         address pool,
+        address noteTokenAddress,
         address[] memory toAddresses,
-        uint256[] memory amounts,
-        uint256[] memory redeemedAmounts
+        uint256[] memory currencyAmounts,
+        uint256[] memory redeemedNoteAmounts
     ) onlyRole(BACKEND_ADMIN) public {
         ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
-        uint256 userLength = toAddresses.length;
-        uint256 totalAmount = 0;
-        uint256 totalSOTRedeemed = 0;
+        address jotTokenAddress = poolTGE.jotToken();
+        address sotTokenAddress = poolTGE.sotToken();
+        require(noteTokenAddress == jotTokenAddress || noteTokenAddress == sotTokenAddress, "NoteTokenVault: Invalid token address");
 
-        for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
-            totalAmount += amounts[i];
-            totalSOTRedeemed += redeemedAmounts[i];
-            poolTGE.disburse(toAddresses[i], amounts[i]);
-            poolUserRedeems[pool][toAddresses[i]].redeemSOTAmount -= redeemedAmounts[i];
-            ERC20BurnableUpgradeable(poolTGE.sotToken()).burn(redeemedAmounts[i]);
+        uint256 totalCurrencyAmount = 0;
+        uint256 userLength = toAddresses.length;
+
+        if (noteTokenAddress == jotTokenAddress) {
+            uint256 totalJOTRedeemed = 0;
+            for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
+                totalCurrencyAmount += currencyAmounts[i];
+                totalJOTRedeemed += redeemedNoteAmounts[i];
+                poolTGE.disburse(toAddresses[i], currencyAmounts[i]);
+                poolUserRedeems[pool][toAddresses[i]].redeemJOTAmount -= redeemedNoteAmounts[i];
+                ERC20BurnableUpgradeable(jotTokenAddress).burn(redeemedNoteAmounts[i]);
+            }
+
+            poolTotalJOTRedeem[pool] -= totalJOTRedeemed;
+        } else if (noteTokenAddress == sotTokenAddress) {
+            uint256 totalSOTRedeemed = 0;
+            for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
+                totalCurrencyAmount += currencyAmounts[i];
+                totalSOTRedeemed += redeemedNoteAmounts[i];
+                poolTGE.disburse(toAddresses[i], currencyAmounts[i]);
+                poolUserRedeems[pool][toAddresses[i]].redeemSOTAmount -= redeemedNoteAmounts[i];
+                ERC20BurnableUpgradeable(sotTokenAddress).burn(redeemedNoteAmounts[i]);
+            }
+
+            poolTotalSOTRedeem[pool] -= totalSOTRedeemed;
         }
 
-        poolTotalSOTRedeem[pool] -= totalSOTRedeemed;
-        poolTGE.decreaseReserve(totalAmount);
-        emit DisburseSOTOrder(pool, toAddresses, amounts, redeemedAmounts);
-    }
-
-    /// @inheritdoc INoteTokenVault
-    function disburseAllForJOT(
-        address pool,
-        address[] memory toAddresses,
-        uint256[] memory amounts,
-        uint256[] memory redeemedAmounts
-    ) onlyRole(BACKEND_ADMIN) public {
-        ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
-        uint256 userLength = toAddresses.length;
-        uint256 totalAmount = 0;
-        uint256 totalJOTRedeemed = 0;
-
-        for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
-            totalAmount += amounts[i];
-            totalJOTRedeemed += redeemedAmounts[i];
-            poolTGE.disburse(toAddresses[i], amounts[i]);
-            poolUserRedeems[pool][toAddresses[i]].redeemJOTAmount -= redeemedAmounts[i];
-            ERC20BurnableUpgradeable(poolTGE.jotToken()).burn(redeemedAmounts[i]);
-        }
-
-        poolTotalJOTRedeem[pool] -= totalJOTRedeemed;
-        poolTGE.decreaseReserve(totalAmount);
-        emit DisburseJOTOrder(pool, toAddresses, amounts, redeemedAmounts);
+        poolTGE.decreaseReserve(totalCurrencyAmount);
+        emit DisburseOrder(pool, noteTokenAddress, toAddresses, currencyAmounts, redeemedNoteAmounts);
     }
 
     /// @inheritdoc INoteTokenVault
