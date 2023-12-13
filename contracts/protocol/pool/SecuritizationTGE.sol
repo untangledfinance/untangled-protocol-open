@@ -179,6 +179,22 @@ contract SecuritizationTGE is
         emit UpdateReserve($.reserve);
     }
 
+    function disburse(
+        address usr,
+        uint256 currencyAmount
+    ) external virtual override {
+        Storage storage $ = _getStorage();
+        require(
+            _msgSender() == address(registry().getNoteTokenVault()),
+            'SecuritizationPool: Caller must be NoteTokenVault'
+        );
+        require(
+            IERC20Upgradeable($.underlyingCurrency).transferFrom($.pot, usr, currencyAmount),
+            'SecuritizationPool: currency-transfer-failed'
+        );
+
+    }
+
     function checkMinFirstLost() public view virtual returns (bool) {
         ISecuritizationPoolValueService poolService = registry().getSecuritizationPoolValueService();
         return _getStorage().minFirstLossCushion <= poolService.getJuniorRatio(address(this));
@@ -277,7 +293,7 @@ contract SecuritizationTGE is
     function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
             _msgSender() == address(registry().getSecuritizationManager()) ||
-                _msgSender() == address(registry().getDistributionOperator()),
+            _msgSender() == address(registry().getDistributionOperator()) || _msgSender() == address(registry().getNoteTokenVault()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
 
@@ -392,7 +408,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](30);
+        bytes4[] memory _functionSignatures = new bytes4[](31);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -424,6 +440,7 @@ contract SecuritizationTGE is
         _functionSignatures[27] = this.isDebtCeilingValid.selector;
         _functionSignatures[28] = this.setDebtCeiling.selector;
         _functionSignatures[29] = this.debtCeiling.selector;
+        _functionSignatures[30] = this.disburse.selector;
 
         return _functionSignatures;
     }

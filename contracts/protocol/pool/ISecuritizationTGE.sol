@@ -70,6 +70,8 @@ interface ISecuritizationTGE {
 
     function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external;
 
+    function disburse(address usr, uint256 currencyAmount) external;
+
     /// @notice checks if the redemption process has finished
     function hasFinishedRedemption() external view returns (bool);
 

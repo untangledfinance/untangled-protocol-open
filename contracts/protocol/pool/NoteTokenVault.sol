@@ -4,7 +4,10 @@ pragma solidity 0.8.19;
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
+import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 
+import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {INoteTokenVault} from "./INoteTokenVault.sol";
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
@@ -78,6 +81,31 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
         }
 
         emit RedeemSOTOrder(pool, usr, newRedeemAmount);
+    }
+
+    /// @inheritdoc INoteTokenVault
+    function disburseAllForSOT(
+        address pool,
+        address[] memory toAddresses,
+        uint256[] memory amounts,
+        uint256[] memory redeemedAmounts
+    ) onlyRole(BACKEND_ADMIN) public {
+        ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
+        uint256 userLength = toAddresses.length;
+        uint256 totalAmount = 0;
+        uint256 totalSOTRedeemed = 0;
+
+        for (uint256 i = 0; i < userLength; i = UntangledMath.uncheckedInc(i)) {
+            totalAmount += amounts[i];
+            totalSOTRedeemed += redeemedAmounts[i];
+            poolTGE.disburse(toAddresses[i], amounts[i]);
+            poolUserRedeems[pool][toAddresses[i]].redeemSOTAmount -= redeemedAmounts[i];
+            ERC20BurnableUpgradeable(poolTGE.sotToken()).burn(redeemedAmounts[i]);
+        }
+
+        poolTotalSOTRedeem[pool] -= totalSOTRedeemed;
+        poolTGE.decreaseReserve(totalAmount);
+        emit DisburseSOTOrder(pool, toAddresses, amounts, redeemedAmounts);
     }
 
     function setRedeemDisabled(address pool, bool _redeemDisabled) onlyRole(BACKEND_ADMIN) public {

@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 interface INoteTokenVault {
     event RedeemSOTOrder(address pool, address usr, uint256 newRedeemAmount);
     event RedeemJOTOrder(address pool, address usr, uint256 newRedeemAmount);
+    event DisburseSOTOrder(address pool, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
     event SetRedeemDisabled(address pool, bool _redeemDisabled);
 
     struct UserOrder {
@@ -19,11 +20,9 @@ interface INoteTokenVault {
     /// @param newRedeemAmount new amount of tokens to be redeemed
     function redeemSOTOrder(address pool, uint256 newRedeemAmount) external;
 
-/*
-    function disburseAllForSOT(address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
+    function disburseAllForSOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
 
-    function disburseAllForJOT(address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
-*/
+//    function disburseAllForJOT(address pool, address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
 
     /// @notice Pause redeem request
     function setRedeemDisabled(address pool, bool _redeemDisabled) external;
