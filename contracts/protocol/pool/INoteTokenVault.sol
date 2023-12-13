@@ -22,22 +22,26 @@ interface INoteTokenVault {
     function disburseAllForSOT(address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
 
     function disburseAllForJOT(address[] memory toAddresses, uint256[] memory amounts, uint256[] memory redeemedAmount) external;
+*/
 
+/*
     /// @notice Pause redeem request
     function setRedeemDisabled(bool _redeemDisabled) external;
+*/
 
     /// @notice Total amount of SOT redeem order
-    function totalSOTRedeem() external view returns (uint256);
+    function totalSOTRedeem(address pool) external view returns (uint256);
 
+/*
     /// @notice Get redeem disabled
-    function redeemDisabled() external view returns (bool);
+k   function redeemDisabled() external view returns (bool);
+*/
 
     /// @notice Total amount of JOT redeem order
-    function totalJOTRedeem() external view returns (uint256);
+    function totalJOTRedeem(address pool) external view returns (uint256);
     /// @dev Retrieves the amount of JOT tokens that can be redeemed for the specified user.
     /// @param usr The address of the user for which to retrieve the redeemable JOT amount.
     /// @return The amount of JOT tokens that can be redeemed by the user.
-    function userRedeemJOTOrder(address usr) external view returns (uint256);
-    function userRedeemSOTOrder(address usr) external view returns (uint256);
-*/
+    function userRedeemJOTOrder(address pool, address usr) external view returns (uint256);
+    function userRedeemSOTOrder(address pool, address usr) external view returns (uint256);
 }

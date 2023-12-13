@@ -78,5 +78,21 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, INoteTokenVault {
         emit RedeemSOTOrder(pool, usr, newRedeemAmount);
     }
 
+    function totalJOTRedeem(address pool) public view override returns (uint256) {
+        return poolTotalJOTRedeem[pool];
+    }
+
+    function totalSOTRedeem(address pool) public view override returns (uint256) {
+        return poolTotalSOTRedeem[pool];
+    }
+
+    function userRedeemJOTOrder(address pool, address usr) public view override returns (uint256) {
+        return poolUserRedeems[pool][usr].redeemJOTAmount;
+    }
+
+    function userRedeemSOTOrder(address pool, address usr) public view override returns (uint256) {
+        return poolUserRedeems[pool][usr].redeemSOTAmount;
+    }
+
     uint256[49] private __gap;
 }
