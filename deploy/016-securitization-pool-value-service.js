@@ -1,4 +1,3 @@
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy, execute, get } = deployments;
     const { deployer } = await getNamedAccounts();
@@ -11,7 +10,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log: true,
     });
 
-    await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPoolValueService', securitizationPoolValueService.address);
+    await execute(
+        'Registry',
+        { from: deployer, log: true },
+        'setSecuritizationPoolValueService',
+        securitizationPoolValueService.address
+    );
 };
 
 module.exports.dependencies = ['Registry'];

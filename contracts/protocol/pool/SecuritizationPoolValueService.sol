@@ -159,9 +159,9 @@ contract SecuritizationPoolValueService is
         return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
-    function getExpectedAssetValue(address poolAddress, uint256 tokenId) public view returns (uint256) {
+    function getExpectedAssetValue(address poolAddress, bytes32 tokenId) public view returns (uint256) {
         IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
-        return poolNav.currentNAVAsset(bytes32(tokenId));
+        return poolNav.currentNAVAsset(tokenId);
     }
 
     function getExpectedAssetValues(
