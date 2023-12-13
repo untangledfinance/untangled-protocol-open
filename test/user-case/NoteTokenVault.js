@@ -284,7 +284,7 @@ describe('NoteTokenVault', () => {
         expect(sotRedeemOrderLenderB).to.equal(parseEther('1'));
       });
       it('only pool creator can disable redeem request', async () => {
-        await expect(noteTokenVault.connect(lenderSignerA).setRedeemDisabled(securitizationPoolContract.address, true)).to.be.revertedWith('AccessControl: account 0xe874840a8e05ec11307c6b567426616f056e0b3d is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194');
+        await expect(noteTokenVault.connect(lenderSignerA).setRedeemDisabled(securitizationPoolContract.address, true)).to.be.revertedWith(`AccessControl: account ${lenderSignerA.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`);
         await noteTokenVault.connect(untangledAdminSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
         await noteTokenVault.connect(backendAdminSigner).setRedeemDisabled(securitizationPoolContract.address, true);
 
