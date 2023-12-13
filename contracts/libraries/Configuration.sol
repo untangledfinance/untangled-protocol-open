@@ -35,7 +35,8 @@ library Configuration {
         INVOICE_LOAN_KERNEL,
         INVOICE_LOAN_REPAYMENT_ROUTER,
         GO,
-        POOL_NAV_FACTORY
+        POOL_NAV_FACTORY,
+        NOTE_TOKEN_VAULT
     }
 
     enum NOTE_TOKEN_TYPE {

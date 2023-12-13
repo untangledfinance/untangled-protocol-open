@@ -70,6 +70,11 @@ interface ISecuritizationTGE {
 
     function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external;
 
+    /// @dev Disburses a specified amount of currency to the given user.
+    /// @param usr The address of the user to receive the currency.
+    /// @param currencyAmount The amount of currency to disburse.
+    function disburse(address usr, uint256 currencyAmount) external;
+
     /// @notice checks if the redemption process has finished
     function hasFinishedRedemption() external view returns (bool);
 

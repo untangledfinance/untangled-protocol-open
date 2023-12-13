@@ -878,6 +878,15 @@ describe('SecuritizationPool', () => {
             expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('89.0');
         });
 
+        it('#disburse', async () => {
+            await expect(securitizationPoolContract
+              .connect(poolCreatorSigner)
+              .disburse(lenderSigner.address, parseEther('1')))
+              .to.be.revertedWith(
+                "SecuritizationPool: Caller must be NoteTokenVault"
+              )
+        });
+
         it('#claimCashRemain', async () => {
             expect(formatEther(await stableCoin.balanceOf(poolCreatorSigner.address))).equal('0.0');
             expect(formatEther(await sotToken.totalSupply())).equal('90.0');
