@@ -10,6 +10,7 @@ interface ISecuritizationTGE {
     event UpdateReserve(uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event UpdateDebtCeiling(uint256 _debtCeiling);
+    event UpdateMintFirstLoss(uint32 _mintFirstLoss);
     event Withdraw(address originatorAddress, uint256 amount);
     event UpdatePoolNAV(address poolNav);
 
@@ -20,6 +21,9 @@ interface ISecuritizationTGE {
 
     /// @notice sets debt ceiling value
     function setDebtCeiling(uint256 _debtCeiling) external;
+
+    /// @notice sets mint first loss value
+    function setMinFirstLossCushion(uint32 _minFirstLossCushion) external;
 
     // function pot() external view returns (address);
 

@@ -94,7 +94,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     function setTotalCap(uint256 cap_) external whenNotPaused {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
-            'MintedNormalTGE: Caller must be owner or manager'
+            'MintedIncreasingInterestTGE: Caller must be owner or manager'
         );
         _setTotalCap(cap_);
     }
