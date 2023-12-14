@@ -84,6 +84,12 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         uint32 amountChangeEachInterval;
     }
 
+    struct TGEInfoParam {
+        address tgeAddress;
+        uint32 totalCap;
+        uint256 minBidAmount;
+    }
+
     function initialize(Registry _registry, address _factoryAdmin) public reinitializer(2) {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
@@ -371,40 +377,16 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
-    function setTgeTotalCap(address tgeAddress, uint256 newTotalCap) public {
-        IMintedTGE tge = IMintedTGE(tgeAddress);
-        require(
-            IAccessControlUpgradeable(ICrowdSale(tgeAddress).pool()).hasRole(OWNER_ROLE, _msgSender()),
-            'SecuritizationManager: Not the controller of the project'
-        );
-        tge.setTotalCap(newTotalCap);
+    function updateTgeInfo(TGEInfoParam[] calldata tgeInfos) public {
+        for (uint i = 0; i < tgeInfos.length; i++) {
+            require(
+                IAccessControlUpgradeable(ICrowdSale(tgeInfos[i].tgeAddress).pool()).hasRole(OWNER_ROLE, _msgSender()),
+                'SecuritizationManager: Not the controller of the project'
+            );
+            IMintedTGE(tgeInfos[i].tgeAddress).setTotalCap(tgeInfos[i].totalCap);
+            ICrowdSale(tgeInfos[i].tgeAddress).setMinBidAmount(tgeInfos[i].minBidAmount);
+        }
     }
-
-    // function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
-    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
-    //     pool.pause();
-    // }
-
-    // function unpausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-    //     require(isExistingPools[poolAddress], 'SecuritizationManager: pool does not exist');
-    //     ISecuritizationPool pool = ISecuritizationPool(poolAddress);
-    //     pool.unpause();
-    // }
-
-    // function pauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-    //     uint256 poolsLength = pools.length;
-    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
-    //         pools[i].pause();
-    //     }
-    // }
-
-    // function unpauseAllPools() external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
-    //     uint256 poolsLength = pools.length;
-    //     for (uint256 i = 0; i < poolsLength; i = UntangledMath.uncheckedInc(i)) {
-    //         pools[i].unpause();
-    //     }
-    // }
 
     function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
         require(validator != address(0), 'SecuritizationManager: Invalid validator address');

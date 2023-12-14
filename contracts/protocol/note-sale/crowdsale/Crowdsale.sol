@@ -99,7 +99,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
 
     /// @notice Setup minimum bid amount in currency for note token
     /// @param _minBidAmount Expected minimum amount
-    function setMinBidAmount(uint256 _minBidAmount) external whenNotPaused {
+    function setMinBidAmount(uint256 _minBidAmount) external override whenNotPaused {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
             'Crowdsale: caller must be owner or manager'
