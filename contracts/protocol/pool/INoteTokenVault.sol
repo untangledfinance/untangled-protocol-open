@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 interface INoteTokenVault {
     event RedeemOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount, uint256 noteTokenPrice);
+    event CancelOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount);
     event DisburseOrder(address pool, address noteTokenAddress, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
     event SetRedeemDisabled(address pool, bool _redeemDisabled);
 
@@ -11,6 +12,12 @@ interface INoteTokenVault {
     struct UserOrder {
         uint256 redeemSOTAmount;
         uint256 redeemJOTAmount;
+    }
+
+    struct CancelOrderParam {
+        address pool;
+        address noteTokenAddress;
+        uint256 maxTimestamp;
     }
 
     /// @notice redeemJOTOrder function can be used to place or revoke a redeem
@@ -23,6 +30,8 @@ interface INoteTokenVault {
     /// @param redeemedNoteAmounts An array of JOT amounts redeemed by each recipient.
     /// @notice Only accessible by BACKEND_ADMIN role.
     function disburseAll(address pool, address noteTokenAddress, address[] memory toAddresses, uint256[] memory currencyAmounts, uint256[] memory redeemedNoteAmounts) external;
+
+    function cancelOrder(CancelOrderParam memory cancelParam, bytes calldata signature) external;
 
     /// @notice Pause redeem request
     function setRedeemDisabled(address pool, bool _redeemDisabled) external;

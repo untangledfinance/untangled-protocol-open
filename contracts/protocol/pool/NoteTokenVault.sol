@@ -5,6 +5,7 @@ import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
+import {ECDSAUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
 import {ERC20BurnableUpgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 
@@ -12,7 +13,7 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {INoteTokenVault} from './INoteTokenVault.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-import {BACKEND_ADMIN} from './types.sol';
+import {BACKEND_ADMIN, SIGNER_ROLE} from './types.sol';
 import '../../storage/Registry.sol';
 import '../../libraries/ConfigHelper.sol';
 
@@ -22,6 +23,10 @@ import '../../libraries/ConfigHelper.sol';
 contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnumerableUpgradeable, ReentrancyGuardUpgradeable, INoteTokenVault {
     using ConfigHelper for Registry;
     Registry public registry;
+
+    /// @dev We include a nonce in every hashed message, and increment the nonce as part of a
+    /// state-changing operation, so as to prevent replay attacks, i.e. the reuse of a signature.
+    mapping(address => uint256) public nonces;
 
     /// @dev Pool redeem disabled value
     mapping(address => bool) public poolRedeemDisabled;
@@ -36,6 +41,25 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     /// @param pool The address of the pool to check.
     modifier orderAllowed(address pool) {
         require(poolRedeemDisabled[pool] == false, 'redeem-not-allowed');
+        _;
+    }
+
+    modifier incrementNonce(address account) {
+        nonces[account] += 1;
+        _;
+    }
+
+    modifier onlySigner(
+        CancelOrderParam memory cancelParam,
+        bytes calldata signature
+    ) {
+        require(block.timestamp <= cancelParam.maxTimestamp, 'Cancel request has expired');
+        address usr = _msgSender();
+        bytes32 hash = keccak256(
+            abi.encodePacked(usr, cancelParam.pool, cancelParam.noteTokenAddress, cancelParam.maxTimestamp, nonces[usr], block.chainid)
+        );
+        bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
+        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
         _;
     }
 
@@ -125,6 +149,41 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
 
         poolTGE.decreaseReserve(totalCurrencyAmount);
         emit DisburseOrder(pool, noteTokenAddress, toAddresses, currencyAmounts, redeemedNoteAmounts);
+    }
+
+    function cancelOrder(CancelOrderParam memory cancelParam, bytes calldata signature) public onlySigner(cancelParam, signature) incrementNonce(_msgSender()) {
+        address pool = cancelParam.pool;
+        address jotTokenAddress = ISecuritizationTGE(pool).jotToken();
+        address sotTokenAddress = ISecuritizationTGE(pool).sotToken();
+        address noteTokenAddress = cancelParam.noteTokenAddress;
+        address usr = _msgSender();
+
+        require(
+            _isJotToken(noteTokenAddress, jotTokenAddress) || _isSotToken(noteTokenAddress, sotTokenAddress),
+            'NoteTokenVault: Invalid token address'
+        );
+
+        if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
+            uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemJOTAmount;
+            require(currentRedeemAmount > 0, 'NoteTokenVault: Redeem order not found');
+            poolUserRedeems[pool][usr].redeemJOTAmount = 0;
+            poolTotalJOTRedeem[pool] = poolTotalJOTRedeem[pool] - currentRedeemAmount;
+            require(
+                INoteToken(noteTokenAddress).transfer(usr, currentRedeemAmount),
+                'token-transfer-from-pool-failed'
+            );
+            emit CancelOrder(pool, noteTokenAddress, usr, currentRedeemAmount);
+        } else {
+            uint256 currentRedeemAmount = poolUserRedeems[pool][usr].redeemSOTAmount;
+            require(currentRedeemAmount > 0, 'NoteTokenVault: Redeem order not found');
+            poolUserRedeems[pool][usr].redeemSOTAmount = 0;
+            poolTotalSOTRedeem[pool] = poolTotalSOTRedeem[pool] - currentRedeemAmount;
+            require(
+                INoteToken(noteTokenAddress).transfer(usr, currentRedeemAmount),
+                'token-transfer-from-pool-failed'
+            );
+            emit CancelOrder(pool, noteTokenAddress, usr, currentRedeemAmount);
+        }
     }
 
     /// @inheritdoc INoteTokenVault

@@ -55,3 +55,27 @@ module.exports.presignedMintMessage = (
     chainId,
   );
 };
+
+module.exports.presignedCancelRedeemOrderMessage = (
+    fromAddress,
+    poolAddress,
+    noteTokenAddress,
+    maxTimestamp,
+    nonce,
+    chainId,
+) => {
+  const types = ['address', 'address', 'address', 'uint256', 'uint256', 'uint256'];
+  const values = [
+    fromAddress,
+    poolAddress,
+    noteTokenAddress,
+    maxTimestamp,
+    nonce,
+    chainId,
+  ];
+
+  const encoded = pack(types, values);
+  const hash = keccak256(encoded);
+  // Cf. https://github.com/ethers-io/ethers.js/blob/ce8f1e4015c0f27bf178238770b1325136e3351a/docs/v5/api/signer/README.md#note
+  return arrayify(hash)
+};

@@ -6,8 +6,8 @@ const { parseEther } = ethers.utils;
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { setup } = require('../setup');
-const { presignedMintMessage } = require('../shared/uid-helper');
-const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN } = require('../constants.js');
+const { presignedMintMessage, presignedCancelRedeemOrderMessage } = require('../shared/uid-helper');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN, SIGNER_ROLE } = require('../constants.js');
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 const { getPoolByAddress, unlimitedAllowance } = require('../utils');
 const { SaleType } = require('../shared/constants.js');
@@ -25,6 +25,7 @@ describe('NoteTokenVault', () => {
   let mintedIncreasingInterestTGEContract;
   let loanKernel;
   let noteTokenVault;
+  let chainId;
 
   // Wallets
   let untangledAdminSigner,
@@ -33,8 +34,9 @@ describe('NoteTokenVault', () => {
     originatorSigner,
     lenderSignerA,
     lenderSignerB,
-    secondLenderSigner,
+    lenderSignerC,
     backendAdminSigner,
+    cancelOrderAdminSigner,
     relayer;
 
   const stableCoinAmountToBuyJOT = parseEther('1');
@@ -49,9 +51,10 @@ describe('NoteTokenVault', () => {
       originatorSigner,
       lenderSignerA,
       lenderSignerB,
-      secondLenderSigner,
-      relayer,
-      backendAdminSigner
+      lenderSignerC,
+      backendAdminSigner,
+      cancelOrderAdminSigner,
+      relayer
     ] = await ethers.getSigners();
 
     // Init contracts
@@ -168,7 +171,7 @@ describe('NoteTokenVault', () => {
 
     // Lender gain UID
     const UID_TYPE = 0;
-    const chainId = await getChainId();
+    chainId = await getChainId();
     const expiredAt = now + ONE_DAY_IN_SECONDS;
     const nonce = 0;
     const ethRequired = parseEther('0.00083');
@@ -194,9 +197,20 @@ describe('NoteTokenVault', () => {
     const signatureForLenderB = await untangledAdminSigner.signMessage(uidMintMessageLenderB);
     await uniqueIdentity.connect(lenderSignerB).mint(UID_TYPE, expiredAt, signatureForLenderB, { value: ethRequired });
 
+    const uidMintMessageLenderC = presignedMintMessage(
+        lenderSignerC.address,
+        UID_TYPE,
+        expiredAt,
+        uniqueIdentity.address,
+        nonce,
+        chainId
+    );
+    const signatureForLenderC = await untangledAdminSigner.signMessage(uidMintMessageLenderC);
+    await uniqueIdentity.connect(lenderSignerC).mint(UID_TYPE, expiredAt, signatureForLenderC, { value: ethRequired });
     // Faucet stable coin to lender/investor
     await stableCoin.transfer(lenderSignerA.address, parseEther('10000')); // $10k
     await stableCoin.transfer(lenderSignerB.address, parseEther('10000')); // $10k
+    await stableCoin.transfer(lenderSignerC.address, parseEther('10000')); // $10k
   });
 
   describe('Redeem Orders', () => {
@@ -343,6 +357,139 @@ describe('NoteTokenVault', () => {
 
     });
 
+    describe('Cancel Order', () => {
+      before('Lender C buy JOT and SOT', async () => {
+        // Lender buys JOT Token
+        await stableCoin.connect(lenderSignerC).approve(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT);
+        await securitizationManager
+            .connect(lenderSignerC)
+            .buyTokens(mintedNormalTGEContract.address, stableCoinAmountToBuyJOT);
+        // Lender try to buy SOT with amount violates min first loss
+        await stableCoin
+            .connect(lenderSignerC)
+            .approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
+        await securitizationManager
+            .connect(lenderSignerC)
+            .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
+      });
+      before('Investor C create redeem order for SOT and JOT', async () => {
+        await jotContract.connect(lenderSignerC).approve(noteTokenVault.address, unlimitedAllowance);
+        await noteTokenVault.connect(lenderSignerC).redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'));
+
+        await sotContract.connect(lenderSignerC).approve(noteTokenVault.address, unlimitedAllowance);
+        await noteTokenVault.connect(lenderSignerC).redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'));
+      })
+      it('Should revert if invalid signer', async () => {
+        const maxTimestamp = await time.latest() + ONE_DAY_IN_SECONDS;
+        const nonce = 0;
+        const cancelParam = {
+          pool: securitizationPoolContract.address,
+          noteTokenAddress: jotContract.address,
+          maxTimestamp: maxTimestamp
+        }
+        const cancelOrderMessage = presignedCancelRedeemOrderMessage(
+            lenderSignerC.address,
+            securitizationPoolContract.address,
+            jotContract.address,
+            maxTimestamp,
+            nonce,
+            chainId
+        );
+        const cancelSignature = await untangledAdminSigner.signMessage(cancelOrderMessage);
+        await expect(noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)).to.be.revertedWith("Invalid signer");
+      });
+      it('Should revert if maxTimestamp < block timestamp', async () => {
+        const maxTimestamp = await time.latest() - 1; // maxTimestamp in the past
+        const nonce = 0;
+        const cancelParam = {
+          pool: securitizationPoolContract.address,
+          noteTokenAddress: jotContract.address,
+          maxTimestamp: maxTimestamp
+        }
+        const cancelOrderMessage = presignedCancelRedeemOrderMessage(
+            lenderSignerC.address,
+            securitizationPoolContract.address,
+            jotContract.address,
+            maxTimestamp,
+            nonce,
+            chainId
+        );
+        const cancelSignature = await untangledAdminSigner.signMessage(cancelOrderMessage);
+        // await noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)
+        await expect(noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)).to.be.revertedWith("Cancel request has expired");
+      });
+      it('Investor C should cancel order for JOT successfully', async () => {
+        await noteTokenVault.connect(untangledAdminSigner).grantRole(SIGNER_ROLE, cancelOrderAdminSigner.address);
+        const maxTimestamp = await time.latest() + ONE_DAY_IN_SECONDS;
+        const nonce = 0;
+        const cancelParam = {
+          pool: securitizationPoolContract.address,
+          noteTokenAddress: jotContract.address,
+          maxTimestamp: maxTimestamp
+        }
+        const cancelOrderMessage = presignedCancelRedeemOrderMessage(
+            lenderSignerC.address,
+            securitizationPoolContract.address,
+            jotContract.address,
+            maxTimestamp,
+            nonce,
+            chainId
+        );
+        const cancelSignature = await cancelOrderAdminSigner.signMessage(cancelOrderMessage);
+        await noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)
+        const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
+        expect(totalJOTRedeem).to.equal(parseEther('2'));
+        const jotRedeemOrderLenderC = await noteTokenVault.userRedeemJOTOrder(securitizationPoolContract.address, lenderSignerC.address);
+        expect(jotRedeemOrderLenderC).to.equal(parseEther('0'));
+        const jotBalanceLenderC = await jotContract.balanceOf(lenderSignerC.address);
+        expect(jotBalanceLenderC).to.equal(parseEther('1'));
+      });
+      it('Should revert if invalid nonce', async () => {
+        const maxTimestamp = await time.latest() + ONE_DAY_IN_SECONDS;
+        const nonce = 0;
+        const cancelParam = {
+          pool: securitizationPoolContract.address,
+          noteTokenAddress: sotContract.address,
+          maxTimestamp: maxTimestamp
+        }
+        const cancelOrderMessage = presignedCancelRedeemOrderMessage(
+            lenderSignerC.address,
+            securitizationPoolContract.address,
+            sotContract.address,
+            maxTimestamp,
+            nonce,
+            chainId
+        );
+        const cancelSignature = await cancelOrderAdminSigner.signMessage(cancelOrderMessage);
+        await expect(noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)).to.be.revertedWith('Invalid signer')
+      });
+      it('Investor C should cancel order for SOT successfully', async () => {
+        const maxTimestamp = await time.latest() + ONE_DAY_IN_SECONDS;
+        const nonce = 1;
+        const cancelParam = {
+          pool: securitizationPoolContract.address,
+          noteTokenAddress: sotContract.address,
+          maxTimestamp: maxTimestamp
+        }
+        const cancelOrderMessage = presignedCancelRedeemOrderMessage(
+            lenderSignerC.address,
+            securitizationPoolContract.address,
+            sotContract.address,
+            maxTimestamp,
+            nonce,
+            chainId
+        );
+        const cancelSignature = await cancelOrderAdminSigner.signMessage(cancelOrderMessage);
+        await noteTokenVault.connect(lenderSignerC).cancelOrder(cancelParam, cancelSignature)
+        const totalSOTRedeem = await noteTokenVault.totalSOTRedeem(securitizationPoolContract.address);
+        expect(totalSOTRedeem).to.equal(parseEther('2'));
+        const sotRedeemOrderLenderC = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerC.address);
+        expect(sotRedeemOrderLenderC).to.equal(parseEther('0'));
+        const sotBalanceLenderC = await sotContract.balanceOf(lenderSignerC.address);
+        expect(sotBalanceLenderC).to.equal(parseEther('1'));
+      });
+    });
+
     describe('Disburse', () => {
       it('SOT: should revert if not backend admin', async () => {
         await expect(
@@ -387,7 +534,7 @@ describe('NoteTokenVault', () => {
         const sotRedeemOrderLenderB = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerB.address);
         expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
         const reserve = await securitizationPoolContract.reserve();
-        expect(reserve).to.equal(parseEther('2.5')); // $2 SOT raised + $2 JOT raised - $1.5 redeemed
+        expect(reserve).to.equal(parseEther('4.5')); // $3 SOT raised + $3 JOT raised - $1.5 redeemed
       });
 
       it('JOT: should revert if not backend admin', async () => {
@@ -419,7 +566,7 @@ describe('NoteTokenVault', () => {
         const sotRedeemOrderLenderB = await noteTokenVault.userRedeemJOTOrder(securitizationPoolContract.address, lenderSignerB.address);
         expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
         const reserve = await securitizationPoolContract.reserve();
-        expect(reserve).to.equal(parseEther('1'));
+        expect(reserve).to.equal(parseEther('3'));
       });
     });
 
