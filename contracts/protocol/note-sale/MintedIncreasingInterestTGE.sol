@@ -78,16 +78,24 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
         uint256 closingTime_,
         uint256 rate_,
         uint256 cap_
-    ) external whenNotPaused override {
+    ) external override whenNotPaused {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
-            'MintedIncreasingInterestTGE: Caller must be owner or pool'
+            'MintedIncreasingInterestTGE: Caller must be owner or manager'
         );
         _preValidateNewSaleRound();
 
         // call inner function for each extension
         _newSaleRound(rate_);
         newSaleRoundTime(openingTime_, closingTime_);
+        _setTotalCap(cap_);
+    }
+
+    function setTotalCap(uint256 cap_) external whenNotPaused {
+        require(
+            hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),
+            'MintedNormalTGE: Caller must be owner or manager'
+        );
         _setTotalCap(cap_);
     }
 
