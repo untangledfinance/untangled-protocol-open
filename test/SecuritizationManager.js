@@ -377,5 +377,17 @@ describe('SecuritizationManager', () => {
             // await securitizationManager.connect(poolCreatorSigner).unpausePool(securitizationPoolContract.address);
             await securitizationPoolContract.connect(poolCreatorSigner).unpause();
         });
+
+        it('Should change total cap of note token successfully', async () => {
+            const currentTotalCap = await mintedIncreasingInterestTGE.totalCap();
+            expect(formatEther(currentTotalCap)).equal('100000.0');
+
+            await securitizationManager
+                .connect(poolCreatorSigner)
+                .setTgeTotalCap(mintedIncreasingInterestTGE.address, parseEther('200000'));
+
+            const newTotalCap = await mintedIncreasingInterestTGE.totalCap();
+            expect(formatEther(newTotalCap)).equal('200000.0');
+        });
     });
 });

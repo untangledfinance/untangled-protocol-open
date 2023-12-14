@@ -879,12 +879,9 @@ describe('SecuritizationPool', () => {
         });
 
         it('#disburse', async () => {
-            await expect(securitizationPoolContract
-              .connect(poolCreatorSigner)
-              .disburse(lenderSigner.address, parseEther('1')))
-              .to.be.revertedWith(
-                "SecuritizationPool: Caller must be NoteTokenVault"
-              )
+            await expect(
+                securitizationPoolContract.connect(poolCreatorSigner).disburse(lenderSigner.address, parseEther('1'))
+            ).to.be.revertedWith('SecuritizationPool: Caller must be NoteTokenVault');
         });
 
         it('#claimCashRemain', async () => {
@@ -951,6 +948,14 @@ describe('SecuritizationPool', () => {
             const tokens = await securitizationPoolContract.getTokenAssetAddresses();
 
             expect(tokens).to.deep.equal([sotToken.address]);
+        });
+
+        it('set new min first loss', async () => {
+            const currentMinFirstLoss = await securitizationPoolContract.minFirstLossCushion();
+            expect(currentMinFirstLoss).equal(100000);
+            await securitizationPoolContract.connect(poolCreatorSigner).setMinFirstLossCushion('150000');
+            const newMinFirstLoss = await securitizationPoolContract.minFirstLossCushion();
+            expect(newMinFirstLoss).equal(150000);
         });
     });
 });

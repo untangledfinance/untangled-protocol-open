@@ -20,6 +20,7 @@ import {POOL_ADMIN} from './types.sol';
 import {VALIDATOR_ROLE} from '../../tokens/ERC721/types.sol';
 import {MintedNormalTGE} from '../note-sale/MintedNormalTGE.sol';
 import {MintedIncreasingInterestTGE} from '../note-sale/MintedIncreasingInterestTGE.sol';
+import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
 import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEventFactory.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
@@ -368,6 +369,15 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     /// @notice Check if an user has valid UID type
     function hasAllowedUID(address sender) public view override returns (bool) {
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
+    }
+
+    function setTgeTotalCap(address tgeAddress, uint256 newTotalCap) public {
+        IMintedTGE tge = IMintedTGE(tgeAddress);
+        require(
+            IAccessControlUpgradeable(ICrowdSale(tgeAddress).pool()).hasRole(OWNER_ROLE, _msgSender()),
+            'SecuritizationManager: Not the controller of the project'
+        );
+        tge.setTotalCap(newTotalCap);
     }
 
     // function pausePool(address poolAddress) external whenNotPaused nonReentrant onlyRole(POOL_ADMIN) {
