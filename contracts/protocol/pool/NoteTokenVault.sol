@@ -24,10 +24,6 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     using ConfigHelper for Registry;
     Registry public registry;
 
-    /// @dev We include a nonce in every hashed message, and increment the nonce as part of a
-    /// state-changing operation, so as to prevent replay attacks, i.e. the reuse of a signature.
-    mapping(address => uint256) public nonces;
-
     /// @dev Pool redeem disabled value
     mapping(address => bool) public poolRedeemDisabled;
     /// @dev Pool total SOT redeem
@@ -36,6 +32,11 @@ contract NoteTokenVault is Initializable, PausableUpgradeable, AccessControlEnum
     mapping(address => uint256) public poolTotalJOTRedeem;
     /// @dev Pool user redeem order
     mapping(address => mapping(address => UserOrder)) public poolUserRedeems;
+    
+    /// @dev We include a nonce in every hashed message, and increment the nonce as part of a
+    /// state-changing operation, so as to prevent replay attacks, i.e. the reuse of a signature.
+    mapping(address => uint256) public nonces;
+
 
     /// @dev Checks if redeeming is allowed for a given pool.
     /// @param pool The address of the pool to check.
