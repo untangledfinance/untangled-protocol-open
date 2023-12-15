@@ -382,11 +382,13 @@ describe('SecuritizationManager', () => {
             const currentTotalCap = await mintedIncreasingInterestTGE.totalCap();
             expect(formatEther(currentTotalCap)).equal('100000.0');
 
-            await securitizationManager.connect(poolCreatorSigner).updateTgeInfo({
-                tgeAddress: mintedIncreasingInterestTGE.address,
-                totalCap: parseEther('200000'),
-                minBidAmount: parseEther('10'),
-            });
+            await securitizationManager.connect(poolCreatorSigner).updateTgeInfo([
+                {
+                    tgeAddress: mintedIncreasingInterestTGE.address,
+                    totalCap: parseEther('200000'),
+                    minBidAmount: parseEther('10'),
+                },
+            ]);
 
             const newTotalCap = await mintedIncreasingInterestTGE.totalCap();
             const newMinBidAmount = await mintedIncreasingInterestTGE.minBidAmount();

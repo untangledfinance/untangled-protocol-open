@@ -86,7 +86,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
 
     struct TGEInfoParam {
         address tgeAddress;
-        uint32 totalCap;
+        uint256 totalCap;
         uint256 minBidAmount;
     }
 
