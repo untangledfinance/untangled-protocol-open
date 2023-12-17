@@ -13,6 +13,7 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {PRICE_SCALING_FACTOR} from '../../base/constants.sol';
 
 /// @title DistributionOperator
 /// @author Untangled Team
@@ -68,11 +69,11 @@ contract DistributionOperator is SecuritizationPoolServiceBase, IDistributionOpe
 
         address pot = ISecuritizationPoolStorage(poolAddress).pot();
         uint256 tokenToBeRedeemed = Math.min(
-            INoteToken(securitizationPool.underlyingCurrency()).balanceOf(pot) / tokenPrice,
+            INoteToken(securitizationPool.underlyingCurrency()).balanceOf(pot) * PRICE_SCALING_FACTOR / tokenPrice,
             tokenAmount
         );
 
-        uint256 currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice;
+        uint256 currencyAmtToBeDistributed = tokenToBeRedeemed * tokenPrice / PRICE_SCALING_FACTOR;
 
         ISecuritizationLockDistribution securitizationLockDistribute = ISecuritizationLockDistribution(poolAddress);
         securitizationLockDistribute.increaseLockedDistributeBalance(

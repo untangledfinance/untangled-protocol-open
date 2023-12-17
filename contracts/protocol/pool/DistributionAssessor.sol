@@ -12,6 +12,7 @@ import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {PRICE_SCALING_FACTOR} from '../../base/constants.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -32,10 +33,9 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         require(address(noteToken) != address(0), 'DistributionAssessor: Invalid note token address');
         // In initial state, SOT price = 1$
         if (noteToken.totalSupply() == 0)
-            return
-                10 ** (INoteToken(ISecuritizationTGE(securitizationPool).underlyingCurrency()).decimals() - decimals);
+            return PRICE_SCALING_FACTOR;
 
-        return asset / totalSupply;
+        return asset * PRICE_SCALING_FACTOR / totalSupply;
     }
 
     // get current individual asset for SOT tranche
@@ -72,7 +72,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
         uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
         uint256 tokenBalance = notesToken.balanceOf(investor) - tokenRedeem;
-        return tokenBalance * tokenPrice;
+        return tokenBalance * tokenPrice / PRICE_SCALING_FACTOR;
     }
 
     /// @notice Calculate SOT/JOT asset value for multiple investors

@@ -544,7 +544,7 @@ describe('Distribution', () => {
                 jotToken.address,
                 lenderSigner.address
             );
-            expect(formatEther(result)).equal('90.0');
+            expect(formatEther(result)).equal('90.18495');
         });
 
         it('#calcCorrespondingAssetValue(address,address[])', async () => {
@@ -560,10 +560,10 @@ describe('Distribution', () => {
                 securitizationPoolContract.address,
                 sotToken.address
             );
-            expect(formatEther(result)).equal('0.000000000000000001');
+            expect(formatEther(result)).equal('0.000000000001');
 
             result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, jotToken.address);
-            expect(formatEther(result)).equal('0.000000000000000001');
+            expect(formatEther(result)).equal('0.000000000001002055');
 
             result = await distributionAssessor.calcTokenPrice(securitizationPoolContract.address, ZERO_ADDRESS);
             expect(formatEther(result)).equal('0.0');

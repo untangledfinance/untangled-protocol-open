@@ -252,7 +252,7 @@ describe('NoteTokenVault', () => {
                 jotContract.address,
                 lenderSignerA.address,
                 parseEther('1'),
-                '1'
+                '1000000'
             );
         const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
         expect(totalJOTRedeem).to.equal(parseEther('1'));
@@ -276,7 +276,16 @@ describe('NoteTokenVault', () => {
       });
       it('Investor A should make redeem order for 1 SOT', async () => {
         await sotContract.connect(lenderSignerA).approve(noteTokenVault.address, unlimitedAllowance);
-        await noteTokenVault.connect(lenderSignerA).redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'));
+        await expect(noteTokenVault.connect(lenderSignerA).redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1')))
+            .to.emit(noteTokenVault, 'RedeemOrder')
+            .withArgs(
+                securitizationPoolContract.address,
+                sotContract.address,
+                lenderSignerA.address,
+                parseEther('1'),
+                '1000000'
+            )
+        ;
         const totalSOTRedeem = await noteTokenVault.totalSOTRedeem(securitizationPoolContract.address);
         expect(totalSOTRedeem).to.equal(parseEther('1'));
         const sotRedeemOrderLenderA = await noteTokenVault.userRedeemSOTOrder(securitizationPoolContract.address, lenderSignerA.address);
