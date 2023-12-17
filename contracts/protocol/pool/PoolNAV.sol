@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import {Auth} from './auth.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
+
 import {Discounting} from './discounting.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
@@ -11,8 +12,11 @@ import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ILoanRegistry} from '../loan/ILoanRegistry.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
+import {POOL} from './types.sol';
 
-contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
+import "hardhat/console.sol";
+
+contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounting, IPoolNAV {
     using ConfigHelper for Registry;
 
     /// @notice details of the underlying collateral
@@ -148,7 +152,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         return securitizationPool.riskScores(idx);
     }
 
-    function addLoan(uint256 loan) external auth returns (uint256) {
+    function addLoan(uint256 loan) external onlyRole(POOL) returns (uint256) {
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry
             .getLoanInterestTermsContract()
             .unpackParamsForAgreementID(bytes32(loan));
@@ -235,8 +239,10 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     }
 
     function initialize(Registry _registry, address _pool) public initializer {
+        __AccessControlEnumerable_init_unchained();
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        grantRole(POOL, _pool);
         registry = _registry;
-        wards[_pool] = 1;
         pool = _pool;
         lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
 
@@ -258,7 +264,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         return uint128(value);
     }
 
-    function setLoanMaturityDate(bytes32 nftID_, uint256 maturityDate_) public auth {
+    function setLoanMaturityDate(bytes32 nftID_, uint256 maturityDate_) public onlyRole(POOL) {
         require((futureValue(nftID_) == 0), 'can-not-change-maturityDate-outstanding-debt');
         details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
         emit SetLoanMaturity(nftID_, maturityDate_);
@@ -267,7 +273,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice file allows governance to change parameters of the contract
     /// @param name name of the parameter
     /// @param value new value of the parameter
-    function file(bytes32 name, uint256 value) public override auth {
+    function file(bytes32 name, uint256 value) public override onlyRole(POOL) {
         if (name == 'discountRate') {
             uint256 oldDiscountRate = discountRate;
             discountRate = ONE + (value * ONE) / (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
@@ -292,7 +298,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         uint256 overdueDays_,
         uint256 penaltyRate_,
         uint256 riskIndex
-    ) public override auth {
+    ) public override onlyRole(POOL) {
         if (name == 'writeOffGroup') {
             uint256 index = writeOffGroups.length;
             uint256 _convertedInterestRate = ONE +
@@ -322,7 +328,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @param what what config to change
     /// @param rate the interest rate group
     /// @param value the value to change
-    function file(bytes32 what, uint256 rate, uint256 value) public auth {
+    function file(bytes32 what, uint256 rate, uint256 value) public onlyRole(POOL) {
         if (what == 'rate') {
             require(value != 0, 'rate-per-second-can-not-be-0');
             if (rates[rate].chi == 0) {
@@ -469,7 +475,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
 
     /// @notice borrowEvent triggers a borrow event for a loan
     /// @param loan the id of the loan
-    function borrowEvent(uint256 loan, uint256) public virtual auth {
+    function borrowEvent(uint256 loan, uint256) public virtual onlyRole(POOL) {
         uint256 risk_ = risk(nftID(loan));
 
         // when issued every loan has per default interest rate of risk group 0.
@@ -509,7 +515,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @notice authorized call to write of a loan in a specific writeoff group
     /// @param loan the id of the loan
     /// @param writeOffGroupIndex_ the index of the writeoff group
-    function overrideWriteOff(uint256 loan, uint256 writeOffGroupIndex_) public auth {
+    function overrideWriteOff(uint256 loan, uint256 writeOffGroupIndex_) public onlyRole(POOL) {
         // can not write-off healthy loans
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
@@ -717,7 +723,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     }
 
     /// @notice update the value (apprasial) of the collateral NFT
-    function update(bytes32 nftID_, uint256 value) public auth {
+    function update(bytes32 nftID_, uint256 value) public onlyRole(POOL) {
         // switch of collateral risk group results in new: ceiling, threshold for existing loan
         details[nftID_].nftValues = toUint128(value);
     }
@@ -726,7 +732,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
     /// @param nftID_ the nftID of the loan
     /// @param risk_ the new value appraisal of the collateral NFT
     /// @param risk_ the new risk group
-    function update(bytes32 nftID_, uint256 value, uint256 risk_) public auth {
+    function update(bytes32 nftID_, uint256 value, uint256 risk_) public onlyRole(POOL) {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         details[nftID_].nftValues = toUint128(value);
 
@@ -850,7 +856,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         return lastValidWriteOff;
     }
 
-    function incDebt(uint256 loan, uint256 currencyAmount) public auth {
+    function incDebt(uint256 loan, uint256 currencyAmount) public onlyRole(POOL) {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, 'rate-group-not-updated');
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);
@@ -917,7 +923,7 @@ contract PoolNAV is Auth, Discounting, Initializable, IPoolNAV {
         }
     }
 
-    function setRate(uint256 loan, uint256 rate) public auth {
+    function setRate(uint256 loan, uint256 rate) public onlyRole(POOL) {
         require(pie[loan] == 0, 'non-zero-debt');
         // rate category has to be initiated
         require(rates[rate].chi != 0, 'rate-group-not-set');
