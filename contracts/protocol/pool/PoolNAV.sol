@@ -21,7 +21,6 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
 
     /// @notice details of the underlying collateral
     struct NFTDetails {
-        uint128 nftValues;
         uint128 futureValue;
         uint128 maturityDate;
         uint128 risk;
@@ -208,10 +207,6 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @notice getter function for the nft value
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
     /// @return nftValue_ the value of the nft
-
-    function nftValues(bytes32 nft_) public view returns (uint256 nftValue_) {
-        return uint256(details[nft_].nftValues);
-    }
 
     /// @notice getter function for the future value
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
@@ -722,107 +717,11 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         return latestNAV;
     }
 
-    /// @notice update the value (apprasial) of the collateral NFT
-    function update(bytes32 nftID_, uint256 value) public onlyRole(POOL) {
-        // switch of collateral risk group results in new: ceiling, threshold for existing loan
-        details[nftID_].nftValues = toUint128(value);
-    }
-
-    /// @notice updates the risk group of active loans (borrowed and unborrowed loans)
-    /// @param nftID_ the nftID of the loan
-    /// @param risk_ the new value appraisal of the collateral NFT
-    /// @param risk_ the new risk group
-    function update(bytes32 nftID_, uint256 value, uint256 risk_) public onlyRole(POOL) {
-        uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        details[nftID_].nftValues = toUint128(value);
-
-        // no change in risk group
-        if (risk_ == risk(nftID_)) {
-            return;
-        }
-
-        details[nftID_].risk = toUint128(risk_);
-
-        // update nav -> latestNAVUpdate = now
-        if (nnow > lastNAVUpdate) {
-            calcUpdateNAV();
-        }
-
-        // switch of collateral risk group results in new: ceiling, threshold and interest rate for existing loan
-        // change to new rate interestRate immediately in pile if loan debt exists
-        uint256 loan = uint256(nftID_);
-        if (pie[loan] != 0) {
-            changeRate(loan, risk_);
-        }
-
-        // no currencyAmount borrowed yet
-        if (futureValue(nftID_) == 0) {
-            return;
-        }
-
-        uint256 maturityDate_ = maturityDate(nftID_);
-
-        // Changing the risk group of an nft, might lead to a new interest rate for the dependant loan.
-        // New interest rate leads to a future value.
-        // recalculation required
-        uint256 fvDecrease = futureValue(nftID_);
-
-        uint256 navDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
-
-        buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
-
-        latestDiscount = safeSub(latestDiscount, navDecrease);
-        latestDiscountOfNavAssets[nftID_] -= navDecrease;
-
-        latestNAV = safeSub(latestNAV, navDecrease);
-
-        // update latest NAV
-        // update latest Discount
-        Rate memory _rate = rates[loanRates[loan]];
-        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
-        details[nftID_].futureValue = toUint128(
-            calcFutureValue(
-                _rate.ratePerSecond,
-                debt(loan),
-                maturityDate(nftID_),
-                recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
-            )
-        );
-
-        uint256 fvIncrease = futureValue(nftID_);
-        uint256 navIncrease = calcDiscount(discountRate, fvIncrease, nnow, maturityDate_);
-
-        buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
-
-        latestDiscount = safeAdd(latestDiscount, navIncrease);
-        latestDiscountOfNavAssets[nftID_] += navIncrease;
-
-        latestNAV = safeAdd(latestNAV, navIncrease);
-    }
-
     /// @notice returns the nftID for the underlying collateral nft
     /// @param loan the loan id
     /// @return nftID_ the nftID of the loan
     function nftID(uint256 loan) public pure returns (bytes32 nftID_) {
         return bytes32(loan);
-    }
-
-    /// @notice returns true if the present value of a loan is zero
-    /// true if all debt is repaid or debt is 100% written-off
-    /// @param loan the loan id
-    /// @return isZeroPV true if the present value of a loan is zero
-    function zeroPV(uint256 loan) public view returns (bool isZeroPV) {
-        if (debt(loan) == 0) {
-            return true;
-        }
-
-        uint256 rate = loanRates[loan];
-
-        if (rate < WRITEOFF_RATE_GROUP_START) {
-            return false;
-        }
-
-        return writeOffGroups[safeSub(rate, WRITEOFF_RATE_GROUP_START)].percentage == 0;
     }
 
     /// @notice returns the current valid write off group of a loan
