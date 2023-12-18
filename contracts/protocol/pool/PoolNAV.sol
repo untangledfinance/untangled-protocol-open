@@ -14,7 +14,7 @@ import {ILoanRegistry} from '../loan/ILoanRegistry.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
 import {POOL} from './types.sol';
 
-import "hardhat/console.sol";
+import 'hardhat/console.sol';
 
 contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounting, IPoolNAV {
     using ConfigHelper for Registry;
@@ -126,6 +126,24 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
 
+    function initialize(Registry _registry, address _pool) public initializer {
+        __AccessControlEnumerable_init_unchained();
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        grantRole(POOL, _pool);
+        registry = _registry;
+        pool = _pool;
+        lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
+
+        // pre-definition for loans without interest rates
+        rates[0].chi = ONE;
+        rates[0].ratePerSecond = ONE;
+
+        // Default discount rate
+        discountRate = ONE;
+
+        emit Rely(_pool);
+    }
+
     function getRiskScoreByIdx(uint256 idx) private view returns (RiskScore memory) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(pool);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
@@ -231,24 +249,6 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @return borrowed_ borrowed amount of the loan
     function borrowed(uint256 loan) public view returns (uint256 borrowed_) {
         return uint256(loanDetails[loan].borrowed);
-    }
-
-    function initialize(Registry _registry, address _pool) public initializer {
-        __AccessControlEnumerable_init_unchained();
-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        grantRole(POOL, _pool);
-        registry = _registry;
-        pool = _pool;
-        lastNAVUpdate = uniqueDayTimestamp(block.timestamp);
-
-        // pre-definition for loans without interest rates
-        rates[0].chi = ONE;
-        rates[0].ratePerSecond = ONE;
-
-        // Default discount rate
-        discountRate = ONE;
-
-        emit Rely(_pool);
     }
 
     /// @notice converts a uint256 to uint128

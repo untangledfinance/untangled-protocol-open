@@ -8,7 +8,7 @@ import {FinalizableCrowdsale} from './crowdsale/FinalizableCrowdsale.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {IMintedTGE} from './IMintedTGE.sol';
 import {LongSaleInterest} from './base/LongSaleInterest.sol';
-import {PRICE_SCALING_FACTOR} from '../../base/constants.sol';
+import '../../interfaces/INoteToken.sol';
 
 /// @title MintedNormalTGE
 /// @author Untangled Team
@@ -68,7 +68,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     }
 
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return currencyAmount * PRICE_SCALING_FACTOR / getTokenPrice();
+        return (currencyAmount * 10 ** INoteToken(token).decimals()) / getTokenPrice();
     }
 
     /// @notice Setup a new round sale for note token
