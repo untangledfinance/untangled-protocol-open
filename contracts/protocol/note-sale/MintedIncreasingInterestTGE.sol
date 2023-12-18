@@ -6,6 +6,7 @@ import './crowdsale/IncreasingInterestCrowdsale.sol';
 import './IMintedTGE.sol';
 import './base/LongSaleInterest.sol';
 import './IInterestRate.sol';
+import '../../interfaces/INoteToken.sol';
 
 /// @title MintedIncreasingInterestTGE
 /// @author Untangled Team
@@ -66,7 +67,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
 
     /// @notice Get amount of token can receive from an amount of currency
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return currencyAmount / getTokenPrice();
+        return (currencyAmount * 10 ** INoteToken(token).decimals()) / getTokenPrice();
     }
 
     /// @notice Setup a new round sale for note token
