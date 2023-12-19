@@ -21,7 +21,7 @@ import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './Secur
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
-import {ORIGINATOR_ROLE} from './types.sol';
+import {ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
 import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
@@ -53,14 +53,15 @@ contract SecuritizationTGE is
         $.pot = address(this);
         $.state = CycleState.INITIATED;
 
+        require(params.currency != address(0), 'SecuritizationPool: Invalid currency');
         $.underlyingCurrency = params.currency;
-        $.minFirstLossCushion = params.minFirstLossCushion;
-        $.debtCeiling = params.debtCeiling;
+
+        _setMinFirstLossCushion(params.minFirstLossCushion);
+        _setDebtCeiling(params.debtCeiling);
     }
 
     // alias
     function sotToken() public view override returns (address) {
-        // return _getStorage().sotToken;
         address tge = tgeAddress();
         if (tge == address(0)) return address(0);
         return ICrowdSaleLike(tge).token();
@@ -68,7 +69,6 @@ contract SecuritizationTGE is
 
     // alias
     function jotToken() public view override returns (address) {
-        // return _getStorage().jotToken;
         address tge = secondTGEAddress();
         if (tge == address(0)) return address(0);
         return ICrowdSaleLike(tge).token();
@@ -254,6 +254,14 @@ contract SecuritizationTGE is
 
     function setMinFirstLossCushion(uint32 _minFirstLossCushion) external override whenNotPaused notClosingStage {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
+        _setMinFirstLossCushion(_minFirstLossCushion);
+    }
+
+    function _setMinFirstLossCushion(uint32 _minFirstLossCushion) internal {
+        require(
+            _minFirstLossCushion <= 100 * RATE_SCALING_FACTOR,
+            'SecuritizationPool: minFirstLossCushion is greater than 100'
+        );
 
         Storage storage $ = _getStorage();
         $.minFirstLossCushion = _minFirstLossCushion;
@@ -263,9 +271,12 @@ contract SecuritizationTGE is
     function setDebtCeiling(uint256 _debtCeiling) external override whenNotPaused notClosingStage {
         registry().requirePoolAdminOrOwner(address(this), _msgSender());
 
+        _setDebtCeiling(_debtCeiling);
+    }
+
+    function _setDebtCeiling(uint256 _debtCeiling) internal {
         Storage storage $ = _getStorage();
         $.debtCeiling = _debtCeiling;
-        require(isDebtCeilingValid(), 'SecuritizationPool: Debt ceiling is not valid');
         emit UpdateDebtCeiling(_debtCeiling);
     }
 
