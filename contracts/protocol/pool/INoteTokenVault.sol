@@ -2,9 +2,21 @@
 pragma solidity 0.8.19;
 
 interface INoteTokenVault {
-    event RedeemOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount, uint256 noteTokenPrice);
+    event RedeemOrder(
+        address pool,
+        address noteTokenAddress,
+        address usr,
+        uint256 noteTokenRedeemAmount,
+        uint256 noteTokenPrice
+    );
     event CancelOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount);
-    event DisburseOrder(address pool, address noteTokenAddress, address[] toAddresses, uint256[] amounts, uint256[] redeemedAmount);
+    event DisburseOrder(
+        address pool,
+        address noteTokenAddress,
+        address[] toAddresses,
+        uint256[] amounts,
+        uint256[] redeemedAmount
+    );
     event SetRedeemDisabled(address pool, bool _redeemDisabled);
 
     /// @title UserOrder
@@ -14,6 +26,12 @@ interface INoteTokenVault {
         uint256 redeemJOTAmount;
     }
 
+    struct RedeemOrderParam {
+        address pool;
+        address noteTokenAddress;
+        uint256 noteTokenRedeemAmount;
+    }
+
     struct CancelOrderParam {
         address pool;
         address noteTokenAddress;
@@ -21,7 +39,7 @@ interface INoteTokenVault {
     }
 
     /// @notice redeemJOTOrder function can be used to place or revoke a redeem
-    function redeemOrder(address pool, address noteTokenAddress, uint256 newRedeemAmount) external;
+    function redeemOrder(RedeemOrderParam calldata redeemParam, bytes calldata signature) external;
 
     /// @dev Disburses funds and handles JOT redemptions for a pool.
     /// @param pool The address of the pool contract.
@@ -29,7 +47,13 @@ interface INoteTokenVault {
     /// @param currencyAmounts An array of amounts to disburse to each recipient.
     /// @param redeemedNoteAmounts An array of JOT amounts redeemed by each recipient.
     /// @notice Only accessible by BACKEND_ADMIN role.
-    function disburseAll(address pool, address noteTokenAddress, address[] memory toAddresses, uint256[] memory currencyAmounts, uint256[] memory redeemedNoteAmounts) external;
+    function disburseAll(
+        address pool,
+        address noteTokenAddress,
+        address[] memory toAddresses,
+        uint256[] memory currencyAmounts,
+        uint256[] memory redeemedNoteAmounts
+    ) external;
 
     function cancelOrder(CancelOrderParam memory cancelParam, bytes calldata signature) external;
 
@@ -49,5 +73,6 @@ interface INoteTokenVault {
     /// @param usr The address of the user for which to retrieve the redeemable JOT amount.
     /// @return The amount of JOT tokens that can be redeemed by the user.
     function userRedeemJOTOrder(address pool, address usr) external view returns (uint256);
+
     function userRedeemSOTOrder(address pool, address usr) external view returns (uint256);
 }

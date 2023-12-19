@@ -6,7 +6,11 @@ const { parseEther } = ethers.utils;
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { setup } = require('../setup');
-const { presignedMintMessage, presignedCancelRedeemOrderMessage } = require('../shared/uid-helper');
+const {
+    presignedMintMessage,
+    presignedCancelRedeemOrderMessage,
+    presignedRedeemOrderMessage,
+} = require('../shared/uid-helper');
 const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN, SIGNER_ROLE } = require('../constants.js');
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 const { getPoolByAddress, unlimitedAllowance } = require('../utils');
@@ -54,6 +58,7 @@ describe('NoteTokenVault', () => {
             lenderSignerC,
             backendAdminSigner,
             cancelOrderAdminSigner,
+            redeemOrderAdminSigner,
             relayer,
         ] = await ethers.getSigners();
 
@@ -253,12 +258,26 @@ describe('NoteTokenVault', () => {
         });
         describe('Redeem Order', () => {
             it('Investor A should make redeem order for 1 JOT', async () => {
+                await noteTokenVault
+                    .connect(untangledAdminSigner)
+                    .grantRole(SIGNER_ROLE, redeemOrderAdminSigner.address);
                 await jotContract.connect(lenderSignerA).approve(noteTokenVault.address, unlimitedAllowance);
-                await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'))
-                )
+
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+
+                await expect(noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature))
                     .to.emit(noteTokenVault, 'RedeemOrder')
                     .withArgs(
                         securitizationPoolContract.address,
@@ -276,18 +295,41 @@ describe('NoteTokenVault', () => {
                 expect(jotRedeemOrderLenderA).to.equal(parseEther('1'));
             });
             it('should revert if created redeem order for JOT again', async () => {
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('NoteTokenVault: User already created redeem order');
             });
             it('Investor B should make redeem order for 1 JOT', async () => {
                 const jotLenderBBalance = await jotContract.balanceOf(lenderSignerB.address); // 1 jot
                 await jotContract.connect(lenderSignerB).approve(noteTokenVault.address, jotLenderBBalance);
-                await noteTokenVault
-                    .connect(lenderSignerB)
-                    .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'));
+
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerB.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerB).redeemOrder(redeemParam, redeemSignature);
 
                 const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
                 expect(totalJOTRedeem).to.equal(parseEther('2'));
@@ -299,11 +341,21 @@ describe('NoteTokenVault', () => {
             });
             it('Investor A should make redeem order for 1 SOT', async () => {
                 await sotContract.connect(lenderSignerA).approve(noteTokenVault.address, unlimitedAllowance);
-                await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'))
-                )
+
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await expect(noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature))
                     .to.emit(noteTokenVault, 'RedeemOrder')
                     .withArgs(
                         securitizationPoolContract.address,
@@ -321,18 +373,41 @@ describe('NoteTokenVault', () => {
                 expect(sotRedeemOrderLenderA).to.equal(parseEther('1'));
             });
             it('should revert if created redeem order for SOT again', async () => {
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('NoteTokenVault: User already created redeem order');
             });
             it('Investor B should make redeem order for 1 SOT', async () => {
                 const sotLenderBBalance = await sotContract.balanceOf(lenderSignerB.address); // 1 sot
                 await sotContract.connect(lenderSignerB).approve(noteTokenVault.address, sotLenderBBalance);
-                await noteTokenVault
-                    .connect(lenderSignerB)
-                    .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'));
+
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerB.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerB).redeemOrder(redeemParam, redeemSignature);
 
                 const totalSOTRedeem = await noteTokenVault.totalSOTRedeem(securitizationPoolContract.address);
                 expect(totalSOTRedeem).to.equal(parseEther('2'));
@@ -354,16 +429,38 @@ describe('NoteTokenVault', () => {
                     .setRedeemDisabled(securitizationPoolContract.address, true);
             });
             it('should revert if request redemption when redeem disabled', async () => {
+                let redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                let redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerB.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                let redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerB)
-                        .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerB).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('redeem-not-allowed');
 
+                redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerB.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerB)
-                        .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerB).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('redeem-not-allowed');
             });
 
@@ -400,17 +497,39 @@ describe('NoteTokenVault', () => {
                     .setRedeemDisabled(securitizationPoolContract.address, false);
             });
             it('Investor A should change redeem order for 1 JOT', async () => {
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('NoteTokenVault: User already created redeem order');
             });
             it('Investor A change redeem order for 1 SOT', async () => {
+                const redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                const redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerA.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await expect(
-                    noteTokenVault
-                        .connect(lenderSignerA)
-                        .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'))
+                    noteTokenVault.connect(lenderSignerA).redeemOrder(redeemParam, redeemSignature)
                 ).to.be.revertedWith('NoteTokenVault: User already created redeem order');
             });
         });
@@ -434,14 +553,38 @@ describe('NoteTokenVault', () => {
             });
             before('Investor C create redeem order for SOT and JOT', async () => {
                 await jotContract.connect(lenderSignerC).approve(noteTokenVault.address, unlimitedAllowance);
-                await noteTokenVault
-                    .connect(lenderSignerC)
-                    .redeemOrder(securitizationPoolContract.address, jotContract.address, parseEther('1'));
+
+                let redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                let redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerC.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                let redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
 
                 await sotContract.connect(lenderSignerC).approve(noteTokenVault.address, unlimitedAllowance);
-                await noteTokenVault
-                    .connect(lenderSignerC)
-                    .redeemOrder(securitizationPoolContract.address, sotContract.address, parseEther('1'));
+
+                redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerC.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
             });
             it('Should revert if invalid signer', async () => {
                 const maxTimestamp = (await time.latest()) + ONE_DAY_IN_SECONDS;
