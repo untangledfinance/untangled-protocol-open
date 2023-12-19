@@ -50,27 +50,8 @@ contract NoteTokenVault is
         _;
     }
 
-    modifier incrementNonce(address account) {
+    function _incrementNonce(address account) internal {
         nonces[account] += 1;
-        _;
-    }
-
-    modifier onlySigner(CancelOrderParam memory cancelParam, bytes calldata signature) {
-        require(block.timestamp <= cancelParam.maxTimestamp, 'Cancel request has expired');
-        address usr = _msgSender();
-        bytes32 hash = keccak256(
-            abi.encodePacked(
-                usr,
-                cancelParam.pool,
-                cancelParam.noteTokenAddress,
-                cancelParam.maxTimestamp,
-                nonces[usr],
-                block.chainid
-            )
-        );
-        bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
-        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
-        _;
     }
 
     function initialize(Registry _registry) public initializer {
@@ -81,12 +62,32 @@ contract NoteTokenVault is
         registry = _registry;
     }
 
+    function _validateRedeemParam(RedeemOrderParam calldata redeemParam, bytes calldata signature) internal view {
+        address usr = _msgSender();
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                usr,
+                redeemParam.pool,
+                redeemParam.noteTokenAddress,
+                redeemParam.noteTokenRedeemAmount,
+                block.chainid
+            )
+        );
+        bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
+        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
+    }
+
     /// @inheritdoc INoteTokenVault
     function redeemOrder(
-        address pool,
-        address noteTokenAddress,
-        uint256 noteTokenRedeemAmount
-    ) public orderAllowed(pool) {
+        RedeemOrderParam calldata redeemParam,
+        bytes calldata signature
+    ) public orderAllowed(redeemParam.pool) {
+        _validateRedeemParam(redeemParam, signature);
+
+        address pool = redeemParam.pool;
+        address noteTokenAddress = redeemParam.noteTokenAddress;
+        uint256 noteTokenRedeemAmount = redeemParam.noteTokenRedeemAmount;
+
         address jotTokenAddress = ISecuritizationTGE(pool).jotToken();
         address sotTokenAddress = ISecuritizationTGE(pool).sotToken();
         require(
@@ -107,7 +108,7 @@ contract NoteTokenVault is
             require(currentRedeemAmount == 0, 'NoteTokenVault: User already created redeem order');
             poolUserRedeems[pool][usr].redeemSOTAmount = noteTokenRedeemAmount;
             poolTotalSOTRedeem[pool] = poolTotalSOTRedeem[pool] + noteTokenRedeemAmount;
-            noteTokenPrice = registry.getDistributionAssessor().getJOTTokenPrice(pool);
+            noteTokenPrice = registry.getDistributionAssessor().getSOTTokenPrice(pool);
         }
 
         require(
@@ -161,15 +162,33 @@ contract NoteTokenVault is
         emit DisburseOrder(pool, noteTokenAddress, toAddresses, currencyAmounts, redeemedNoteAmounts);
     }
 
-    function cancelOrder(
-        CancelOrderParam memory cancelParam,
-        bytes calldata signature
-    ) public onlySigner(cancelParam, signature) incrementNonce(_msgSender()) {
+    function _validateCancelParam(CancelOrderParam calldata cancelParam, bytes calldata signature) internal view {
+        require(block.timestamp <= cancelParam.maxTimestamp, 'Cancel request has expired');
+        address usr = _msgSender();
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                usr,
+                cancelParam.pool,
+                cancelParam.noteTokenAddress,
+                cancelParam.maxTimestamp,
+                nonces[usr],
+                block.chainid
+            )
+        );
+        bytes32 ethSignedMessage = ECDSAUpgradeable.toEthSignedMessageHash(hash);
+        require(hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(ethSignedMessage, signature)), 'Invalid signer');
+    }
+
+    function cancelOrder(CancelOrderParam calldata cancelParam, bytes calldata signature) public {
+        address usr = _msgSender();
+
+        _validateCancelParam(cancelParam, signature);
+        _incrementNonce(usr);
+
         address pool = cancelParam.pool;
         address jotTokenAddress = ISecuritizationTGE(pool).jotToken();
         address sotTokenAddress = ISecuritizationTGE(pool).sotToken();
         address noteTokenAddress = cancelParam.noteTokenAddress;
-        address usr = _msgSender();
 
         require(
             _isJotToken(noteTokenAddress, jotTokenAddress) || _isSotToken(noteTokenAddress, sotTokenAddress),
@@ -190,6 +209,7 @@ contract NoteTokenVault is
 
         require(currentRedeemAmount > 0, 'NoteTokenVault: Redeem order not found');
         require(INoteToken(noteTokenAddress).transfer(usr, currentRedeemAmount), 'token-transfer-from-pool-failed');
+
         emit CancelOrder(pool, noteTokenAddress, usr, currentRedeemAmount);
     }
 
