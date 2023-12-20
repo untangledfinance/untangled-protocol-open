@@ -145,40 +145,6 @@ contract SecuritizationTGE is
         emit UpdateTGEAddress(_tgeAddress, _noteType);
     }
 
-    /// @notice allows the redemption of tokens
-    function redeem(
-        address usr,
-        address notesToken,
-        uint256 currencyAmount,
-        uint256 tokenAmount
-    ) external virtual override {
-        require(
-            _msgSender() == address(registry().getDistributionTranche()),
-            'SecuritizationPool: Caller must be DistributionTranche'
-        );
-
-        Storage storage $ = _getStorage();
-
-        if (sotToken() == notesToken) {
-            $.paidPrincipalAmountSOTByInvestor[usr] += currencyAmount;
-            emit UpdatePaidPrincipalAmountSOTByInvestor(usr, currencyAmount);
-        }
-
-        $.reserve = $.reserve - currencyAmount;
-
-        if (tokenAmount > 0) {
-            ERC20BurnableUpgradeable(notesToken).burn(tokenAmount);
-        }
-
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
-        require(
-            IERC20Upgradeable($.underlyingCurrency).transferFrom($.pot, usr, currencyAmount),
-            'SecuritizationPool: currency-transfer-failed'
-        );
-
-        emit UpdateReserve($.reserve);
-    }
-
     /// @inheritdoc ISecuritizationTGE
     function disburse(address usr, uint256 currencyAmount) external virtual override {
         Storage storage $ = _getStorage();
@@ -293,8 +259,7 @@ contract SecuritizationTGE is
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry().getSecuritizationManager()) ||
-                _msgSender() == address(registry().getDistributionOperator()),
+            _msgSender() == address(registry().getSecuritizationManager()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
 
@@ -309,7 +274,6 @@ contract SecuritizationTGE is
     function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
             _msgSender() == address(registry().getSecuritizationManager()) ||
-                _msgSender() == address(registry().getDistributionOperator()) ||
                 _msgSender() == address(registry().getNoteTokenVault()),
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
@@ -425,7 +389,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](32);
+        bytes4[] memory _functionSignatures = new bytes4[](31);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -443,22 +407,21 @@ contract SecuritizationTGE is
         _functionSignatures[13] = this.totalAssetRepaidCurrency.selector;
         _functionSignatures[14] = this.injectTGEAddress.selector;
         _functionSignatures[15] = this.increaseTotalAssetRepaidCurrency.selector;
-        _functionSignatures[16] = this.redeem.selector;
-        _functionSignatures[17] = this.hasFinishedRedemption.selector;
-        _functionSignatures[18] = this.setInterestRateForSOT.selector;
-        _functionSignatures[19] = this.claimCashRemain.selector;
-        _functionSignatures[20] = this.startCycle.selector;
-        _functionSignatures[21] = this.withdraw.selector;
-        _functionSignatures[22] = this.supportsInterface.selector;
-        _functionSignatures[23] = this.paused.selector;
-        _functionSignatures[24] = this.pause.selector;
-        _functionSignatures[25] = this.unpause.selector;
-        _functionSignatures[26] = this.setUpPoolNAV.selector;
-        _functionSignatures[27] = this.isDebtCeilingValid.selector;
-        _functionSignatures[28] = this.setDebtCeiling.selector;
-        _functionSignatures[29] = this.debtCeiling.selector;
-        _functionSignatures[30] = this.disburse.selector;
-        _functionSignatures[31] = this.setMinFirstLossCushion.selector;
+        _functionSignatures[16] = this.hasFinishedRedemption.selector;
+        _functionSignatures[17] = this.setInterestRateForSOT.selector;
+        _functionSignatures[18] = this.claimCashRemain.selector;
+        _functionSignatures[19] = this.startCycle.selector;
+        _functionSignatures[20] = this.withdraw.selector;
+        _functionSignatures[21] = this.supportsInterface.selector;
+        _functionSignatures[22] = this.paused.selector;
+        _functionSignatures[23] = this.pause.selector;
+        _functionSignatures[24] = this.unpause.selector;
+        _functionSignatures[25] = this.setUpPoolNAV.selector;
+        _functionSignatures[26] = this.isDebtCeilingValid.selector;
+        _functionSignatures[27] = this.setDebtCeiling.selector;
+        _functionSignatures[28] = this.debtCeiling.selector;
+        _functionSignatures[29] = this.disburse.selector;
+        _functionSignatures[30] = this.setMinFirstLossCushion.selector;
 
         return _functionSignatures;
     }

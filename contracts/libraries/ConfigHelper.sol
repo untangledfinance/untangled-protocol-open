@@ -11,8 +11,6 @@ import {INoteTokenFactory} from '../interfaces/INoteTokenFactory.sol';
 import {INoteToken} from '../interfaces/INoteToken.sol';
 import {ITokenGenerationEventFactory} from '../interfaces/ITokenGenerationEventFactory.sol';
 import {IUntangledERC721} from '../interfaces/IUntangledERC721.sol';
-import {IDistributionOperator} from '../interfaces/IDistributionOperator.sol';
-import {IDistributionTranche} from '../interfaces/IDistributionTranche.sol';
 import {ILoanRegistry} from '../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanRepaymentRouter} from '../interfaces/ILoanRepaymentRouter.sol';
@@ -24,10 +22,10 @@ import {ISecuritizationPoolValueService} from '../interfaces/ISecuritizationPool
 import {MintedIncreasingInterestTGE} from '../protocol/note-sale/MintedIncreasingInterestTGE.sol';
 import {MintedNormalTGE} from '../protocol/note-sale/MintedNormalTGE.sol';
 import {IGo} from '../interfaces/IGo.sol';
-import "../protocol/pool/IPoolNAVFactory.sol";
+import '../protocol/pool/IPoolNAVFactory.sol';
 
 import {POOL_ADMIN, OWNER_ROLE} from './types.sol';
-import {INoteTokenVault} from "../protocol/pool/INoteTokenVault.sol";
+import {INoteTokenVault} from '../protocol/pool/INoteTokenVault.sol';
 
 /**
  * @title ConfigHelper
@@ -63,10 +61,6 @@ library ConfigHelper {
             );
     }
 
-    function getDistributionOperator(Registry registry) internal view returns (IDistributionOperator) {
-        return IDistributionOperator(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR));
-    }
-
     function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
         return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
     }
@@ -88,10 +82,6 @@ library ConfigHelper {
         return ILoanKernel(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_KERNEL));
     }
 
-    function getDistributionTranche(Registry registry) internal view returns (IDistributionTranche) {
-        return IDistributionTranche(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE));
-    }
-
     function getSecuritizationPoolValueService(
         Registry registry
     ) internal view returns (ISecuritizationPoolValueService) {
@@ -105,17 +95,6 @@ library ConfigHelper {
         return IDistributionAssessor(getAddress(registry, Configuration.CONTRACT_TYPE.DISTRIBUTION_ASSESSOR));
     }
 
-    // function getMintedIncreasingInterestTGE(Registry registry) internal view returns (MintedIncreasingInterestTGE) {
-    //     return
-    //         MintedIncreasingInterestTGE(
-    //             getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE)
-    //         );
-    // }
-
-    // function getMintedNormalTGE(Registry registry) internal view returns (MintedNormalTGE) {
-    //     return MintedNormalTGE(getAddress(registry, Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE));
-    // }
-
     function getGo(Registry registry) internal view returns (IGo) {
         return IGo(getAddress(registry, Configuration.CONTRACT_TYPE.GO));
     }
@@ -126,10 +105,6 @@ library ConfigHelper {
 
     function getNoteTokenVault(Registry registry) internal view returns (INoteTokenVault) {
         return INoteTokenVault(getAddress(registry, Configuration.CONTRACT_TYPE.NOTE_TOKEN_VAULT));
-    }
-
-    function requireDistributionOperator(Registry registry, address account) internal view {
-        require(account == address(getDistributionOperator(registry)), 'Registry: Only DistributionOperator');
     }
 
     function requirePoolAdmin(Registry registry, address account) internal view {
