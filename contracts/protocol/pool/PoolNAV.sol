@@ -175,6 +175,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
             .unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
         ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(_tokenId);
+        details[_tokenId].risk = loanEntry.riskScore;
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         uint256 _convertedInterestRate;
@@ -716,6 +717,79 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
 
         return latestNAV;
     }
+
+    /// @notice updates the risk group of active loans (borrowed and unborrowed loans)
+    /// @param nftID_ the nftID of the loan
+    /// @param risk_ the new value appraisal of the collateral NFT
+    /// @param risk_ the new risk group
+    function update(bytes32 nftID_, uint256 risk_) public onlyRole(POOL) {
+        uint256 nnow = uniqueDayTimestamp(block.timestamp);
+
+        // no change in risk group
+        if (risk_ == risk(nftID_)) {
+            return;
+        }
+
+        details[nftID_].risk = toUint128(risk_);
+
+        // update nav -> latestNAVUpdate = now
+        if (nnow > lastNAVUpdate) {
+            calcUpdateNAV();
+        }
+
+        // switch of collateral risk group results in new: ceiling, threshold and interest rate for existing loan
+        // change to new rate interestRate immediately in pile if loan debt exists
+        uint256 loan = uint256(nftID_);
+        if (pie[loan] != 0) {
+            changeRate(loan, risk_);
+        }
+
+        // no currencyAmount borrowed yet
+        if (futureValue(nftID_) == 0) {
+            return;
+        }
+
+        uint256 maturityDate_ = maturityDate(nftID_);
+
+        // Changing the risk group of an nft, might lead to a new interest rate for the dependant loan.
+        // New interest rate leads to a future value.
+        // recalculation required
+        uint256 fvDecrease = futureValue(nftID_);
+
+        uint256 navDecrease = calcDiscount(discountRate, fvDecrease, nnow, maturityDate_);
+
+        buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
+
+        latestDiscount = safeSub(latestDiscount, navDecrease);
+        latestDiscountOfNavAssets[nftID_] -= navDecrease;
+
+        latestNAV = safeSub(latestNAV, navDecrease);
+
+        // update latest NAV
+        // update latest Discount
+        Rate memory _rate = rates[loanRates[loan]];
+        ILoanRegistry.LoanEntry memory loanEntry = registry.getLoanRegistry().getEntry(bytes32(loan));
+        details[nftID_].futureValue = toUint128(
+            calcFutureValue(
+                _rate.ratePerSecond,
+                debt(loan),
+                maturityDate(nftID_),
+                recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+            )
+        );
+
+        uint256 fvIncrease = futureValue(nftID_);
+        uint256 navIncrease = calcDiscount(discountRate, fvIncrease, nnow, maturityDate_);
+
+        buckets[maturityDate_] = safeAdd(buckets[maturityDate_], fvIncrease);
+
+        latestDiscount = safeAdd(latestDiscount, navIncrease);
+        latestDiscountOfNavAssets[nftID_] += navIncrease;
+
+        latestNAV = safeAdd(latestNAV, navIncrease);
+        emit Update(loan, risk_);
+    }
+
 
     /// @notice returns the nftID for the underlying collateral nft
     /// @param loan the loan id
