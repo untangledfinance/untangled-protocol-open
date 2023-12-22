@@ -449,19 +449,9 @@ describe('SecuritizationPool', () => {
     });
 
     describe('#Pool value service', async () => {
-        it('#getOutstandingPrincipalCurrencyByInvestor', async () => {
-            const result = await securitizationPoolValueService.getOutstandingPrincipalCurrencyByInvestor(
-                securitizationPoolContract.address,
-                lenderSigner.address
-            );
-
-            expect(formatEther(result)).equal('100.0');
-        });
-
         it('#getExpectedAssetsValue', async () => {
             const result = await securitizationPoolValueService.getExpectedAssetsValue(
-                securitizationPoolContract.address,
-                dayjs(new Date()).add(1, 'days').unix()
+                securitizationPoolContract.address
             );
 
             expect(formatEther(result)).equal('0.0');
@@ -683,19 +673,9 @@ describe('SecuritizationPool', () => {
     describe('Pool value after loan kernel executed', async () => {
         it('#getExpectedAssetsValue', async () => {
             const result = await securitizationPoolValueService.getExpectedAssetsValue(
-                securitizationPoolContract.address,
-                dayjs(new Date()).add(1, 'days').unix()
+                securitizationPoolContract.address
             );
             expect(result.toString()).equal('43164');
-        });
-
-        it('#getAssetRiskScoreIdx', async () => {
-            const result = await securitizationPoolValueService.getAssetRiskScoreIdx(
-                securitizationPoolContract.address,
-                dayjs(new Date()).add(10, 'days').unix()
-            );
-            expect(result.hasValidRiskScore).equal(true);
-            expect(result.riskScoreIdx.toNumber()).equal(0);
         });
     });
 
@@ -732,19 +712,9 @@ describe('SecuritizationPool', () => {
     describe('Get Info after Upgrade', async () => {
         it('#getExpectedAssetsValue', async () => {
             const result = await securitizationPoolValueService.getExpectedAssetsValue(
-                securitizationPoolContract.address,
-                dayjs(new Date()).add(1, 'days').unix()
+                securitizationPoolContract.address
             );
             expect(result.toString()).equal('43164');
-        });
-
-        it('#getAssetRiskScoreIdx', async () => {
-            const result = await securitizationPoolValueService.getAssetRiskScoreIdx(
-                securitizationPoolContract.address,
-                dayjs(new Date()).add(10, 'days').unix()
-            );
-            expect(result.hasValidRiskScore).equal(true);
-            expect(result.riskScoreIdx.toNumber()).equal(0);
         });
     });
 

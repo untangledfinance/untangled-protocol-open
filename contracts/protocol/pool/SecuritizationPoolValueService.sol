@@ -74,10 +74,7 @@ contract SecuritizationPoolValueService is
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
-    function getExpectedAssetsValue(
-        address poolAddress,
-        uint256 timestamp
-    ) external view returns (uint256 expectedAssetsValue) {
+    function getExpectedAssetsValue(address poolAddress) external view returns (uint256 expectedAssetsValue) {
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
@@ -97,44 +94,10 @@ contract SecuritizationPoolValueService is
         }
     }
 
-    function getAssetRiskScoreIdx(
-        address poolAddress,
-        uint256 overdue
-    ) public view returns (bool hasValidRiskScore, uint256 riskScoreIdx) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
-        for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
-            uint32 daysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx);
-            if (overdue < daysPastDue) return (false, 0);
-            else if (riskScoreIdx == riskScoresLength - 1) {
-                return (true, riskScoreIdx);
-            } else {
-                uint32 nextDaysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx + 1);
-                if (overdue < nextDaysPastDue) return (true, riskScoreIdx);
-            }
-        }
-    }
-
-    function getDaysPastDueByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        // (uint32 daysPastDue, , , , , , , , , , ) = securitizationPool.riskScores(idx);
-        return securitizationPool.riskScores(idx).daysPastDue;
-    }
-
-    /// @inheritdoc ISecuritizationPoolValueService
-    function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        return
-            crowdsale.currencyRaisedByInvestor(investor) -
-            ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor);
-    }
-
     function getPoolValue(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+        uint256 nAVpoolValue = this.getExpectedLATAssetValue(poolAddress);
 
         // use reserve variable instead
         uint256 balancePool = ISecuritizationTGE(poolAddress).reserve();
