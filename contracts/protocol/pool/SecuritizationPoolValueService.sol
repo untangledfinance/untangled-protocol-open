@@ -278,10 +278,7 @@ contract SecuritizationPoolValueService is
         address sotToken = securitizationPool.sotToken();
         require(sotToken != address(0), 'Invalid sot address');
         uint256 tokenSupply = INoteToken(sotToken).totalSupply();
-        uint256 tokenDecimals = INoteToken(sotToken).decimals();
-        return
-            tokenSupply *
-            10 ** (IERC20MetadataUpgradeable(securitizationPool.underlyingCurrency()).decimals() - tokenDecimals);
+        return tokenSupply;
     }
 
     // @notice this function will return 72 in example
@@ -351,13 +348,13 @@ contract SecuritizationPoolValueService is
 
     /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
-        uint256 rateSenior = this.getSeniorRatio(poolAddress);
+        uint256 rateSenior = getSeniorRatio(poolAddress);
         require(rateSenior <= 100 * RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
 
         return 100 * RATE_SCALING_FACTOR - rateSenior;
     }
 
-    function getSeniorRatio(address poolAddress) external view returns (uint256) {
+    function getSeniorRatio(address poolAddress) public view returns (uint256) {
         uint256 seniorAsset = this.getSeniorAsset(poolAddress);
         uint256 poolValue = this.getPoolValue(poolAddress);
         if (poolValue == 0) {
