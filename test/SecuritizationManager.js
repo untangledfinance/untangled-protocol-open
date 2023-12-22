@@ -136,7 +136,7 @@ describe('SecuritizationManager', () => {
                         ]
                     )
                 )
-            ).to.be.revertedWith(`minFirstLossCushion is greater than 100`);
+            ).to.be.revertedWith(`SecuritizationPool: minFirstLossCushion is greater than 100`);
         });
 
         it('only pool creator role can create pool', async () => {

@@ -50,10 +50,6 @@ contract SecuritizationPoolStorage is
         return _getStorage().pot;
     }
 
-    function amountOwedToOriginator() public view returns (uint256) {
-        return _getStorage().amountOwedToOriginator;
-    }
-
     function openingBlockTimestamp() public view override returns (uint64) {
         Storage storage $ = _getStorage();
         return $.openingBlockTimestamp;
@@ -88,18 +84,17 @@ contract SecuritizationPoolStorage is
     }
 
     function getFunctionSignatures() public view virtual override returns (bytes4[] memory) {
-        bytes4[] memory _functionSignatures = new bytes4[](10);
+        bytes4[] memory _functionSignatures = new bytes4[](9);
 
-        _functionSignatures[0] = this.amountOwedToOriginator.selector;
-        _functionSignatures[1] = this.tgeAddress.selector;
-        _functionSignatures[2] = this.secondTGEAddress.selector;
-        _functionSignatures[3] = this.state.selector;
-        _functionSignatures[4] = this.isClosedState.selector;
-        _functionSignatures[5] = this.pot.selector;
-        _functionSignatures[6] = this.validatorRequired.selector;
-        _functionSignatures[7] = this.openingBlockTimestamp.selector;
-        _functionSignatures[8] = this.poolNAV.selector;
-        _functionSignatures[9] = this.supportsInterface.selector;
+        _functionSignatures[0] = this.tgeAddress.selector;
+        _functionSignatures[1] = this.secondTGEAddress.selector;
+        _functionSignatures[2] = this.state.selector;
+        _functionSignatures[3] = this.isClosedState.selector;
+        _functionSignatures[4] = this.pot.selector;
+        _functionSignatures[5] = this.validatorRequired.selector;
+        _functionSignatures[6] = this.openingBlockTimestamp.selector;
+        _functionSignatures[7] = this.poolNAV.selector;
+        _functionSignatures[8] = this.supportsInterface.selector;
 
         return _functionSignatures;
     }
