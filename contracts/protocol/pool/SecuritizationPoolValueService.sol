@@ -8,11 +8,9 @@ import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
-
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
-
 import {NAVCalculation} from './base/NAVCalculation.sol';
 import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
@@ -21,9 +19,7 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
-
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-
 import {RiskScore} from './base/types.sol';
 
 /// @title SecuritizationPoolValueService
@@ -78,19 +74,14 @@ contract SecuritizationPoolValueService is
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        expectedAssetsValue =
-            expectedAssetsValue +
-            IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+        expectedAssetsValue = expectedAssetsValue + getExpectedLATAssetValue(poolAddress);
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             address tokenAddress = securitizationPool.tokenAssetAddresses(i);
-            INoteToken notesToken = INoteToken(tokenAddress);
-            if (notesToken.balanceOf(poolAddress) > 0) {
-                expectedAssetsValue =
-                    expectedAssetsValue +
-                    registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
-            }
+            expectedAssetsValue =
+                expectedAssetsValue +
+                registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
         }
     }
 

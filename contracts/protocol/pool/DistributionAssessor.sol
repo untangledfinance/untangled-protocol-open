@@ -67,6 +67,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
         uint256 tokenPrice = calcTokenPrice(address(securitizationPool), tokenAddress);
         uint256 tokenBalance = notesToken.balanceOf(investor);
+
         return (tokenBalance * tokenPrice) / 10 ** notesToken.decimals();
     }
 
