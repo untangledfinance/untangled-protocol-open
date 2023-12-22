@@ -11,7 +11,6 @@ import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
-import {NAVCalculation} from './base/NAVCalculation.sol';
 import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
@@ -25,14 +24,16 @@ import {RiskScore} from './base/types.sol';
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
-contract SecuritizationPoolValueService is
-    SecuritizationPoolServiceBase,
-    NAVCalculation,
-    ISecuritizationPoolValueService
-{
+contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecuritizationPoolValueService {
     using ConfigHelper for Registry;
 
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
+    uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
+    // All time units in seconds
+    uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
+    uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
+    uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
+    uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
 
     function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
@@ -126,7 +127,7 @@ contract SecuritizationPoolValueService is
         uint256 seniorInterestRate = ISecuritizationTGE(poolAddress).interestRateSOT();
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
-        uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
+        uint256 oneYearInSeconds = YEAR_LENGTH_IN_SECONDS;
 
         uint256 seniorDebt = beginningSeniorDebt +
             (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) /
