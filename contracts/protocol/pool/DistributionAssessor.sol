@@ -66,9 +66,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(notesToken.poolAddress());
 
         uint256 tokenPrice = calcTokenPrice(address(securitizationPool), tokenAddress);
-
-        uint256 tokenRedeem = securitizationPool.lockedRedeemBalances(tokenAddress, investor);
-        uint256 tokenBalance = notesToken.balanceOf(investor) - tokenRedeem;
+        uint256 tokenBalance = notesToken.balanceOf(investor);
         return (tokenBalance * tokenPrice) / 10 ** notesToken.decimals();
     }
 
