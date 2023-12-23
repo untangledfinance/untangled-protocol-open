@@ -92,6 +92,19 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         return 0;
     }
 
+    function getTokenPrices(
+        address[] calldata pools,
+        address[] calldata tokenAddresses
+    ) public view override returns (uint256[] memory tokenPrices) {
+        tokenPrices = new uint256[](pools.length);
+
+        for (uint i = 0; i < pools.length; i++) {
+            tokenPrices[i] = calcTokenPrice(pools[i], tokenAddresses[i]);
+        }
+
+        return tokenPrices;
+    }
+
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();

@@ -21,4 +21,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.dependencies = ['registry'];
-module.exports.tags = ['mainnet', 'DistributionAccessor', 'v3'];
+module.exports.tags = ['mainnet', 'DistributionAssessor'];
