@@ -20,6 +20,8 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     uint256 public interestRate;
     uint256 public yield;
 
+    uint8 saleType;
+
     function initialize(
         Registry _registry,
         address _pool,
@@ -30,6 +32,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
         __Crowdsale__init(_registry, _pool, _token, _currency);
 
         longSale = _longSale;
+        saleType = uint8(SaleType.MINTED_INCREASING_INTEREST);
     }
 
     /// @inheritdoc Crowdsale
@@ -62,12 +65,16 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     /// @notice Calculate token price
     /// @dev This sale is for SOT. So the function return SOT token price
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getSOTTokenPrice(pool);
+        return registry.getDistributionAssessor().calcTokenPrice(pool, token);
     }
 
     /// @notice Get amount of token can receive from an amount of currency
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
         return (currencyAmount * 10 ** INoteToken(token).decimals()) / getTokenPrice();
+    }
+
+    function getInterest() public view override returns (uint256) {
+        return getCurrentInterest();
     }
 
     /// @notice Setup a new round sale for note token
