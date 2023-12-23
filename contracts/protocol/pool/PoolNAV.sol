@@ -191,7 +191,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         setLoanMaturityDate(_tokenId, loanParam.termEndUnixTimestamp);
         if (rates[_convertedInterestRate].ratePerSecond == 0) {
             // If interest rate is not set
-            file('rate', _convertedInterestRate, _convertedInterestRate);
+            _file('rate', _convertedInterestRate, _convertedInterestRate);
         }
         setRate(loan, _convertedInterestRate);
         accrue(loan);
@@ -201,7 +201,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
 
         // increase NAV
         borrow(loan, principalAmount);
-        incDebt(loan, principalAmount);
+        _incDebt(loan, principalAmount);
 
         emit AddLoan(loan, principalAmount, loanParam.termEndUnixTimestamp);
 
@@ -312,8 +312,8 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
                     toUint128(riskIndex)
                 )
             );
-            file('rate', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
-            file('penalty', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedPenaltyRate);
+            _file('rate', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedInterestRate);
+            _file('penalty', safeAdd(WRITEOFF_RATE_GROUP_START, index), _convertedPenaltyRate);
         } else {
             revert('unknown name');
         }
@@ -324,7 +324,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @param what what config to change
     /// @param rate the interest rate group
     /// @param value the value to change
-    function file(bytes32 what, uint256 rate, uint256 value) public onlyRole(POOL) {
+    function _file(bytes32 what, uint256 rate, uint256 value) private {
         if (what == 'rate') {
             require(value != 0, 'rate-per-second-can-not-be-0');
             if (rates[rate].chi == 0) {
@@ -722,7 +722,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @param nftID_ the nftID of the loan
     /// @param risk_ the new value appraisal of the collateral NFT
     /// @param risk_ the new risk group
-    function update(bytes32 nftID_, uint256 risk_) public onlyRole(POOL) {
+    function update(bytes32 nftID_, uint256 risk_) public {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
         // no change in risk group
@@ -741,7 +741,14 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         // change to new rate interestRate immediately in pile if loan debt exists
         uint256 loan = uint256(nftID_);
         if (pie[loan] != 0) {
-            changeRate(loan, risk_);
+            RiskScore memory riskParam = getRiskScoreByIdx(risk_);
+            uint256 _convertedInterestRate = ONE + (riskParam.interestRate * ONE) /
+                (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
+            if (rates[_convertedInterestRate].ratePerSecond == 0) {
+                // If interest rate is not set
+                _file('rate', _convertedInterestRate, _convertedInterestRate);
+            }
+            changeRate(loan, _convertedInterestRate);
         }
 
         // no currencyAmount borrowed yet
@@ -760,10 +767,10 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
 
         buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
 
-        latestDiscount = safeSub(latestDiscount, navDecrease);
-        latestDiscountOfNavAssets[nftID_] -= navDecrease;
+        latestDiscount = secureSub(latestDiscount, navDecrease);
+        latestDiscountOfNavAssets[nftID_]= secureSub(latestDiscountOfNavAssets[nftID_], navDecrease);
 
-        latestNAV = safeSub(latestNAV, navDecrease);
+        latestNAV = secureSub(latestNAV, navDecrease);
 
         // update latest NAV
         // update latest Discount
@@ -774,7 +781,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
                 _rate.ratePerSecond,
                 debt(loan),
                 maturityDate(nftID_),
-                recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+                recoveryRatePD(risk_, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
             )
         );
 
@@ -829,7 +836,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         return lastValidWriteOff;
     }
 
-    function incDebt(uint256 loan, uint256 currencyAmount) public onlyRole(POOL) {
+    function _incDebt(uint256 loan, uint256 currencyAmount) private {
         uint256 rate = loanRates[loan];
         require(block.timestamp == rates[rate].lastUpdated, 'rate-group-not-updated');
         uint256 pieAmount = toPie(rates[rate].chi, currencyAmount);
