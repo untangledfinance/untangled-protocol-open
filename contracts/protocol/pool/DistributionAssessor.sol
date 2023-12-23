@@ -105,6 +105,39 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         return tokenPrices;
     }
 
+    function getTokenValues(
+        address[] calldata tokenAddresses,
+        address[] calldata investors
+    ) public view override returns (uint256[] memory tokenValues) {
+        tokenValues = new uint256[](investors.length);
+
+        for (uint i = 0; i < investors.length; i++) {
+            tokenValues[i] = _calcCorrespondingAssetValue(tokenAddresses[i], investors[i]);
+        }
+
+        return tokenValues;
+    }
+
+    function getExternalTokenInfos(address poolAddress) public view override returns (NoteToken[] memory noteTokens) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+
+        uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
+        noteTokens = new NoteToken[](tokenAssetAddressesLength);
+        for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
+            address tokenAddress = securitizationPool.tokenAssetAddresses(i);
+            INoteToken noteToken = INoteToken(tokenAddress);
+
+            noteTokens[i] = NoteToken({
+                poolAddress: noteToken.poolAddress(),
+                noteTokenAddress: tokenAddress,
+                balance: noteToken.balanceOf(poolAddress),
+                apy: uint256(0)
+            });
+        }
+
+        return noteTokens;
+    }
+
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
