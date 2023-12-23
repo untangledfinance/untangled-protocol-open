@@ -12,6 +12,7 @@ import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -126,12 +127,21 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             address tokenAddress = securitizationPool.tokenAssetAddresses(i);
             INoteToken noteToken = INoteToken(tokenAddress);
+            ISecuritizationPoolStorage notePool = ISecuritizationPoolStorage(noteToken.poolAddress());
+
+            uint256 apy;
+
+            if (tokenAddress == ISecuritizationTGE(noteToken.poolAddress()).sotToken()) {
+                apy = IMintedTGE(notePool.tgeAddress()).getInterest();
+            } else {
+                apy = IMintedTGE(notePool.secondTGEAddress()).getInterest();
+            }
 
             noteTokens[i] = NoteToken({
-                poolAddress: noteToken.poolAddress(),
+                poolAddress: address(notePool),
                 noteTokenAddress: tokenAddress,
                 balance: noteToken.balanceOf(poolAddress),
-                apy: uint256(0)
+                apy: apy
             });
         }
 
@@ -141,12 +151,12 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        uint256 juniorrAsset = poolService.getJuniorAsset(address(securitizationPool));
         return
             _getTokenPrice(
                 securitizationPool,
                 INoteToken(ISecuritizationTGE(securitizationPool).jotToken()),
-                seniorAsset
+                juniorrAsset
             );
     }
 
