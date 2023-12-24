@@ -421,6 +421,25 @@ describe('NAV', () => {
             expect(value).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
             expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
         });
+        it('Should revert if updating loan risk without having Pool Admin role', async () => {
+            await expect(poolNAV.connect(originatorSigner).update(tokenIds[0], 2))
+                .to.be.revertedWith("Registry: Not an pool admin")
+            ;
+        });
+        it('Change risk score', async () => {
+            await poolNAV.update(tokenIds[0], 2);
+            const currentNAV = await poolNAV.currentNAV();
+            const debtLoan = await poolNAV.debt(tokenIds[0]);
+            const curNAVAsset = await poolNAV.currentNAVAsset(tokenIds[0])
+            expect(currentNAV).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
+            expect(curNAVAsset).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
+            expect(debtLoan).to.closeTo(parseEther('9.029'), parseEther('0.001'));
+            await poolNAV.update(tokenIds[0], 3);
+            expect(await poolNAV.debt(tokenIds[0])).to.closeTo(parseEther('9.029'), parseEther('0.001'));
+            expect(await poolNAV.currentNAV()).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+            expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+
+        });
         it('next 20 days - on maturity date', async () => {
             await time.increase(20 * ONE_DAY);
             const now = await time.latest();
@@ -448,20 +467,6 @@ describe('NAV', () => {
       await expect(poolNAV.connect(originatorSigner).update(tokenIds[0], 2))
           .to.be.revertedWith("Registry: Not an pool admin")
       ;
-    });
-    it('Change risk score', async () => {
-      await poolNAV.update(tokenIds[0], 2);
-      const currentNAV = await poolNAV.currentNAV();
-      const debtLoan = await poolNAV.debt(tokenIds[0]);
-      const curNAVAsset = await poolNAV.currentNAVAsset(tokenIds[0])
-      expect(currentNAV).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
-      expect(curNAVAsset).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
-      expect(debtLoan).to.closeTo(parseEther('9.029'), parseEther('0.001'));
-      await poolNAV.update(tokenIds[0], 3);
-      expect(await poolNAV.debt(tokenIds[0])).to.closeTo(parseEther('9.029'), parseEther('0.001'));
-      expect(await poolNAV.currentNAV()).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
-      expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
-
     });
     it('next 20 days - on maturity date', async () => {
       await time.increase(20 * ONE_DAY);
