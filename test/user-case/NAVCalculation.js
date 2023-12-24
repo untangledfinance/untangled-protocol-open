@@ -431,6 +431,45 @@ describe('NAV', () => {
             expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.078'), parseEther('0.001'));
         });
         /*
+    it('after 10 days - should include interest', async () => {
+      await time.increase(10 * ONE_DAY);
+      const now = await time.latest();
+
+      const currentNAV = await poolNAV.currentNAV();
+      const debtLoan = await poolNAV.debt(tokenIds[0]);
+      expect(debtLoan).to.closeTo(parseEther('9.029'), parseEther('0.001'));
+      expect(currentNAV).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+      const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
+      expect(value).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+      expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+
+    });
+    it('Change risk score', async () => {
+      await poolNAV.update(tokenIds[0], 2);
+      const currentNAV = await poolNAV.currentNAV();
+      const debtLoan = await poolNAV.debt(tokenIds[0]);
+      const curNAVAsset = await poolNAV.currentNAVAsset(tokenIds[0])
+      expect(currentNAV).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
+      expect(curNAVAsset).to.closeTo(parseEther('9.0221'), parseEther('0.001'));
+      expect(debtLoan).to.closeTo(parseEther('9.029'), parseEther('0.001'));
+      await poolNAV.update(tokenIds[0], 3);
+      expect(await poolNAV.debt(tokenIds[0])).to.closeTo(parseEther('9.029'), parseEther('0.001'));
+      expect(await poolNAV.currentNAV()).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+      expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
+
+    });
+    it('next 20 days - on maturity date', async () => {
+      await time.increase(20 * ONE_DAY);
+      const now = await time.latest();
+      // const value = await securitizationPoolValueService.getExpectedAssetsValue(securitizationPoolContract.address, now);
+      // console.log("ASSET", value);
+      const currentNAV = await poolNAV.currentNAV();
+      const debtLoan = await poolNAV.debt(tokenIds[0]);
+      expect(debtLoan).to.closeTo(parseEther('9.089'), parseEther('0.001'));
+      expect(currentNAV).to.closeTo(parseEther('9.078'), parseEther('0.001'));
+      expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.078'), parseEther('0.001'));
+    });
+    /*
         xit('should repay now', async () => {
           await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
           await loanRepaymentRouter
