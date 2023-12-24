@@ -12,7 +12,8 @@ import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ILoanRegistry} from '../loan/ILoanRegistry.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
-import {POOL} from './types.sol';
+import {POOL, POOL_ADMIN} from './types.sol';
+import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 
 import 'hardhat/console.sol';
 
@@ -723,6 +724,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @param risk_ the new value appraisal of the collateral NFT
     /// @param risk_ the new risk group
     function update(bytes32 nftID_, uint256 risk_) public {
+        registry.requirePoolAdmin(_msgSender());
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
         // no change in risk group

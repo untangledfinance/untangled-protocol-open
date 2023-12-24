@@ -444,6 +444,11 @@ describe('NAV', () => {
       expect(await poolNAV.currentNAVAsset(tokenIds[0])).to.closeTo(parseEther('9.02839'), parseEther('0.001'));
 
     });
+    it('Should revert if updating loan risk without having Pool Admin role', async () => {
+      await expect(poolNAV.connect(originatorSigner).update(tokenIds[0], 2))
+          .to.be.revertedWith("Registry: Not an pool admin")
+      ;
+    });
     it('Change risk score', async () => {
       await poolNAV.update(tokenIds[0], 2);
       const currentNAV = await poolNAV.currentNAV();
