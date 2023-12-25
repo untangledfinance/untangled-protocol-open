@@ -426,7 +426,6 @@ describe('Pool to Pool', () => {
         });
 
         it('Pool A pot invests into pool B for SOT', async () => {
-            console.log('step 1');
             await stableCoin.connect(untangledAdminSigner).transfer(anonymousInvestorSigner.address, parseEther('2'));
             await stableCoin
                 .connect(anonymousInvestorSigner)
@@ -434,7 +433,6 @@ describe('Pool to Pool', () => {
             await securitizationManager
                 .connect(anonymousInvestorSigner)
                 .buyTokens(mintedNormalTGEPoolAContract.address, parseEther('2'));
-            console.log('step 2');
             // Invest into main pool (buy JOT token)
             await stableCoin.connect(poolAPot).approve(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
             await securitizationManager
@@ -442,7 +440,6 @@ describe('Pool to Pool', () => {
                 .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyJOT);
             const value = await mintedIncreasingInterestTGEPoolBContract.hasStarted();
             // Invest into main pool (buy SOT token)
-            console.log('step 3');
             await stableCoin
                 .connect(poolAPot)
                 .approve(mintedIncreasingInterestTGEPoolBContract.address, stableCoinAmountToBuySOT);
@@ -508,7 +505,7 @@ describe('Pool to Pool', () => {
                     sotPoolBContract.address,
                     [poolAPot.address],
                     [investorPoolPotSotBalance],
-                    [parseEther('0')]
+                    [parseEther('2')]
                 );
 
             const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
@@ -518,7 +515,7 @@ describe('Pool to Pool', () => {
         });
     });
 
-    describe.skip('Pool A invests in pool B, pool B invests in pool C', async () => {
+    describe('Pool A invests in pool B, pool B invests in pool C', async () => {
         let stableCoin;
         let securitizationManager;
         let loanKernel;
@@ -1104,8 +1101,8 @@ describe('Pool to Pool', () => {
                     poolCContract.address,
                     jotCContract.address,
                     [poolBPotSigner.address],
-                    [stableCoinAmountToBuyBJOT],
-                    [parseEther('0')]
+                    [stableCoinAmountToBuyCJOT],
+                    [parseEther('1')]
                 );
             const investorPoolPotJotBalanceAfterRedeem = await jotCContract.balanceOf(poolBPotSigner.address);
             const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolBPotSigner.address);
@@ -1142,7 +1139,7 @@ describe('Pool to Pool', () => {
                     jotBContract.address,
                     [poolAPotSigner.address],
                     [stableCoinAmountToBuyBJOT],
-                    [parseEther('0')]
+                    [parseEther('2')]
                 );
 
             const investorPoolPotJotBalanceAfterRedeem = await jotBContract.balanceOf(poolAPotSigner.address);
