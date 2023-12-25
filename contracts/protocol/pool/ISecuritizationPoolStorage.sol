@@ -39,7 +39,6 @@ interface ISecuritizationPoolStorage {
         address secondTGEAddress;
         address sotToken;
         address jotToken;
-        
         address underlyingCurrency;
         uint256 reserve; // Money in pool
         uint32 minFirstLossCushion;
@@ -53,7 +52,6 @@ interface ISecuritizationPoolStorage {
         uint32 interestRateSOT; // Annually, support 4 decimals num
         uint256 totalAssetRepaidCurrency;
         mapping(address => uint256) paidPrincipalAmountSOTByInvestor;
-        uint256 amountOwedToOriginator;
         uint256 debtCeiling;
         CycleState state;
         // lock distribution
@@ -65,8 +63,6 @@ interface ISecuritizationPoolStorage {
         uint256 totalRedeemedCurrency; // Total $ (cUSD) has been redeemed
         address poolNAV;
     }
-
-    function amountOwedToOriginator() external view returns (uint256);
 
     function tgeAddress() external view returns (address);
 

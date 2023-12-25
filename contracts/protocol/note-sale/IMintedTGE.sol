@@ -9,6 +9,11 @@ interface IMintedTGE is IInterestRate {
     event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
     event UpdateInitialAmount(uint256 initialAmount);
 
+    enum SaleType {
+        MINTED_INCREASING_INTEREST,
+        NORMAL_SALE
+    }
+
     function initialize(
         Registry _registry,
         address _pool,
@@ -30,4 +35,6 @@ interface IMintedTGE is IInterestRate {
     function startNewRoundSale(uint256 openingTime_, uint256 closingTime_, uint256 rate_, uint256 cap_) external;
 
     function setTotalCap(uint256 cap_) external;
+
+    function getInterest() external view returns (uint256);
 }

@@ -259,8 +259,9 @@ contract SecuritizationTGE is
 
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
-            _msgSender() == address(registry().getSecuritizationManager()),
-            'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
+            _msgSender() == address(registry().getSecuritizationManager()) ||
+                _msgSender() == address(registry().getNoteTokenVault()),
+            'SecuritizationPool: Caller must be SecuritizationManager or NoteTokenVault'
         );
 
         Storage storage $ = _getStorage();

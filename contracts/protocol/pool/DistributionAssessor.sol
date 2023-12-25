@@ -11,6 +11,7 @@ import {IDistributionAssessor} from './IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 
 /// @title DistributionAssessor
 /// @author Untangled Team
@@ -63,8 +64,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     function _calcCorrespondingAssetValue(address tokenAddress, address investor) internal view returns (uint256) {
         INoteToken notesToken = INoteToken(tokenAddress);
         uint256 tokenPrice = calcTokenPrice(notesToken.poolAddress(), tokenAddress);
-
         uint256 tokenBalance = notesToken.balanceOf(investor);
+
         return (tokenBalance * tokenPrice) / 10 ** notesToken.decimals();
     }
 
@@ -89,15 +90,70 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
         return 0;
     }
 
+    function getTokenPrices(
+        address[] calldata pools,
+        address[] calldata tokenAddresses
+    ) public view override returns (uint256[] memory tokenPrices) {
+        tokenPrices = new uint256[](pools.length);
+
+        for (uint i = 0; i < pools.length; i++) {
+            tokenPrices[i] = calcTokenPrice(pools[i], tokenAddresses[i]);
+        }
+
+        return tokenPrices;
+    }
+
+    function getTokenValues(
+        address[] calldata tokenAddresses,
+        address[] calldata investors
+    ) public view override returns (uint256[] memory tokenValues) {
+        tokenValues = new uint256[](investors.length);
+
+        for (uint i = 0; i < investors.length; i++) {
+            tokenValues[i] = _calcCorrespondingAssetValue(tokenAddresses[i], investors[i]);
+        }
+
+        return tokenValues;
+    }
+
+    function getExternalTokenInfos(address poolAddress) public view override returns (NoteToken[] memory noteTokens) {
+        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
+
+        uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
+        noteTokens = new NoteToken[](tokenAssetAddressesLength);
+        for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
+            address tokenAddress = securitizationPool.tokenAssetAddresses(i);
+            INoteToken noteToken = INoteToken(tokenAddress);
+            ISecuritizationPoolStorage notePool = ISecuritizationPoolStorage(noteToken.poolAddress());
+
+            uint256 apy;
+
+            if (tokenAddress == ISecuritizationTGE(noteToken.poolAddress()).sotToken()) {
+                apy = IMintedTGE(notePool.tgeAddress()).getInterest();
+            } else {
+                apy = IMintedTGE(notePool.secondTGEAddress()).getInterest();
+            }
+
+            noteTokens[i] = NoteToken({
+                poolAddress: address(notePool),
+                noteTokenAddress: tokenAddress,
+                balance: noteToken.balanceOf(poolAddress),
+                apy: apy
+            });
+        }
+
+        return noteTokens;
+    }
+
     /// @inheritdoc IDistributionAssessor
     function getJOTTokenPrice(address securitizationPool) public view override returns (uint256) {
         ISecuritizationPoolValueService poolService = registry.getSecuritizationPoolValueService();
-        uint256 seniorAsset = poolService.getJuniorAsset(address(securitizationPool));
+        uint256 juniorrAsset = poolService.getJuniorAsset(address(securitizationPool));
         return
             _getTokenPrice(
                 securitizationPool,
                 INoteToken(ISecuritizationTGE(securitizationPool).jotToken()),
-                seniorAsset
+                juniorrAsset
             );
     }
 

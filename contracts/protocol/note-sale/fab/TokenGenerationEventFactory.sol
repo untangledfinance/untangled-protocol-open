@@ -51,7 +51,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
     function createNewSaleInstance(
         address issuerTokenController,
-        // address pool,
         address token,
         address currency,
         uint8 saleType,
@@ -130,70 +129,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
 
         return tgeAddress;
     }
-
-    // function _newMintedIncreasingInterestSale(
-    //     address issuerTokenController,
-    //     address pool,
-    //     address token,
-    //     address currency,
-    //     bool longSale
-    // ) private returns (address) {
-    //     address mintedIncreasingInterestTGEImplAddress = address(registry.getMintedIncreasingInterestTGE());
-
-    //     bytes memory _initialData = abi.encodeWithSelector(
-    //         TGE_INIT_FUNC_SELECTOR,
-    //         registry,
-    //         pool,
-    //         token,
-    //         currency,
-    //         longSale
-    //     );
-
-    //     address tgeAddress = _deployInstance(mintedIncreasingInterestTGEImplAddress, _initialData);
-    //     MintedIncreasingInterestTGE tge = MintedIncreasingInterestTGE(tgeAddress);
-
-    //     tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
-    //     tge.renounceRole(tge.OWNER_ROLE(), address(this));
-
-    //     tgeAddresses.push(tgeAddress);
-    //     isExistingTge[tgeAddress] = true;
-
-    //     emit TokenGenerationEventCreated(tgeAddress);
-
-    //     return tgeAddress;
-    // }
-
-    // function _newNormalSale(
-    //     address issuerTokenController,
-    //     address pool,
-    //     address token,
-    //     address currency,
-    //     bool longSale
-    // ) private returns (address) {
-    //     address mintedNormalTGEImplAddress = address(registry.getMintedNormalTGE());
-
-    //     bytes memory _initialData = abi.encodeWithSelector(
-    //         TGE_INIT_FUNC_SELECTOR,
-    //         registry,
-    //         pool,
-    //         token,
-    //         currency,
-    //         longSale
-    //     );
-
-    //     address tgeAddress = _deployInstance(mintedNormalTGEImplAddress, _initialData);
-    //     MintedNormalTGE tge = MintedNormalTGE(tgeAddress);
-
-    //     tge.grantRole(tge.OWNER_ROLE(), issuerTokenController);
-    //     tge.renounceRole(tge.OWNER_ROLE(), address(this));
-
-    //     tgeAddresses.push(tgeAddress);
-    //     isExistingTge[tgeAddress] = true;
-
-    //     emit TokenGenerationEventCreated(tgeAddress);
-
-    //     return tgeAddress;
-    // }
 
     function pauseUnpauseTge(address tgeAdress) external whenNotPaused onlyRole(DEFAULT_ADMIN_ROLE) {
         require(isExistingTge[tgeAdress], 'TokenGenerationEventFactory: tge does not exist');

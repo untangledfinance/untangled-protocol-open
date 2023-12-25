@@ -8,12 +8,9 @@ import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
-
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
-
-import {NAVCalculation} from './base/NAVCalculation.sol';
 import {SecuritizationPoolServiceBase} from './base/SecuritizationPoolServiceBase.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
@@ -21,142 +18,25 @@ import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {IPoolNAV} from './IPoolNAV.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
-
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-
 import {RiskScore} from './base/types.sol';
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
-contract SecuritizationPoolValueService is
-    SecuritizationPoolServiceBase,
-    NAVCalculation,
-    ISecuritizationPoolValueService
-{
+contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecuritizationPoolValueService {
     using ConfigHelper for Registry;
 
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
-
-    function getPresentValueWithNAVCalculation(
-        address poolAddress,
-        uint256 principalAmount,
-        uint256 expectTimeEarnInterest,
-        uint256 interestRate,
-        uint256 riskScoreIdx, // riskScoreIdx should be reduced 1 to be able to use because 0 means no specific riskScore
-        uint256 overdue,
-        uint256 secondTillCashFlow
-    ) private view returns (uint256) {
-        uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
-        bool hasValidRiskScore = riskScoresLength > 0;
-        if (hasValidRiskScore) {
-            if (riskScoreIdx == 0) (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
-            else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
-        }
-        if (!hasValidRiskScore) {
-            return
-                (principalAmount *
-                    UntangledMath.rpow(
-                        UntangledMath.ONE +
-                            ((interestRate * UntangledMath.ONE) / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
-                            YEAR_LENGTH_IN_SECONDS,
-                        expectTimeEarnInterest,
-                        UntangledMath.ONE
-                    )) / UntangledMath.ONE;
-        }
-        RiskScore memory riskscore = ISecuritizationPool(poolAddress).riskScores(riskScoreIdx);
-        uint256 result = _calculateAssetValue(
-            principalAmount,
-            expectTimeEarnInterest,
-            interestRate,
-            overdue,
-            secondTillCashFlow,
-            riskscore
-        );
-        return result;
-    }
-
-    function getAssetInterestRate(
-        address poolAddress,
-        address tokenAddress,
-        uint256 tokenId,
-        uint256 timestamp
-    ) public view returns (uint256) {
-        IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
-        uint256 interestRate = loanAssetToken.getInterestRate(tokenId);
-
-        uint256 riskScoresLength = ISecuritizationPool(poolAddress).getRiskScoresLength();
-
-        bool hasValidRiskScore = riskScoresLength > 0;
-        if (hasValidRiskScore) {
-            uint256 riskScoreIdx = loanAssetToken.getRiskScore(tokenId);
-
-            if (riskScoreIdx == 0) {
-                uint256 expirationTimestamp = loanAssetToken.getExpirationTimestamp(tokenId);
-                uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
-                (hasValidRiskScore, riskScoreIdx) = getAssetRiskScoreIdx(poolAddress, overdue);
-            } else riskScoreIdx = riskScoreIdx > riskScoresLength ? riskScoresLength - 1 : riskScoreIdx - 1;
-
-            if (hasValidRiskScore) {
-                RiskScore memory riskscore = ISecuritizationPool(poolAddress).riskScores(riskScoreIdx);
-                return riskscore.interestRate;
-            }
-        }
-
-        return interestRate;
-    }
-
-    function getAssetInterestRates(
-        address poolAddress,
-        address[] calldata tokenAddresses,
-        uint256[] calldata tokenIds,
-        uint256 timestamp
-    ) external view returns (uint256[] memory) {
-        uint256 tokenIdsLength = tokenIds.length;
-        uint256[] memory interestRates = new uint256[](tokenIdsLength);
-        for (uint256 i; i < tokenIdsLength; i++) {
-            interestRates[i] = getAssetInterestRate(poolAddress, tokenAddresses[i], tokenIds[i], timestamp);
-        }
-        return interestRates;
-    }
+    uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
+    // All time units in seconds
+    uint256 public constant MINUTE_LENGTH_IN_SECONDS = 60;
+    uint256 public constant HOUR_LENGTH_IN_SECONDS = MINUTE_LENGTH_IN_SECONDS * 60;
+    uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
+    uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
 
     function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
-    }
-
-    function getExpectedERC20AssetValue(
-        address poolAddress,
-        address assetPoolAddress,
-        address tokenAddress,
-        uint256 interestRate,
-        uint256 timestamp
-    ) public view returns (uint256) {
-        uint256 expirationTimestamp = ISecuritizationPoolStorage(assetPoolAddress).openingBlockTimestamp() +
-            ISecuritizationTGE(assetPoolAddress).termLengthInSeconds();
-
-        uint256 overdue = timestamp > expirationTimestamp ? timestamp - expirationTimestamp : 0;
-        uint256 secondTillCashflow = expirationTimestamp > timestamp ? expirationTimestamp - timestamp : 0;
-
-        uint256 totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(
-            tokenAddress,
-            poolAddress
-        );
-
-        uint256 presentValue = getPresentValueWithNAVCalculation(
-            poolAddress,
-            totalDebt,
-            0,
-            interestRate,
-            0,
-            overdue,
-            secondTillCashflow
-        );
-
-        if (timestamp < expirationTimestamp) {
-            totalDebt = registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
-        }
-
-        return presentValue < totalDebt ? presentValue : totalDebt;
     }
 
     function getExpectedAssetValue(address poolAddress, bytes32 tokenId) public view returns (uint256) {
@@ -191,82 +71,29 @@ contract SecuritizationPoolValueService is
     }
 
     /// @inheritdoc ISecuritizationPoolValueService
-    function getExpectedAssetsValue(
-        address poolAddress,
-        uint256 timestamp
-    ) external view returns (uint256 expectedAssetsValue) {
+    function getExpectedAssetsValue(address poolAddress) external view returns (uint256 expectedAssetsValue) {
         expectedAssetsValue = 0;
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
 
-        expectedAssetsValue =
-            expectedAssetsValue +
-            IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+        expectedAssetsValue = expectedAssetsValue + getExpectedLATAssetValue(poolAddress);
 
         uint256 tokenAssetAddressesLength = securitizationPool.getTokenAssetAddressesLength();
         for (uint256 i = 0; i < tokenAssetAddressesLength; i = UntangledMath.uncheckedInc(i)) {
             address tokenAddress = securitizationPool.tokenAssetAddresses(i);
-            INoteToken notesToken = INoteToken(tokenAddress);
-            if (notesToken.balanceOf(poolAddress) > 0) {
-                expectedAssetsValue =
-                    expectedAssetsValue +
-                    getExpectedERC20AssetValue(
-                        poolAddress,
-                        notesToken.poolAddress(),
-                        tokenAddress,
-                        Configuration.NOTE_TOKEN_TYPE(notesToken.noteTokenType()) ==
-                            Configuration.NOTE_TOKEN_TYPE.SENIOR
-                            ? ISecuritizationTGE(notesToken.poolAddress()).interestRateSOT()
-                            : 0,
-                        timestamp
-                    );
-            }
+            expectedAssetsValue =
+                expectedAssetsValue +
+                registry.getDistributionAssessor().calcCorrespondingTotalAssetValue(tokenAddress, poolAddress);
         }
-    }
-
-    function getAssetRiskScoreIdx(
-        address poolAddress,
-        uint256 overdue
-    ) public view returns (bool hasValidRiskScore, uint256 riskScoreIdx) {
-        ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
-        uint256 riskScoresLength = securitizationPool.getRiskScoresLength();
-        for (riskScoreIdx = 0; riskScoreIdx < riskScoresLength; riskScoreIdx++) {
-            uint32 daysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx);
-            if (overdue < daysPastDue) return (false, 0);
-            else if (riskScoreIdx == riskScoresLength - 1) {
-                return (true, riskScoreIdx);
-            } else {
-                uint32 nextDaysPastDue = getDaysPastDueByIdx(securitizationPool, riskScoreIdx + 1);
-                if (overdue < nextDaysPastDue) return (true, riskScoreIdx);
-            }
-        }
-    }
-
-    function getDaysPastDueByIdx(ISecuritizationPool securitizationPool, uint256 idx) private view returns (uint32) {
-        // (uint32 daysPastDue, , , , , , , , , , ) = securitizationPool.riskScores(idx);
-        return securitizationPool.riskScores(idx).daysPastDue;
-    }
-
-    /// @inheritdoc ISecuritizationPoolValueService
-    function getOutstandingPrincipalCurrencyByInvestor(address pool, address investor) public view returns (uint256) {
-        ISecuritizationPoolStorage securitizationPool = ISecuritizationPoolStorage(pool);
-        ICrowdSale crowdsale = ICrowdSale(securitizationPool.tgeAddress());
-
-        return
-            crowdsale.currencyRaisedByInvestor(investor) -
-            ISecuritizationTGE(pool).paidPrincipalAmountSOTByInvestor(investor);
     }
 
     function getPoolValue(address poolAddress) external view returns (uint256) {
         ISecuritizationPool securitizationPool = ISecuritizationPool(poolAddress);
         require(address(securitizationPool) != address(0), 'Pool was not deployed');
-        uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
+        uint256 nAVpoolValue = this.getExpectedLATAssetValue(poolAddress);
 
         // use reserve variable instead
         uint256 balancePool = ISecuritizationTGE(poolAddress).reserve();
-        uint256 poolValue = balancePool +
-            nAVpoolValue -
-            ISecuritizationPoolStorage(poolAddress).amountOwedToOriginator();
+        uint256 poolValue = balancePool + nAVpoolValue;
 
         return poolValue;
     }
@@ -285,14 +112,10 @@ contract SecuritizationPoolValueService is
     function getBeginningSeniorDebt(address poolAddress) external view returns (uint256) {
         uint256 poolValue = this.getPoolValue(poolAddress);
         if (poolValue == 0) return 0;
-        // require(poolValue > 0, 'Pool value is 0');
+
         uint256 beginningSeniorAsset = this.getBeginningSeniorAsset(poolAddress);
-        uint256 currentTimestamp = block.timestamp;
-        uint256 nAVpoolValue = this.getExpectedAssetsValue(poolAddress, currentTimestamp);
-        if (nAVpoolValue > poolValue) {
-            return beginningSeniorAsset;
-        }
-        return (beginningSeniorAsset * nAVpoolValue) / poolValue;
+
+        return beginningSeniorAsset;
     }
 
     // @notice get beginning of senior debt, get interest of this debt over number of interval
@@ -304,7 +127,7 @@ contract SecuritizationPoolValueService is
         uint256 seniorInterestRate = ISecuritizationTGE(poolAddress).interestRateSOT();
         uint256 openingTime = securitizationPool.openingBlockTimestamp();
         uint256 compoundingPeriods = block.timestamp - openingTime;
-        uint256 oneYearInSeconds = NAVCalculation.YEAR_LENGTH_IN_SECONDS;
+        uint256 oneYearInSeconds = YEAR_LENGTH_IN_SECONDS;
 
         uint256 seniorDebt = beginningSeniorDebt +
             (beginningSeniorDebt * seniorInterestRate * compoundingPeriods) /

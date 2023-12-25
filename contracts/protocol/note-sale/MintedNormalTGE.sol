@@ -24,6 +24,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     uint256 public initialAmount;
 
     uint32 public pickedInterest;
+    uint8 saleType;
 
     function initialize(
         Registry _registry,
@@ -35,6 +36,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         __Crowdsale__init(_registry, _pool, _token, _currency);
 
         longSale = _longSale;
+        saleType = uint8(SaleType.NORMAL_SALE);
     }
 
     /// @inheritdoc Crowdsale
@@ -64,11 +66,15 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     }
 
     function getTokenPrice() public view returns (uint256) {
-        return registry.getDistributionAssessor().getJOTTokenPrice(pool);
+        return registry.getDistributionAssessor().calcTokenPrice(pool, token);
     }
 
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
         return (currencyAmount * 10 ** INoteToken(token).decimals()) / getTokenPrice();
+    }
+
+    function getInterest() public view override returns (uint256) {
+        return interestRate;
     }
 
     /// @notice Setup a new round sale for note token
