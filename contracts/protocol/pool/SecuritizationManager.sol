@@ -256,6 +256,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
                 increasingInterestParam.timeInterval,
                 increasingInterestParam.amountChangeEachInterval
             );
+        } else if (saleType == uint8(ITokenGenerationEventFactory.SaleType.NORMAL_SALE_SOT)) {
+            MintedNormalTGE(tgeAddress).setInterestRate(increasingInterestParam.finalInterest);
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setMinBidAmount(tgeParam.minBidAmount);
