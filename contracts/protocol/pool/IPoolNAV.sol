@@ -5,6 +5,7 @@ import './auth.sol';
 import {Discounting} from './discounting.sol';
 
 interface IPoolNAV {
+    event Update(uint256 loanId, uint256 risk);
     event Rely(address indexed usr);
     function addLoan(uint256 loan) external returns (uint256);
 
