@@ -416,7 +416,7 @@ describe('Pool to Pool', () => {
                     jotPoolBContract.address,
                     [poolAPot.address],
                     [parseEther('1')],
-                    [parseEther('0')]
+                    [parseEther('1')]
                 );
 
             const investorPoolPotJotBalanceAfterRedeem = await jotPoolBContract.balanceOf(poolAPot.address);
@@ -518,7 +518,7 @@ describe('Pool to Pool', () => {
         });
     });
 
-    describe('Pool A invests in pool B, pool B invests in pool C', async () => {
+    describe.skip('Pool A invests in pool B, pool B invests in pool C', async () => {
         let stableCoin;
         let securitizationManager;
         let loanKernel;

@@ -152,7 +152,7 @@ contract NoteTokenVault is
             }
 
             // Update pot pool reserve in P2P investment
-            address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+            address poolOfPot = registry.getSecuritizationManager().potToPool(toAddresses[i]);
             if (poolOfPot != address(0)) {
                 ISecuritizationTGE(poolOfPot).increaseReserve(currencyAmounts[i]);
             }
