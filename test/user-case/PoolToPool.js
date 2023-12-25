@@ -1104,7 +1104,7 @@ describe('Pool to Pool', () => {
                     poolCContract.address,
                     jotCContract.address,
                     [poolBPotSigner.address],
-                    [jotBalance],
+                    [stableCoinAmountToBuyBJOT],
                     [parseEther('0')]
                 );
             const investorPoolPotJotBalanceAfterRedeem = await jotCContract.balanceOf(poolBPotSigner.address);
