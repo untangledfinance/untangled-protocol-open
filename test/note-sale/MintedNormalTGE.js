@@ -79,6 +79,14 @@ describe('MintedNormalTGE', () => {
     expect(_cap).to.equal(cap);
   });
 
+  it('Setup interest rate', async () => {
+    const expectedInterestRate = '100000'
+
+    await mintedNormalTGE.setInterestRate(expectedInterestRate);
+
+    const interestRate = await mintedNormalTGE.interestRate();
+    expect(interestRate).to.equal(expectedInterestRate);
+  });
   it('Setup initialAmount', async () => {
     const expectedInitialAmount = 1000; // Replace with your desired initial amount
 
