@@ -12,3 +12,5 @@ bytes32 constant SIGNER_ROLE = keccak256('SIGNER_ROLE');
 bytes32 constant POOL = keccak256('POOL');
 
 uint256 constant RATE_SCALING_FACTOR = 10 ** 4;
+
+uint256 constant ONE_HUNDRED_PERCENT = 100 * RATE_SCALING_FACTOR;

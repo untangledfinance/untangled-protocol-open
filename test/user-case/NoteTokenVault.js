@@ -727,6 +727,10 @@ describe('NoteTokenVault', () => {
                     `AccessControl: account ${poolCreatorSigner.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`
                 );
             });
+            it('should return max available reserve', async () => {
+                const result = await securitizationPoolContract.getMaxAvailableReserve(parseEther('1.5'), parseEther('1.5'))
+                console.log(result);
+            });
 
             it('SOT: should run successfully', async () => {
                 await expect(

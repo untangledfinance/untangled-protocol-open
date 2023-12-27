@@ -16,4 +16,6 @@ interface ISecuritizationPoolValueService {
 
     /// @notice returns the rate that belongs to Junior investors at the current time
     function getJuniorRatio(address poolAddress) external view returns (uint256);
+
+    function getPoolValue(address poolAddress) external view returns (uint256);
 }
