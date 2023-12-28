@@ -30,7 +30,7 @@ contract NoteTokenFactory is UntangledBase, Factory, INoteTokenFactory {
         _;
     }
 
-    function initialize(Registry _registry, address _factoryAdmin) public reinitializer(3) {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
 

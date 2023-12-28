@@ -90,7 +90,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         uint256 minBidAmount;
     }
 
-    function initialize(Registry _registry, address _factoryAdmin) public reinitializer(2) {
+    function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
         __Factory__init(_factoryAdmin);
         _setRoleAdmin(POOL_ADMIN, OWNER_ROLE);
