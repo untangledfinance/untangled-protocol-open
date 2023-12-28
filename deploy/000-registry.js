@@ -10,10 +10,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             proxyContract: 'OpenZeppelinTransparentProxy',
             execute: {
                 init: {
-                    methodName: "initialize",
+                    methodName: 'initialize',
                     args: [],
                 },
-            }
+            },
         },
         log: true,
     });

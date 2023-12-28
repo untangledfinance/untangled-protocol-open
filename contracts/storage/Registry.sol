@@ -42,24 +42,8 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN_FACTORY), newAddress);
     }
 
-    // function setNoteToken(address newAddress) public onlyAdmin whenNotPaused {
-    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN), newAddress);
-    // }
-
     function setTokenGenerationEventFactory(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.TOKEN_GENERATION_EVENT_FACTORY), newAddress);
-    }
-
-    // function setMintedIncreasingInterestTGE(address newAddress) public onlyAdmin whenNotPaused {
-    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_INCREASING_INTEREST_TGE), newAddress);
-    // }
-
-    // function setMintedNormalTGE(address newAddress) public onlyAdmin whenNotPaused {
-    //     _setAddress(uint8(Configuration.CONTRACT_TYPE.MINTED_NORMAL_TGE), newAddress);
-    // }
-
-    function setDistributionOperator(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_OPERATOR), newAddress);
     }
 
     function setDistributionAssessor(address newAddress) public onlyAdmin whenNotPaused {
@@ -68,10 +52,6 @@ contract Registry is UntangledBase {
 
     function setLoanAssetToken(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN), newAddress);
-    }
-
-    function setDistributionTranche(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.DISTRIBUTION_TRANCHE), newAddress);
     }
 
     function setSecuritizationPoolValueService(address newAddress) public onlyAdmin whenNotPaused {
