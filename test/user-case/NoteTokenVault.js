@@ -15,6 +15,7 @@ const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN, SIGNER_ROLE } = require
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 const { getPoolByAddress, unlimitedAllowance } = require('../utils');
 const { SaleType } = require('../shared/constants.js');
+const { parse } = require('dotenv');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -30,6 +31,7 @@ describe('NoteTokenVault', () => {
     let loanKernel;
     let noteTokenVault;
     let chainId;
+    let securitizationPoolValueService;
 
     // Wallets
     let untangledAdminSigner,
@@ -41,6 +43,7 @@ describe('NoteTokenVault', () => {
         lenderSignerC,
         backendAdminSigner,
         cancelOrderAdminSigner,
+        redeemOrderAdminSigner,
         relayer;
 
     const stableCoinAmountToBuyJOT = parseEther('1');
@@ -63,7 +66,14 @@ describe('NoteTokenVault', () => {
         ] = await ethers.getSigners();
 
         // Init contracts
-        ({ stableCoin, uniqueIdentity, securitizationManager, loanKernel, noteTokenVault } = await setup());
+        ({
+            stableCoin,
+            uniqueIdentity,
+            securitizationManager,
+            loanKernel,
+            noteTokenVault,
+            securitizationPoolValueService,
+        } = await setup());
 
         await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
         // Create new pool
@@ -726,6 +736,13 @@ describe('NoteTokenVault', () => {
                 ).to.be.revertedWith(
                     `AccessControl: account ${poolCreatorSigner.address.toLowerCase()} is missing role 0x48c56c0d6590b6240b1a1005717522dced5c82a200c197c7d7ad7bf3660f4194`
                 );
+            });
+            it('should return max available reserve', async () => {
+                const result = await securitizationPoolValueService.getMaxAvailableReserve(
+                    securitizationPoolContract.address,
+                    parseEther('1.5')
+                );
+                expect(result).to.deep.equal([parseEther('6'), parseEther('1.5'), parseEther('4.5')]);
             });
 
             it('SOT: should run successfully', async () => {

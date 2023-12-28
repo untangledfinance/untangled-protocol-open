@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 import {IERC20MetadataUpgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20MetadataUpgradeable.sol';
+import '@openzeppelin/contracts/utils/math/Math.sol';
 
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
@@ -20,12 +21,14 @@ import {IPoolNAV} from './IPoolNAV.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {RiskScore} from './base/types.sol';
+import {ONE_HUNDRED_PERCENT} from './types.sol';
 
 /// @title SecuritizationPoolValueService
 /// @author Untangled Team
 /// @dev Calculate pool's values
 contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecuritizationPoolValueService {
     using ConfigHelper for Registry;
+    using Math for uint256;
 
     uint256 public constant RATE_SCALING_FACTOR = 10 ** 4;
     uint256 public constant YEAR_LENGTH_IN_DAYS = 365;
@@ -191,6 +194,69 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         uint256 senorDebt = this.getSeniorDebt(poolAddress);
         uint256 seniorBalance = this.getSeniorBalance(poolAddress);
         return senorDebt + seniorBalance;
+    }
+
+    function getMaxAvailableReserve(
+        address poolAddress,
+        uint256 sotRequest
+    ) public view returns (uint256, uint256, uint256) {
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
+        address sotToken = securitizationPool.sotToken();
+        address jotToken = securitizationPool.jotToken();
+        uint256 reserve = securitizationPool.reserve();
+
+        uint256 sotPrice = registry.getDistributionAssessor().calcTokenPrice(poolAddress, sotToken);
+        if (sotPrice == 0) {
+            return (reserve, 0, 0);
+        }
+        uint256 expectedSOTCurrencyAmount = (sotRequest * sotPrice) / 10 ** INoteToken(sotToken).decimals();
+        if (reserve <= expectedSOTCurrencyAmount) {
+            return (reserve, (reserve * (10 ** INoteToken(sotToken).decimals())) / sotPrice, 0);
+        }
+
+        uint256 jotPrice = registry.getDistributionAssessor().calcTokenPrice(poolAddress, jotToken);
+        uint256 x = solveReserveEquation(poolAddress, expectedSOTCurrencyAmount, sotRequest);
+        if (jotPrice == 0) {
+            return (x + expectedSOTCurrencyAmount, sotRequest, 0);
+        }
+        uint256 maxJOTRedeem = (x * 10 ** INoteToken(jotToken).decimals()) / jotPrice;
+
+        return (x + expectedSOTCurrencyAmount, sotRequest, maxJOTRedeem);
+    }
+
+    function solveReserveEquation(
+        address poolAddress,
+        uint256 expectedSOTCurrencyAmount,
+        uint256 sotRequest
+    ) public view returns (uint256) {
+        ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
+        address sotToken = securitizationPool.sotToken();
+        uint32 minFirstLossCushion = securitizationPool.minFirstLossCushion();
+        uint64 openingBlockTimestamp = ISecuritizationPoolStorage(poolAddress).openingBlockTimestamp();
+
+        uint256 poolValue = this.getPoolValue(poolAddress) - expectedSOTCurrencyAmount;
+        uint256 nav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+        uint256 maxSeniorRatio = ONE_HUNDRED_PERCENT - minFirstLossCushion; // a = maxSeniorRatio / ONE_HUNDRED_PERCENT
+
+        if (maxSeniorRatio == 0) {
+            return 0;
+        }
+
+        uint256 remainingSOTSupply = INoteToken(sotToken).totalSupply() - sotRequest;
+
+        uint256 b = (2 * poolValue * maxSeniorRatio) / ONE_HUNDRED_PERCENT - remainingSOTSupply;
+        uint256 c = ((poolValue ** 2) * maxSeniorRatio) /
+            ONE_HUNDRED_PERCENT -
+            remainingSOTSupply *
+            poolValue -
+            (remainingSOTSupply *
+                nav *
+                ISecuritizationTGE(poolAddress).interestRateSOT() *
+                (block.timestamp - openingBlockTimestamp)) /
+            (ONE_HUNDRED_PERCENT * 365 days);
+        uint256 delta = b ** 2 - (4 * c * maxSeniorRatio) / ONE_HUNDRED_PERCENT;
+        uint256 x = ((b + delta.sqrt()) * ONE_HUNDRED_PERCENT) / (2 * maxSeniorRatio);
+        return x;
     }
 
     uint256[50] private __gap;
