@@ -16,9 +16,9 @@ interface ICrowdSale {
 
     function buyTokens(address payee, address beneficiary, uint256 currencyAmount) external returns (uint256);
 
-    function onRedeem(uint256 currencyAmount) external;
-
     function setHasStarted(bool _hasStarted) external;
 
     function setMinBidAmount(uint256 _minBidAmount) external;
+
+    function onRedeem(uint256 currencyAmount) external;
 }

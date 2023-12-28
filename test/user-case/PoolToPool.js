@@ -4,10 +4,10 @@ const { setup } = require('../setup.js');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
 const dayjs = require('dayjs');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
-const { presignedMintMessage } = require('../shared/uid-helper');
-const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants.js');
+const { presignedMintMessage, presignedRedeemOrderMessage } = require('../shared/uid-helper');
+const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN, SIGNER_ROLE } = require('../constants.js');
 const { utils } = require('ethers');
-const { getPoolByAddress } = require('../utils.js');
+const { getPoolByAddress, unlimitedAllowance } = require('../utils.js');
 const { SaleType } = require('../shared/constants.js');
 const { getContractAt } = require('@nomiclabs/hardhat-ethers/internal/helpers.js');
 
@@ -28,8 +28,7 @@ describe('Pool to Pool', () => {
         let uniqueIdentity;
         let registry;
         let loanInterestTermsContract;
-        let distributionOperator;
-        let distributionTranche;
+        let noteTokenVault;
         let poolBContract;
         let securitizationPoolValueService;
 
@@ -41,7 +40,9 @@ describe('Pool to Pool', () => {
             lenderSigner,
             relayer,
             poolAPot,
-            anonymousInvestorSigner;
+            anonymousInvestorSigner,
+            backendAdminSigner,
+            redeemOrderAdminSigner;
 
         const stableCoinAmountToBuyJOT = parseEther('1'); // $1
         const stableCoinAmountToBuySOT = parseEther('2'); // $1
@@ -55,6 +56,7 @@ describe('Pool to Pool', () => {
         let sotPoolBContract;
         let jotAmount;
         let sotAmount;
+
         before('init sale', async () => {
             // Init wallets
             [
@@ -66,6 +68,8 @@ describe('Pool to Pool', () => {
                 relayer,
                 poolAPot,
                 anonymousInvestorSigner,
+                backendAdminSigner,
+                redeemOrderAdminSigner,
             ] = await ethers.getSigners();
 
             // Init contracts
@@ -78,11 +82,14 @@ describe('Pool to Pool', () => {
                 loanKernel,
                 loanRepaymentRouter,
                 securitizationManager,
-                distributionOperator,
-                distributionTranche,
                 registry,
                 securitizationPoolValueService,
+                noteTokenVault,
             } = await setup());
+
+            await noteTokenVault.connect(untangledAdminSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
+            await noteTokenVault.connect(untangledAdminSigner).grantRole(SIGNER_ROLE, redeemOrderAdminSigner.address);
+            chainId = await getChainId();
 
             // Create new main pool
             await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
@@ -298,7 +305,6 @@ describe('Pool to Pool', () => {
             );
 
             // Anonymous investor gain UID
-            const chainId = await getChainId();
             const SIGNATURE_EXPIRE_TIME = now + ONE_DAY;
             const UID_TYPE_ANONYMOUS_INVESTOR = 0;
             let nonce = 0;
@@ -385,10 +391,34 @@ describe('Pool to Pool', () => {
         it('Pool A pot can make JOT redeem request to pool B', async () => {
             // Redeem
             const investorPoolPotJotBalance = await jotPoolBContract.balanceOf(poolAPot.address);
-            await jotPoolBContract.connect(poolAPot).approve(distributionTranche.address, investorPoolPotJotBalance);
-            await distributionOperator
-                .connect(poolAPot)
-                .makeRedeemRequestAndRedeem(poolBContract.address, jotPoolBContract.address, parseEther('1'));
+            await jotPoolBContract.connect(poolAPot).approve(noteTokenVault.address, unlimitedAllowance);
+
+            const redeemParam = {
+                pool: poolBContract.address,
+                noteTokenAddress: jotPoolBContract.address,
+                noteTokenRedeemAmount: parseEther('1'),
+            };
+            const redeemOrderMessage = presignedRedeemOrderMessage(
+                poolAPot.address,
+                redeemParam.pool,
+                redeemParam.noteTokenAddress,
+                redeemParam.noteTokenRedeemAmount,
+                chainId
+            );
+            const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+
+            await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
+
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .disburseAll(
+                    poolBContract.address,
+                    jotPoolBContract.address,
+                    [poolAPot.address],
+                    [parseEther('1')],
+                    [parseEther('1')]
+                );
+
             const investorPoolPotJotBalanceAfterRedeem = await jotPoolBContract.balanceOf(poolAPot.address);
             const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
             expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(parseEther('1'));
@@ -449,10 +479,35 @@ describe('Pool to Pool', () => {
         it('Pool A pot can make SOT redeem request to pool B', async () => {
             // Redeem
             const investorPoolPotSotBalance = await sotPoolBContract.balanceOf(poolAPot.address);
-            await sotPoolBContract.connect(poolAPot).approve(distributionTranche.address, investorPoolPotSotBalance);
-            await distributionOperator
-                .connect(poolAPot)
-                .makeRedeemRequestAndRedeem(poolBContract.address, sotPoolBContract.address, investorPoolPotSotBalance);
+
+            await sotPoolBContract.connect(poolAPot).approve(noteTokenVault.address, unlimitedAllowance);
+
+            const redeemParam = {
+                pool: poolBContract.address,
+                noteTokenAddress: sotPoolBContract.address,
+                noteTokenRedeemAmount: investorPoolPotSotBalance,
+            };
+            const redeemOrderMessage = presignedRedeemOrderMessage(
+                poolAPot.address,
+                redeemParam.pool,
+                redeemParam.noteTokenAddress,
+                redeemParam.noteTokenRedeemAmount,
+                chainId
+            );
+            const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+
+            await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
+
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .disburseAll(
+                    poolBContract.address,
+                    sotPoolBContract.address,
+                    [poolAPot.address],
+                    [investorPoolPotSotBalance],
+                    [parseEther('2')]
+                );
+
             const investorPoolPotJotBalanceAfterRedeem = await sotPoolBContract.balanceOf(poolAPot.address);
             const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPot.address);
             expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(stableCoinAmountToBuySOT);
@@ -470,10 +525,10 @@ describe('Pool to Pool', () => {
         let uniqueIdentity;
         let registry;
         let loanInterestTermsContract;
-        let distributionOperator;
-        let distributionTranche;
+        let noteTokenVault;
         let distributionAssessor;
         let securitizationPoolValueService;
+        let chainId;
 
         let poolAContract;
         let poolBContract;
@@ -503,7 +558,9 @@ describe('Pool to Pool', () => {
             poolAPotSigner,
             poolBPotSigner,
             poolCPotSigner,
-            anonymousInvestorSigner;
+            anonymousInvestorSigner,
+            backendAdminSigner,
+            redeemOrderAdminSigner;
 
         const stableCoinAmountToBuyBJOT = parseEther('2'); // $2
         const stableCoinAmountToBuyCJOT = parseEther('1'); // $1
@@ -512,7 +569,6 @@ describe('Pool to Pool', () => {
         const expectSOTAmountBBuyFromC = parseEther('1');
         const NOW = dayjs().unix();
         before('init sale', async () => {
-            const chainId = await getChainId();
             // Init wallets
             [
                 untangledAdminSigner,
@@ -527,6 +583,8 @@ describe('Pool to Pool', () => {
                 poolBPotSigner,
                 poolCPotSigner,
                 anonymousInvestorSigner,
+                backendAdminSigner,
+                redeemOrderAdminSigner,
             ] = await ethers.getSigners();
 
             // Init contracts
@@ -539,12 +597,15 @@ describe('Pool to Pool', () => {
                 loanKernel,
                 loanRepaymentRouter,
                 securitizationManager,
-                distributionOperator,
-                distributionTranche,
                 distributionAssessor,
                 registry,
                 securitizationPoolValueService,
+                noteTokenVault,
             } = await setup());
+
+            await noteTokenVault.connect(untangledAdminSigner).grantRole(BACKEND_ADMIN, backendAdminSigner.address);
+            await noteTokenVault.connect(untangledAdminSigner).grantRole(SIGNER_ROLE, redeemOrderAdminSigner.address);
+            chainId = await getChainId();
 
             // Create pool C
             await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCCreatorSigner.address);
@@ -1015,11 +1076,34 @@ describe('Pool to Pool', () => {
         it('Pool B pot can make JOT redeem request to pool C', async () => {
             // Redeem
             const jotBalance = await jotCContract.balanceOf(poolBPotSigner.address);
-            await jotCContract.connect(poolBPotSigner).approve(distributionTranche.address, jotBalance);
 
-            await distributionOperator
-                .connect(poolBPotSigner)
-                .makeRedeemRequestAndRedeem(poolCContract.address, jotCContract.address, jotBalance);
+            await jotCContract.connect(poolBPotSigner).approve(noteTokenVault.address, unlimitedAllowance);
+
+            const redeemParam = {
+                pool: poolCContract.address,
+                noteTokenAddress: jotCContract.address,
+                noteTokenRedeemAmount: jotBalance,
+            };
+            const redeemOrderMessage = presignedRedeemOrderMessage(
+                poolBPotSigner.address,
+                redeemParam.pool,
+                redeemParam.noteTokenAddress,
+                redeemParam.noteTokenRedeemAmount,
+                chainId
+            );
+            const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+
+            await noteTokenVault.connect(poolBPotSigner).redeemOrder(redeemParam, redeemSignature);
+
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .disburseAll(
+                    poolCContract.address,
+                    jotCContract.address,
+                    [poolBPotSigner.address],
+                    [stableCoinAmountToBuyCJOT],
+                    [parseEther('1')]
+                );
             const investorPoolPotJotBalanceAfterRedeem = await jotCContract.balanceOf(poolBPotSigner.address);
             const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolBPotSigner.address);
             expect(investorPoolPotStableCoinBalanceAfterRedeem).equal(stableCoinAmountToBuyBJOT);
@@ -1029,11 +1113,35 @@ describe('Pool to Pool', () => {
         it('Pool A pot can make JOT redeem request to pool B', async () => {
             // Redeem
             const investorPoolPotJotBalance = await jotBContract.balanceOf(poolAPotSigner.address);
-            await jotBContract.connect(poolAPotSigner).approve(distributionTranche.address, investorPoolPotJotBalance);
 
-            await distributionOperator
-                .connect(poolAPotSigner)
-                .makeRedeemRequestAndRedeem(poolBContract.address, jotBContract.address, investorPoolPotJotBalance);
+            await jotBContract.connect(poolAPotSigner).approve(noteTokenVault.address, unlimitedAllowance);
+
+            const redeemParam = {
+                pool: poolBContract.address,
+                noteTokenAddress: jotBContract.address,
+                noteTokenRedeemAmount: investorPoolPotJotBalance,
+            };
+            const redeemOrderMessage = presignedRedeemOrderMessage(
+                poolAPotSigner.address,
+                redeemParam.pool,
+                redeemParam.noteTokenAddress,
+                redeemParam.noteTokenRedeemAmount,
+                chainId
+            );
+            const redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+
+            await noteTokenVault.connect(poolAPotSigner).redeemOrder(redeemParam, redeemSignature);
+
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .disburseAll(
+                    poolBContract.address,
+                    jotBContract.address,
+                    [poolAPotSigner.address],
+                    [stableCoinAmountToBuyBJOT],
+                    [parseEther('2')]
+                );
+
             const investorPoolPotJotBalanceAfterRedeem = await jotBContract.balanceOf(poolAPotSigner.address);
             const investorPoolPotStableCoinBalanceAfterRedeem = await stableCoin.balanceOf(poolAPotSigner.address);
             expect(investorPoolPotStableCoinBalanceAfterRedeem).closeTo(stableCoinAmountToBuyBJOT, parseEther('0.01'));

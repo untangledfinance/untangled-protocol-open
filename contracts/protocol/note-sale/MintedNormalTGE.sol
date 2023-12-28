@@ -70,7 +70,12 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
     }
 
     function getTokenAmount(uint256 currencyAmount) public view override returns (uint256) {
-        return (currencyAmount * 10 ** INoteToken(token).decimals()) / getTokenPrice();
+        uint256 tokenPrice = getTokenPrice();
+
+        if (tokenPrice == 0) {
+            return 0;
+        }
+        return (currencyAmount * 10 ** INoteToken(token).decimals()) / tokenPrice;
     }
 
     function getInterest() public view override returns (uint256) {

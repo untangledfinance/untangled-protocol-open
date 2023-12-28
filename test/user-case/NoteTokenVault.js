@@ -762,6 +762,8 @@ describe('NoteTokenVault', () => {
                 expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
                 const reserve = await securitizationPoolContract.reserve();
                 expect(reserve).to.equal(parseEther('4.5')); // $3 SOT raised + $3 JOT raised - $1.5 redeemed
+                const sotTGECurrencyRaised = await mintedIncreasingInterestTGEContract.currencyRaised();
+                expect(sotTGECurrencyRaised).to.equal(parseEther('1.5'));
             });
 
             it('JOT: should revert if not backend admin', async () => {
@@ -804,6 +806,9 @@ describe('NoteTokenVault', () => {
                 expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
                 const reserve = await securitizationPoolContract.reserve();
                 expect(reserve).to.equal(parseEther('3'));
+
+                const jotTGECurrencyRaised = await mintedNormalTGEContract.currencyRaised();
+                expect(jotTGECurrencyRaised).to.equal(parseEther('1.5'));
             });
         });
     });

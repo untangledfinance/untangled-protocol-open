@@ -26,8 +26,6 @@ import {FinalizableCrowdsale} from './../note-sale/crowdsale/FinalizableCrowdsal
 import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
-import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
-import {SecuritizationLockDistribution} from './SecuritizationLockDistribution.sol';
 import {SecuritizationTGE} from './SecuritizationTGE.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {RegistryInjection} from './RegistryInjection.sol';

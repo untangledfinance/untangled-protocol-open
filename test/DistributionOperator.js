@@ -395,26 +395,6 @@ describe('Distribution', () => {
         });
     });
 
-    describe('#Distribution Operator', async () => {
-        it('#makeRedeemRequestAndRedeem SOT', async () => {
-            await sotToken.connect(lenderSigner).approve(distributionTranche.address, unlimitedAllowance);
-            await distributionOperator
-                .connect(lenderSigner)
-                .makeRedeemRequestAndRedeem(securitizationPoolContract.address, sotToken.address, parseEther('10'));
-
-            expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('90.0');
-        });
-
-        it('#makeRedeemRequestAndRedeem JOT', async () => {
-            await jotToken.connect(lenderSigner).approve(distributionTranche.address, unlimitedAllowance);
-            await distributionOperator
-                .connect(lenderSigner)
-                .makeRedeemRequestAndRedeem(securitizationPoolContract.address, jotToken.address, parseEther('10'));
-
-            expect(formatEther(await jotToken.balanceOf(lenderSigner.address))).equal('90.0');
-        });
-    });
-
     let expirationTimestamps;
     const CREDITOR_FEE = '0';
     const ASSET_PURPOSE_LOAN = '0';
@@ -532,14 +512,14 @@ describe('Distribution', () => {
                 sotToken.address,
                 lenderSigner.address
             );
-            expect(formatEther(result)).equal('90.0');
+            expect(formatEther(result)).equal('100.0');
 
             result = await distributionAssessor.calcCorrespondingTotalAssetValue(
                 jotToken.address,
                 lenderSigner.address
             );
 
-            expect(result).to.closeTo(parseEther('90.18'), parseEther('0.01'));
+            expect(result).to.closeTo(parseEther('100.18'), parseEther('0.01'));
         });
 
         it('#calcCorrespondingAssetValue(address,address[])', async () => {
@@ -547,7 +527,7 @@ describe('Distribution', () => {
                 sotToken.address,
                 [lenderSigner.address]
             );
-            expect(result.map((x) => formatEther(x))).to.deep.equal(['90.0']);
+            expect(result.map((x) => formatEther(x))).to.deep.equal(['100.0']);
         });
 
         it('#calcTokenPrice', async () => {
@@ -566,7 +546,7 @@ describe('Distribution', () => {
 
         it('#getCashBalance', async () => {
             const result = await distributionAssessor.getCashBalance(securitizationPoolContract.address);
-            expect(result).to.closeTo(parseEther('161.000'), parseEther('0.001'));
+            expect(result).to.closeTo(parseEther('181.000'), parseEther('0.001'));
         });
     });
 
