@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {PausableUpgradeable} from '../../base/PauseableUpgradeable.sol';
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import '@openzeppelin/contracts/utils/math/Math.sol';
 
 import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {Registry} from '../../storage/Registry.sol';
@@ -41,7 +41,12 @@ contract SecuritizationLockDistribution is
 
     function installExtension(
         bytes memory params
-    ) public virtual override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {}
+    )
+        public
+        virtual
+        override(ISecuritizationPoolExtension, SecuritizationAccessControl, SecuritizationPoolStorage)
+        onlyCallInTargetPool
+    {}
 
     function lockedDistributeBalances(address tokenAddress, address investor) public view override returns (uint256) {
         Storage storage $ = _getStorage();
@@ -66,41 +71,6 @@ contract SecuritizationLockDistribution is
     function totalRedeemedCurrency() public view override returns (uint256) {
         Storage storage $ = _getStorage();
         return $.totalRedeemedCurrency;
-    }
-
-    function getMaxAvailableReserve(uint256 sotRequest, uint256 jotRequest) public view override returns (uint256, uint256, uint256) {
-        Storage storage $ = _getStorage();
-        uint256 expectedSOTCurrencyAmount = sotRequest * registry().getDistributionAssessor().calcTokenPrice(address(this), $.sotToken)
-            /  10 ** INoteToken($.sotToken).decimals();
-        if ($.reserve <= expectedSOTCurrencyAmount) {
-            return ($.reserve,
-                $.reserve * (10 ** INoteToken($.sotToken).decimals()) /
-                registry().getDistributionAssessor().calcTokenPrice(address(this), $.sotToken),
-                0);
-        }
-
-        uint256 x = solveReserveEquation(expectedSOTCurrencyAmount, sotRequest);
-        uint256 maxJOTRedeem = (x *  10 ** INoteToken($.jotToken).decimals())/registry().getDistributionAssessor().calcTokenPrice(address(this), $.jotToken);
-
-        return (x+ expectedSOTCurrencyAmount, sotRequest, maxJOTRedeem);
-    }
-
-
-    function solveReserveEquation(uint256 expectedSOTCurrencyAmount, uint256 sotRequest) public view returns(uint256){
-        Storage storage $ = _getStorage();
-        uint256 remainingReserve = $.reserve - expectedSOTCurrencyAmount;
-        uint256 poolValue = registry().getSecuritizationPoolValueService().getPoolValue(address(this)) - expectedSOTCurrencyAmount;
-        uint256 nav = IPoolNAV(ISecuritizationPoolStorage(address(this)).poolNAV()).currentNAV();
-        uint256 maxSeniorRatio = ONE_HUNDRED_PERCENT- $.minFirstLossCushion; // a = maxSeniorRatio / ONE_HUNDRED_PERCENT
-        uint256 remainingSOTSupply =  INoteToken($.sotToken).totalSupply() - sotRequest;
-
-        uint256 b = 2 * poolValue * maxSeniorRatio / ONE_HUNDRED_PERCENT - remainingSOTSupply;
-        uint256 c = (poolValue**2) * maxSeniorRatio / ONE_HUNDRED_PERCENT
-        - remainingSOTSupply * poolValue
-            - (remainingSOTSupply * nav * ISecuritizationTGE(address(this)).interestRateSOT() * (block.timestamp - $.openingBlockTimestamp)) / (ONE_HUNDRED_PERCENT * 365 days);
-        uint256 delta = b**2 - 4 * c * maxSeniorRatio / ONE_HUNDRED_PERCENT;
-        uint256 x = (b + delta.sqrt()) * ONE_HUNDRED_PERCENT / (2 * maxSeniorRatio);
-        return x;
     }
 
     // // token address -> user -> locked
@@ -220,7 +190,6 @@ contract SecuritizationLockDistribution is
         _functionSignatures[5] = this.increaseLockedDistributeBalance.selector;
         _functionSignatures[6] = this.decreaseLockedDistributeBalance.selector;
         _functionSignatures[7] = this.supportsInterface.selector;
-        _functionSignatures[8] = this.getMaxAvailableReserve.selector;
 
         return _functionSignatures;
     }

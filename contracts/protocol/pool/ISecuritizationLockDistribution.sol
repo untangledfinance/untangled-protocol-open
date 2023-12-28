@@ -29,9 +29,6 @@ interface ISecuritizationLockDistribution {
     // for lending operation
     function totalLockedDistributeBalance() external view returns (uint256);
 
-    /// @notice Max reserve amount for redemption
-    function getMaxAvailableReserve(uint256 sotRequest, uint256 jotRequest) external view returns (uint256,uint256, uint256);
-
     /// @notice increases the locked distribution balance for a specific investor
     function increaseLockedDistributeBalance(
         address tokenAddress,

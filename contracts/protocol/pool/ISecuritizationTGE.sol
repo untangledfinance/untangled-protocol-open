@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import {Configuration} from '../../libraries/Configuration.sol';
 
 interface ISecuritizationTGE {
-    // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event UpdateTGEAddress(address tge, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
     event UpdateReserve(uint256 currencyAmount);

@@ -31,6 +31,7 @@ describe('NoteTokenVault', () => {
     let loanKernel;
     let noteTokenVault;
     let chainId;
+    let securitizationPoolValueService;
 
     // Wallets
     let untangledAdminSigner,
@@ -65,7 +66,14 @@ describe('NoteTokenVault', () => {
         ] = await ethers.getSigners();
 
         // Init contracts
-        ({ stableCoin, uniqueIdentity, securitizationManager, loanKernel, noteTokenVault } = await setup());
+        ({
+            stableCoin,
+            uniqueIdentity,
+            securitizationManager,
+            loanKernel,
+            noteTokenVault,
+            securitizationPoolValueService,
+        } = await setup());
 
         await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
         // Create new pool
@@ -730,7 +738,10 @@ describe('NoteTokenVault', () => {
                 );
             });
             it('should return max available reserve', async () => {
-                const result = await securitizationPoolContract.getMaxAvailableReserve(parseEther('1.5'), parseEther('1.5'))
+                const result = await securitizationPoolValueService.getMaxAvailableReserve(
+                    securitizationPoolContract.address,
+                    parseEther('1.5')
+                );
                 expect(result).to.deep.equal([parseEther('6'), parseEther('1.5'), parseEther('4.5')]);
             });
 
