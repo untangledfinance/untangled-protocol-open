@@ -38,6 +38,25 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
     uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
 
+    function getAssetInterestRates(
+        address[] calldata tokenAddresses,
+        uint256[] calldata tokenIds
+    ) external view returns (uint256[] memory) {
+        uint256 tokenIdsLength = tokenIds.length;
+        uint256[] memory interestRates = new uint256[](tokenIdsLength);
+        for (uint256 i; i < tokenIdsLength; i++) {
+            interestRates[i] = getAssetInterestRate(tokenAddresses[i], tokenIds[i]);
+        }
+        return interestRates;
+    }
+
+    function getAssetInterestRate(address tokenAddress, uint256 tokenId) public view returns (uint256) {
+        IUntangledERC721 loanAssetToken = IUntangledERC721(tokenAddress);
+        uint256 interestRate = loanAssetToken.getInterestRate(tokenId);
+
+        return interestRate;
+    }
+
     function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
     }
