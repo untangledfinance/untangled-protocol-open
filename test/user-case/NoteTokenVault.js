@@ -15,6 +15,7 @@ const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE, BACKEND_ADMIN, SIGNER_ROLE } = require
 const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 const { getPoolByAddress, unlimitedAllowance } = require('../utils');
 const { SaleType } = require('../shared/constants.js');
+const { parse } = require('dotenv');
 
 const ONE_DAY_IN_SECONDS = 86400;
 
@@ -41,6 +42,7 @@ describe('NoteTokenVault', () => {
         lenderSignerC,
         backendAdminSigner,
         cancelOrderAdminSigner,
+        redeemOrderAdminSigner,
         relayer;
 
     const stableCoinAmountToBuyJOT = parseEther('1');
@@ -729,7 +731,7 @@ describe('NoteTokenVault', () => {
             });
             it('should return max available reserve', async () => {
                 const result = await securitizationPoolContract.getMaxAvailableReserve(parseEther('1.5'), parseEther('1.5'))
-                console.log(result);
+                expect(result).to.deep.equal([parseEther('6'), parseEther('1.5'), parseEther('4.5')]);
             });
 
             it('SOT: should run successfully', async () => {

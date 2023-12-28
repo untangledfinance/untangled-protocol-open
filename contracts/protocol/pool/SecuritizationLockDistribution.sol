@@ -72,9 +72,7 @@ contract SecuritizationLockDistribution is
         Storage storage $ = _getStorage();
         uint256 expectedSOTCurrencyAmount = sotRequest * registry().getDistributionAssessor().calcTokenPrice(address(this), $.sotToken)
             /  10 ** INoteToken($.sotToken).decimals();
-        console.log("h1");
         if ($.reserve <= expectedSOTCurrencyAmount) {
-            console.log("h2");
             return ($.reserve,
                 $.reserve * (10 ** INoteToken($.sotToken).decimals()) /
                 registry().getDistributionAssessor().calcTokenPrice(address(this), $.sotToken),
@@ -101,7 +99,7 @@ contract SecuritizationLockDistribution is
         - remainingSOTSupply * poolValue
             - (remainingSOTSupply * nav * ISecuritizationTGE(address(this)).interestRateSOT() * (block.timestamp - $.openingBlockTimestamp)) / (ONE_HUNDRED_PERCENT * 365 days);
         uint256 delta = b**2 - 4 * c * maxSeniorRatio / ONE_HUNDRED_PERCENT;
-        uint256 x = (b - delta.sqrt()) * ONE_HUNDRED_PERCENT / (2 * maxSeniorRatio);
+        uint256 x = (b + delta.sqrt()) * ONE_HUNDRED_PERCENT / (2 * maxSeniorRatio);
         return x;
     }
 
