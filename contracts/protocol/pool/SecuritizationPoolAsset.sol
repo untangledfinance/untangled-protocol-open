@@ -219,6 +219,12 @@ contract SecuritizationPoolAsset is
         IPoolNAV(poolNAV()).file('discountRate', $.riskScores[0].discountRate);
     }
 
+    function updateAssetRiskScore(bytes32 nftID, uint256 risk) public override {
+        registry().requirePoolAdmin(_msgSender());
+
+        IPoolNAV(poolNAV()).updateAssetRiskScore(nftID, risk);
+    }
+
     /// @inheritdoc ISecuritizationPool
     function exportAssets(
         address tokenAddress,

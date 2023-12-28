@@ -51,6 +51,8 @@ interface ISecuritizationPool {
         uint32[] calldata _periodsAndWriteOffs
     ) external;
 
+    function updateAssetRiskScore(bytes32 nftID, uint256 risk) external;
+
     /// @notice exports NFT assets to another pool address
     function exportAssets(address tokenAddress, address toPoolAddress, uint256[] calldata tokenIds) external;
 
@@ -62,7 +64,7 @@ interface ISecuritizationPool {
     ) external;
 
     /// @notice collects NFT assets from a specified address
-    function collectAssets(uint256[] calldata tokenIds) external returns(uint256);
+    function collectAssets(uint256[] calldata tokenIds) external returns (uint256);
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Assets(

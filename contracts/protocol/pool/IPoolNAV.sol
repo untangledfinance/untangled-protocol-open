@@ -7,6 +7,7 @@ import {Discounting} from './discounting.sol';
 interface IPoolNAV {
     event Update(uint256 loanId, uint256 risk);
     event Rely(address indexed usr);
+
     function addLoan(uint256 loan) external returns (uint256);
 
     function repayLoan(uint256 loan, uint256 amount) external returns (uint256);
@@ -35,4 +36,6 @@ interface IPoolNAV {
     function maturityDate(bytes32 nft_) external view returns (uint256);
 
     function discountRate() external view returns (uint256);
+
+    function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) external;
 }

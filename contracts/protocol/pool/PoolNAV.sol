@@ -1,4 +1,23 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+// src/borrower/feed/navfeed.sol -- Tinlake NAV Feed
+
+// Copyright (C) 2022 Centrifuge
+// Copyright (C) 2023 Untangled.Finance
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol';
@@ -723,8 +742,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
     /// @param nftID_ the nftID of the loan
     /// @param risk_ the new value appraisal of the collateral NFT
     /// @param risk_ the new risk group
-    function update(bytes32 nftID_, uint256 risk_) public {
-        registry.requirePoolAdmin(_msgSender());
+    function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) public onlyRole(POOL) {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
         // no change in risk group
@@ -744,7 +762,8 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         uint256 loan = uint256(nftID_);
         if (pie[loan] != 0) {
             RiskScore memory riskParam = getRiskScoreByIdx(risk_);
-            uint256 _convertedInterestRate = ONE + (riskParam.interestRate * ONE) /
+            uint256 _convertedInterestRate = ONE +
+                (riskParam.interestRate * ONE) /
                 (100 * INTEREST_RATE_SCALING_FACTOR_PERCENT * 365 days);
             if (rates[_convertedInterestRate].ratePerSecond == 0) {
                 // If interest rate is not set
@@ -770,7 +789,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         buckets[maturityDate_] = safeSub(buckets[maturityDate_], fvDecrease);
 
         latestDiscount = secureSub(latestDiscount, navDecrease);
-        latestDiscountOfNavAssets[nftID_]= secureSub(latestDiscountOfNavAssets[nftID_], navDecrease);
+        latestDiscountOfNavAssets[nftID_] = secureSub(latestDiscountOfNavAssets[nftID_], navDecrease);
 
         latestNAV = secureSub(latestNAV, navDecrease);
 
@@ -798,7 +817,6 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         latestNAV = safeAdd(latestNAV, navIncrease);
         emit Update(loan, risk_);
     }
-
 
     /// @notice returns the nftID for the underlying collateral nft
     /// @param loan the loan id
