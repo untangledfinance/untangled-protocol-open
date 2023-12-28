@@ -165,10 +165,7 @@ abstract contract Crowdsale is UntangledBase, ICrowdSale {
     /// @notice Catch event redeem token
     /// @param currencyAmount amount of currency investor want to redeem
     function onRedeem(uint256 currencyAmount) public virtual override {
-        require(
-            _msgSender() == address(registry.getDistributionOperator()),
-            'Crowdsale: Caller must be distribution operator'
-        );
+        require(_msgSender() == address(registry.getNoteTokenVault()), 'Crowdsale: Caller must be Note token vault');
         _currencyRaised -= currencyAmount;
     }
 

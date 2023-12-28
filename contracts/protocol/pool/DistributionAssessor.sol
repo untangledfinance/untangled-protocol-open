@@ -9,7 +9,6 @@ import '../../interfaces/INoteToken.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
-import {ISecuritizationLockDistribution} from './ISecuritizationLockDistribution.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
@@ -64,9 +63,7 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
     /// @return The value in pool's underlying currency
     function _calcCorrespondingAssetValue(address tokenAddress, address investor) internal view returns (uint256) {
         INoteToken notesToken = INoteToken(tokenAddress);
-        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(notesToken.poolAddress());
-
-        uint256 tokenPrice = calcTokenPrice(address(securitizationPool), tokenAddress);
+        uint256 tokenPrice = calcTokenPrice(notesToken.poolAddress(), tokenAddress);
         uint256 tokenBalance = notesToken.balanceOf(investor);
 
         return (tokenBalance * tokenPrice) / 10 ** notesToken.decimals();
@@ -162,11 +159,8 @@ contract DistributionAssessor is SecuritizationPoolServiceBase, IDistributionAss
 
     /// @inheritdoc IDistributionAssessor
     function getCashBalance(address pool) public view override returns (uint256) {
-        ISecuritizationLockDistribution securitizationPool = ISecuritizationLockDistribution(pool);
         return
-            INoteToken(ISecuritizationTGE(pool).underlyingCurrency()).balanceOf(
-                ISecuritizationPoolStorage(pool).pot()
-            ) - securitizationPool.totalLockedDistributeBalance();
+            INoteToken(ISecuritizationTGE(pool).underlyingCurrency()).balanceOf(ISecuritizationPoolStorage(pool).pot());
     }
 
     uint256[50] private __gap;

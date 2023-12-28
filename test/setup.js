@@ -100,10 +100,6 @@ const initPool = async (securitizationPoolImpl) => {
     const securitizationPoolAssetImpl = await SecuritizationPoolAsset.deploy();
     await securitizationPoolImpl.registerExtension(securitizationPoolAssetImpl.address);
 
-    const SecuritizationLockDistribution = await ethers.getContractFactory('SecuritizationLockDistribution');
-    const securitizationLockDistributionImpl = await SecuritizationLockDistribution.deploy();
-    await securitizationPoolImpl.registerExtension(securitizationLockDistributionImpl.address);
-
     return securitizationPoolImpl;
 };
 
@@ -179,10 +175,7 @@ async function setup() {
     loanRepaymentRouter = await upgrades.deployProxy(LoanRepaymentRouter, [registry.address]);
     const DistributionAssessor = await ethers.getContractFactory('DistributionAssessor');
     distributionAssessor = await upgrades.deployProxy(DistributionAssessor, [registry.address]);
-    const DistributionOperator = await ethers.getContractFactory('DistributionOperator');
-    distributionOperator = await upgrades.deployProxy(DistributionOperator, [registry.address]);
-    const DistributionTranche = await ethers.getContractFactory('DistributionTranche');
-    distributionTranche = await upgrades.deployProxy(DistributionTranche, [registry.address]);
+
     const NoteTokenVault = await ethers.getContractFactory('NoteTokenVault');
     noteTokenVault = await upgrades.deployProxy(NoteTokenVault, [registry.address]);
 
@@ -193,8 +186,6 @@ async function setup() {
     await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
     await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
     await registry.setDistributionAssessor(distributionAssessor.address);
-    await registry.setDistributionOperator(distributionOperator.address);
-    await registry.setDistributionTranche(distributionTranche.address);
     await registry.setNoteTokenVault(noteTokenVault.address);
 
     const { loanAssetTokenContract, defaultLoanAssetTokenValidator } = await setUpLoanAssetToken(

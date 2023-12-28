@@ -31,10 +31,6 @@ contract TokenGenerationEventFactory is ITokenGenerationEventFactory, UntangledB
         __TokenGenerationEventFactory_init(_registry, _factoryAdmin);
     }
 
-    function initializeV2(Registry _registry, address _factoryAdmin) public reinitializer(2) {
-        __TokenGenerationEventFactory_init(_registry, _factoryAdmin);
-    }
-
     function setFactoryAdmin(address _factoryAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _setFactoryAdmin(_factoryAdmin);
     }

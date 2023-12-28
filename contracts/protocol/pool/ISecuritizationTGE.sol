@@ -68,8 +68,6 @@ interface ISecuritizationTGE {
     /// @dev trigger update asset value repaid
     function increaseTotalAssetRepaidCurrency(uint256 amount) external;
 
-    function redeem(address usr, address notesToken, uint256 currencyAmount, uint256 tokenAmount) external;
-
     /// @dev Disburses a specified amount of currency to the given user.
     /// @param usr The address of the user to receive the currency.
     /// @param currencyAmount The amount of currency to disburse.

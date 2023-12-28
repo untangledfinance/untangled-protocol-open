@@ -11,6 +11,8 @@ import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/
 
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {INoteTokenVault} from './INoteTokenVault.sol';
+import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {BACKEND_ADMIN, SIGNER_ROLE} from './types.sol';
@@ -149,13 +151,21 @@ contract NoteTokenVault is
                 poolUserRedeems[pool][toAddresses[i]].redeemSOTAmount -= redeemedNoteAmounts[i];
             }
 
+            // Update pot pool reserve in P2P investment
+            address poolOfPot = registry.getSecuritizationManager().potToPool(toAddresses[i]);
+            if (poolOfPot != address(0)) {
+                ISecuritizationTGE(poolOfPot).increaseReserve(currencyAmounts[i]);
+            }
+
             ERC20BurnableUpgradeable(noteTokenAddress).burn(redeemedNoteAmounts[i]);
         }
 
         if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
             poolTotalJOTRedeem[pool] -= totalNoteRedeemed;
+            ICrowdSale(ISecuritizationPoolStorage(pool).secondTGEAddress()).onRedeem(totalCurrencyAmount);
         } else {
             poolTotalSOTRedeem[pool] -= totalNoteRedeemed;
+            ICrowdSale(ISecuritizationPoolStorage(pool).tgeAddress()).onRedeem(totalCurrencyAmount);
         }
 
         poolTGE.decreaseReserve(totalCurrencyAmount);

@@ -174,13 +174,13 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
 
     /// @inheritdoc ISecuritizationPoolValueService
     function getJuniorRatio(address poolAddress) external view returns (uint256) {
-        uint256 rateSenior = this.getSeniorRatio(poolAddress);
+        uint256 rateSenior = getSeniorRatio(poolAddress);
         require(rateSenior <= 100 * RATE_SCALING_FACTOR, 'securitizationPool.rateSenior >100');
 
         return 100 * RATE_SCALING_FACTOR - rateSenior;
     }
 
-    function getSeniorRatio(address poolAddress) external view returns (uint256) {
+    function getSeniorRatio(address poolAddress) public view returns (uint256) {
         uint256 seniorAsset = this.getSeniorAsset(poolAddress);
         uint256 poolValue = this.getPoolValue(poolAddress);
         if (poolValue == 0) {
