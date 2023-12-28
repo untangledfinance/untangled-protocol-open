@@ -57,7 +57,7 @@ module.exports = {
 
             // forking: {
             //     url: 'https://alfajores-forno.celo-testnet.org',
-            //     blockNumber: 21675656,
+            //     blockNumber: 21676043,
             // },
             // chainId: 44787,
         },

@@ -12,6 +12,7 @@ contract SecuritizationPoolServiceBase is UntangledBase {
     function initialize(Registry _registry) public initializer {
         __UntangledBase__init(_msgSender());
 
+        require(address(_registry) != address(0), 'Registry address cannot be empty');
         registry = _registry;
     }
 
