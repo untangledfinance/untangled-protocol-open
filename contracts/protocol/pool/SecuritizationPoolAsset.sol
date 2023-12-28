@@ -409,7 +409,7 @@ contract SecuritizationPoolAsset is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](19);
+        bytes4[] memory _functionSignatures = new bytes4[](20);
 
         _functionSignatures[0] = this.getNFTAssetsLength.selector;
         _functionSignatures[1] = this.getTokenAssetAddresses.selector;
@@ -430,6 +430,7 @@ contract SecuritizationPoolAsset is
         _functionSignatures[16] = this.pause.selector;
         _functionSignatures[17] = this.unpause.selector;
         _functionSignatures[18] = this.paused.selector;
+        _functionSignatures[19] = this.updateAssetRiskScore.selector;
 
         return _functionSignatures;
     }
