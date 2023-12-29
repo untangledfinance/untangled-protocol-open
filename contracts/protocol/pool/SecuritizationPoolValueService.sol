@@ -53,6 +53,20 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         return interestRate;
     }
 
+    function getAssetRiskScores(
+        address poolAddress,
+        bytes32[] calldata tokenIds
+    ) external view returns (uint256[] memory) {
+        uint256 tokenIdsLength = tokenIds.length;
+        uint256[] memory riskScores = new uint256[](tokenIdsLength);
+
+        IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        for (uint256 i; i < tokenIdsLength; i++) {
+            riskScores[i] = poolNAV.risk(tokenIds[i]);
+        }
+        return riskScores;
+    }
+
     function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
         return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
     }
