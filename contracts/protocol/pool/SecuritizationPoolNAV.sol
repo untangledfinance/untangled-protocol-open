@@ -76,10 +76,10 @@ contract SecuritizationPoolNAV is
     {
         return
             super.supportsInterface(interfaceId) ||
-            interfaceId == type(ISecuritizationPool).interfaceId ||
             interfaceId == type(ISecuritizationPoolExtension).interfaceId ||
             interfaceId == type(ISecuritizationAccessControl).interfaceId ||
-            interfaceId == type(ISecuritizationPoolStorage).interfaceId;
+            interfaceId == type(ISecuritizationPoolStorage).interfaceId ||
+            interfaceId == type(ISecuritizationPoolNAV).interfaceId;
     }
 
     function installExtension(
@@ -103,6 +103,56 @@ contract SecuritizationPoolNAV is
     }
 
     /** GETTER */
+    /// @notice getter function for the maturityDate
+    /// @param nft_ the id of the nft based on the hash of registry and tokenId
+    /// @return maturityDate_ the maturityDate of the nft
+    function maturityDate(bytes32 nft_) public view override returns (uint256 maturityDate_) {
+        Storage storage $ = _getStorage();
+        return uint256($.details[nft_].maturityDate);
+    }
+
+    /// @notice getter function for the risk group
+    /// @param nft_ the id of the nft based on the hash of registry and tokenId
+    /// @return risk_ the risk group of the nft
+
+    function risk(bytes32 nft_) public view returns (uint256 risk_) {
+        Storage storage $ = _getStorage();
+        return uint256($.details[nft_].risk);
+    }
+
+    /// @notice getter function for the nft value
+    /// @param nft_ the id of the nft based on the hash of registry and tokenId
+    /// @return nftValue_ the value of the nft
+
+    /// @notice getter function for the future value
+    /// @param nft_ the id of the nft based on the hash of registry and tokenId
+    /// @return fv_ future value of the loan
+    function futureValue(bytes32 nft_) public view override returns (uint256 fv_) {
+        Storage storage $ = _getStorage();
+        return uint256($.details[nft_].futureValue);
+    }
+
+    function discountRate() public view override returns (uint256) {
+        return uint256(_getStorage().discountRate);
+    }
+
+    /// @notice getter function for the recovery rate PD
+    /// @param riskID id of a risk group
+    /// @return recoveryRatePD_ recovery rate PD of the risk group
+    function recoveryRatePD(uint256 riskID, uint256 termLength) public view returns (uint256 recoveryRatePD_) {
+        RiskScore memory riskParam = getRiskScoreByIdx(riskID);
+        return
+            ONE -
+            (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) /
+            (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
+    }
+
+    /// @notice getter function for the borrowed amount
+    /// @param loan id of a loan
+    /// @return borrowed_ borrowed amount of the loan
+    function borrowed(uint256 loan) public view returns (uint256 borrowed_) {
+        return uint256(_getStorage().loanDetails[loan].borrowed);
+    }
 
     /** UTILITY FUNCTION */
     function getRiskScoreByIdx(uint256 idx) private view returns (RiskScore memory) {
@@ -171,56 +221,6 @@ contract SecuritizationPoolNAV is
         return principalAmount;
     }
 
-    /// @notice getter function for the maturityDate
-    /// @param nft_ the id of the nft based on the hash of registry and tokenId
-    /// @return maturityDate_ the maturityDate of the nft
-    function maturityDate(bytes32 nft_) public view override returns (uint256 maturityDate_) {
-        Storage storage $ = _getStorage();
-        return uint256($.details[nft_].maturityDate);
-    }
-
-    /// @notice getter function for the risk group
-    /// @param nft_ the id of the nft based on the hash of registry and tokenId
-    /// @return risk_ the risk group of the nft
-
-    function risk(bytes32 nft_) public view returns (uint256 risk_) {
-        Storage storage $ = _getStorage();
-        return uint256($.details[nft_].risk);
-    }
-
-    /// @notice getter function for the nft value
-    /// @param nft_ the id of the nft based on the hash of registry and tokenId
-    /// @return nftValue_ the value of the nft
-
-    /// @notice getter function for the future value
-    /// @param nft_ the id of the nft based on the hash of registry and tokenId
-    /// @return fv_ future value of the loan
-    function futureValue(bytes32 nft_) public view override returns (uint256 fv_) {
-        Storage storage $ = _getStorage();
-        return uint256($.details[nft_].futureValue);
-    }
-
-    function discountRate() public view override returns (uint256) {
-        return uint256(_getStorage().discountRate);
-    }
-
-    /// @notice getter function for the recovery rate PD
-    /// @param riskID id of a risk group
-    /// @return recoveryRatePD_ recovery rate PD of the risk group
-    function recoveryRatePD(uint256 riskID, uint256 termLength) public view returns (uint256 recoveryRatePD_) {
-        RiskScore memory riskParam = getRiskScoreByIdx(riskID);
-        return
-            ONE -
-            (ONE * riskParam.probabilityOfDefault * riskParam.lossGivenDefault * termLength) /
-            (ONE_HUNDRED_PERCENT * ONE_HUNDRED_PERCENT * 365 days);
-    }
-
-    /// @notice getter function for the borrowed amount
-    /// @param loan id of a loan
-    /// @return borrowed_ borrowed amount of the loan
-    function borrowed(uint256 loan) public view returns (uint256 borrowed_) {
-        return uint256(_getStorage().loanDetails[loan].borrowed);
-    }
 
     /// @notice converts a uint256 to uint128
     /// @param value the value to be converted
