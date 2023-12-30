@@ -849,6 +849,7 @@ describe('NAV', () => {
       */
             uploadedLoanTime = await time.latest();
 
+            securitizationPoolContract = await ethers.getContractAt('SecuritizationPoolNAV', securitizationPoolContract.address);
         });
 
         it('after upload loan successfully', async () => {
