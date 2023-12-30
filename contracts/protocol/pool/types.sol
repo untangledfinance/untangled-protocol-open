@@ -14,3 +14,6 @@ bytes32 constant POOL = keccak256('POOL');
 uint256 constant RATE_SCALING_FACTOR = 10 ** 4;
 
 uint256 constant ONE_HUNDRED_PERCENT = 100 * RATE_SCALING_FACTOR;
+
+uint256 constant ONE = 10 ** 27;
+uint256 constant WRITEOFF_RATE_GROUP_START = 1000 * ONE;

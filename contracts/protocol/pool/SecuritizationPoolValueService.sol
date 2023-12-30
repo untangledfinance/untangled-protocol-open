@@ -17,7 +17,7 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Configuration} from '../../libraries/Configuration.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
-import {IPoolNAV} from './IPoolNAV.sol';
+import {ISecuritizationPoolNAV} from './ISecuritizationPoolNAV.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
 import {RiskScore} from './base/types.sol';
@@ -60,7 +60,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory riskScores = new uint256[](tokenIdsLength);
 
-        IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        ISecuritizationPoolNAV poolNAV = ISecuritizationPoolNAV(poolAddress);
         for (uint256 i; i < tokenIdsLength; i++) {
             riskScores[i] = poolNAV.risk(tokenIds[i]);
         }
@@ -68,11 +68,11 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
     }
 
     function getExpectedLATAssetValue(address poolAddress) public view returns (uint256) {
-        return IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+        return ISecuritizationPoolNAV(poolAddress).currentNAV();
     }
 
     function getExpectedAssetValue(address poolAddress, bytes32 tokenId) public view returns (uint256) {
-        IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        ISecuritizationPoolNAV poolNav = ISecuritizationPoolNAV(poolAddress);
         return poolNav.currentNAVAsset(tokenId);
     }
 
@@ -81,7 +81,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         bytes32[] calldata tokenIds
     ) public view returns (uint256[] memory expectedAssetsValues) {
         expectedAssetsValues = new uint256[](tokenIds.length);
-        IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        ISecuritizationPoolNAV poolNav = ISecuritizationPoolNAV(poolAddress);
         for (uint i = 0; i < tokenIds.length; i++) {
             expectedAssetsValues[i] = poolNav.currentNAVAsset(tokenIds[i]);
         }
@@ -94,7 +94,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         bytes32[] calldata tokenIds
     ) public view returns (uint256[] memory debtAssetsValues) {
         debtAssetsValues = new uint256[](tokenIds.length);
-        IPoolNAV poolNav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV());
+        ISecuritizationPoolNAV poolNav = ISecuritizationPoolNAV(poolAddress);
         for (uint i = 0; i < tokenIds.length; i++) {
             debtAssetsValues[i] = poolNav.debt(uint256(tokenIds[i]));
         }
@@ -264,7 +264,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         uint64 openingBlockTimestamp = ISecuritizationPoolStorage(poolAddress).openingBlockTimestamp();
 
         uint256 poolValue = this.getPoolValue(poolAddress) - expectedSOTCurrencyAmount;
-        uint256 nav = IPoolNAV(ISecuritizationPoolStorage(poolAddress).poolNAV()).currentNAV();
+        uint256 nav = ISecuritizationPoolNAV(poolAddress).currentNAV();
         uint256 maxSeniorRatio = ONE_HUNDRED_PERCENT - minFirstLossCushion; // a = maxSeniorRatio / ONE_HUNDRED_PERCENT
 
         if (maxSeniorRatio == 0) {

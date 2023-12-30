@@ -157,7 +157,6 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
 
         poolInstance.grantRole(OWNER_ROLE, poolOwner);
         poolInstance.renounceRole(OWNER_ROLE, address(this));
-        ISecuritizationTGE(poolAddress).setUpPoolNAV();
 
         emit NewPoolCreated(poolAddress);
 
