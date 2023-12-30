@@ -1,11 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import {Discounting} from './discounting.sol';
+import {Configuration} from '../../libraries/Configuration.sol';
 
-interface IPoolNAV {
+interface ISecuritizationPoolNAV {
+    /// Events
+    event IncreaseDebt(uint256 indexed loan, uint256 currencyAmount);
+    event DecreaseDebt(uint256 indexed loan, uint256 currencyAmount);
+    event SetRate(uint256 indexed loan, uint256 rate);
+    event ChangeRate(uint256 indexed loan, uint256 newRate);
+    event File(bytes32 indexed what, uint256 rate, uint256 value);
+
+
+    // events
+    event Depend(bytes32 indexed name, address addr);
+    event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
+    event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
+    event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
+
     event UpdateAssetRiskScore(uint256 loanId, uint256 risk);
-    event Rely(address indexed usr);
 
     function addLoan(uint256 loan) external returns (uint256);
 
@@ -39,4 +52,5 @@ interface IPoolNAV {
     function discountRate() external view returns (uint256);
 
     function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) external;
+
 }

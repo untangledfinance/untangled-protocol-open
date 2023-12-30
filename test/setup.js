@@ -65,19 +65,6 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
     return { noteTokenFactory };
 };
 
-const setUpPoolNAVFactory = async (registry, factoryAdmin) => {
-    const PoolNAVFactory = await ethers.getContractFactory('PoolNAVFactory');
-    const poolNAVFactory = await upgrades.deployProxy(PoolNAVFactory, [registry.address, factoryAdmin.address]);
-
-    const PoolNAV = await ethers.getContractFactory('PoolNAV');
-    const poolNAVImpl = await PoolNAV.deploy();
-    // await registry.setNoteToken(noteTokenImpl.address);
-    await poolNAVFactory.setPoolNAVImplementation(poolNAVImpl.address);
-    await registry.setPoolNAVFactory(poolNAVFactory.address);
-
-    return { poolNAVFactory };
-};
-
 const initPool = async (securitizationPoolImpl) => {
     // SecuritizationAccessControl,
     // SecuritizationPoolStorage,
@@ -99,6 +86,10 @@ const initPool = async (securitizationPoolImpl) => {
     const SecuritizationPoolAsset = await ethers.getContractFactory('SecuritizationPoolAsset');
     const securitizationPoolAssetImpl = await SecuritizationPoolAsset.deploy();
     await securitizationPoolImpl.registerExtension(securitizationPoolAssetImpl.address);
+
+    const SecuritizationPoolNAV = await ethers.getContractFactory('SecuritizationPoolNAV');
+    const securitizationPoolNAVImpl = await SecuritizationPoolNAV.deploy();
+    await securitizationPoolImpl.registerExtension(securitizationPoolNAVImpl.address);
 
     return securitizationPoolImpl;
 };
@@ -153,7 +144,6 @@ async function setup() {
     securitizationPoolValueService = await upgrades.deployProxy(SecuritizationPoolValueService, [registry.address]);
 
     const { noteTokenFactory } = await setUpNoteTokenFactory(registry, factoryAdmin);
-    const { poolNAVFactory } = await setUpPoolNAVFactory(registry, factoryAdmin);
     const { tokenGenerationEventFactory } = await setUpTokenGenerationEventFactory(registry, factoryAdmin);
 
     const UniqueIdentity = await ethers.getContractFactory('UniqueIdentity');
@@ -211,7 +201,6 @@ async function setup() {
         go,
         uniqueIdentity,
         noteTokenFactory,
-        poolNAVFactory,
         tokenGenerationEventFactory,
         distributionOperator,
         distributionAssessor,

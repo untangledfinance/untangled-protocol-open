@@ -23,7 +23,6 @@ import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
-import {IPoolNAV} from './IPoolNAV.sol';
 import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
 
 interface ICrowdSaleLike {
@@ -246,17 +245,6 @@ contract SecuritizationTGE is
         emit UpdateDebtCeiling(_debtCeiling);
     }
 
-    function setUpPoolNAV() public override {
-        require(poolNAV() == address(0), 'SecuritizationPool: PoolNAV already set');
-        IPoolNAVFactory poolNAVFactory = registry().getPoolNAVFactory();
-        require(address(poolNAVFactory) != address(0), 'Pool NAV Factory was not registered');
-        address poolNAVAddress = poolNAVFactory.createPoolNAV();
-        Storage storage $ = _getStorage();
-        $.poolNAV = poolNAVAddress;
-
-        emit UpdatePoolNAV(poolNAVAddress);
-    }
-
     function increaseReserve(uint256 currencyAmount) external override whenNotPaused {
         require(
             _msgSender() == address(registry().getSecuritizationManager()) ||
@@ -390,7 +378,7 @@ contract SecuritizationTGE is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](31);
+        bytes4[] memory _functionSignatures = new bytes4[](30);
 
         _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
@@ -417,12 +405,11 @@ contract SecuritizationTGE is
         _functionSignatures[22] = this.paused.selector;
         _functionSignatures[23] = this.pause.selector;
         _functionSignatures[24] = this.unpause.selector;
-        _functionSignatures[25] = this.setUpPoolNAV.selector;
-        _functionSignatures[26] = this.isDebtCeilingValid.selector;
-        _functionSignatures[27] = this.setDebtCeiling.selector;
-        _functionSignatures[28] = this.debtCeiling.selector;
-        _functionSignatures[29] = this.disburse.selector;
-        _functionSignatures[30] = this.setMinFirstLossCushion.selector;
+        _functionSignatures[25] = this.isDebtCeilingValid.selector;
+        _functionSignatures[26] = this.setDebtCeiling.selector;
+        _functionSignatures[27] = this.debtCeiling.selector;
+        _functionSignatures[28] = this.disburse.selector;
+        _functionSignatures[29] = this.setMinFirstLossCushion.selector;
 
         return _functionSignatures;
     }

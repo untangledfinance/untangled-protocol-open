@@ -16,13 +16,13 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
+import {ISecuritizationPoolNAV} from './ISecuritizationPoolNAV.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 import {RiskScore} from './base/types.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
-import {IPoolNAV} from './IPoolNAV.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -181,7 +181,7 @@ contract SecuritizationPoolAsset is
                     writeOffAfterCollectionPeriod: _periodsAndWriteOffs[i + _daysPastDuesLength * 3]
                 })
             );
-            IPoolNAV(poolNAV()).file(
+            ISecuritizationPoolNAV(address(this)).file(
                 'writeOffGroup',
                 _interestRate,
                 _writeOffAfterGracePeriod,
@@ -189,7 +189,7 @@ contract SecuritizationPoolAsset is
                 _ratesAndDefaults[i + _daysPastDuesLength],
                 i
             );
-            IPoolNAV(poolNAV()).file(
+            ISecuritizationPoolNAV(address(this)).file(
                 'writeOffGroup',
                 _interestRate,
                 _writeOffAfterCollectionPeriod,
@@ -200,13 +200,7 @@ contract SecuritizationPoolAsset is
         }
 
         // Set discount rate
-        IPoolNAV(poolNAV()).file('discountRate', $.riskScores[0].discountRate);
-    }
-
-    function updateAssetRiskScore(bytes32 nftID, uint256 risk) public override {
-        registry().requirePoolAdmin(_msgSender());
-
-        IPoolNAV(poolNAV()).updateAssetRiskScore(nftID, risk);
+        ISecuritizationPoolNAV(address(this)).file('discountRate', $.riskScores[0].discountRate);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -254,7 +248,7 @@ contract SecuritizationPoolAsset is
         uint256 tokenIdsLength = tokenIds.length;
         uint256 expectedAssetsValue = 0;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            expectedAssetsValue = expectedAssetsValue + IPoolNAV(poolNAV()).addLoan(tokenIds[i]);
+            expectedAssetsValue = expectedAssetsValue + ISecuritizationPoolNAV(address(this)).addLoan(tokenIds[i]);
         }
 
         Storage storage $ = _getStorage();
@@ -368,7 +362,7 @@ contract SecuritizationPoolAsset is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](20);
+        bytes4[] memory _functionSignatures = new bytes4[](19);
 
         _functionSignatures[0] = this.getNFTAssetsLength.selector;
         _functionSignatures[1] = this.getTokenAssetAddresses.selector;
@@ -389,7 +383,6 @@ contract SecuritizationPoolAsset is
         _functionSignatures[16] = this.pause.selector;
         _functionSignatures[17] = this.unpause.selector;
         _functionSignatures[18] = this.paused.selector;
-        _functionSignatures[19] = this.updateAssetRiskScore.selector;
 
         return _functionSignatures;
     }

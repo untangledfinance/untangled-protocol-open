@@ -10,8 +10,8 @@ import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
-import {IPoolNAV} from '../pool/IPoolNAV.sol';
 import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
+import {ISecuritizationPoolNAV} from "../pool/ISecuritizationPoolNAV.sol";
 
 /// @title LoanRepaymentRouter
 /// @author Untangled Team
@@ -54,7 +54,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
         ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
-        IPoolNAV poolNAV = IPoolNAV(ISecuritizationPoolStorage(poolInstance).poolNAV());
+        ISecuritizationPoolNAV poolNAV = ISecuritizationPoolNAV(beneficiary);
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
         ISecuritizationTGE poolTGE = ISecuritizationTGE(beneficiary);

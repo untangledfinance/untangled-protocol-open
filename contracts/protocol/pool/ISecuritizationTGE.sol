@@ -11,7 +11,6 @@ interface ISecuritizationTGE {
     event UpdateDebtCeiling(uint256 _debtCeiling);
     event UpdateMintFirstLoss(uint32 _mintFirstLoss);
     event Withdraw(address originatorAddress, uint256 amount);
-    event UpdatePoolNAV(address poolNav);
 
     function termLengthInSeconds() external view returns (uint64);
 
@@ -96,5 +95,4 @@ interface ISecuritizationTGE {
     /// @notice allows the originator to withdraw from reserve
     function withdraw(address to, uint256 amount) external;
 
-    function setUpPoolNAV() external;
 }
