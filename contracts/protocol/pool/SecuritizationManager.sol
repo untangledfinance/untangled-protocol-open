@@ -4,10 +4,8 @@ pragma solidity 0.8.19;
 import {IAccessControlUpgradeable} from '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 
 import {UntangledBase} from '../../base/UntangledBase.sol';
-
 import {IRequiresUID} from '../../interfaces/IRequiresUID.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
-
 import {Factory2} from '../../base/Factory2.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {INoteTokenFactory} from '../note-sale/fab/INoteTokenFactory.sol';
@@ -24,7 +22,6 @@ import {IMintedTGE} from '../note-sale/IMintedTGE.sol';
 import {TokenGenerationEventFactory} from '../note-sale/fab/TokenGenerationEventFactory.sol';
 import {ITokenGenerationEventFactory} from '../note-sale/fab/ITokenGenerationEventFactory.sol';
 import {ISecuritizationTGE} from './ISecuritizationTGE.sol';
-
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
@@ -345,11 +342,17 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         require(hasAllowedUID(_msgSender()), 'Unauthorized. Must have correct UID');
 
         ICrowdSale tge = ICrowdSale(tgeAddress);
-        uint256 tokenAmount = tge.buyTokens(_msgSender(), _msgSender(), currencyAmount);
+        address poolOfPot = potToPool[_msgSender()];
+        uint256 tokenAmount = tge.buyTokens(
+            _msgSender(),
+            poolOfPot == address(0) ? _msgSender() : poolOfPot,
+            currencyAmount
+        );
         address pool = tge.pool();
         require(registry.getNoteTokenVault().redeemDisabled(pool) == false, 'SM: Buy token paused');
 
-        if (INoteToken(tge.token()).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
+        address noteToken = tge.token();
+        if (INoteToken(noteToken).noteTokenType() == uint8(Configuration.NOTE_TOKEN_TYPE.JUNIOR)) {
             if (MintedNormalTGE(tgeAddress).currencyRaised() >= MintedNormalTGE(tgeAddress).initialAmount()) {
                 // Currency Raised For JOT > initialJOTAmount => SOT sale start
                 address sotTGEAddress = ISecuritizationPoolStorage(pool).tgeAddress();
@@ -360,9 +363,10 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         }
 
         ISecuritizationTGE(pool).increaseReserve(currencyAmount);
-        address poolOfPot = registry.getSecuritizationManager().potToPool(_msgSender());
+
         if (poolOfPot != address(0)) {
             ISecuritizationTGE(poolOfPot).decreaseReserve(currencyAmount);
+            ISecuritizationPool(poolOfPot).collectERC20Asset(noteToken);
         }
 
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
