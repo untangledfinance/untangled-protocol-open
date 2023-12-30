@@ -742,7 +742,7 @@ describe('NoteTokenVault', () => {
                     securitizationPoolContract.address,
                     parseEther('1.5')
                 );
-                expect(result).to.deep.equal([parseEther('6'), parseEther('1.5'), parseEther('4.5')]);
+                expect(result).to.deep.equal([parseEther('4.333333333333333333'), parseEther('1.5'), parseEther('2.833333333333333333')]);
             });
 
             it('SOT: should run successfully', async () => {
@@ -799,33 +799,79 @@ describe('NoteTokenVault', () => {
                 );
             });
 
+            it('JOT: Investor C create JOT redeem order for 1 JOT again', async () => {
+                let redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: jotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                let redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerC.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                let redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
+
+                await sotContract.connect(lenderSignerC).approve(noteTokenVault.address, unlimitedAllowance);
+
+                redeemParam = {
+                    pool: securitizationPoolContract.address,
+                    noteTokenAddress: sotContract.address,
+                    noteTokenRedeemAmount: parseEther('1'),
+                };
+                redeemOrderMessage = presignedRedeemOrderMessage(
+                    lenderSignerC.address,
+                    redeemParam.pool,
+                    redeemParam.noteTokenAddress,
+                    redeemParam.noteTokenRedeemAmount,
+                    chainId
+                );
+                redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
+                await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
+            })
+            it('JOT: should run fail', async () => {
+                await expect(noteTokenVault
+                    .connect(backendAdminSigner)
+                    .disburseAll(
+                        securitizationPoolContract.address,
+                        jotContract.address,
+                        [lenderSignerA.address, lenderSignerB.address, lenderSignerC.address],
+                        [parseEther('0.84'), parseEther('1'), parseEther('1')], // Total: $0.84 + $1.00 + $1.00 = $2.84 > $2.83 (max JOT redeem amount)
+                        [parseEther('0.84'), parseEther('1'), parseEther('1')]
+                    ))
+                    .to.revertedWith('MinFirstLoss is not satisfied');
+            });
             it('JOT: should run successfully', async () => {
+                // Disburse $2.83 for JOT
                 await noteTokenVault
                     .connect(backendAdminSigner)
                     .disburseAll(
                         securitizationPoolContract.address,
                         jotContract.address,
-                        [lenderSignerA.address, lenderSignerB.address],
-                        [parseEther('0.5'), parseEther('1')],
-                        [parseEther('0.5'), parseEther('1')]
+                        [lenderSignerA.address, lenderSignerB.address, lenderSignerC.address],
+                        [parseEther('0.83'), parseEther('1'), parseEther('1')], // Total: $0.84 + $1.00 + $1.00 = $2.83
+                        [parseEther('0.83'), parseEther('1'), parseEther('1')]
                     );
                 const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
-                expect(totalJOTRedeem).to.equal(parseEther('0.5'));
-                const sotRedeemOrderLenderA = await noteTokenVault.userRedeemJOTOrder(
+                expect(totalJOTRedeem).to.equal(parseEther('0.17')); // 3 - 2.83 = 0.17
+                const jotRedeemOrderLenderA = await noteTokenVault.userRedeemJOTOrder(
                     securitizationPoolContract.address,
                     lenderSignerA.address
                 );
-                expect(sotRedeemOrderLenderA).to.equal(parseEther('0.5'));
+                expect(jotRedeemOrderLenderA).to.equal(parseEther('0.17'));
                 const sotRedeemOrderLenderB = await noteTokenVault.userRedeemJOTOrder(
                     securitizationPoolContract.address,
                     lenderSignerB.address
                 );
                 expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
                 const reserve = await securitizationPoolContract.reserve();
-                expect(reserve).to.equal(parseEther('3'));
+                expect(reserve).to.equal(parseEther('1.67')); // $4.5 - $2.83 = $1.67
 
                 const jotTGECurrencyRaised = await mintedNormalTGEContract.currencyRaised();
-                expect(jotTGECurrencyRaised).to.equal(parseEther('1.5'));
+                expect(jotTGECurrencyRaised).to.equal(parseEther('0.17')); // $3 - $2.83 = $0.17
             });
         });
     });
