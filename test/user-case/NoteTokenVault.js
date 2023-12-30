@@ -840,15 +840,14 @@ describe('NoteTokenVault', () => {
                 redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
             })
-            it('JOT: should run fail', async () => {
+            it('JOT: should revert if exceed max JOT redeem amount', async () => {
                 await expect(noteTokenVault
                     .connect(backendAdminSigner)
-                    .disburseAll(
+                    .preDistribute(
                         securitizationPoolContract.address,
                         jotContract.address,
-                        [lenderSignerA.address, lenderSignerB.address, lenderSignerC.address],
-                        [parseEther('0.84'), parseEther('1'), parseEther('1')], // Total: $0.84 + $1.00 + $1.00 = $2.84 > $2.83 (max JOT redeem amount)
-                        [parseEther('0.84'), parseEther('1'), parseEther('1')]
+                        parseEther('2.84'), // Total: $0.84 + $1.00 + $1.00 = $2.84 > $2.83 (max JOT redeem amount)
+                        parseEther('2.84')
                     ))
                     .to.revertedWith('MinFirstLoss is not satisfied');
             });
@@ -859,8 +858,8 @@ describe('NoteTokenVault', () => {
                     .preDistribute(
                         securitizationPoolContract.address,
                         jotContract.address,
-                        parseEther('1.5'),
-                        parseEther('1.5')
+                        parseEther('2.83'),
+                        parseEther('2.83')
                     );
                 await noteTokenVault
                     .connect(backendAdminSigner)
