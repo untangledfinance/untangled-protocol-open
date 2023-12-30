@@ -67,11 +67,7 @@ interface ISecuritizationPool {
     function collectAssets(uint256[] calldata tokenIds) external returns (uint256);
 
     /// @notice collects ERC20 assets from specified senders
-    function collectERC20Assets(
-        address[] calldata tokenAddresses,
-        address[] calldata senders,
-        uint256[] calldata amounts
-    ) external;
+    function collectERC20Asset(address tokenAddresss) external;
 
     /// @notice withdraws ERC20 assets from the contract and transfers them to recipients\
     function withdrawERC20Assets(
