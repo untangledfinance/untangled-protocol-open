@@ -224,8 +224,9 @@ const getPoolAbi = async () => {
     const control = await artifacts.readArtifact('SecuritizationAccessControl');
     const storage = await artifacts.readArtifact('SecuritizationPoolStorage');
     const tge = await artifacts.readArtifact('SecuritizationTGE');
+    const nav = await artifacts.readArtifact('SecuritizationPoolNAV');
 
-    const abis = [...storage.abi, ...asset.abi, ...control.abi, ...tge.abi];
+    const abis = [...storage.abi, ...asset.abi, ...control.abi, ...tge.abi, ...nav.abi];
 
     const resultAbis = [];
     // remove duplicate

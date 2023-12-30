@@ -710,7 +710,7 @@ contract SecuritizationPoolNAV is
     /// @param risk_ the new value appraisal of the collateral NFT
     /// @param risk_ the new risk group
     function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) public {
-        require(_msgSender() == address(this), "Only SecuritizationPool");
+        registry().requirePoolAdmin(_msgSender());
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
         // no change in risk group
@@ -1016,7 +1016,7 @@ contract SecuritizationPoolNAV is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](12);
+        bytes4[] memory _functionSignatures = new bytes4[](13);
 
         _functionSignatures[0] = this.addLoan.selector;
         _functionSignatures[1] = this.repayLoan.selector;
@@ -1029,7 +1029,8 @@ contract SecuritizationPoolNAV is
         _functionSignatures[8] = this.maturityDate.selector;
         _functionSignatures[9] = this.discountRate.selector;
         _functionSignatures[10] = this.updateAssetRiskScore.selector;
-        _functionSignatures[11] = bytes4(keccak256(bytes('file(bytes32,uint256,uint256,uint256,uint256,uint256)')));
+        _functionSignatures[11] = this.writeOff.selector;
+        _functionSignatures[12] = bytes4(keccak256(bytes('file(bytes32,uint256,uint256,uint256,uint256,uint256)')));
 
         return _functionSignatures;
     }
