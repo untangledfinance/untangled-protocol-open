@@ -363,14 +363,9 @@ describe('Pool to Pool', () => {
             // Transfer to pool
             const jotPoolBAddress = await poolBContract.jotToken();
             jotPoolBContract = await ethers.getContractAt('NoteToken', jotPoolBAddress);
-            jotAmount = await jotPoolBContract.balanceOf(poolAPot.address);
+            jotPoolAAmount = await jotPoolBContract.balanceOf(poolAContract.address);
 
-            await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
-            await jotPoolBContract.connect(poolAPot).approve(poolAContract.address, jotAmount);
-            await poolAContract
-                .connect(borrowerSigner)
-                .collectERC20Assets([jotPoolBAddress], [poolAPot.address], [jotAmount]);
-            expect(await jotPoolBContract.balanceOf(poolAContract.address)).equal(jotAmount);
+            expect(jotPoolAAmount).equal(parseEther('1'));
         });
         it('Should include B JOT token value in pool A expected assets', async () => {
             // Check values
@@ -384,7 +379,7 @@ describe('Pool to Pool', () => {
             // Claim back to investor pot wallet
             await poolAContract
                 .connect(poolACreator)
-                .withdrawERC20Assets([jotPoolBContract.address], [poolAPot.address], [jotAmount]);
+                .withdrawERC20Assets([jotPoolBContract.address], [poolAPot.address], [parseEther('1')]);
             const investorPoolPotJotBalance = await jotPoolBContract.balanceOf(poolAPot.address);
             expect(investorPoolPotJotBalance).equal(parseEther('1'));
         });
@@ -409,6 +404,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(poolBContract.address, jotPoolBContract.address, parseEther('1'), parseEther('1'));
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -452,19 +450,15 @@ describe('Pool to Pool', () => {
             // Transfer to pool
             const sotPoolBAddress = await poolBContract.sotToken();
             sotPoolBContract = await ethers.getContractAt('NoteToken', sotPoolBAddress);
-            sotAmount = await sotPoolBContract.balanceOf(poolAPot.address);
-            await poolAContract.connect(poolACreator).grantRole(ORIGINATOR_ROLE, borrowerSigner.address);
-            await sotPoolBContract.connect(poolAPot).approve(poolAContract.address, sotAmount);
-            await poolAContract
-                .connect(borrowerSigner)
-                .collectERC20Assets([sotPoolBAddress], [poolAPot.address], [sotAmount]);
-            expect(await sotPoolBContract.balanceOf(poolAContract.address)).equal(sotAmount);
+            sotPoolAContractAmount = await sotPoolBContract.balanceOf(poolAContract.address);
+
+            expect(sotPoolAContractAmount).equal(parseEther('2'));
         });
         it('Should include B SOT token value in pool A expected assets', async () => {
             // Check values
             const chainTime = await time.latest();
             const expectAssetValue = await securitizationPoolValueService.getExpectedAssetsValue(poolAContract.address);
-            expect(expectAssetValue).equal(stableCoinAmountToBuySOT);
+            expect(expectAssetValue).equal(parseEther('3'));
             const tokenERC20AssetAddress = await poolAContract.tokenAssetAddresses(1);
             expect(tokenERC20AssetAddress).equal(sotPoolBContract.address);
         });
@@ -472,7 +466,7 @@ describe('Pool to Pool', () => {
             // Claim back to investor pot wallet
             await poolAContract
                 .connect(poolACreator)
-                .withdrawERC20Assets([sotPoolBContract.address], [poolAPot.address], [sotAmount]);
+                .withdrawERC20Assets([sotPoolBContract.address], [poolAPot.address], [parseEther('2')]);
             const investorPoolPotJotBalance = await sotPoolBContract.balanceOf(poolAPot.address);
             expect(investorPoolPotJotBalance).equal(parseEther('2'));
         });
@@ -498,6 +492,14 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(
+                    poolBContract.address,
+                    sotPoolBContract.address,
+                    investorPoolPotSotBalance,
+                    parseEther('2')
+                );
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -1003,7 +1005,7 @@ describe('Pool to Pool', () => {
                 .connect(poolAPotSigner)
                 .buyTokens(mintedNormalTGEPoolBContract.address, stableCoinAmountToBuyBJOT);
             expect(await stableCoin.balanceOf(poolAPotSigner.address)).equal('0');
-            expect(await jotBContract.balanceOf(poolAPotSigner.address)).equal(parseEther('2'));
+            expect(await jotBContract.balanceOf(poolAContract.address)).equal(parseEther('2'));
         });
         it('Pool B pot invests into pool C for JOT', async () => {
             await stableCoin
@@ -1015,27 +1017,13 @@ describe('Pool to Pool', () => {
             expect(await stableCoin.balanceOf(poolBPotSigner.address)).equal(
                 stableCoinAmountToBuyBJOT.sub(stableCoinAmountToBuyCJOT)
             );
-            expect(await jotCContract.balanceOf(poolBPotSigner.address)).equal(parseEther('1'));
+            expect(await jotCContract.balanceOf(poolBContract.address)).equal(parseEther('1'));
         });
         it('Pool A originator can transfer B-JOT from pool A pot to pool A', async () => {
-            // Transfer to pool
-            sotAmountABuyFromB = await jotBContract.balanceOf(poolAPotSigner.address);
-            await poolAContract.connect(poolACreatorSigner).grantRole(ORIGINATOR_ROLE, poolAOriginatorSigner.address);
-            await jotBContract.connect(poolAPotSigner).approve(poolAContract.address, sotAmountABuyFromB);
-            await poolAContract
-                .connect(poolAOriginatorSigner)
-                .collectERC20Assets([jotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
-            expect(await jotBContract.balanceOf(poolAContract.address)).equal(sotAmountABuyFromB);
+            expect(await jotBContract.balanceOf(poolAContract.address)).equal(parseEther('2'));
         });
         it('Pool B originator can transfer C-JOT from pool B pot to pool B', async () => {
-            // Transfer to pool
-            sotAmountBBuyFromC = await jotCContract.balanceOf(poolBPotSigner.address);
-            await poolBContract.connect(poolBCreatorSigner).grantRole(ORIGINATOR_ROLE, poolBOriginatorSigner.address);
-            await jotCContract.connect(poolBPotSigner).approve(poolBContract.address, sotAmountBBuyFromC);
-            await poolBContract
-                .connect(poolBOriginatorSigner)
-                .collectERC20Assets([jotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
-            expect(await jotCContract.balanceOf(poolBContract.address)).equal(sotAmountBBuyFromC);
+            expect(await jotCContract.balanceOf(poolBContract.address)).equal(parseEther('1'));
         });
         it('Should include B-JOT token value in pool A expected assets', async () => {
             // Check values
@@ -1061,7 +1049,7 @@ describe('Pool to Pool', () => {
             // Claim back to investor pot wallet
             await poolAContract
                 .connect(poolACreatorSigner)
-                .withdrawERC20Assets([jotBContract.address], [poolAPotSigner.address], [sotAmountABuyFromB]);
+                .withdrawERC20Assets([jotBContract.address], [poolAPotSigner.address], [parseEther('2')]);
             const sotBalance = await jotBContract.balanceOf(poolAPotSigner.address);
             expect(sotBalance).equal(expectSOTAmountABuyFromB);
         });
@@ -1069,7 +1057,7 @@ describe('Pool to Pool', () => {
             // Claim back to investor pot wallet
             await poolBContract
                 .connect(poolBCreatorSigner)
-                .withdrawERC20Assets([jotCContract.address], [poolBPotSigner.address], [sotAmountBBuyFromC]);
+                .withdrawERC20Assets([jotCContract.address], [poolBPotSigner.address], [parseEther('1')]);
             const sotBalance = await jotCContract.balanceOf(poolBPotSigner.address);
             expect(sotBalance).equal(expectSOTAmountBBuyFromC);
         });
@@ -1095,6 +1083,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolBPotSigner).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(poolCContract.address, jotCContract.address, stableCoinAmountToBuyCJOT, parseEther('1'));
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -1132,6 +1123,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPotSigner).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(poolBContract.address, jotBContract.address, stableCoinAmountToBuyBJOT, parseEther('2'));
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(

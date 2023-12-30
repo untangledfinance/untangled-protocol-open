@@ -10,6 +10,12 @@ interface INoteTokenVault {
         uint256 noteTokenPrice
     );
     event CancelOrder(address pool, address noteTokenAddress, address usr, uint256 noteTokenRedeemAmount);
+    event PreDistribute(
+        address pool,
+        address noteTokenAddress,
+        uint256 totalCurrencyAmount,
+        uint256 totalRedeemedNoteAmount
+    );
     event DisburseOrder(
         address pool,
         address noteTokenAddress,

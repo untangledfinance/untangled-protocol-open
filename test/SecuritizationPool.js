@@ -753,24 +753,6 @@ describe('SecuritizationPool', () => {
             expect(balanceOfPoolCreator).equal(1);
         });
 
-        it('#collectERC20Assets', async () => {
-            await sotToken.connect(lenderSigner).approve(securitizationPoolContract.address, unlimitedAllowance);
-
-            await securitizationPoolContract
-                .connect(originatorSigner)
-                .collectERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('2')]);
-
-            expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('98.0');
-        });
-
-        it('#withdrawERC20Assets', async () => {
-            await securitizationPoolContract
-                .connect(poolCreatorSigner)
-                .withdrawERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('1')]);
-
-            expect(formatEther(await sotToken.balanceOf(lenderSigner.address))).equal('99.0');
-        });
-
         it('#disburse', async () => {
             await expect(
                 securitizationPoolContract.connect(poolCreatorSigner).disburse(lenderSigner.address, parseEther('1'))
@@ -783,10 +765,6 @@ describe('SecuritizationPool', () => {
             await expect(
                 securitizationPoolContract.connect(poolCreatorSigner).claimCashRemain(poolCreatorSigner.address)
             ).to.be.revertedWith(`SecuritizationPool: SOT still remain`);
-
-            await securitizationPoolContract
-                .connect(poolCreatorSigner)
-                .withdrawERC20Assets([sotToken.address], [lenderSigner.address], [parseEther('1')]);
 
             // Force burn to test
             await sotToken.connect(lenderSigner).burn(parseEther('100'));
@@ -837,12 +815,6 @@ describe('SecuritizationPool', () => {
     });
 
     describe('Get Info', async () => {
-        it('#getTokenAssetAddresses', async () => {
-            const tokens = await securitizationPoolContract.getTokenAssetAddresses();
-
-            expect(tokens).to.deep.equal([sotToken.address]);
-        });
-
         it('set new min first loss', async () => {
             const currentMinFirstLoss = await securitizationPoolContract.minFirstLossCushion();
             expect(currentMinFirstLoss).equal(100000);

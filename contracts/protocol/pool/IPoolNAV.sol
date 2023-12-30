@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import './auth.sol';
 import {Discounting} from './discounting.sol';
 
 interface IPoolNAV {
-    event Update(uint256 loanId, uint256 risk);
+    event UpdateAssetRiskScore(uint256 loanId, uint256 risk);
     event Rely(address indexed usr);
 
     function addLoan(uint256 loan) external returns (uint256);
