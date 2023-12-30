@@ -45,7 +45,6 @@ import {RiskScore} from './base/types.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import 'contracts/libraries/UnpackLoanParamtersLib.sol';
-import "hardhat/console.sol";
 
 /**
  * @title Untangled's SecuritizaionPoolNAV contract
