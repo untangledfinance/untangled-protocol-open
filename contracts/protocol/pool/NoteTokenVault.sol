@@ -120,6 +120,20 @@ contract NoteTokenVault is
         emit RedeemOrder(pool, noteTokenAddress, usr, noteTokenRedeemAmount, noteTokenPrice);
     }
 
+    function preDistribute(
+        address pool,
+        address noteTokenAddress,
+        uint256 totalCurrencyAmount,
+        uint256 totalRedeemedNoteAmount
+    ) public onlyRole(BACKEND_ADMIN) nonReentrant {
+        ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
+
+        ERC20BurnableUpgradeable(noteTokenAddress).burn(totalRedeemedNoteAmount);
+        poolTGE.decreaseReserve(totalCurrencyAmount);
+
+        emit PreDistribute(pool, noteTokenAddress, totalCurrencyAmount, totalRedeemedNoteAmount);
+    }
+
     /// @inheritdoc INoteTokenVault
     function disburseAll(
         address pool,
@@ -156,8 +170,6 @@ contract NoteTokenVault is
             if (poolOfPot != address(0)) {
                 ISecuritizationTGE(poolOfPot).increaseReserve(currencyAmounts[i]);
             }
-
-            ERC20BurnableUpgradeable(noteTokenAddress).burn(redeemedNoteAmounts[i]);
         }
 
         if (_isJotToken(noteTokenAddress, jotTokenAddress)) {
@@ -168,7 +180,6 @@ contract NoteTokenVault is
             ICrowdSale(ISecuritizationPoolStorage(pool).tgeAddress()).onRedeem(totalCurrencyAmount);
         }
 
-        poolTGE.decreaseReserve(totalCurrencyAmount);
         emit DisburseOrder(pool, noteTokenAddress, toAddresses, currencyAmounts, redeemedNoteAmounts);
     }
 

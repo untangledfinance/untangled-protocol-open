@@ -746,6 +746,14 @@ describe('NoteTokenVault', () => {
             });
 
             it('SOT: should run successfully', async () => {
+                await noteTokenVault
+                    .connect(backendAdminSigner)
+                    .preDistribute(
+                        securitizationPoolContract.address,
+                        sotContract.address,
+                        parseEther('1.5'),
+                        parseEther('1.5')
+                    );
                 await expect(
                     noteTokenVault
                         .connect(backendAdminSigner)
@@ -800,6 +808,14 @@ describe('NoteTokenVault', () => {
             });
 
             it('JOT: should run successfully', async () => {
+                await noteTokenVault
+                    .connect(backendAdminSigner)
+                    .preDistribute(
+                        securitizationPoolContract.address,
+                        jotContract.address,
+                        parseEther('1.5'),
+                        parseEther('1.5')
+                    );
                 await noteTokenVault
                     .connect(backendAdminSigner)
                     .disburseAll(
