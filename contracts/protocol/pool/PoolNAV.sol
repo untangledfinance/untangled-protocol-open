@@ -34,8 +34,6 @@ import {IPoolNAV} from './IPoolNAV.sol';
 import {POOL, POOL_ADMIN} from './types.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 
-import 'hardhat/console.sol';
-
 contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounting, IPoolNAV {
     using ConfigHelper for Registry;
 
@@ -815,7 +813,7 @@ contract PoolNAV is Initializable, AccessControlEnumerableUpgradeable, Discounti
         latestDiscountOfNavAssets[nftID_] += navIncrease;
 
         latestNAV = safeAdd(latestNAV, navIncrease);
-        emit Update(loan, risk_);
+        emit UpdateAssetRiskScore(loan, risk_);
     }
 
     /// @notice returns the nftID for the underlying collateral nft

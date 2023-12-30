@@ -406,6 +406,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault
                 .connect(backendAdminSigner)
+                .preDistribute(poolBContract.address, jotPoolBContract.address, parseEther('1'), parseEther('1'));
+            await noteTokenVault
+                .connect(backendAdminSigner)
                 .disburseAll(
                     poolBContract.address,
                     jotPoolBContract.address,
@@ -489,6 +492,14 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(
+                    poolBContract.address,
+                    sotPoolBContract.address,
+                    investorPoolPotSotBalance,
+                    parseEther('2')
+                );
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -1074,6 +1085,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault
                 .connect(backendAdminSigner)
+                .preDistribute(poolCContract.address, jotCContract.address, stableCoinAmountToBuyCJOT, parseEther('1'));
+            await noteTokenVault
+                .connect(backendAdminSigner)
                 .disburseAll(
                     poolCContract.address,
                     jotCContract.address,
@@ -1109,6 +1123,9 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPotSigner).redeemOrder(redeemParam, redeemSignature);
 
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(poolBContract.address, jotBContract.address, stableCoinAmountToBuyBJOT, parseEther('2'));
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
