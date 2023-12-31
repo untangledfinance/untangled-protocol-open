@@ -78,10 +78,6 @@ contract Registry is UntangledBase {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.GO), newAddress);
     }
 
-    function setPoolNAVFactory(address newAddress) public onlyAdmin whenNotPaused {
-        _setAddress(uint8(Configuration.CONTRACT_TYPE.POOL_NAV_FACTORY), newAddress);
-    }
-
     function setNoteTokenVault(address newAddress) public onlyAdmin whenNotPaused {
         _setAddress(uint8(Configuration.CONTRACT_TYPE.NOTE_TOKEN_VAULT), newAddress);
     }

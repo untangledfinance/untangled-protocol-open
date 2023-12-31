@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// https://github.com/centrifuge/tinlake
 // src/borrower/feed/navfeed.sol -- Tinlake NAV Feed
 
 // Copyright (C) 2022 Centrifuge
@@ -32,7 +33,7 @@ import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
-import {Discounting} from './discounting.sol';
+import {Discounting} from './libs/discounting.sol';
 import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {POOL, ONE_HUNDRED_PERCENT, RATE_SCALING_FACTOR, WRITEOFF_RATE_GROUP_START} from './types.sol';
 
@@ -85,7 +86,6 @@ contract SecuritizationPoolNAV is
         bytes memory params
     ) public virtual override(SecuritizationAccessControl, SecuritizationPoolStorage) onlyCallInTargetPool {
         __SecuritizationPoolNAV_init_unchained();
-
     }
 
     function __SecuritizationPoolNAV_init_unchained() internal {
@@ -98,7 +98,6 @@ contract SecuritizationPoolNAV is
 
         // Default discount rate
         $.discountRate = ONE;
-
     }
 
     /** GETTER */
@@ -161,18 +160,18 @@ contract SecuritizationPoolNAV is
             // Default risk score
             return
                 RiskScore({
-                daysPastDue: 0,
-                advanceRate: 1000000,
-                penaltyRate: 0,
-                interestRate: 0,
-                probabilityOfDefault: 0,
-                lossGivenDefault: 0,
-                writeOffAfterGracePeriod: 0,
-                gracePeriod: 0,
-                collectionPeriod: 0,
-                writeOffAfterCollectionPeriod: 0,
-                discountRate: 0
-            });
+                    daysPastDue: 0,
+                    advanceRate: 1000000,
+                    penaltyRate: 0,
+                    interestRate: 0,
+                    probabilityOfDefault: 0,
+                    lossGivenDefault: 0,
+                    writeOffAfterGracePeriod: 0,
+                    gracePeriod: 0,
+                    collectionPeriod: 0,
+                    writeOffAfterCollectionPeriod: 0,
+                    discountRate: 0
+                });
         }
         // Because risk score upload = risk score index onchain + 1
         idx = idx - 1;
@@ -180,7 +179,7 @@ contract SecuritizationPoolNAV is
     }
 
     function addLoan(uint256 loan) public returns (uint256) {
-        require(_msgSender() == address(this), "Only SecuritizationPool");
+        require(_msgSender() == address(this), 'Only SecuritizationPool');
         Storage storage $ = _getStorage();
         UnpackLoanParamtersLib.InterestParams memory loanParam = registry()
             .getLoanInterestTermsContract()
@@ -193,10 +192,7 @@ contract SecuritizationPoolNAV is
         uint256 _convertedInterestRate;
 
         principalAmount = (principalAmount * riskParam.advanceRate) / (ONE_HUNDRED_PERCENT);
-        _convertedInterestRate =
-            ONE +
-            (riskParam.interestRate * ONE) /
-            (ONE_HUNDRED_PERCENT * 365 days);
+        _convertedInterestRate = ONE + (riskParam.interestRate * ONE) / (ONE_HUNDRED_PERCENT * 365 days);
 
         $.loanToNFT[$.loanCount] = _tokenId;
         $.loanCount++;
@@ -220,7 +216,6 @@ contract SecuritizationPoolNAV is
         return principalAmount;
     }
 
-
     /// @notice converts a uint256 to uint128
     /// @param value the value to be converted
     /// @return converted value to uint128
@@ -240,7 +235,7 @@ contract SecuritizationPoolNAV is
     /// @param name name of the parameter
     /// @param value new value of the parameter
     function file(bytes32 name, uint256 value) public override {
-        require(_msgSender() == address(this), "Only SecuritizationPool");
+        require(_msgSender() == address(this), 'Only SecuritizationPool');
         if (name == 'discountRate') {
             Storage storage $ = _getStorage();
             uint256 oldDiscountRate = $.discountRate;
@@ -267,13 +262,11 @@ contract SecuritizationPoolNAV is
         uint256 penaltyRate_,
         uint256 riskIndex
     ) public override {
-        require(_msgSender() == address(this), "Only SecuritizationPool");
+        require(_msgSender() == address(this), 'Only SecuritizationPool');
         if (name == 'writeOffGroup') {
             Storage storage $ = _getStorage();
             uint256 index = $.writeOffGroups.length;
-            uint256 _convertedInterestRate = ONE +
-                (rate_ * ONE) /
-                (ONE_HUNDRED_PERCENT * 365 days);
+            uint256 _convertedInterestRate = ONE + (rate_ * ONE) / (ONE_HUNDRED_PERCENT * 365 days);
             uint256 _convertedWriteOffPercentage = ONE - (writeOffPercentage_ * ONE) / ONE_HUNDRED_PERCENT;
             uint256 _convertedPenaltyRate = ONE +
                 (ONE * penaltyRate_ * rate_) /
@@ -381,7 +374,7 @@ contract SecuritizationPoolNAV is
         decDebt(loan, amount);
     }
 
-    function _calcFutureValue(uint256 loan, uint256 _debt, uint256 _maturityDate) private returns(uint256) {
+    function _calcFutureValue(uint256 loan, uint256 _debt, uint256 _maturityDate) private view returns (uint256) {
         Storage storage $ = _getStorage();
         Rate memory _rate = $.rates[$.loanRates[loan]];
         ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(nftID(loan));
@@ -409,7 +402,6 @@ contract SecuritizationPoolNAV is
         // In case of successful repayment the latestNAV is decreased by the repaid amount
         bytes32 nftID_ = nftID(loan);
         uint256 maturityDate_ = maturityDate(nftID_);
-
 
         uint256 _currentDebt = debt(loan);
         if (amount > _currentDebt) {
@@ -587,12 +579,12 @@ contract SecuritizationPoolNAV is
         }
 
         return (
-        // calculate current totalDiscount based on the previous totalDiscount (optimized calculation)
-        // the overdue loans are incorrectly in this new result with their current PV and need to be removed
+            // calculate current totalDiscount based on the previous totalDiscount (optimized calculation)
+            // the overdue loans are incorrectly in this new result with their current PV and need to be removed
             secureSub(rmul($.latestDiscount, rpow($.discountRate, safeSub(nnow, $.lastNAVUpdate), ONE)), errPV),
-        // current overdue loans not written off
+            // current overdue loans not written off
             safeAdd($.overdueLoans, overdue),
-        // current write-offs loans
+            // current write-offs loans
             currentWriteOffs()
         );
     }
@@ -634,9 +626,9 @@ contract SecuritizationPoolNAV is
 
         return (
             secureSub(
-            rmul($.latestDiscountOfNavAssets[tokenId], rpow($.discountRate, safeSub(nnow, $.lastNAVUpdate), ONE)),
-            errPV
-        ),
+                rmul($.latestDiscountOfNavAssets[tokenId], rpow($.discountRate, safeSub(nnow, $.lastNAVUpdate), ONE)),
+                errPV
+            ),
             safeAdd($.overdueLoansOfNavAssets[tokenId], overdue),
             _currentWriteOffs
         );
@@ -693,7 +685,12 @@ contract SecuritizationPoolNAV is
                 continue;
             }
 
-            uint256 discountIncrease_ = calcDiscount($.discountRate, futureValue(nftID_), $.lastNAVUpdate, maturityDate_);
+            uint256 discountIncrease_ = calcDiscount(
+                $.discountRate,
+                futureValue(nftID_),
+                $.lastNAVUpdate,
+                maturityDate_
+            );
             latestDiscount_ = safeAdd(latestDiscount_, discountIncrease_);
             $.latestDiscountOfNavAssets[nftID_] = discountIncrease_;
         }
@@ -730,9 +727,7 @@ contract SecuritizationPoolNAV is
         uint256 loan = uint256(nftID_);
         if ($.pie[loan] != 0) {
             RiskScore memory riskParam = getRiskScoreByIdx(risk_);
-            uint256 _convertedInterestRate = ONE +
-                (riskParam.interestRate * ONE) /
-                (ONE_HUNDRED_PERCENT* 365 days);
+            uint256 _convertedInterestRate = ONE + (riskParam.interestRate * ONE) / (ONE_HUNDRED_PERCENT * 365 days);
             if ($.rates[_convertedInterestRate].ratePerSecond == 0) {
                 // If interest rate is not set
                 _file('rate', _convertedInterestRate, _convertedInterestRate);
@@ -1006,7 +1001,6 @@ contract SecuritizationPoolNAV is
     function toPie(uint chi, uint amount) public pure returns (uint) {
         return rdivup(amount, chi);
     }
-
 
     function getFunctionSignatures()
         public

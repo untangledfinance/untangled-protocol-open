@@ -1,7 +1,27 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+/// SPDX-License-Identifier: AGPL-3.0-or-later
+
+// https://github.com/centrifuge/tinlake
+// src/borrower/feed/discounting.sol -- Tinlake Discounting
+
+// Copyright (C) 2022 Centrifuge
+// Copyright (C) 2023 Untangled.Finance
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 pragma solidity 0.8.19;
 
-import "./math.sol";
+import './math.sol';
 
 /// @notice Discounting contract without a state which defines the relevant formulas for the navfeed
 contract Discounting is Math {
@@ -11,11 +31,12 @@ contract Discounting is Math {
     /// @param normalizedBlockTimestamp the normalized block time (each day to midnight)
     /// @param maturityDate the maturity date of the loan
     /// @return result discount for the loan
-    function calcDiscount(uint256 discountRate, uint256 fv, uint256 normalizedBlockTimestamp, uint256 maturityDate)
-        public
-        pure
-        returns (uint256 result)
-    {
+    function calcDiscount(
+        uint256 discountRate,
+        uint256 fv,
+        uint256 normalizedBlockTimestamp,
+        uint256 maturityDate
+    ) public pure returns (uint256 result) {
         return rdiv(fv, rpow(discountRate, safeSub(maturityDate, normalizedBlockTimestamp), ONE));
     }
 
@@ -25,11 +46,12 @@ contract Discounting is Math {
     /// @param maturityDate the maturity date of the loan
     /// @param recoveryRatePD the recovery rate together with the probability of default of the loan
     /// @return fv future value of the loan
-    function calcFutureValue(uint256 loanInterestRate, uint256 amount, uint256 maturityDate, uint256 recoveryRatePD)
-        public
-        view
-        returns (uint256 fv)
-    {
+    function calcFutureValue(
+        uint256 loanInterestRate,
+        uint256 amount,
+        uint256 maturityDate,
+        uint256 recoveryRatePD
+    ) public view returns (uint256 fv) {
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
         uint256 timeRemaining = 0;
         if (maturityDate > nnow) {
@@ -56,6 +78,7 @@ contract Discounting is Math {
     function uniqueDayTimestamp(uint256 timestamp) public pure returns (uint256 nTimestamp) {
         return (1 days) * (timestamp / (1 days));
     }
+
     /// @notice rpow peforms a math pow operation with fixed point number
     /// adopted from ds-math
     /// @param x the base for the pow operation
@@ -68,25 +91,45 @@ contract Discounting is Math {
             switch x
             case 0 {
                 switch n
-                case 0 { z := base }
-                default { z := 0 }
+                case 0 {
+                    z := base
+                }
+                default {
+                    z := 0
+                }
             }
             default {
                 switch mod(n, 2)
-                case 0 { z := base }
-                default { z := x }
+                case 0 {
+                    z := base
+                }
+                default {
+                    z := x
+                }
                 let half := div(base, 2) // for rounding.
-                for { n := div(n, 2) } n { n := div(n, 2) } {
+                for {
+                    n := div(n, 2)
+                } n {
+                    n := div(n, 2)
+                } {
                     let xx := mul(x, x)
-                    if iszero(eq(div(xx, x), x)) { revert(0, 0) }
+                    if iszero(eq(div(xx, x), x)) {
+                        revert(0, 0)
+                    }
                     let xxRound := add(xx, half)
-                    if lt(xxRound, xx) { revert(0, 0) }
+                    if lt(xxRound, xx) {
+                        revert(0, 0)
+                    }
                     x := div(xxRound, base)
                     if mod(n, 2) {
                         let zx := mul(z, x)
-                        if and(iszero(iszero(x)), iszero(eq(div(zx, x), z))) { revert(0, 0) }
+                        if and(iszero(iszero(x)), iszero(eq(div(zx, x), z))) {
+                            revert(0, 0)
+                        }
                         let zxRound := add(zx, half)
-                        if lt(zxRound, zx) { revert(0, 0) }
+                        if lt(zxRound, zx) {
+                            revert(0, 0)
+                        }
                         z := div(zxRound, base)
                     }
                 }

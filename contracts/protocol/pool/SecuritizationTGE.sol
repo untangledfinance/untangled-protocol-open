@@ -23,8 +23,6 @@ import {ICrowdSale} from '../note-sale/crowdsale/ICrowdSale.sol';
 
 import {ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 
-import {IPoolNAVFactory} from './IPoolNAVFactory.sol';
-
 interface ICrowdSaleLike {
     function token() external view returns (address);
 }
