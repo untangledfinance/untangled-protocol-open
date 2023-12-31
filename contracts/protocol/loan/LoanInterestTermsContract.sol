@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../base/UntangledBase.sol';
@@ -29,7 +29,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     // To convert an encoded interest rate into its equivalent in percents,
     // divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
     //     10,000 => 1% interest rate
-    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10**4;
+    uint256 public constant INTEREST_RATE_SCALING_FACTOR_PERCENT = 10 ** 4;
 
     // To convert an encoded interest rate into its equivalent multiplier
     // (for purposes of calculating total interest), divide it by INTEREST_RATE_SCALING_FACTOR_PERCENT -- e.g.
@@ -99,14 +99,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     // Register to start Loan term for batch of agreement Ids
     /// @inheritdoc ILoanInterestTermsContract
-    function registerTermStart(bytes32 agreementId)
-        public
-        override
-        whenNotPaused
-        onlyKernel
-        onlyHaventStartedLoan(agreementId)
-        returns (bool)
-    {
+    function registerTermStart(
+        bytes32 agreementId
+    ) public override whenNotPaused onlyKernel onlyHaventStartedLoan(agreementId) returns (bool) {
         startedLoan[agreementId] = true;
         return true;
     }
@@ -238,12 +233,10 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     }
 
     /// @inheritdoc ILoanInterestTermsContract
-    function getMultiExpectedRepaymentValues(bytes32[] memory agreementIds, uint256 timestamp)
-        public
-        view
-        override
-        returns (uint256[] memory, uint256[] memory)
-    {
+    function getMultiExpectedRepaymentValues(
+        bytes32[] memory agreementIds,
+        uint256 timestamp
+    ) public view override returns (uint256[] memory, uint256[] memory) {
         uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
         uint256[] memory expectedInterests = new uint256[](agreementIds.length);
         uint256 agreementIdsLength = agreementIds.length;
@@ -265,11 +258,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
 
     /// @param amortizationUnitType AmortizationUnitType enum
     /// @return the corresponding length of the unit in seconds
-    function _getAmortizationUnitLengthInSeconds(UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType)
-        private
-        pure
-        returns (uint256)
-    {
+    function _getAmortizationUnitLengthInSeconds(
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
+    ) private pure returns (uint256) {
         if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
             return MINUTE_LENGTH_IN_SECONDS;
         } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {
@@ -341,18 +332,13 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         uint256 _interestRate,
         uint256 _durationLengthInSec
     ) private pure returns (uint256) {
-
         // x = 10 ** 27 + IR * (10 ** 27 / 10 ** 4 / 100) / YLIR
         uint256 x = UntangledMath.ONE +
-                        (_interestRate * UntangledMath.ONE / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
-                        YEAR_LENGTH_IN_SECONDS;
+            ((_interestRate * UntangledMath.ONE) / INTEREST_RATE_SCALING_FACTOR_PERCENT / 100) /
+            YEAR_LENGTH_IN_SECONDS;
 
         return
-            (_principalAmount *
-                UntangledMath.rpow(x,
-                    _durationLengthInSec,
-                    UntangledMath.ONE
-                )) /
+            (_principalAmount * UntangledMath.rpow(x, _durationLengthInSec, UntangledMath.ONE)) /
             UntangledMath.ONE -
             _principalAmount;
     }
@@ -414,8 +400,7 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         // If still within the term length
         if (_timestamp < _endTermTimestamp) {
             // Have just made new repayment
-            if (
-                _timestamp <= _lastRepayTimestamp && _paidInterestAmount > 0) {
+            if (_timestamp <= _lastRepayTimestamp && _paidInterestAmount > 0) {
                 interest = 0;
             } else {
                 if (_paidInterestAmount > 0) {

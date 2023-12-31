@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {Registry} from '../../storage/Registry.sol';
@@ -111,6 +111,7 @@ contract MintedNormalTGE is IMintedTGE, FinalizableCrowdsale, LongSaleInterest {
         );
         interestRate = _interestRate;
     }
+
     function setTotalCap(uint256 cap_) external whenNotPaused {
         require(
             hasRole(OWNER_ROLE, _msgSender()) || _msgSender() == address(registry.getSecuritizationManager()),

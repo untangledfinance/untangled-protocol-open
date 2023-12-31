@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
@@ -11,7 +11,7 @@ import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 import {ISecuritizationPoolStorage} from '../pool/ISecuritizationPoolStorage.sol';
-import {ISecuritizationPoolNAV} from "../pool/ISecuritizationPoolNAV.sol";
+import {ISecuritizationPoolNAV} from '../pool/ISecuritizationPoolNAV.sol';
 
 /// @title LoanRepaymentRouter
 /// @author Untangled Team

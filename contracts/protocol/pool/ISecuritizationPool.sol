@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
 import '../../storage/Registry.sol';
@@ -50,7 +50,6 @@ interface ISecuritizationPool {
         uint32[] calldata _ratesAndDefaults,
         uint32[] calldata _periodsAndWriteOffs
     ) external;
-
 
     /// @notice exports NFT assets to another pool address
     function exportAssets(address tokenAddress, address toPoolAddress, uint256[] calldata tokenIds) external;
