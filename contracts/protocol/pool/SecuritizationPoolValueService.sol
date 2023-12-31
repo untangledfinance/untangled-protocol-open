@@ -135,7 +135,9 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
         require(poolAddress != address(0), 'Invalid pool address');
         ISecuritizationTGE securitizationPool = ISecuritizationTGE(poolAddress);
         address sotToken = securitizationPool.sotToken();
-        require(sotToken != address(0), 'Invalid sot address');
+        if (sotToken == address(0)) {
+            return 0;
+        }
         uint256 tokenSupply = INoteToken(sotToken).totalSupply();
         return tokenSupply;
     }
