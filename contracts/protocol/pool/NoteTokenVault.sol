@@ -122,16 +122,18 @@ contract NoteTokenVault is
 
     function preDistribute(
         address pool,
-        address noteTokenAddress,
         uint256 totalCurrencyAmount,
-        uint256 totalRedeemedNoteAmount
+        address[] calldata noteTokenAddresses,
+        uint256[] calldata totalRedeemedNoteAmounts
     ) public onlyRole(BACKEND_ADMIN) nonReentrant {
         ISecuritizationTGE poolTGE = ISecuritizationTGE(pool);
 
-        ERC20BurnableUpgradeable(noteTokenAddress).burn(totalRedeemedNoteAmount);
+        for (uint i = 0; i < noteTokenAddresses.length; i++) {
+            ERC20BurnableUpgradeable(noteTokenAddresses[i]).burn(totalRedeemedNoteAmounts[i]);
+        }
         poolTGE.decreaseReserve(totalCurrencyAmount);
 
-        emit PreDistribute(pool, noteTokenAddress, totalCurrencyAmount, totalRedeemedNoteAmount);
+        emit PreDistribute(pool, totalCurrencyAmount, noteTokenAddresses, totalRedeemedNoteAmounts);
     }
 
     /// @inheritdoc INoteTokenVault

@@ -750,9 +750,9 @@ describe('NoteTokenVault', () => {
                     .connect(backendAdminSigner)
                     .preDistribute(
                         securitizationPoolContract.address,
-                        sotContract.address,
                         parseEther('1.5'),
-                        parseEther('1.5')
+                        [sotContract.address],
+                        [parseEther('1.5')]
                     );
                 await expect(
                     noteTokenVault
@@ -812,9 +812,9 @@ describe('NoteTokenVault', () => {
                     .connect(backendAdminSigner)
                     .preDistribute(
                         securitizationPoolContract.address,
-                        jotContract.address,
                         parseEther('1.5'),
-                        parseEther('1.5')
+                        [jotContract.address],
+                        [parseEther('1.5')]
                     );
                 await noteTokenVault
                     .connect(backendAdminSigner)
