@@ -722,7 +722,7 @@ describe('NoteTokenVault', () => {
         });
 
         describe('Disburse', () => {
-            const maxReserveForJOTRedeem = parseEther('2.833333333333333333')
+            const maxReserveForJOTRedeem = parseEther('2.833333333333333333');
             it('SOT: should revert if not backend admin', async () => {
                 await expect(
                     noteTokenVault
@@ -743,7 +743,11 @@ describe('NoteTokenVault', () => {
                     securitizationPoolContract.address,
                     parseEther('1.5')
                 );
-                expect(result).to.deep.equal([parseEther('4.333333333333333333'), parseEther('1.5'), maxReserveForJOTRedeem]);
+                expect(result).to.deep.equal([
+                    parseEther('4.333333333333333333'),
+                    parseEther('1.5'),
+                    maxReserveForJOTRedeem,
+                ]);
             });
 
             it('SOT: should run successfully', async () => {
@@ -751,9 +755,9 @@ describe('NoteTokenVault', () => {
                     .connect(backendAdminSigner)
                     .preDistribute(
                         securitizationPoolContract.address,
-                        sotContract.address,
                         parseEther('1.5'),
-                        parseEther('1.5')
+                        [sotContract.address],
+                        [parseEther('1.5')]
                     );
                 await expect(
                     noteTokenVault
@@ -840,17 +844,18 @@ describe('NoteTokenVault', () => {
                 );
                 redeemSignature = await redeemOrderAdminSigner.signMessage(redeemOrderMessage);
                 await noteTokenVault.connect(lenderSignerC).redeemOrder(redeemParam, redeemSignature);
-            })
+            });
             it('JOT: should revert if exceed max JOT redeem amount', async () => {
-                await expect(noteTokenVault
-                    .connect(backendAdminSigner)
-                    .preDistribute(
-                        securitizationPoolContract.address,
-                        jotContract.address,
-                        maxReserveForJOTRedeem.add(parseEther('0.00001')),
-                        parseEther('2.83')
-                    ))
-                    .to.revertedWith('MinFirstLoss is not satisfied');
+                await expect(
+                    noteTokenVault
+                        .connect(backendAdminSigner)
+                        .preDistribute(
+                            securitizationPoolContract.address,
+                            maxReserveForJOTRedeem.add(parseEther('0.00001')),
+                            [jotContract.address],
+                            [parseEther('2.83')]
+                        )
+                ).to.revertedWith('MinFirstLoss is not satisfied');
             });
             it('JOT: should run successfully', async () => {
                 // Disburse $2.83 for JOT
@@ -858,19 +863,17 @@ describe('NoteTokenVault', () => {
                     .connect(backendAdminSigner)
                     .preDistribute(
                         securitizationPoolContract.address,
-                        jotContract.address,
                         parseEther('2.83'),
-                        parseEther('2.83')
+                        [jotContract.address],
+                        [parseEther('1.5')]
                     );
-                await noteTokenVault
-                    .connect(backendAdminSigner)
-                    .disburseAll(
-                        securitizationPoolContract.address,
-                        jotContract.address,
-                        [lenderSignerA.address, lenderSignerB.address, lenderSignerC.address],
-                        [parseEther('0.83'), parseEther('1'), parseEther('1')], // Total: $0.84 + $1.00 + $1.00 = $2.83
-                        [parseEther('0.83'), parseEther('1'), parseEther('1')]
-                    );
+                await noteTokenVault.connect(backendAdminSigner).disburseAll(
+                    securitizationPoolContract.address,
+                    jotContract.address,
+                    [lenderSignerA.address, lenderSignerB.address, lenderSignerC.address],
+                    [parseEther('0.83'), parseEther('1'), parseEther('1')], // Total: $0.84 + $1.00 + $1.00 = $2.83
+                    [parseEther('0.83'), parseEther('1'), parseEther('1')]
+                );
                 const totalJOTRedeem = await noteTokenVault.totalJOTRedeem(securitizationPoolContract.address);
                 expect(totalJOTRedeem).to.equal(parseEther('0.17')); // 3 - 2.83 = 0.17
                 const jotRedeemOrderLenderA = await noteTokenVault.userRedeemJOTOrder(
@@ -883,11 +886,12 @@ describe('NoteTokenVault', () => {
                     lenderSignerB.address
                 );
                 expect(sotRedeemOrderLenderB).to.equal(parseEther('0'));
-                const reserve = await securitizationPoolContract.reserve();
-                expect(reserve).to.equal(parseEther('1.67')); // $4.5 - $2.83 = $1.67
 
                 const jotTGECurrencyRaised = await mintedNormalTGEContract.currencyRaised();
                 expect(jotTGECurrencyRaised).to.equal(parseEther('0.17')); // $3 - $2.83 = $0.17
+
+                const reserve = await securitizationPoolContract.reserve();
+                expect(reserve).to.equal(parseEther('1.67')); // $4.5 - $2.83 = $1.67
             });
         });
     });
