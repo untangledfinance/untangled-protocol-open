@@ -99,7 +99,10 @@ const RISK_SCORES = {
   riskScoreF,
 }
 
+const LAT_BASE_URI = "https://api.example.com/token/"
+
 module.exports = {
   SaleType,
   RISK_SCORES,
+  LAT_BASE_URI
 };

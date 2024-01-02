@@ -1,6 +1,7 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
 const { OWNER_ROLE, POOL_ADMIN_ROLE, VALIDATOR_ADMIN_ROLE } = require('./constants');
+const { LAT_BASE_URI } = require('./shared/constants');
 
 const { parseEther } = ethers.utils;
 
@@ -8,7 +9,7 @@ const setUpLoanAssetToken = async (registry, securitizationManager) => {
     const LoanAssetToken = await ethers.getContractFactory('LoanAssetToken');
     const loanAssetTokenContract = await upgrades.deployProxy(
         LoanAssetToken,
-        [registry.address, 'TEST', 'TST', 'test.com'],
+        [registry.address, 'TEST', 'TST', LAT_BASE_URI],
         {
             initializer: 'initialize(address,string,string,string)',
         }

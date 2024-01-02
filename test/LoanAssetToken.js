@@ -25,6 +25,7 @@ const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('./constants.js');
 const { utils } = require('ethers');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 const { SaleType } = require('./shared/constants.js');
+const { LAT_BASE_URI } = require('./shared/constants');
 
 describe('LoanAssetToken', () => {
   let stableCoin;
@@ -735,6 +736,11 @@ describe('LoanAssetToken', () => {
 
       const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
       expect(balanceOfPool).equal(tokenIds.length);
+    });
+
+    it('Correct token uri', async () => {
+      const tokenURI = await loanAssetTokenContract.tokenURI(tokenIds[0]);
+      expect(tokenURI).to.equal(`${LAT_BASE_URI}${BigNumber.from(tokenIds[0])}`);
     });
 
     describe('#info', async () => {
