@@ -286,7 +286,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
                 (block.timestamp - openingBlockTimestamp)) /
             (ONE_HUNDRED_PERCENT * 365 days);
         uint256 delta = b ** 2 - (4 * c * maxSeniorRatio) / ONE_HUNDRED_PERCENT;
-        uint256 x = ((b + delta.sqrt()) * ONE_HUNDRED_PERCENT) / (2 * maxSeniorRatio);
+        uint256 x = ((b - delta.sqrt()) * ONE_HUNDRED_PERCENT) / (2 * maxSeniorRatio);
         return x;
     }
 
