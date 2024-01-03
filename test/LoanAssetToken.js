@@ -743,6 +743,17 @@ describe('LoanAssetToken', () => {
       expect(tokenURI).to.equal(`${LAT_BASE_URI}${BigNumber.from(tokenIds[0])}`);
     });
 
+    it('Should revert if setBaseURI by a wallet which is NOT admin', async () => {
+      await expect(loanAssetTokenContract.connect(lenderSigner).setBaseURI('https://untangled.finance/lat/'))
+        .to.be.revertedWith(`AccessControl: account ${lenderSigner.address.toLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`);
+    });
+
+    it('Change base uri successfully', async () => {
+      await loanAssetTokenContract.connect(untangledAdminSigner).setBaseURI("https://untangled.finance/lat/");
+      const tokenURI = await loanAssetTokenContract.tokenURI(tokenIds[0]);
+      expect(tokenURI).to.equal(`https://untangled.finance/lat/${BigNumber.from(tokenIds[0])}`);
+    });
+
     describe('#info', async () => {
       it('getExpirationTimestamp', async () => {
         const data = await loanAssetTokenContract.getExpirationTimestamp(tokenIds[0]);
