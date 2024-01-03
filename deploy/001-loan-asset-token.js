@@ -30,8 +30,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         [registry.address, 'Loan Asset Token', 'LAT', ''],
         'initialize(address,string,string,string)'
     );
+    // const loanAssetTokenProxy = await deployments.get('LoanAssetToken');
+    // console.log('loanAssetTokenProxy', loanAssetTokenProxy.address);
+    // await execute('LoanAssetToken', { from: deployer, log: true }, 'setBaseURI', 'https://api-test.untangled.finance/');
 
-    console.log('loanAssetTokenProxy', loanAssetTokenProxy.address);
+    // const Token = await ethers.getContractFactory('LoanAssetToken');
+    // const token = await Token.attach(loanAssetTokenProxy.address);
+    // const tokenURI = await token.tokenURI(
+    //     '84279236014946466549278681696182247184601533423077762990928557906082942176381'
+    // );
+    // console.log('tokenURI', tokenURI);
 
     await execute('Registry', { from: deployer, log: true }, 'setLoanAssetToken', loanAssetTokenProxy.address);
 };
