@@ -11,14 +11,12 @@ interface ISecuritizationPoolNAV {
     event ChangeRate(uint256 indexed loan, uint256 newRate);
     event File(bytes32 indexed what, uint256 rate, uint256 value);
 
-
     // events
-    event Depend(bytes32 indexed name, address addr);
-    event SetLoanMaturity(bytes32 nftID_, uint256 maturityDate_);
+    event SetLoanMaturity(uint256 indexed loan, uint256 maturityDate_);
     event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
     event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
-
-    event UpdateAssetRiskScore(uint256 loanId, uint256 risk);
+    event Repay(uint256 indexed loan, uint256 currencyAmount);
+    event UpdateAssetRiskScore(uint256 loan, uint256 risk);
 
     function addLoan(uint256 loan) external returns (uint256);
 
@@ -52,5 +50,4 @@ interface ISecuritizationPoolNAV {
     function discountRate() external view returns (uint256);
 
     function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) external;
-
 }

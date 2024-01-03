@@ -36,6 +36,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
     await execute('SecuritizationPool', { from: deployer, log: true }, 'registerExtension', pAsset.address);
 
+    const pNAV = await deploy('SecuritizationPoolNAV', {
+        from: deployer,
+        args: [],
+        log: true,
+    });
+    await execute('SecuritizationPool', { from: deployer, log: true }, 'registerExtension', pNAV.address);
+
+
     await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', securitizationPool.address);
 };
 
