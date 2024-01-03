@@ -18,6 +18,20 @@ interface ISecuritizationPoolNAV {
     event Repay(uint256 indexed loan, uint256 currencyAmount);
     event UpdateAssetRiskScore(uint256 loan, uint256 risk);
 
+    struct LoanEntry {
+        uint256 tokenId;
+        address loanTermContract;
+        address debtor;
+        address principalTokenAddress;
+        bytes32 termsParam; // actually inside this param was already included P token address
+        uint256 salt;
+        uint256 issuanceBlockTimestamp;
+        uint256 lastRepayTimestamp;
+        uint256 expirationTimestamp;
+        uint8 riskScore;
+        Configuration.ASSET_PURPOSE assetPurpose;
+    }
+
     function addLoan(uint256 loan) external returns (uint256);
 
     function repayLoan(uint256 loan, uint256 amount) external returns (uint256);

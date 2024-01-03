@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
@@ -16,6 +15,11 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
  */
 contract LoanAssetToken is ILoanAssetToken, LATValidator {
     using ConfigHelper for Registry;
+
+    modifier onlyLoanKernel() {
+        require(_msgSender() == address(registry.getLoanKernel()), 'LoanRegistry: Only LoanKernel');
+        _;
+    }
 
     /** CONSTRUCTOR */
     function initialize(
@@ -45,41 +49,58 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         _revokeRole(MINTER_ROLE, _msgSender());
     }
 
-    function getExpectedRepaymentValues(
-        uint256 tokenId,
-        uint256 timestamp
-    ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
-        bytes32 agreementId = bytes32(tokenId);
-        (expectedPrincipal, expectedInterest) = registry.getLoanInterestTermsContract().getExpectedRepaymentValues(
-            agreementId,
-            timestamp
-        );
-    }
-
     function getExpirationTimestamp(uint256 _tokenId) public view override returns (uint256) {
-        return registry.getLoanRegistry().getExpirationTimestamp(bytes32(_tokenId));
+        return entries[bytes32(_tokenId)].expirationTimestamp;
     }
 
     function getRiskScore(uint256 _tokenId) public view override returns (uint8) {
-        return registry.getLoanRegistry().getRiskScore(bytes32(_tokenId));
+        return entries[bytes32(_tokenId)].riskScore;
     }
 
     function getAssetPurpose(uint256 _tokenId) public view override returns (Configuration.ASSET_PURPOSE) {
-        return registry.getLoanRegistry().getAssetPurpose(bytes32(_tokenId));
+        return entries[bytes32(_tokenId)].assetPurpose;
     }
 
     function getInterestRate(uint256 _tokenId) public view override returns (uint256 beneficiary) {
         return registry.getLoanInterestTermsContract().getInterestRate(bytes32(_tokenId));
     }
 
-    function getTotalExpectedRepaymentValue(
-        uint256 agreementId,
-        uint256 timestamp
-    ) public view override returns (uint256 expectedRepaymentValue) {
-        uint256 principalAmount;
-        uint256 interestAmount;
-        (principalAmount, interestAmount) = getExpectedRepaymentValues(agreementId, timestamp);
-        expectedRepaymentValue = principalAmount + interestAmount;
+    /**
+     * Record new Loan to blockchain
+     */
+    /// @dev Records a new loan entry by inserting loan details into the entries mapping
+    function insert(
+        bytes32 tokenId,
+        address termContract,
+        address debtor,
+        bytes32 termsContractParameter,
+        address pTokenAddress,
+        uint256 _salt,
+        uint256 expirationTimestampInSecs,
+        uint8[] calldata assetPurposeAndRiskScore
+    ) external override whenNotPaused onlyLoanKernel returns (bool) {
+        require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
+        LoanEntry memory newEntry = LoanEntry({
+            loanTermContract: termContract,
+            debtor: debtor,
+            principalTokenAddress: pTokenAddress,
+            termsParam: termsContractParameter,
+            salt: _salt, //solium-disable-next-line security
+            issuanceBlockTimestamp: block.timestamp,
+            lastRepayTimestamp: 0,
+            expirationTimestamp: expirationTimestampInSecs,
+            assetPurpose: Configuration.ASSET_PURPOSE(assetPurposeAndRiskScore[0]),
+            riskScore: assetPurposeAndRiskScore[1]
+        });
+        entries[tokenId] = newEntry;
+
+        emit UpdateLoanEntry(tokenId, newEntry);
+        return true;
+    }
+
+    /// @inheritdoc ILoanAssetToken
+    function getEntry(bytes32 agreementId) public view override returns (LoanEntry memory) {
+        return entries[agreementId];
     }
 
     function safeMint(

@@ -112,7 +112,6 @@ async function setup() {
     let registry;
 
     let loanInterestTermsContract;
-    let loanRegistry;
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -158,8 +157,6 @@ async function setup() {
 
     const LoanInterestTermsContract = await ethers.getContractFactory('LoanInterestTermsContract');
     loanInterestTermsContract = await upgrades.deployProxy(LoanInterestTermsContract, [registry.address]);
-    const LoanRegistry = await ethers.getContractFactory('LoanRegistry');
-    loanRegistry = await upgrades.deployProxy(LoanRegistry, [registry.address]);
     const LoanKernel = await ethers.getContractFactory('LoanKernel');
     loanKernel = await upgrades.deployProxy(LoanKernel, [registry.address]);
     const LoanRepaymentRouter = await ethers.getContractFactory('LoanRepaymentRouter');
@@ -172,7 +169,6 @@ async function setup() {
 
     await registry.setSecuritizationManager(securitizationManager.address);
     await registry.setLoanInterestTermsContract(loanInterestTermsContract.address);
-    await registry.setLoanRegistry(loanRegistry.address);
     await registry.setLoanKernel(loanKernel.address);
     await registry.setLoanRepaymentRouter(loanRepaymentRouter.address);
     await registry.setSecuritizationPoolValueService(securitizationPoolValueService.address);
@@ -193,7 +189,6 @@ async function setup() {
         defaultLoanAssetTokenValidator,
 
         loanInterestTermsContract,
-        loanRegistry,
         loanKernel,
         loanRepaymentRouter,
         securitizationManager,

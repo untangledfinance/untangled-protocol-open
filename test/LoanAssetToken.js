@@ -775,20 +775,6 @@ describe('LoanAssetToken', () => {
                 expect(data.toString()).equal(interestRateFixedPoint(5).toString());
             });
 
-            it('getExpectedRepaymentValues', async () => {
-                const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
-                const data = await loanAssetTokenContract.getExpectedRepaymentValues(tokenIds[0], nextTimeStamps);
-
-                expect(data.expectedPrincipal.toNumber()).equal(principalAmount);
-                expect(data.expectedInterest.toString()).equal('0');
-            });
-
-            it('getTotalExpectedRepaymentValue', async () => {
-                const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
-                const data = await loanAssetTokenContract.getTotalExpectedRepaymentValue(tokenIds[0], nextTimeStamps);
-
-                expect(data.toString()).equal(principalAmount.toString());
-            });
         });
 
         describe('#burn', async () => {

@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/utils/math/Math.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';

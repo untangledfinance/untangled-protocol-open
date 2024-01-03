@@ -4,9 +4,9 @@ pragma solidity 0.8.19;
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 
 import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
+import {ILoanAssetToken} from '../../interfaces/ILoanAssetToken.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
@@ -49,9 +49,9 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     ) private returns (bool) {
         // Notify terms contract
 
-        ILoanRegistry loanRegistry = registry.getLoanRegistry();
-        address termsContract = loanRegistry.getTermContract(_agreementId);
-        address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
+        ILoanAssetToken loanAssetToken = registry.getLoanAssetToken();
+        address termsContract = loanAssetToken.getEntry(_agreementId).loanTermContract;
+        address beneficiary = loanAssetToken.ownerOf(uint256(_agreementId));
 
         ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
         ISecuritizationPoolNAV poolNAV = ISecuritizationPoolNAV(beneficiary);

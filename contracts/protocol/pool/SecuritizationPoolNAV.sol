@@ -34,7 +34,6 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Discounting} from './libs/discounting.sol';
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {POOL, ONE_HUNDRED_PERCENT, RATE_SCALING_FACTOR, WRITEOFF_RATE_GROUP_START} from './types.sol';
 
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
@@ -45,6 +44,7 @@ import {ISecuritizationPoolNAV} from './ISecuritizationPoolNAV.sol';
 import {RiskScore} from './base/types.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
+import {ILoanAssetToken} from '../../tokens/ERC721/ILoanAssetToken.sol';
 import 'contracts/libraries/UnpackLoanParamtersLib.sol';
 
 /**
@@ -185,7 +185,7 @@ contract SecuritizationPoolNAV is
             .getLoanInterestTermsContract()
             .unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(_tokenId);
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(_tokenId);
         $.details[_tokenId].risk = loanEntry.riskScore;
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
@@ -340,7 +340,7 @@ contract SecuritizationPoolNAV is
         Rate memory _rate = $.rates[$.loanRates[loan]];
 
         // calculate future value FV
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(bytes32(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             amount,
@@ -377,7 +377,7 @@ contract SecuritizationPoolNAV is
     function _calcFutureValue(uint256 loan, uint256 _debt, uint256 _maturityDate) private view returns (uint256) {
         Storage storage $ = _getStorage();
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(nftID(loan));
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(nftID(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             _debt,
@@ -465,7 +465,7 @@ contract SecuritizationPoolNAV is
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(bytes32(loan));
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         require(maturityDate_ + riskParam.gracePeriod <= nnow, 'maturity-date-in-the-future');
         // check the writeoff group based on the amount of days overdue
@@ -761,7 +761,7 @@ contract SecuritizationPoolNAV is
         // update latest NAV
         // update latest Discount
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(bytes32(loan));
         $.details[nftID_].futureValue = toUint128(
             calcFutureValue(
                 _rate.ratePerSecond,
@@ -798,7 +798,7 @@ contract SecuritizationPoolNAV is
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(nftID_);
+        ILoanAssetToken.LoanEntry memory loanEntry = registry().getLoanAssetToken().getEntry(nftID_);
 
         uint8 _loanRiskIndex = loanEntry.riskScore - 1;
 

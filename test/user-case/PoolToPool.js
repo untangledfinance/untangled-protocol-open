@@ -1083,7 +1083,7 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault
                 .connect(backendAdminSigner)
-                .preDistribute(poolCContract.address, stableCoinAmountToBuyCJOT, [jotCContract.address], [parseEther('1']));
+                .preDistribute(poolCContract.address, stableCoinAmountToBuyCJOT, [jotCContract.address], [parseEther('1')]);
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(

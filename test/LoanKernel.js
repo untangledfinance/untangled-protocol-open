@@ -639,30 +639,23 @@ describe('LoanKernel', () => {
         });
     });
 
-    describe('Loan registry', async () => {
+    describe('Loan asset token', async () => {
         it('#getLoanDebtor', async () => {
-            const result = await loanRegistry.getLoanDebtor(tokenIds[0]);
+            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
 
-            expect(result).equal(borrowerSigner.address);
+            expect(result.debtor).equal(borrowerSigner.address);
         });
 
         it('#getLoanTermParams', async () => {
-            const result = await loanRegistry.getLoanTermParams(tokenIds[0]);
+            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
 
-            expect(result).equal('0x00000000008ac7230489e8000000c35010000000000000000000000f00200000');
-        });
-
-        it('#getDebtor', async () => {
-            const result = await loanRegistry.getDebtor(tokenIds[0]);
-
-            expect(result).equal(borrowerSigner.address);
+            expect(result.termsParam).equal('0x00000000008ac7230489e8000000c35010000000000000000000000f00200000');
         });
 
         it('#principalPaymentInfo', async () => {
-            const result = await loanRegistry.principalPaymentInfo(tokenIds[0]);
+            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
 
-            expect(result.pTokenAddress).equal(stableCoin.address);
-            expect(result.pAmount.toNumber()).equal(0);
+            expect(result.principalTokenAddress).equal(stableCoin.address);
         });
     });
 

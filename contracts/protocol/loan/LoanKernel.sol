@@ -129,7 +129,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint8[] memory assetPurposeAndRiskScore
     ) private {
         require(
-            registry.getLoanRegistry().insert(
+            registry.getLoanAssetToken().insert(
                 bytes32(tokenId),
                 termContract,
                 debtor,

@@ -318,7 +318,7 @@ describe('LoanInterestTermsContract', () => {
     });
   });
 
-  describe('#getExpectedRepaymentValues', () => {
+  describe('#registerConcludeLoan', () => {
     before('upload a loan', async () => {
       await registry.setLoanKernel(loanKernel.address);
       const orderAddresses = [
@@ -432,13 +432,13 @@ describe('LoanInterestTermsContract', () => {
               termsContractParameters,
               await Promise.all(
                   tokenIds.map(async (x) => ({
-                      ...(await generateLATMintPayload(
-                          loanAssetTokenContract,
-                          defaultLoanAssetTokenValidator,
-                          [x],
-                          [(await loanAssetTokenContract.nonce(x)).toNumber()],
-                          defaultLoanAssetTokenValidator.address
-                      )),
+                    ...(await generateLATMintPayload(
+                        loanAssetTokenContract,
+                        defaultLoanAssetTokenValidator,
+                        [x],
+                        [(await loanAssetTokenContract.nonce(x)).toNumber()],
+                        defaultLoanAssetTokenValidator.address
+                    )),
                   }))
               )
           )
@@ -446,21 +446,7 @@ describe('LoanInterestTermsContract', () => {
 
       await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
     });
-    it('should return correct expected principal and expected interest', async () => {
-      const now = await time.latest();
-      const duration = YEAR_LENGTH_IN_SECONDS;
-      const { expectedPrincipal, expectedInterest } = await loanInterestTermsContract.getExpectedRepaymentValues(
-          tokenIds[0],
-          now + duration
-      );
-      const repaidPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
-      expect(expectedPrincipal).equal(BigNumber.from(principalAmount.toString()).sub(repaidPrincipalAmount));
 
-      const expectInterest = calculateInterestForDuration(principalAmount, interestRatePercentage, duration);
-      expect(expectedInterest).closeTo(expectInterest.toString(), parseEther('0.001'));
-    });
-  });
-  describe('#registerConcludeLoan', () => {
     it('should revert if caller is not LoanKernel contract address', async () => {
       await expect(
         loanInterestTermsContract.connect(untangledAdminSigner).registerConcludeLoan(agreementID)
@@ -482,22 +468,6 @@ describe('LoanInterestTermsContract', () => {
       const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
       expect(repaidPrincipal).to.equal(expectPrincipalAmount);
       expect(repaidInterest).to.equal(expectInterestAmount);
-    });
-    describe('#getMultiExpectedRepaymentValues', async () => {
-        it('should return current repaid principal and interest amount of multiple agreementIds', async () => {
-            const [repaidPrincipal, repaidInterest] = await loanInterestTermsContract.getValueRepaidToDate(tokenIds[0]);
-            const expectPrincipalAmount = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[0]);
-            const expectInterestAmount = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[0]);
-            const [repaidPrincipal1, repaidInterest1] = await loanInterestTermsContract.getValueRepaidToDate(
-                tokenIds[1]
-            );
-            const expectPrincipalAmount1 = await loanInterestTermsContract.repaidPrincipalAmounts(tokenIds[1]);
-            const expectInterestAmount1 = await loanInterestTermsContract.repaidInterestAmounts(tokenIds[1]);
-            expect(repaidPrincipal).to.equal(expectPrincipalAmount);
-            expect(repaidInterest).to.equal(expectInterestAmount);
-            expect(repaidPrincipal1).to.equal(expectPrincipalAmount1);
-            expect(repaidInterest1).to.equal(expectInterestAmount1);
-        });
     });
   });
 });

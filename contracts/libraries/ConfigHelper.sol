@@ -11,7 +11,6 @@ import {INoteTokenFactory} from '../interfaces/INoteTokenFactory.sol';
 import {INoteToken} from '../interfaces/INoteToken.sol';
 import {ITokenGenerationEventFactory} from '../interfaces/ITokenGenerationEventFactory.sol';
 import {IUntangledERC721} from '../interfaces/IUntangledERC721.sol';
-import {ILoanRegistry} from '../interfaces/ILoanRegistry.sol';
 import {ILoanInterestTermsContract} from '../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanRepaymentRouter} from '../interfaces/ILoanRepaymentRouter.sol';
 import {ILoanKernel} from '../interfaces/ILoanKernel.sol';
@@ -62,10 +61,6 @@ library ConfigHelper {
 
     function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
         return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
-    }
-
-    function getLoanRegistry(Registry registry) internal view returns (ILoanRegistry) {
-        return ILoanRegistry(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_REGISTRY));
     }
 
     function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
