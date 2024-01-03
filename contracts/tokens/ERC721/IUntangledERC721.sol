@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import '@openzeppelin/contracts-upgradeable/token/ERC721/presets/ERC721PresetMinterPauserAutoIdUpgradeable.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
+
 import '../../storage/Registry.sol';
 
 abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable {
@@ -42,6 +44,13 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         return _baseTokenURI;
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireMinted(tokenId);
+
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, Strings.toHexString(tokenId))) : '';
+    }
+
     /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp
     function getTotalExpectedRepaymentValue(
         uint256 agreementId,
@@ -66,5 +75,5 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
     /// @notice retrieves the asset purpose for a given loan agreement ID
     function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
 
-    uint256[49] private __gap;
+    uint256[48] private __gap;
 }
