@@ -228,7 +228,7 @@ contract SecuritizationPoolNAV is
         require((futureValue(nftID_) == 0), 'can-not-change-maturityDate-outstanding-debt');
         Storage storage $ = _getStorage();
         $.details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
-        emit SetLoanMaturity(nftID_, maturityDate_);
+        emit SetLoanMaturity(uint256(nftID_), maturityDate_);
     }
 
     /// @notice file allows governance to change parameters of the contract
@@ -448,6 +448,8 @@ contract SecuritizationPoolNAV is
         }
 
         decDebt(loan, amount);
+
+        emit Repay(loan, amount);
         return amount;
     }
 
