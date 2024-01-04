@@ -87,7 +87,6 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
             termsParam: termsContractParameter,
             salt: _salt, //solium-disable-next-line security
             issuanceBlockTimestamp: block.timestamp,
-            lastRepayTimestamp: 0,
             expirationTimestamp: expirationTimestampInSecs,
             assetPurpose: Configuration.ASSET_PURPOSE(assetPurposeAndRiskScore[0]),
             riskScore: assetPurposeAndRiskScore[1]

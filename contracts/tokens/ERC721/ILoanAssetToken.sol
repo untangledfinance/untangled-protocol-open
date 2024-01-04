@@ -14,7 +14,6 @@ abstract contract ILoanAssetToken is IUntangledERC721 {
         bytes32 termsParam; // actually inside this param was already included P token address
         uint256 salt;
         uint256 issuanceBlockTimestamp;
-        uint256 lastRepayTimestamp;
         uint256 expirationTimestamp;
         uint8 riskScore;
         Configuration.ASSET_PURPOSE assetPurpose;
