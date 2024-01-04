@@ -26,23 +26,5 @@ abstract contract ILoanInterestTermsContract {
     /// @dev set loan as repaid
     function registerConcludeLoan(bytes32 agreementId) external virtual returns (bool);
 
-    /// When called, the registerRepayment function records the debtor's
-    ///  repayment, as well as any auxiliary metadata needed by the contract
-    ///  to determine ex post facto the value repaid (e.g. current USD
-    ///  exchange rate)
-    /// @notice register a loan repayment
-    /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
-    /// @param  payer address. The address of the payer.
-    /// @param  beneficiary address. The address of the payment's beneficiary.
-    /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
-    /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
-    function registerRepayment(
-        bytes32 agreementId,
-        address payer,
-        address beneficiary,
-        uint256 unitsOfRepayment,
-        address tokenAddress
-    ) public virtual returns (uint256 remains);
-
     uint256[46] private __gap;
 }
