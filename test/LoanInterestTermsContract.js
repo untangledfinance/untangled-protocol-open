@@ -456,8 +456,8 @@ describe('LoanInterestTermsContract', () => {
 
     describe('#getInterestRate', async () => {
         it('should unpack interest rate correctly', async () => {
-            const interestRate = await loanInterestTermsContract.getInterestRate(tokenIds[0]);
-            expect(interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
+            const interestRate = await securitizationPoolContract.unpackParamsForAgreementID(tokenIds[0]);
+            expect(interestRate.interestRate).equal(BigNumber.from(interestRateFixedPoint(interestRatePercentage).toString()));
         });
     });
 

@@ -641,19 +641,19 @@ describe('LoanKernel', () => {
 
     describe('Loan asset token', async () => {
         it('#getLoanDebtor', async () => {
-            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
+            const result = await securitizationPoolContract.getEntry(tokenIds[0]);
 
             expect(result.debtor).equal(borrowerSigner.address);
         });
 
         it('#getLoanTermParams', async () => {
-            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
+            const result = await securitizationPoolContract.getEntry(tokenIds[0]);
 
             expect(result.termsParam).equal('0x00000000008ac7230489e8000000c35010000000000000000000000f00200000');
         });
 
         it('#principalPaymentInfo', async () => {
-            const result = await loanAssetTokenContract.getEntry(tokenIds[0]);
+            const result = await securitizationPoolContract.getEntry(tokenIds[0]);
 
             expect(result.principalTokenAddress).equal(stableCoin.address);
         });
