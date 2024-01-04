@@ -49,12 +49,11 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
     ) private returns (bool) {
         // Notify terms contract
 
-        ILoanAssetToken loanAssetToken = registry.getLoanAssetToken();
-        address termsContract = loanAssetToken.getEntry(_agreementId).loanTermContract;
-        address beneficiary = loanAssetToken.ownerOf(uint256(_agreementId));
+        address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
         ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
         ISecuritizationPoolNAV poolNAV = ISecuritizationPoolNAV(beneficiary);
+        address termsContract = poolNAV.getEntry(_agreementId).loanTermContract;
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
         ISecuritizationTGE poolTGE = ISecuritizationTGE(beneficiary);

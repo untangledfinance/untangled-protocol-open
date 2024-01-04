@@ -8,6 +8,7 @@ import '../../base/UntangledBase.sol';
 import '../../libraries/ConfigHelper.sol';
 import '../../libraries/UntangledMath.sol';
 import '../../tokens/ERC721/types.sol';
+import {LoanEntry} from '../../protocol/pool/base/types.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
 import {ISecuritizationTGE} from '../pool/ISecuritizationTGE.sol';
 
@@ -115,32 +116,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         });
         debtOrder.debtOrderHashes = _getDebtOrderHashes(debtOrder);
         return debtOrder;
-    }
-
-    //** Issue Loan to Farmers */
-    function _issueDebtAgreements(
-        uint256 tokenId,
-        address termContract,
-        address debtor,
-        bytes32 termsParam,
-        address principalTokenAddress,
-        uint256 salt,
-        uint256 expirationTimestampInSecs,
-        uint8[] memory assetPurposeAndRiskScore
-    ) private {
-        require(
-            registry.getLoanAssetToken().insert(
-                bytes32(tokenId),
-                termContract,
-                debtor,
-                termsParam,
-                principalTokenAddress,
-                salt,
-                expirationTimestampInSecs,
-                assetPurposeAndRiskScore
-            ),
-            'LoanKernel: insert failure'
-        );
     }
 
     /**
@@ -291,6 +266,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         // Mint to pool
         for (uint i = 0; i < fillDebtOrderParam.latInfo.length; i = UntangledMath.uncheckedInc(i)) {
             registry.getLoanAssetToken().safeMint(poolAddress, fillDebtOrderParam.latInfo[i]);
+            LoanEntry[] memory loans = new LoanEntry[](fillDebtOrderParam.latInfo[i].tokenIds.length);
 
             for (uint j = 0; j < fillDebtOrderParam.latInfo[i].tokenIds.length; j = UntangledMath.uncheckedInc(j)) {
                 require(
@@ -298,16 +274,18 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                     'LoanKernel: Invalid LAT Token Id'
                 );
 
-                _issueDebtAgreements(
-                    fillDebtOrderParam.latInfo[i].tokenIds[j],
-                    fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
-                    debtOrder.issuance.debtors[x],
-                    fillDebtOrderParam.termsContractParameters[x],
-                    debtOrder.principalTokenAddress,
-                    salts[x],
-                    debtOrder.expirationTimestampInSecs[x],
-                    _getAssetPurposeAndRiskScore(debtOrder.assetPurpose, debtOrder.riskScores[x])
-                );
+                LoanEntry memory newLoan = LoanEntry({
+                    loanTermContract: fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
+                    debtor: debtOrder.issuance.debtors[x],
+                    principalTokenAddress: debtOrder.principalTokenAddress,
+                    termsParam: fillDebtOrderParam.termsContractParameters[x],
+                    salt: salts[x], //solium-disable-next-line security
+                    issuanceBlockTimestamp: block.timestamp,
+                    expirationTimestamp: debtOrder.expirationTimestampInSecs[x],
+                    assetPurpose: Configuration.ASSET_PURPOSE(debtOrder.assetPurpose),
+                    riskScore: debtOrder.riskScores[x]
+                });
+                loans[j] = newLoan;
 
                 require(
                     ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(
@@ -327,7 +305,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             }
 
             expectedAssetsValue += ISecuritizationPool(poolAddress).collectAssets(
-                fillDebtOrderParam.latInfo[i].tokenIds
+                fillDebtOrderParam.latInfo[i].tokenIds, loans
             );
         }
 

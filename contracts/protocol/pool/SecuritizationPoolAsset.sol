@@ -20,7 +20,7 @@ import {ISecuritizationPoolNAV} from './ISecuritizationPoolNAV.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
-import {RiskScore} from './base/types.sol';
+import {RiskScore, LoanEntry} from './base/types.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 
@@ -243,12 +243,12 @@ contract SecuritizationPoolAsset is
     }
 
     /// @inheritdoc ISecuritizationPool
-    function collectAssets(uint256[] calldata tokenIds) external override whenNotPaused returns (uint256) {
+    function collectAssets(uint256[] calldata tokenIds, LoanEntry[] calldata loanEntries) external override whenNotPaused returns (uint256) {
         registry().requireLoanKernel(_msgSender());
         uint256 tokenIdsLength = tokenIds.length;
         uint256 expectedAssetsValue = 0;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            expectedAssetsValue = expectedAssetsValue + ISecuritizationPoolNAV(address(this)).addLoan(tokenIds[i]);
+            expectedAssetsValue = expectedAssetsValue + ISecuritizationPoolNAV(address(this)).addLoan(tokenIds[i], loanEntries[i]);
         }
 
         Storage storage $ = _getStorage();

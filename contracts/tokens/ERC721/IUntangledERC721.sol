@@ -51,17 +51,5 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, Strings.toHexString(tokenId))) : '';
     }
 
-    /// @notice the expiration timestamp of an invoice/loan token
-    function getExpirationTimestamp(uint256 agreementId) external view virtual returns (uint256);
-
-    /// @notice  the interest rate associated with an token
-    function getInterestRate(uint256 agreementId) external view virtual returns (uint256);
-
-    /// @notice the risk score associated with a token
-    function getRiskScore(uint256 agreementId) external view virtual returns (uint8);
-
-    /// @notice retrieves the asset purpose for a given loan agreement ID
-    function getAssetPurpose(uint256 agreementId) public view virtual returns (Configuration.ASSET_PURPOSE);
-
     uint256[48] private __gap;
 }

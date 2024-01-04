@@ -707,7 +707,7 @@ describe('SecuritizationPool', () => {
         });
 
         it('#getAssetInterestRate', async () => {
-            const result = await securitizationPoolValueService.getAssetInterestRate(tokenIds[0]);
+            const result = await securitizationPoolValueService.getAssetInterestRate(securitizationPoolContract.address, tokenIds[0]);
 
             // expect(result.toString()).equal('43164');
         });

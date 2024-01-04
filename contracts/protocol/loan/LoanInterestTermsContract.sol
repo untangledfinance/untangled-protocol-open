@@ -195,11 +195,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         return result;
     }
 
-    /// @inheritdoc ILoanInterestTermsContract
-    function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
-        return unpackParamsForAgreementID(agreementId).interestRate;
-    }
-
     /// @param amortizationUnitType AmortizationUnitType enum
     /// @return the corresponding length of the unit in seconds
     function _getAmortizationUnitLengthInSeconds(
@@ -222,49 +217,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         }
     }
 
-    /**
-     *   Get parameters by Agreement ID (commitment hash)
-     */
-    function unpackParamsForAgreementID(
-        bytes32 agreementId
-    ) public view override returns (UnpackLoanParamtersLib.InterestParams memory params) {
-        ILoanAssetToken.LoanEntry memory loan = registry.getLoanAssetToken().getEntry(agreementId);
-        // The principal amount denominated in the aforementioned token.
-        uint256 principalAmount;
-        // The interest rate accrued per amortization unit.
-        uint256 interestRate;
-        // The amortization unit in which the repayments installments schedule is defined.
-        uint256 rawAmortizationUnitType;
-        // The debt's entire term's length, denominated in the aforementioned amortization units
-        uint256 termLengthInAmortizationUnits;
-        uint256 gracePeriodInDays;
-
-        (
-            principalAmount,
-            interestRate,
-            rawAmortizationUnitType,
-            termLengthInAmortizationUnits,
-            gracePeriodInDays
-        ) = UnpackLoanParamtersLib.unpackParametersFromBytes(loan.termsParam);
-
-        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType = UnpackLoanParamtersLib.AmortizationUnitType(
-            rawAmortizationUnitType
-        );
-
-        // Calculate term length base on Amortization Unit and number
-        uint256 termLengthInSeconds = termLengthInAmortizationUnits *
-            _getAmortizationUnitLengthInSeconds(amortizationUnitType);
-
-        return
-            UnpackLoanParamtersLib.InterestParams({
-                principalAmount: principalAmount,
-                interestRate: interestRate,
-                termStartUnixTimestamp: loan.issuanceBlockTimestamp,
-                termEndUnixTimestamp: termLengthInSeconds + loan.issuanceBlockTimestamp,
-                amortizationUnitType: amortizationUnitType,
-                termLengthInAmortizationUnits: termLengthInAmortizationUnits
-            });
-    }
 
     // Calculate interest amount for a duration with specific Principal amount
     function _calculateInterestForDuration(

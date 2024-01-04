@@ -49,59 +49,6 @@ contract LoanAssetToken is ILoanAssetToken, LATValidator {
         _revokeRole(MINTER_ROLE, _msgSender());
     }
 
-    function getExpirationTimestamp(uint256 _tokenId) public view override returns (uint256) {
-        return entries[bytes32(_tokenId)].expirationTimestamp;
-    }
-
-    function getRiskScore(uint256 _tokenId) public view override returns (uint8) {
-        return entries[bytes32(_tokenId)].riskScore;
-    }
-
-    function getAssetPurpose(uint256 _tokenId) public view override returns (Configuration.ASSET_PURPOSE) {
-        return entries[bytes32(_tokenId)].assetPurpose;
-    }
-
-    function getInterestRate(uint256 _tokenId) public view override returns (uint256 beneficiary) {
-        return registry.getLoanInterestTermsContract().getInterestRate(bytes32(_tokenId));
-    }
-
-    /**
-     * Record new Loan to blockchain
-     */
-    /// @dev Records a new loan entry by inserting loan details into the entries mapping
-    function insert(
-        bytes32 tokenId,
-        address termContract,
-        address debtor,
-        bytes32 termsContractParameter,
-        address pTokenAddress,
-        uint256 _salt,
-        uint256 expirationTimestampInSecs,
-        uint8[] calldata assetPurposeAndRiskScore
-    ) external override whenNotPaused onlyLoanKernel returns (bool) {
-        require(termContract != address(0x0), 'LoanRegistry: Invalid term contract');
-        LoanEntry memory newEntry = LoanEntry({
-            loanTermContract: termContract,
-            debtor: debtor,
-            principalTokenAddress: pTokenAddress,
-            termsParam: termsContractParameter,
-            salt: _salt, //solium-disable-next-line security
-            issuanceBlockTimestamp: block.timestamp,
-            expirationTimestamp: expirationTimestampInSecs,
-            assetPurpose: Configuration.ASSET_PURPOSE(assetPurposeAndRiskScore[0]),
-            riskScore: assetPurposeAndRiskScore[1]
-        });
-        entries[tokenId] = newEntry;
-
-        emit UpdateLoanEntry(tokenId, newEntry);
-        return true;
-    }
-
-    /// @inheritdoc ILoanAssetToken
-    function getEntry(bytes32 agreementId) public view override returns (LoanEntry memory) {
-        return entries[agreementId];
-    }
-
     function safeMint(
         address creditor,
         LoanAssetInfo calldata latInfo
