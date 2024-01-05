@@ -34,9 +34,6 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('Distribution', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract = {
-        address: ZERO_ADDRESS,
-    };
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -410,7 +407,6 @@ describe('Distribution', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 // borrower 1
                 borrowerSigner.address,
@@ -451,13 +447,7 @@ describe('Distribution', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             await loanKernel.fillDebtOrder(
                 formatFillDebtOrderParams(

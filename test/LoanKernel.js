@@ -33,9 +33,6 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('LoanKernel', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract = {
-        address: ZERO_ADDRESS,
-    };
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -396,7 +393,6 @@ describe('LoanKernel', () => {
                 ZERO_ADDRESS,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -410,7 +406,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 ZERO_ADDRESS,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -424,7 +419,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 ZERO_ADDRESS,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -438,7 +432,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -452,7 +445,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -513,7 +505,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 // borrower 1
                 borrowerSigner.address,
@@ -553,13 +544,7 @@ describe('LoanKernel', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             await expect(
                 loanKernel.fillDebtOrder(

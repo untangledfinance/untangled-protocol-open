@@ -27,9 +27,6 @@ describe('Pool to Pool', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract = {
-            address: ZERO_ADDRESS,
-        };
         let noteTokenVault;
         let poolBContract;
         let securitizationPoolValueService;
@@ -527,9 +524,6 @@ describe('Pool to Pool', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract = {
-            address: ZERO_ADDRESS,
-        };
         let noteTokenVault;
         let distributionAssessor;
         let securitizationPoolValueService;

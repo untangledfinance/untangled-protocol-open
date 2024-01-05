@@ -32,9 +32,6 @@ describe('LoanAssetToken', () => {
     let stableCoin;
     let registry;
     let loanAssetTokenContract;
-    let loanInterestTermsContract = {
-        address: ZERO_ADDRESS,
-    };
     let loanRegistry;
     let loanKernel;
     let loanRepaymentRouter;
@@ -316,7 +313,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -349,13 +345,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -395,7 +385,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -428,13 +417,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -474,7 +457,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -507,13 +489,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -545,7 +521,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -578,13 +553,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             // 1: no newValidator in AA
             await expect(
@@ -661,7 +630,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -694,13 +662,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             await loanKernel.fillDebtOrder(
                 formatFillDebtOrderParams(

@@ -56,9 +56,6 @@ describe('NAV', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract = {
-            address: ZERO_ADDRESS,
-        };
         let distributionOperator;
         let distributionTranche;
         let securitizationPoolContract;
@@ -328,7 +325,6 @@ describe('NAV', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -360,13 +356,7 @@ describe('NAV', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             // Upload, tokenize loan assets
             await loanKernel.fillDebtOrder(
@@ -509,9 +499,6 @@ describe('NAV', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract = {
-            address: ZERO_ADDRESS,
-        };
         let distributionOperator;
         let distributionTranche;
         let securitizationPoolContract;
@@ -783,7 +770,6 @@ describe('NAV', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
                 borrowerSigner.address,
@@ -831,13 +817,7 @@ describe('NAV', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             // Upload, tokenize loan assets
             await loanKernel.fillDebtOrder(

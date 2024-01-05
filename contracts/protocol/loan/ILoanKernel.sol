@@ -41,7 +41,6 @@ abstract contract ILoanKernel {
         SECURITIZATION_POOL,
         PRINCIPAL_TOKEN_ADDRESS,
         REPAYMENT_ROUTER,
-        TERM_CONTRACT, // deprecated
         RELAYER
     }
 
@@ -74,7 +73,6 @@ abstract contract ILoanKernel {
 
     struct LoanIssuance {
         address version;
-        address termsContract;
         address[] debtors;
         bytes32[] termsContractParameters; // for different loans
         bytes32[] agreementIds;

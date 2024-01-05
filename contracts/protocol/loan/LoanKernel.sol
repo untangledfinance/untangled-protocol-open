@@ -59,13 +59,11 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         LoanIssuance memory issuance = LoanIssuance({
             version: _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)],
             debtors: _debtors,
-            termsContract: _orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
             termsContractParameters: _termsContractParameters,
             salts: _salts,
             agreementIds: _genLoanAgreementIds(
                 _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)],
                 _debtors,
-                _orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
                 _termsContractParameters,
                 _salts
             )
@@ -123,8 +121,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 _length
     ) private pure returns (address[] memory) {
         address[] memory debtors = new address[](_length);
-        for (uint256 i = 5; i < (5 + _length); i = UntangledMath.uncheckedInc(i)) {
-            debtors[i - 5] = _orderAddresses[i];
+        for (uint256 i = 4; i < (4 + _length); i = UntangledMath.uncheckedInc(i)) {
+            debtors[i - 4] = _orderAddresses[i];
         }
         return debtors;
     }
@@ -315,14 +313,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     function _genLoanAgreementIds(
         address _version,
         address[] memory _debtors,
-        address _termsContract,
         bytes32[] memory _termsContractParameters,
         uint256[] memory _salts
     ) private pure returns (bytes32[] memory) {
         bytes32[] memory agreementIds = new bytes32[](_salts.length);
         for (uint256 i = 0; i < (0 + _salts.length); i = UntangledMath.uncheckedInc(i)) {
             agreementIds[i] = keccak256(
-                abi.encodePacked(_version, _debtors[i], _termsContract, _termsContractParameters[i], _salts[i])
+                abi.encodePacked(_version, _debtors[i], _termsContractParameters[i], _salts[i])
             );
         }
         return agreementIds;
