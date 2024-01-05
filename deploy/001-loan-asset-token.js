@@ -32,7 +32,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     );
     // const loanAssetTokenProxy = await deployments.get('LoanAssetToken');
     // console.log('loanAssetTokenProxy', loanAssetTokenProxy.address);
-    // await execute('LoanAssetToken', { from: deployer, log: true }, 'setBaseURI', 'https://api-test.untangled.finance/');
+    // await execute(
+    //     'LoanAssetToken',
+    //     { from: deployer, log: true },
+    //     'setBaseURI',
+    //     'https://test-api.untangled.finance/api/v3/assets/'
+    // );
 
     // const Token = await ethers.getContractFactory('LoanAssetToken');
     // const token = await Token.attach(loanAssetTokenProxy.address);

@@ -48,7 +48,17 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         _requireMinted(tokenId);
 
         string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, Strings.toHexString(tokenId))) : '';
+        return
+            bytes(baseURI).length > 0
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        Strings.toHexString(tokenId),
+                        '?chain_id=',
+                        Strings.toString(block.chainid)
+                    )
+                )
+                : '';
     }
 
     /// @notice calculates the total expected repayment value (principal + interest) for a loan asset token at a given timestamp

@@ -46,6 +46,7 @@ describe('LoanAssetToken', () => {
     let jotMintedIncreasingInterestTGE;
     let securitizationPoolValueService;
     let distributionAssessor;
+    let chainId;
     // Wallets
     let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
     before('create fixture', async () => {
@@ -74,7 +75,7 @@ describe('LoanAssetToken', () => {
 
         // Gain UID
         const UID_TYPE = 0;
-        const chainId = await getChainId();
+        chainId = await getChainId();
         const expiredAt = dayjs().unix() + 86400;
         const nonce = 0;
         const ethRequired = parseEther('0.00083');
@@ -737,7 +738,7 @@ describe('LoanAssetToken', () => {
 
         it('Correct token uri', async () => {
             const tokenURI = await loanAssetTokenContract.tokenURI(tokenIds[0]);
-            expect(tokenURI).to.equal(`${LAT_BASE_URI}${tokenIds[0]}`);
+            expect(tokenURI).to.equal(`${LAT_BASE_URI}${tokenIds[0]}?chain_id=${chainId}`);
         });
 
         it('Should revert if setBaseURI by a wallet which is NOT admin', async () => {
@@ -751,7 +752,7 @@ describe('LoanAssetToken', () => {
         it('Change base uri successfully', async () => {
             await loanAssetTokenContract.connect(untangledAdminSigner).setBaseURI('https://untangled.finance/lat/');
             const tokenURI = await loanAssetTokenContract.tokenURI(tokenIds[0]);
-            expect(tokenURI).to.equal(`https://untangled.finance/lat/${tokenIds[0]}`);
+            expect(tokenURI).to.equal(`https://untangled.finance/lat/${tokenIds[0]}?chain_id=${chainId}`);
         });
 
         describe('#info', async () => {
