@@ -11,7 +11,6 @@ import {INoteTokenFactory} from '../interfaces/INoteTokenFactory.sol';
 import {INoteToken} from '../interfaces/INoteToken.sol';
 import {ITokenGenerationEventFactory} from '../interfaces/ITokenGenerationEventFactory.sol';
 import {IUntangledERC721} from '../interfaces/IUntangledERC721.sol';
-import {ILoanInterestTermsContract} from '../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanRepaymentRouter} from '../interfaces/ILoanRepaymentRouter.sol';
 import {ILoanKernel} from '../interfaces/ILoanKernel.sol';
 import {ILoanAssetToken} from '../interfaces/ILoanAssetToken.sol';
@@ -61,11 +60,6 @@ library ConfigHelper {
 
     function getLoanAssetToken(Registry registry) internal view returns (ILoanAssetToken) {
         return ILoanAssetToken(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_ASSET_TOKEN));
-    }
-
-    function getLoanInterestTermsContract(Registry registry) internal view returns (ILoanInterestTermsContract) {
-        return
-            ILoanInterestTermsContract(getAddress(registry, Configuration.CONTRACT_TYPE.LOAN_INTEREST_TERMS_CONTRACT));
     }
 
     function getLoanRepaymentRouter(Registry registry) internal view returns (ILoanRepaymentRouter) {
@@ -122,9 +116,5 @@ library ConfigHelper {
 
     function requireLoanKernel(Registry registry, address account) internal view {
         require(account == address(getLoanKernel(registry)), 'Registry: Only LoanKernel');
-    }
-
-    function requireLoanInterestTermsContract(Registry registry, address account) internal view {
-        require(account == address(getLoanInterestTermsContract(registry)), 'Registry: Only LoanInterestTermsContract');
     }
 }

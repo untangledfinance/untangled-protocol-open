@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.19;
 
-import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 import {ILoanAssetToken} from './ILoanAssetToken.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {LATValidator} from './LATValidator.sol';

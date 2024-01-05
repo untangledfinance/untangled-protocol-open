@@ -21,6 +21,7 @@ const {
     getPoolByAddress,
     getPoolAbi,
     formatFillDebtOrderParams,
+    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -33,7 +34,9 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('SecuritizationPool', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
+    let loanInterestTermsContract = {
+        address: ZERO_ADDRESS,
+    };
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -61,7 +64,6 @@ describe('SecuritizationPool', () => {
         ({
             stableCoin,
             loanAssetTokenContract,
-            loanInterestTermsContract,
             loanKernel,
             loanRepaymentRouter,
             securitizationManager,
@@ -707,7 +709,10 @@ describe('SecuritizationPool', () => {
         });
 
         it('#getAssetInterestRate', async () => {
-            const result = await securitizationPoolValueService.getAssetInterestRate(securitizationPoolContract.address, tokenIds[0]);
+            const result = await securitizationPoolValueService.getAssetInterestRate(
+                securitizationPoolContract.address,
+                tokenIds[0]
+            );
 
             // expect(result.toString()).equal('43164');
         });

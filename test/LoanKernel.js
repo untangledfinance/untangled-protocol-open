@@ -33,7 +33,9 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('LoanKernel', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
+    let loanInterestTermsContract = {
+        address: ZERO_ADDRESS,
+    };
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -61,7 +63,6 @@ describe('LoanKernel', () => {
         ({
             stableCoin,
             loanAssetTokenContract,
-            loanInterestTermsContract,
             loanKernel,
             loanRepaymentRouter,
             securitizationManager,
@@ -271,7 +272,6 @@ describe('LoanKernel', () => {
 
     describe('#Securitization Manager', async () => {
         it('Should set up TGE for SOT successfully', async () => {
-
             const openingTime = dayjs(new Date()).unix();
             const closingTime = dayjs(new Date()).add(7, 'days').unix();
             const rate = 2;
@@ -282,9 +282,7 @@ describe('LoanKernel', () => {
             const amountChangeEachInterval = 0;
             const prefixOfNoteTokenSaleName = 'SOT_';
 
-            const transaction = await securitizationManager
-              .connect(poolCreatorSigner)
-              .setUpTGEForSOT(
+            const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
                 {
                     issuerTokenController: untangledAdminSigner.address,
                     pool: securitizationPoolContract.address,
@@ -299,8 +297,8 @@ describe('LoanKernel', () => {
                     finalInterest,
                     timeInterval,
                     amountChangeEachInterval,
-                },
-              );
+                }
+            );
 
             const receipt = await transaction.wait();
 
@@ -316,7 +314,6 @@ describe('LoanKernel', () => {
         });
 
         it('Should set up TGE for JOT successfully', async () => {
-
             const openingTime = dayjs(new Date()).unix();
             const closingTime = dayjs(new Date()).add(7, 'days').unix();
             const rate = 2;
@@ -325,9 +322,7 @@ describe('LoanKernel', () => {
             const prefixOfNoteTokenSaleName = 'JOT_';
 
             // JOT only has SaleType.NORMAL_SALE
-            const transaction = await securitizationManager
-              .connect(poolCreatorSigner)
-              .setUpTGEForJOT(
+            const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
                 {
                     issuerTokenController: untangledAdminSigner.address,
                     pool: securitizationPoolContract.address,
@@ -335,11 +330,10 @@ describe('LoanKernel', () => {
                     saleType: SaleType.NORMAL_SALE,
                     longSale: true,
                     ticker: prefixOfNoteTokenSaleName,
-
                 },
                 { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                initialJOTAmount,
-              );
+                initialJOTAmount
+            );
             const receipt = await transaction.wait();
 
             const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
@@ -423,20 +417,6 @@ describe('LoanKernel', () => {
             await expect(
                 loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
             ).to.be.revertedWith(`REPAYMENT_ROUTER is zero address.`);
-        });
-
-        it('TERM_CONTRACT is zero address', async () => {
-            const orderAddresses = [
-                securitizationPoolContract.address,
-                stableCoin.address,
-                loanRepaymentRouter.address,
-                ZERO_ADDRESS,
-                relayer.address,
-                borrowerSigner.address,
-            ];
-            await expect(
-                loanKernel.fillDebtOrder(formatFillDebtOrderParams(orderAddresses, [], [], []))
-            ).to.be.revertedWith(`TERM_CONTRACT is zero address.`);
         });
 
         it('PRINCIPAL_TOKEN_ADDRESS is zero address', async () => {
@@ -670,37 +650,24 @@ describe('LoanKernel', () => {
             await impersonateAccount(loanRepaymentRouter.address);
             await setBalance(loanRepaymentRouter.address, ethers.utils.parseEther('1'));
             const signer = await ethers.getSigner(loanRepaymentRouter.address);
-            await expect(
-        loanKernel.connect(signer).concludeLoans([ZERO_ADDRESS], [tokenIds[0]], loanInterestTermsContract.address)
-            ).to.be.revertedWith(`Invalid creditor account.`);
+            await expect(loanKernel.connect(signer).concludeLoans([ZERO_ADDRESS], [tokenIds[0]])).to.be.revertedWith(
+                `Invalid creditor account.`
+            );
         });
 
         it('LoanKernel: Invalid agreement id', async () => {
             const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-        loanKernel.connect(signer).concludeLoans(
-                    [securitizationPoolContract.address],
-                    [formatBytes32String('')],
-                    loanInterestTermsContract.address
-                )
+                loanKernel
+                    .connect(signer)
+                    .concludeLoans([securitizationPoolContract.address], [formatBytes32String('')])
             ).to.be.revertedWith(`Invalid agreement id.`);
-        });
-
-        it('LoanKernel: Invalid terms contract', async () => {
-            const signer = await ethers.getSigner(loanRepaymentRouter.address);
-            await expect(
-        loanKernel.connect(signer).concludeLoans([securitizationPoolContract.address], [tokenIds[0]], ZERO_ADDRESS)
-            ).to.be.revertedWith(`Invalid terms contract.`);
         });
 
         it('Cannot conclude agreement id if caller is not LoanRepaymentRouter', async () => {
             await expect(
-                loanKernel.concludeLoans(
-                    [securitizationPoolContract.address],
-                    [tokenIds[0]],
-                    loanInterestTermsContract.address
-                )
-              ).to.be.revertedWith('LoanKernel: Only LoanRepaymentRouter');
+                loanKernel.concludeLoans([securitizationPoolContract.address], [tokenIds[0]])
+            ).to.be.revertedWith('LoanKernel: Only LoanRepaymentRouter');
         });
 
         it('only LoanKernel contract can burn', async () => {
@@ -729,7 +696,7 @@ describe('LoanKernel', () => {
         it('Cannot conclude agreement id again', async () => {
             const signer = await ethers.getSigner(loanRepaymentRouter.address);
             await expect(
-            loanKernel.connect(signer).concludeLoans([securitizationPoolContract.address], [tokenIds[0]], loanInterestTermsContract.address)
+                loanKernel.connect(signer).concludeLoans([securitizationPoolContract.address], [tokenIds[0]])
             ).to.be.revertedWith(`ERC721: invalid token ID`);
         });
     });

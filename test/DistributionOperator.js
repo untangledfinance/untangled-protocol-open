@@ -34,7 +34,9 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('Distribution', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
+    let loanInterestTermsContract = {
+        address: ZERO_ADDRESS,
+    };
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -61,7 +63,6 @@ describe('Distribution', () => {
             stableCoin,
             loanAssetTokenContract,
             defaultLoanAssetTokenValidator,
-            loanInterestTermsContract,
             loanKernel,
             loanRepaymentRouter,
             securitizationManager,

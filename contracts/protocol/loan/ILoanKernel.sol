@@ -41,7 +41,7 @@ abstract contract ILoanKernel {
         SECURITIZATION_POOL,
         PRINCIPAL_TOKEN_ADDRESS,
         REPAYMENT_ROUTER,
-        TERM_CONTRACT,
+        TERM_CONTRACT, // deprecated
         RELAYER
     }
 
@@ -108,5 +108,5 @@ abstract contract ILoanKernel {
     mapping(bytes32 => bool) public debtOrderCompleted;
 
     /// @notice conclude a loan by stopping lending/loan terms or allowing the loan loss. It takes the creditor, agreement ID, and term contract as input
-    function concludeLoan(address creditor, bytes32 agreementId, address termContract) public virtual;
+    function concludeLoan(address creditor, bytes32 agreementId) public virtual;
 }

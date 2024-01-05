@@ -18,6 +18,7 @@ const {
     generateLATMintPayload,
     getPoolByAddress,
     formatFillDebtOrderParams,
+    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -31,7 +32,9 @@ describe('LoanAssetToken', () => {
     let stableCoin;
     let registry;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
+    let loanInterestTermsContract = {
+        address: ZERO_ADDRESS,
+    };
     let loanRegistry;
     let loanKernel;
     let loanRepaymentRouter;
@@ -56,7 +59,6 @@ describe('LoanAssetToken', () => {
             stableCoin,
             registry,
             loanAssetTokenContract,
-            loanInterestTermsContract,
             loanRegistry,
             loanKernel,
             loanRepaymentRouter,
@@ -774,7 +776,6 @@ describe('LoanAssetToken', () => {
                 const data = await securitizationPoolContract.unpackParamsForAgreementID(tokenIds[0]);
                 expect(data.interestRate.toString()).equal(interestRateFixedPoint(5).toString());
             });
-
         });
 
         describe('#burn', async () => {
