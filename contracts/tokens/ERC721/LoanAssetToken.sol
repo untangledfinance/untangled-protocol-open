@@ -15,11 +15,6 @@ import {UntangledMath} from '../../libraries/UntangledMath.sol';
 contract LoanAssetToken is ILoanAssetToken, LATValidator {
     using ConfigHelper for Registry;
 
-    modifier onlyLoanKernel() {
-        require(_msgSender() == address(registry.getLoanKernel()), 'LoanRegistry: Only LoanKernel');
-        _;
-    }
-
     /** CONSTRUCTOR */
     function initialize(
         Registry _registry,
