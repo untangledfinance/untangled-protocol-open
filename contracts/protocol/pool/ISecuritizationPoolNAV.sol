@@ -2,6 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Configuration} from '../../libraries/Configuration.sol';
+import {LoanEntry} from './base/types.sol';
+import "../../libraries/UnpackLoanParamtersLib.sol";
 
 interface ISecuritizationPoolNAV {
     /// Events
@@ -18,7 +20,7 @@ interface ISecuritizationPoolNAV {
     event Repay(uint256 indexed loan, uint256 currencyAmount);
     event UpdateAssetRiskScore(uint256 loan, uint256 risk);
 
-    function addLoan(uint256 loan) external returns (uint256);
+    function addLoan(uint256 loan, LoanEntry calldata loanEntry) external returns (uint256);
 
     function repayLoan(uint256 loan, uint256 amount) external returns (uint256);
 
@@ -50,4 +52,11 @@ interface ISecuritizationPoolNAV {
     function discountRate() external view returns (uint256);
 
     function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) external;
+
+    /// @notice retrieves loan information
+    function getEntry(bytes32 agreementId) external view returns (LoanEntry memory);
+
+    function unpackParamsForAgreementID(
+        bytes32 agreementId
+    ) external view returns (UnpackLoanParamtersLib.InterestParams memory params);
 }

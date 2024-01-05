@@ -5,7 +5,7 @@ import '../../storage/Registry.sol';
 import '../../base/UntangledBase.sol';
 import '../../libraries/Configuration.sol';
 
-import {RiskScore} from './base/types.sol';
+import {RiskScore, LoanEntry} from './base/types.sol';
 
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
@@ -62,7 +62,7 @@ interface ISecuritizationPool {
     ) external;
 
     /// @notice collects NFT assets from a specified address
-    function collectAssets(uint256[] calldata tokenIds) external returns (uint256);
+    function collectAssets(uint256[] calldata tokenIds, LoanEntry[] calldata loanEntries) external returns (uint256);
 
     /// @notice collects ERC20 assets from specified senders
     function collectERC20Asset(address tokenAddresss) external;

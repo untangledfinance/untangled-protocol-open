@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import '../../storage/Registry.sol';
 
-import {RiskScore} from './base/types.sol';
+import {RiskScore, LoanEntry} from './base/types.sol';
 
 interface ISecuritizationPoolStorage {
     event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
@@ -153,6 +153,8 @@ interface ISecuritizationPoolStorage {
         mapping(bytes32 => uint256) overdueLoansOfNavAssets;
 
         mapping(uint256 => bytes32) loanToNFT;
+
+        mapping(bytes32 => LoanEntry) entries;
     }
 
     function tgeAddress() external view returns (address);

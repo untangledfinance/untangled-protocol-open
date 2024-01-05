@@ -34,7 +34,6 @@ import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {UntangledMath} from '../../libraries/UntangledMath.sol';
 import {Registry} from '../../storage/Registry.sol';
 import {Discounting} from './libs/discounting.sol';
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {POOL, ONE_HUNDRED_PERCENT, RATE_SCALING_FACTOR, WRITEOFF_RATE_GROUP_START} from './types.sol';
 
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
@@ -42,7 +41,7 @@ import {RegistryInjection} from './RegistryInjection.sol';
 import {SecuritizationAccessControl} from './SecuritizationAccessControl.sol';
 import {ISecuritizationAccessControl} from './ISecuritizationAccessControl.sol';
 import {ISecuritizationPoolNAV} from './ISecuritizationPoolNAV.sol';
-import {RiskScore} from './base/types.sol';
+import {RiskScore, LoanEntry} from './base/types.sol';
 import {SecuritizationPoolStorage} from './SecuritizationPoolStorage.sol';
 import {ISecuritizationPoolExtension, SecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import 'contracts/libraries/UnpackLoanParamtersLib.sol';
@@ -178,14 +177,12 @@ contract SecuritizationPoolNAV is
         return securitizationPool.riskScores(idx);
     }
 
-    function addLoan(uint256 loan) public returns (uint256) {
+    function addLoan(uint256 loan, LoanEntry calldata loanEntry) public returns (uint256) {
         require(_msgSender() == address(this), 'Only SecuritizationPool');
         Storage storage $ = _getStorage();
-        UnpackLoanParamtersLib.InterestParams memory loanParam = registry()
-            .getLoanInterestTermsContract()
-            .unpackParamsForAgreementID(bytes32(loan));
         bytes32 _tokenId = bytes32(loan);
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(_tokenId);
+        $.entries[_tokenId] = loanEntry;
+        UnpackLoanParamtersLib.InterestParams memory loanParam = unpackParamsForAgreementID(_tokenId);
         $.details[_tokenId].risk = loanEntry.riskScore;
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
@@ -340,7 +337,7 @@ contract SecuritizationPoolNAV is
         Rate memory _rate = $.rates[$.loanRates[loan]];
 
         // calculate future value FV
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        LoanEntry memory loanEntry = getEntry(bytes32(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             amount,
@@ -377,7 +374,7 @@ contract SecuritizationPoolNAV is
     function _calcFutureValue(uint256 loan, uint256 _debt, uint256 _maturityDate) private view returns (uint256) {
         Storage storage $ = _getStorage();
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(nftID(loan));
+        LoanEntry memory loanEntry = getEntry(nftID(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             _debt,
@@ -465,7 +462,7 @@ contract SecuritizationPoolNAV is
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        LoanEntry memory loanEntry = getEntry(bytes32(loan));
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         require(maturityDate_ + riskParam.gracePeriod <= nnow, 'maturity-date-in-the-future');
         // check the writeoff group based on the amount of days overdue
@@ -761,7 +758,7 @@ contract SecuritizationPoolNAV is
         // update latest NAV
         // update latest Discount
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(bytes32(loan));
+        LoanEntry memory loanEntry = getEntry(bytes32(loan));
         $.details[nftID_].futureValue = toUint128(
             calcFutureValue(
                 _rate.ratePerSecond,
@@ -798,7 +795,7 @@ contract SecuritizationPoolNAV is
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
-        ILoanRegistry.LoanEntry memory loanEntry = registry().getLoanRegistry().getEntry(nftID_);
+        LoanEntry memory loanEntry = getEntry(nftID_);
 
         uint8 _loanRiskIndex = loanEntry.riskScore - 1;
 
@@ -1004,6 +1001,77 @@ contract SecuritizationPoolNAV is
         return rdivup(amount, chi);
     }
 
+    /// @inheritdoc ISecuritizationPoolNAV
+    function getEntry(bytes32 agreementId) public view override returns (LoanEntry memory) {
+        Storage storage $ = _getStorage();
+        return $.entries[agreementId];
+    }
+
+    /// @param amortizationUnitType AmortizationUnitType enum
+    /// @return the corresponding length of the unit in seconds
+    function _getAmortizationUnitLengthInSeconds(
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType
+    ) private pure returns (uint256) {
+        if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MINUTES) {
+            return 1 minutes;
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.HOURS) {
+            return 1 hours;
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.DAYS) {
+            return 1 days;
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.WEEKS) {
+            return 7 days;
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.MONTHS) {
+            return 30 days;
+        } else if (amortizationUnitType == UnpackLoanParamtersLib.AmortizationUnitType.YEARS) {
+            return 365 days;
+        } else {
+            revert('Unknown amortization unit type.');
+        }
+    }
+    /**
+     *   Get parameters by Agreement ID (commitment hash)
+     */
+    function unpackParamsForAgreementID(
+        bytes32 agreementId
+    ) public view override returns (UnpackLoanParamtersLib.InterestParams memory params) {
+        LoanEntry memory loan = getEntry(agreementId);
+        // The principal amount denominated in the aforementioned token.
+        uint256 principalAmount;
+        // The interest rate accrued per amortization unit.
+        uint256 interestRate;
+        // The amortization unit in which the repayments installments schedule is defined.
+        uint256 rawAmortizationUnitType;
+        // The debt's entire term's length, denominated in the aforementioned amortization units
+        uint256 termLengthInAmortizationUnits;
+        uint256 gracePeriodInDays;
+
+        (
+            principalAmount,
+            interestRate,
+            rawAmortizationUnitType,
+            termLengthInAmortizationUnits,
+            gracePeriodInDays
+        ) = UnpackLoanParamtersLib.unpackParametersFromBytes(loan.termsParam);
+
+        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType = UnpackLoanParamtersLib.AmortizationUnitType(
+            rawAmortizationUnitType
+        );
+
+        // Calculate term length base on Amortization Unit and number
+        uint256 termLengthInSeconds = termLengthInAmortizationUnits *
+                        _getAmortizationUnitLengthInSeconds(amortizationUnitType);
+
+        return
+            UnpackLoanParamtersLib.InterestParams({
+            principalAmount: principalAmount,
+            interestRate: interestRate,
+            termStartUnixTimestamp: loan.issuanceBlockTimestamp,
+            termEndUnixTimestamp: termLengthInSeconds + loan.issuanceBlockTimestamp,
+            amortizationUnitType: amortizationUnitType,
+            termLengthInAmortizationUnits: termLengthInAmortizationUnits
+        });
+    }
+
     function getFunctionSignatures()
         public
         view
@@ -1011,7 +1079,7 @@ contract SecuritizationPoolNAV is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](13);
+        bytes4[] memory _functionSignatures = new bytes4[](15);
 
         _functionSignatures[0] = this.addLoan.selector;
         _functionSignatures[1] = this.repayLoan.selector;
@@ -1026,6 +1094,8 @@ contract SecuritizationPoolNAV is
         _functionSignatures[10] = this.updateAssetRiskScore.selector;
         _functionSignatures[11] = this.writeOff.selector;
         _functionSignatures[12] = bytes4(keccak256(bytes('file(bytes32,uint256,uint256,uint256,uint256,uint256)')));
+        _functionSignatures[13] = this.getEntry.selector;
+        _functionSignatures[14] = this.unpackParamsForAgreementID.selector;
 
         return _functionSignatures;
     }

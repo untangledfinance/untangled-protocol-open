@@ -757,39 +757,25 @@ describe('LoanAssetToken', () => {
 
         describe('#info', async () => {
             it('getExpirationTimestamp', async () => {
-                const data = await loanAssetTokenContract.getExpirationTimestamp(tokenIds[0]);
-                expect(data.toString()).equal(expirationTimestamps.toString());
+                const data = await securitizationPoolContract.getEntry(tokenIds[0]);
+                expect(data.expirationTimestamp.toString()).equal(expirationTimestamps.toString());
             });
 
             it('getRiskScore', async () => {
-                const data = await loanAssetTokenContract.getRiskScore(tokenIds[0]);
-                expect(data).equal(1);
+                const data = await securitizationPoolContract.getEntry(tokenIds[0]);
+                expect(data.riskScore).equal(1);
             });
 
             it('getAssetPurpose', async () => {
-                const data = await loanAssetTokenContract.getAssetPurpose(tokenIds[0]);
-                expect(data).equal(parseInt(ASSET_PURPOSE));
+                const data = await securitizationPoolContract.getEntry(tokenIds[0]);
+                expect(data.assetPurpose).equal(parseInt(ASSET_PURPOSE));
             });
 
             it('getInterestRate', async () => {
-                const data = await loanAssetTokenContract.getInterestRate(tokenIds[0]);
-                expect(data.toString()).equal(interestRateFixedPoint(5).toString());
+                const data = await securitizationPoolContract.unpackParamsForAgreementID(tokenIds[0]);
+                expect(data.interestRate.toString()).equal(interestRateFixedPoint(5).toString());
             });
 
-            it('getExpectedRepaymentValues', async () => {
-                const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
-                const data = await loanAssetTokenContract.getExpectedRepaymentValues(tokenIds[0], nextTimeStamps);
-
-                expect(data.expectedPrincipal.toNumber()).equal(principalAmount);
-                expect(data.expectedInterest.toString()).equal('0');
-            });
-
-            it('getTotalExpectedRepaymentValue', async () => {
-                const nextTimeStamps = dayjs(expirationTimestamps).add(1, 'days').unix();
-                const data = await loanAssetTokenContract.getTotalExpectedRepaymentValue(tokenIds[0], nextTimeStamps);
-
-                expect(data.toString()).equal(principalAmount.toString());
-            });
         });
 
         describe('#burn', async () => {

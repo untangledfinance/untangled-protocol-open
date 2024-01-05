@@ -109,78 +109,9 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
     /// @inheritdoc ILoanInterestTermsContract
     function registerConcludeLoan(bytes32 agreementId) external override whenNotPaused nonReentrant returns (bool) {
         registry.requireLoanKernel(_msgSender());
-        registry.getLoanRegistry().setCompletedLoan(agreementId);
 
         emit LogRegisterCompleteTerm(agreementId);
         return true;
-    }
-
-    /// When called, the registerRepayment function records the debtor's
-    ///  repayment, as well as any auxiliary metadata needed by the contract
-    ///  to determine ex post facto the value repaid (e.g. current USD
-    ///  exchange rate)
-    /// @param  agreementId bytes32. The agreement id (issuance hash) of the debt agreement to which this pertains.
-    /// @param  payer address. The address of the payer.
-    /// @param  beneficiary address. The address of the payment's beneficiary.
-    /// @param  unitsOfRepayment uint. The units-of-value repaid in the transaction.
-    /// @param  tokenAddress address. The address of the token with which the repayment transaction was executed.
-    /// @inheritdoc ILoanInterestTermsContract
-    function registerRepayment(
-        bytes32 agreementId,
-        address payer,
-        address beneficiary,
-        uint256 unitsOfRepayment,
-        address tokenAddress
-    ) public override onlyRouter returns (uint256 remains) {
-        ILoanRegistry loanRegistry = registry.getLoanRegistry();
-        require(
-            tokenAddress == loanRegistry.getPrincipalTokenAddress(agreementId),
-            'LoanTermsContract: Invalid token for repayment.'
-        );
-        require(!loanRegistry.completedLoans(agreementId), 'LoanTermsContract: Completed Loan.');
-        require(startedLoan[agreementId], 'LoanTermsContract: Loan has not started yet.');
-
-        uint256 currentTimestamp = block.timestamp;
-
-        uint256 expectedPrincipal;
-        uint256 expectedInterest;
-        // query total outstanding amounts
-        (expectedPrincipal, expectedInterest) = getExpectedRepaymentValues(agreementId, currentTimestamp);
-        // TODO: Currently only allow Debtor to repay with amount >= expectedInterest of that time
-        // Because, we haven't made any mechanism to manage outstanding interest amounts in the case when Debtor
-        // repaid with amount < expectedInterest (at that moment)
-        require(unitsOfRepayment >= expectedInterest, 'LoanTermsContract: Expected interest amount is minimum.');
-
-        // exceed expectation, Debtor can pay all at once
-        if (unitsOfRepayment >= expectedPrincipal + expectedInterest) {
-            _setCompletedRepayment(agreementId);
-            _addRepaidInterestAmount(agreementId, expectedInterest);
-            _addRepaidPrincipalAmount(agreementId, expectedPrincipal);
-            // put the remain to interest
-            remains = unitsOfRepayment - (expectedPrincipal + expectedInterest);
-        } else {
-            // if currently Debtor no need to repay for interest
-            if (expectedInterest == 0) {
-                _addRepaidPrincipalAmount(agreementId, unitsOfRepayment);
-            } else {
-                // if expectedInterest > 0 ( & unitsOfRepayment >= expectedInterest)
-                _addRepaidInterestAmount(agreementId, expectedInterest);
-                if (unitsOfRepayment - expectedInterest > 0) {
-                    // Debtor is not able to fulfill the expectedPrincipal as we already validated from first IF statement
-                    // -> there is no remains for adding to repaidInterestAmount
-                    _addRepaidPrincipalAmount(agreementId, unitsOfRepayment - expectedInterest);
-                }
-            }
-        }
-
-        // Update Debt registry record
-        loanRegistry.updateLastRepaymentTimestamp(agreementId, currentTimestamp);
-        // loanRegistry.selfEvaluateCollateralRatio(agreementId);
-
-        // Emit new event
-        emit LogRegisterRepayment(agreementId, payer, beneficiary, unitsOfRepayment, tokenAddress);
-
-        return remains;
     }
 
     /// @inheritdoc ILoanInterestTermsContract
@@ -196,64 +127,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
             result[i] = completedRepayment[agreementIds[i]];
         }
         return result;
-    }
-
-    /**
-     * Expected repayment value with Amortization of Interest and Principal
-     * (AMORTIZATION) - will be used for repayment from Debtor
-     */
-    /// @inheritdoc ILoanInterestTermsContract
-    function getExpectedRepaymentValues(
-        bytes32 agreementId,
-        uint256 timestamp
-    ) public view override returns (uint256 expectedPrincipal, uint256 expectedInterest) {
-        UnpackLoanParamtersLib.InterestParams memory params = unpackParamsForAgreementID(agreementId);
-
-        ILoanRegistry loanRegistry = registry.getLoanRegistry();
-
-        uint256 repaidPrincipalAmount = repaidPrincipalAmounts[agreementId];
-        uint256 repaidInterestAmount = repaidInterestAmounts[agreementId];
-        uint256 lastRepaymentTimestamp = loanRegistry.getLastRepaymentTimestamp(agreementId);
-
-        bool isManualInterestLoan = loanRegistry.manualInterestLoan(agreementId);
-        uint256 manualInterestAmountLoan = 0;
-        if (isManualInterestLoan) {
-            manualInterestAmountLoan = loanRegistry.manualInterestAmountLoan(agreementId);
-        }
-
-        (expectedPrincipal, expectedInterest) = _getExpectedRepaymentValuesToTimestamp(
-            params,
-            lastRepaymentTimestamp,
-            timestamp,
-            repaidPrincipalAmount,
-            repaidInterestAmount,
-            isManualInterestLoan,
-            manualInterestAmountLoan
-        );
-    }
-
-    /// @inheritdoc ILoanInterestTermsContract
-    function getMultiExpectedRepaymentValues(
-        bytes32[] memory agreementIds,
-        uint256 timestamp
-    ) public view override returns (uint256[] memory, uint256[] memory) {
-        uint256[] memory expectedPrincipals = new uint256[](agreementIds.length);
-        uint256[] memory expectedInterests = new uint256[](agreementIds.length);
-        uint256 agreementIdsLength = agreementIds.length;
-        for (uint256 i = 0; i < agreementIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            (uint256 expectedPrincipal, uint256 expectedInterest) = getExpectedRepaymentValues(
-                agreementIds[i],
-                timestamp
-            );
-            expectedPrincipals[i] = expectedPrincipal;
-            expectedInterests[i] = expectedInterest;
-        }
-        return (expectedPrincipals, expectedInterests);
-    }
-
-    /// @inheritdoc ILoanInterestTermsContract
-    function getInterestRate(bytes32 agreementId) public view override returns (uint256) {
-        return unpackParamsForAgreementID(agreementId).interestRate;
     }
 
     /// @param amortizationUnitType AmortizationUnitType enum
@@ -278,53 +151,6 @@ contract LoanInterestTermsContract is UntangledBase, ILoanInterestTermsContract 
         }
     }
 
-    /**
-     *   Get parameters by Agreement ID (commitment hash)
-     */
-    function unpackParamsForAgreementID(
-        bytes32 agreementId
-    ) public view override returns (UnpackLoanParamtersLib.InterestParams memory params) {
-        bytes32 parameters;
-        uint256 issuanceBlockTimestamp = 0;
-        ILoanRegistry loanRegistry = registry.getLoanRegistry();
-        issuanceBlockTimestamp = loanRegistry.getIssuanceBlockTimestamp(agreementId);
-        parameters = loanRegistry.getTermsContractParameters(agreementId);
-        // The principal amount denominated in the aforementioned token.
-        uint256 principalAmount;
-        // The interest rate accrued per amortization unit.
-        uint256 interestRate;
-        // The amortization unit in which the repayments installments schedule is defined.
-        uint256 rawAmortizationUnitType;
-        // The debt's entire term's length, denominated in the aforementioned amortization units
-        uint256 termLengthInAmortizationUnits;
-        uint256 gracePeriodInDays;
-
-        (
-            principalAmount,
-            interestRate,
-            rawAmortizationUnitType,
-            termLengthInAmortizationUnits,
-            gracePeriodInDays
-        ) = UnpackLoanParamtersLib.unpackParametersFromBytes(parameters);
-
-        UnpackLoanParamtersLib.AmortizationUnitType amortizationUnitType = UnpackLoanParamtersLib.AmortizationUnitType(
-            rawAmortizationUnitType
-        );
-
-        // Calculate term length base on Amortization Unit and number
-        uint256 termLengthInSeconds = termLengthInAmortizationUnits *
-            _getAmortizationUnitLengthInSeconds(amortizationUnitType);
-
-        return
-            UnpackLoanParamtersLib.InterestParams({
-                principalAmount: principalAmount,
-                interestRate: interestRate,
-                termStartUnixTimestamp: issuanceBlockTimestamp,
-                termEndUnixTimestamp: termLengthInSeconds + issuanceBlockTimestamp,
-                amortizationUnitType: amortizationUnitType,
-                termLengthInAmortizationUnits: termLengthInAmortizationUnits
-            });
-    }
 
     // Calculate interest amount for a duration with specific Principal amount
     function _calculateInterestForDuration(

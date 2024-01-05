@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/utils/math/Math.sol';
 import {INoteToken} from '../../interfaces/INoteToken.sol';
 import {IUntangledERC721} from '../../interfaces/IUntangledERC721.sol';
 import {ICrowdSale} from '../../interfaces/ICrowdSale.sol';
-import {ILoanRegistry} from '../../interfaces/ILoanRegistry.sol';
 import {ISecuritizationPool} from './ISecuritizationPool.sol';
 import {ISecuritizationPoolValueService} from './ISecuritizationPoolValueService.sol';
 import {IDistributionAssessor} from './IDistributionAssessor.sol';
@@ -38,17 +37,17 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
     uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
 
-    function getAssetInterestRates(bytes32[] calldata tokenIds) external view returns (uint256[] memory) {
+    function getAssetInterestRates(address poolAddress, bytes32[] calldata tokenIds) external view returns (uint256[] memory) {
         uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory interestRates = new uint256[](tokenIdsLength);
         for (uint256 i; i < tokenIdsLength; i++) {
-            interestRates[i] = getAssetInterestRate(tokenIds[i]);
+            interestRates[i] = getAssetInterestRate(poolAddress, tokenIds[i]);
         }
         return interestRates;
     }
 
-    function getAssetInterestRate(bytes32 tokenId) public view returns (uint256) {
-        uint256 interestRate = registry.getLoanInterestTermsContract().getInterestRate(tokenId);
+    function getAssetInterestRate(address poolAddress, bytes32 tokenId) public view returns (uint256) {
+        uint256 interestRate = ISecuritizationPoolNAV(poolAddress).unpackParamsForAgreementID(tokenId).interestRate;
 
         return interestRate;
     }
