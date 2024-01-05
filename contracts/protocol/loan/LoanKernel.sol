@@ -34,10 +34,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)] != address(0x0),
             'REPAYMENT_ROUTER is zero address.'
         );
-        require(
-            _orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)] != address(0x0),
-            'TERM_CONTRACT is zero address.'
-        );
+
         require(
             _orderAddresses[uint8(FillingAddressesIndex.PRINCIPAL_TOKEN_ADDRESS)] != address(0x0),
             'PRINCIPAL_TOKEN_ADDRESS is zero address.'
@@ -62,13 +59,11 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         LoanIssuance memory issuance = LoanIssuance({
             version: _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)],
             debtors: _debtors,
-            termsContract: _orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
             termsContractParameters: _termsContractParameters,
             salts: _salts,
             agreementIds: _genLoanAgreementIds(
                 _orderAddresses[uint8(FillingAddressesIndex.REPAYMENT_ROUTER)],
                 _debtors,
-                _orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
                 _termsContractParameters,
                 _salts
             )
@@ -126,8 +121,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 _length
     ) private pure returns (address[] memory) {
         address[] memory debtors = new address[](_length);
-        for (uint256 i = 5; i < (5 + _length); i = UntangledMath.uncheckedInc(i)) {
-            debtors[i - 5] = _orderAddresses[i];
+        for (uint256 i = 4; i < (4 + _length); i = UntangledMath.uncheckedInc(i)) {
+            debtors[i - 4] = _orderAddresses[i];
         }
         return debtors;
     }
@@ -192,26 +187,16 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         return registry.getLoanAssetToken().ownerOf(uint256(agreementId)) != address(0);
     }
 
-    function _assertCompletedRepayment(bytes32 agreementId) private view returns (bool) {
-        return registry.getLoanInterestTermsContract().completedRepayment(agreementId);
-    }
-
     /// @inheritdoc ILoanKernel
     /// @dev A loan, stop lending/loan terms or allow the loan loss
-    function concludeLoan(address creditor, bytes32 agreementId, address termContract) public override whenNotPaused {
+    function concludeLoan(address creditor, bytes32 agreementId) public override whenNotPaused {
         require(_msgSender() == address(registry.getLoanRepaymentRouter()), 'LoanKernel: Only LoanRepaymentRouter');
         require(creditor != address(0), 'Invalid creditor account.');
         require(agreementId != bytes32(0), 'Invalid agreement id.');
-        require(termContract != address(0), 'Invalid terms contract.');
 
         if (!_assertDebtExisting(agreementId)) {
             revert('Debt does not exsits');
         }
-
-        require(
-            ILoanInterestTermsContract(termContract).registerConcludeLoan(agreementId),
-            'Cannot register conclude loan.'
-        );
 
         _burnLoanAssetToken(agreementId);
     }
@@ -222,12 +207,11 @@ contract LoanKernel is ILoanKernel, UntangledBase {
 
     function concludeLoans(
         address[] calldata creditors,
-        bytes32[] calldata agreementIds,
-        address termContract
+        bytes32[] calldata agreementIds
     ) external whenNotPaused nonReentrant {
         uint256 creditorsLength = creditors.length;
         for (uint256 i = 0; i < creditorsLength; i = UntangledMath.uncheckedInc(i)) {
-            concludeLoan(creditors[i], agreementIds[i], termContract);
+            concludeLoan(creditors[i], agreementIds[i]);
         }
     }
 
@@ -275,7 +259,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 );
 
                 LoanEntry memory newLoan = LoanEntry({
-                    loanTermContract: fillDebtOrderParam.orderAddresses[uint8(FillingAddressesIndex.TERM_CONTRACT)],
                     debtor: debtOrder.issuance.debtors[x],
                     principalTokenAddress: debtOrder.principalTokenAddress,
                     termsParam: fillDebtOrderParam.termsContractParameters[x],
@@ -286,13 +269,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                     riskScore: debtOrder.riskScores[x]
                 });
                 loans[j] = newLoan;
-
-                require(
-                    ILoanInterestTermsContract(debtOrder.issuance.termsContract).registerTermStart(
-                        bytes32(fillDebtOrderParam.latInfo[i].tokenIds[j])
-                    ),
-                    'Cannot register term start'
-                );
 
                 emit LogDebtOrderFilled(
                     debtOrder.issuance.agreementIds[x],
@@ -305,7 +281,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
             }
 
             expectedAssetsValue += ISecuritizationPool(poolAddress).collectAssets(
-                fillDebtOrderParam.latInfo[i].tokenIds, loans
+                fillDebtOrderParam.latInfo[i].tokenIds,
+                loans
             );
         }
 
@@ -336,14 +313,13 @@ contract LoanKernel is ILoanKernel, UntangledBase {
     function _genLoanAgreementIds(
         address _version,
         address[] memory _debtors,
-        address _termsContract,
         bytes32[] memory _termsContractParameters,
         uint256[] memory _salts
     ) private pure returns (bytes32[] memory) {
         bytes32[] memory agreementIds = new bytes32[](_salts.length);
         for (uint256 i = 0; i < (0 + _salts.length); i = UntangledMath.uncheckedInc(i)) {
             agreementIds[i] = keccak256(
-                abi.encodePacked(_version, _debtors[i], _termsContract, _termsContractParameters[i], _salts[i])
+                abi.encodePacked(_version, _debtors[i], _termsContractParameters[i], _salts[i])
             );
         }
         return agreementIds;

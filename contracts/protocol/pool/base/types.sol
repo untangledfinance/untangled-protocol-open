@@ -18,7 +18,6 @@ struct RiskScore {
 }
 
 struct LoanEntry {
-    address loanTermContract;
     address debtor;
     address principalTokenAddress;
     bytes32 termsParam; // actually inside this param was already included P token address
@@ -28,15 +27,3 @@ struct LoanEntry {
     uint8 riskScore;
     Configuration.ASSET_PURPOSE assetPurpose;
 }
-
-
-// uint32 advanceRate;
-//     uint32 penaltyRate;
-//     uint32 interestRate;
-//     uint32 probabilityOfDefault;
-//     uint32 lossGivenDefault;
-//     uint32 writeOffAfterGracePeriod;
-//     uint32 gracePeriod;
-//     uint32 collectionPeriod;
-//     uint32 writeOffAfterCollectionPeriod;
-//     uint32 discountRate;

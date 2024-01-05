@@ -27,7 +27,6 @@ describe('Pool to Pool', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract;
         let noteTokenVault;
         let poolBContract;
         let securitizationPoolValueService;
@@ -77,7 +76,6 @@ describe('Pool to Pool', () => {
                 stableCoin,
                 uniqueIdentity,
                 loanAssetTokenContract,
-                loanInterestTermsContract,
                 loanRegistry,
                 loanKernel,
                 loanRepaymentRouter,
@@ -492,12 +490,14 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault.connect(poolAPot).redeemOrder(redeemParam, redeemSignature);
 
-            await noteTokenVault.connect(backendAdminSigner).preDistribute(
-                poolBContract.address,
-                investorPoolPotSotBalance,
-                [sotPoolBContract.address],
-                [parseEther('2')]
-            );
+            await noteTokenVault
+                .connect(backendAdminSigner)
+                .preDistribute(
+                    poolBContract.address,
+                    investorPoolPotSotBalance,
+                    [sotPoolBContract.address],
+                    [parseEther('2')]
+                );
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -524,7 +524,6 @@ describe('Pool to Pool', () => {
         let loanRegistry;
         let uniqueIdentity;
         let registry;
-        let loanInterestTermsContract;
         let noteTokenVault;
         let distributionAssessor;
         let securitizationPoolValueService;
@@ -592,7 +591,6 @@ describe('Pool to Pool', () => {
                 stableCoin,
                 uniqueIdentity,
                 loanAssetTokenContract,
-                loanInterestTermsContract,
                 loanRegistry,
                 loanKernel,
                 loanRepaymentRouter,
@@ -1083,7 +1081,12 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault
                 .connect(backendAdminSigner)
-                .preDistribute(poolCContract.address, stableCoinAmountToBuyCJOT, [jotCContract.address], [parseEther('1')]);
+                .preDistribute(
+                    poolCContract.address,
+                    stableCoinAmountToBuyCJOT,
+                    [jotCContract.address],
+                    [parseEther('1')]
+                );
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(
@@ -1123,7 +1126,12 @@ describe('Pool to Pool', () => {
 
             await noteTokenVault
                 .connect(backendAdminSigner)
-                .preDistribute(poolBContract.address,  stableCoinAmountToBuyBJOT,[jotBContract.address], [parseEther('2')]);
+                .preDistribute(
+                    poolBContract.address,
+                    stableCoinAmountToBuyBJOT,
+                    [jotBContract.address],
+                    [parseEther('2')]
+                );
             await noteTokenVault
                 .connect(backendAdminSigner)
                 .disburseAll(

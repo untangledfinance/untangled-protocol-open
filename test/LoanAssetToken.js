@@ -18,6 +18,7 @@ const {
     generateLATMintPayload,
     getPoolByAddress,
     formatFillDebtOrderParams,
+    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 
@@ -31,7 +32,6 @@ describe('LoanAssetToken', () => {
     let stableCoin;
     let registry;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
     let loanRegistry;
     let loanKernel;
     let loanRepaymentRouter;
@@ -57,7 +57,6 @@ describe('LoanAssetToken', () => {
             stableCoin,
             registry,
             loanAssetTokenContract,
-            loanInterestTermsContract,
             loanRegistry,
             loanKernel,
             loanRepaymentRouter,
@@ -315,7 +314,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -348,13 +346,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -394,7 +386,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -427,13 +418,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -473,7 +458,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -506,13 +490,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             const [, , , , wrongLoanAssetTokenValidator] = await ethers.getSigners();
 
@@ -544,7 +522,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -577,13 +554,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             // 1: no newValidator in AA
             await expect(
@@ -660,7 +631,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 borrowerSigner.address,
             ];
@@ -693,13 +663,7 @@ describe('LoanAssetToken', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             await loanKernel.fillDebtOrder(
                 formatFillDebtOrderParams(
@@ -775,7 +739,6 @@ describe('LoanAssetToken', () => {
                 const data = await securitizationPoolContract.unpackParamsForAgreementID(tokenIds[0]);
                 expect(data.interestRate.toString()).equal(interestRateFixedPoint(5).toString());
             });
-
         });
 
         describe('#burn', async () => {

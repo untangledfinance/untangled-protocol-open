@@ -21,6 +21,7 @@ const {
     getPoolByAddress,
     getPoolAbi,
     formatFillDebtOrderParams,
+    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
@@ -33,7 +34,6 @@ const RATE_SCALING_FACTOR = 10 ** 4;
 describe('SecuritizationPool', () => {
     let stableCoin;
     let loanAssetTokenContract;
-    let loanInterestTermsContract;
     let loanKernel;
     let loanRepaymentRouter;
     let securitizationManager;
@@ -61,7 +61,6 @@ describe('SecuritizationPool', () => {
         ({
             stableCoin,
             loanAssetTokenContract,
-            loanInterestTermsContract,
             loanKernel,
             loanRepaymentRouter,
             securitizationManager,
@@ -490,7 +489,6 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 // borrower 1
                 borrowerSigner.address,
@@ -529,13 +527,7 @@ describe('SecuritizationPool', () => {
             const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
             const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
-            tokenIds = genLoanAgreementIds(
-                loanRepaymentRouter.address,
-                debtors,
-                loanInterestTermsContract.address,
-                termsContractParameters,
-                salts
-            );
+            tokenIds = genLoanAgreementIds(loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
             await loanKernel.fillDebtOrder(
                 formatFillDebtOrderParams(
@@ -589,7 +581,6 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                loanInterestTermsContract.address,
                 relayer.address,
                 // borrower 1
                 borrowerSigner.address,
@@ -626,7 +617,6 @@ describe('SecuritizationPool', () => {
             const pledgeTokenIds = genLoanAgreementIds(
                 loanRepaymentRouter.address,
                 debtors,
-                loanInterestTermsContract.address,
                 termsContractParameters,
                 salts
             );
@@ -707,7 +697,10 @@ describe('SecuritizationPool', () => {
         });
 
         it('#getAssetInterestRate', async () => {
-            const result = await securitizationPoolValueService.getAssetInterestRate(securitizationPoolContract.address, tokenIds[0]);
+            const result = await securitizationPoolValueService.getAssetInterestRate(
+                securitizationPoolContract.address,
+                tokenIds[0]
+            );
 
             // expect(result.toString()).equal('43164');
         });

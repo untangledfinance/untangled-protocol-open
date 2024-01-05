@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {IERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol';
 import {ISecuritizationPool} from '../pool/ISecuritizationPool.sol';
-import {ILoanInterestTermsContract} from '../../interfaces/ILoanInterestTermsContract.sol';
 
 import {ILoanRepaymentRouter} from './ILoanRepaymentRouter.sol';
 import {ILoanAssetToken} from '../../interfaces/ILoanAssetToken.sol';
@@ -53,7 +52,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
         ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
         ISecuritizationPoolNAV poolNAV = ISecuritizationPoolNAV(beneficiary);
-        address termsContract = poolNAV.getEntry(_agreementId).loanTermContract;
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
         ISecuritizationTGE poolTGE = ISecuritizationTGE(beneficiary);
@@ -67,7 +65,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
         if (outstandingAmount == 0) {
             // Burn LAT token when repay completely
-            registry.getLoanKernel().concludeLoan(beneficiary, _agreementId, termsContract);
+            registry.getLoanKernel().concludeLoan(beneficiary, _agreementId);
         }
 
         // Log event for repayment

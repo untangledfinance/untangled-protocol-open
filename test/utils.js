@@ -18,19 +18,19 @@ function saltFromOrderValues(orderValues, length) {
 
 function debtorsFromOrderAddresses(orderAddresses, length) {
     const debtors = [];
-    for (let i = 5; i < 5 + length; i++) {
-        debtors[i - 5] = orderAddresses[i];
+    for (let i = 4; i < 4 + length; i++) {
+        debtors[i - 4] = orderAddresses[i];
     }
     return debtors;
 }
 
-function genLoanAgreementIds(version, debtors, termsContract, termsContractParameters, salts) {
+function genLoanAgreementIds(version, debtors, termsContractParameters, salts) {
     const agreementIds = [];
     for (let i = 0; i < 0 + salts.length; i++) {
         agreementIds[i] = utils.keccak256(
             ethers.utils.solidityPack(
-                ['address', 'address', 'address', 'bytes32', 'uint256'],
-                [version, debtors[i], termsContract, termsContractParameters[i], salts[i]]
+                ['address', 'address', 'bytes32', 'uint256'],
+                [version, debtors[i], termsContractParameters[i], salts[i]]
             )
         );
     }
