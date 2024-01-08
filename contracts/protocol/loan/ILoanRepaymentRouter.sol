@@ -7,12 +7,6 @@ import {Registry} from '../../storage/Registry.sol';
 abstract contract ILoanRepaymentRouter is UntangledBase {
     Registry public registry;
 
-    enum Errors {
-        DEBT_AGREEMENT_NONEXISTENT,
-        PAYER_BALANCE_OR_ALLOWANCE_INSUFFICIENT,
-        REPAYMENT_REJECTED_BY_TERMS_CONTRACT
-    }
-
     event LogOutputSubmit(bytes32 indexed _agreementId, uint256 indexed _tokenIndex, uint256 _totalAmount);
 
     function initialize(Registry _registry) public virtual;

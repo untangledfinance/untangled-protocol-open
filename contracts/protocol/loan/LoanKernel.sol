@@ -80,7 +80,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 debtOrder.issuance.agreementIds[i],
                 debtOrder.principalAmounts[i],
                 debtOrder.principalTokenAddress,
-                debtOrder.relayer,
                 debtOrder.expirationTimestampInSecs[i]
             );
         }
@@ -97,7 +96,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32[] memory emptyDebtOrderHashes = new bytes32[](_debtors.length);
         LoanOrder memory debtOrder = LoanOrder({
             issuance: _getIssuance(_orderAddresses, _debtors, _termContractParameters, _salts),
-            relayer: _orderAddresses[uint8(FillingAddressesIndex.RELAYER)],
             principalTokenAddress: _orderAddresses[uint8(FillingAddressesIndex.PRINCIPAL_TOKEN_ADDRESS)],
             principalAmounts: _principalAmountsFromOrderValues(_orderValues, _termContractParameters.length),
             creditorFee: _orderValues[uint8(FillingNumbersIndex.CREDITOR_FEE)],
@@ -121,8 +119,8 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         uint256 _length
     ) private pure returns (address[] memory) {
         address[] memory debtors = new address[](_length);
-        for (uint256 i = 4; i < (4 + _length); i = UntangledMath.uncheckedInc(i)) {
-            debtors[i - 4] = _orderAddresses[i];
+        for (uint256 i = 3; i < (3 + _length); i = UntangledMath.uncheckedInc(i)) {
+            debtors[i - 3] = _orderAddresses[i];
         }
         return debtors;
     }
@@ -273,8 +271,7 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 emit LogDebtOrderFilled(
                     debtOrder.issuance.agreementIds[x],
                     debtOrder.principalAmounts[x],
-                    debtOrder.principalTokenAddress,
-                    debtOrder.relayer
+                    debtOrder.principalTokenAddress
                 );
 
                 x = UntangledMath.uncheckedInc(x);
@@ -294,7 +291,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
         bytes32 agreementId,
         uint256 principalAmount,
         address principalTokenAddress,
-        address relayer,
         uint256 expirationTimestampInSec
     ) private view returns (bytes32 _debtorMessageHash) {
         return
@@ -304,7 +300,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                     agreementId,
                     principalAmount,
                     principalTokenAddress,
-                    relayer,
                     expirationTimestampInSec
                 )
             );

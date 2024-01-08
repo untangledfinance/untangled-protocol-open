@@ -18,8 +18,8 @@ function saltFromOrderValues(orderValues, length) {
 
 function debtorsFromOrderAddresses(orderAddresses, length) {
     const debtors = [];
-    for (let i = 4; i < 4 + length; i++) {
-        debtors[i - 4] = orderAddresses[i];
+    for (let i = 3; i < 3 + length; i++) {
+        debtors[i - 3] = orderAddresses[i];
     }
     return debtors;
 }

@@ -393,7 +393,6 @@ describe('LoanKernel', () => {
                 ZERO_ADDRESS,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
             await expect(
@@ -406,7 +405,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 ZERO_ADDRESS,
-                relayer.address,
                 borrowerSigner.address,
             ];
             await expect(
@@ -419,7 +417,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 ZERO_ADDRESS,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
             await expect(
@@ -432,7 +429,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
             await expect(
@@ -445,7 +441,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -505,7 +500,6 @@ describe('LoanKernel', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 // borrower 1
                 borrowerSigner.address,
                 // borrower 2

@@ -314,7 +314,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -386,7 +385,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -458,7 +456,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -522,7 +519,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -631,7 +627,6 @@ describe('LoanAssetToken', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 

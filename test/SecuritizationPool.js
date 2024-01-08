@@ -489,7 +489,6 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 // borrower 1
                 borrowerSigner.address,
                 // borrower 2
@@ -581,7 +580,6 @@ describe('SecuritizationPool', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 // borrower 1
                 borrowerSigner.address,
             ];
