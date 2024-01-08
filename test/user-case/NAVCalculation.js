@@ -325,7 +325,6 @@ describe('NAV', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
             ];
 
@@ -770,7 +769,6 @@ describe('NAV', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 borrowerSigner.address,
                 borrowerSigner.address,
             ];
