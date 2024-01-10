@@ -67,7 +67,7 @@ const networks = {
         bnmToken: '',
     },
     polygon: {
-        url: 'https://polygon-rpc.com',
+        url: 'https://rpc.ankr.com/polygon',
         gasPrice: undefined,
         blockGasLimit: 100000000429720,
         accounts: PRIVATEKEY !== undefined ? [PRIVATEKEY] : [],
