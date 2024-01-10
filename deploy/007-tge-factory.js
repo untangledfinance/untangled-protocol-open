@@ -33,8 +33,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     //     log: true,
     //   }, 'initialize', registry.address, proxyAdmin.address);
     //   // }
-
-    // await registrySet(['TokenGenerationEventFactory']);
 };
 
 module.exports.dependencies = ['Registry'];
