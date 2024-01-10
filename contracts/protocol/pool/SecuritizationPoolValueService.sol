@@ -37,7 +37,10 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
     uint256 public constant DAY_LENGTH_IN_SECONDS = HOUR_LENGTH_IN_SECONDS * 24;
     uint256 public constant YEAR_LENGTH_IN_SECONDS = DAY_LENGTH_IN_SECONDS * YEAR_LENGTH_IN_DAYS;
 
-    function getAssetInterestRates(address poolAddress, bytes32[] calldata tokenIds) external view returns (uint256[] memory) {
+    function getAssetInterestRates(
+        address poolAddress,
+        bytes32[] calldata tokenIds
+    ) external view returns (uint256[] memory) {
         uint256 tokenIdsLength = tokenIds.length;
         uint256[] memory interestRates = new uint256[](tokenIdsLength);
         for (uint256 i; i < tokenIdsLength; i++) {
@@ -47,7 +50,7 @@ contract SecuritizationPoolValueService is SecuritizationPoolServiceBase, ISecur
     }
 
     function getAssetInterestRate(address poolAddress, bytes32 tokenId) public view returns (uint256) {
-        uint256 interestRate = ISecuritizationPoolNAV(poolAddress).unpackParamsForAgreementID(tokenId).interestRate;
+        uint256 interestRate = ISecuritizationPoolNAV(poolAddress).getAsset(tokenId).interestRate;
 
         return interestRate;
     }
