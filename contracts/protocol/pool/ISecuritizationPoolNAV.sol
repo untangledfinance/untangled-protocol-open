@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 
 import {Configuration} from '../../libraries/Configuration.sol';
 import {LoanEntry} from './base/types.sol';
-import "../../libraries/UnpackLoanParamtersLib.sol";
+import '../../libraries/UnpackLoanParamtersLib.sol';
+import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 interface ISecuritizationPoolNAV {
     /// Events
@@ -54,9 +55,9 @@ interface ISecuritizationPoolNAV {
     function updateAssetRiskScore(bytes32 nftID_, uint256 risk_) external;
 
     /// @notice retrieves loan information
-    function getEntry(bytes32 agreementId) external view returns (LoanEntry memory);
+    function getAsset(bytes32 agreementId) external view returns (ISecuritizationPoolStorage.NFTDetails memory);
 
     function unpackParamsForAgreementID(
-        bytes32 agreementId
+        LoanEntry calldata loan
     ) external view returns (UnpackLoanParamtersLib.InterestParams memory params);
 }

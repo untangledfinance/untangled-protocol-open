@@ -426,7 +426,11 @@ describe('NAV', () => {
             ).to.be.revertedWith('Registry: Not an pool admin');
         });
         it('Change risk score', async () => {
+            const currentAsset = await securitizationPoolNAV.getAsset(tokenIds[0]);
+            expect(currentAsset.interestRate.toString()).equal('120000');
             await securitizationPoolNAV.connect(untangledAdminSigner).updateAssetRiskScore(tokenIds[0], 2);
+            const nextAsset = await securitizationPoolNAV.getAsset(tokenIds[0]);
+            expect(nextAsset.interestRate.toString()).equal('100000');
             const currentNAV = await securitizationPoolNAV.currentNAV();
             const debtLoan = await securitizationPoolNAV.debt(tokenIds[0]);
             const curNAVAsset = await securitizationPoolNAV.currentNAVAsset(tokenIds[0]);
