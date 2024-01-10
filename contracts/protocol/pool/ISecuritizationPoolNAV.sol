@@ -56,8 +56,4 @@ interface ISecuritizationPoolNAV {
 
     /// @notice retrieves loan information
     function getAsset(bytes32 agreementId) external view returns (ISecuritizationPoolStorage.NFTDetails memory);
-
-    function unpackParamsForAgreementID(
-        LoanEntry calldata loan
-    ) external view returns (UnpackLoanParamtersLib.InterestParams memory params);
 }
