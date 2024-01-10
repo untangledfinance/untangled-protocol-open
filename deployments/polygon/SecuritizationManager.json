@@ -1,5 +1,5 @@
 {
-  "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+  "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
   "abi": [
     {
       "anonymous": false,
@@ -125,33 +125,6 @@
       "type": "receive"
     },
     {
-      "inputs": [
-        {
-          "internalType": "enum MessageType",
-          "name": "messageType",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
-        }
-      ],
-      "name": "BridgeRouterExecutedFailed",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "router",
-          "type": "address"
-        }
-      ],
-      "name": "InvalidRouter",
-      "type": "error"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
@@ -169,30 +142,100 @@
       "inputs": [
         {
           "indexed": true,
-          "internalType": "bytes32",
-          "name": "messageId",
-          "type": "bytes32"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint64",
-          "name": "sourceChainSelector",
-          "type": "uint64"
-        },
-        {
-          "indexed": false,
           "internalType": "address",
-          "name": "sender",
+          "name": "jotAddress",
           "type": "address"
         },
         {
           "indexed": false,
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
+          "internalType": "address",
+          "name": "tgeAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
         }
       ],
-      "name": "MessageReceived",
+      "name": "JotDeployed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "instanceAddress",
+          "type": "address"
+        }
+      ],
+      "name": "NewNotesTokenCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "instanceAddress",
+          "type": "address"
+        }
+      ],
+      "name": "NewPoolCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "instanceAddress",
+          "type": "address"
+        }
+      ],
+      "name": "NewTGECreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "investor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "tgeAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "NoteTokenPurchased",
       "type": "event"
     },
     {
@@ -287,6 +330,62 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sotAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "tgeAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        }
+      ],
+      "name": "SotDeployed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "investor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "tgeAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokensPurchased",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": false,
           "internalType": "address",
           "name": "account",
@@ -294,6 +393,38 @@
         }
       ],
       "name": "Unpaused",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256[]",
+          "name": "uids",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "UpdateAllowedUIDTypes",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pot",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "name": "UpdatePotToPool",
       "type": "event"
     },
     {
@@ -323,76 +454,102 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "POOL_INIT_FUNC_SELECTOR",
+      "outputs": [
         {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "messageId",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "uint64",
-              "name": "sourceChainSelector",
-              "type": "uint64"
-            },
-            {
-              "internalType": "bytes",
-              "name": "sender",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "address",
-                  "name": "token",
-                  "type": "address"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "amount",
-                  "type": "uint256"
-                }
-              ],
-              "internalType": "struct Client.EVMTokenAmount[]",
-              "name": "destTokenAmounts",
-              "type": "tuple[]"
-            }
-          ],
-          "internalType": "struct Client.Any2EVMMessage",
-          "name": "message",
-          "type": "tuple"
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
         }
       ],
-      "name": "ccipReceive",
-      "outputs": [],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "issuerTokenController",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "internalType": "uint8",
+          "name": "saleType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "longSale",
+          "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "ticker",
+          "type": "string"
+        }
+      ],
+      "name": "_initialTGEForJOT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "uint256",
           "name": "",
-          "type": "bytes32"
+          "type": "uint256"
         }
       ],
-      "name": "failedMessageDataGroup",
+      "name": "allowedUIDTypes",
       "outputs": [
         {
-          "internalType": "enum MessageType",
-          "name": "messageType",
-          "type": "uint8"
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tgeAddress",
+          "type": "address"
         },
         {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
+          "internalType": "uint256",
+          "name": "currencyAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "buyTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "factoryAdmin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -400,29 +557,25 @@
     },
     {
       "inputs": [],
-      "name": "getLastReceivedMessageDetails",
+      "name": "getInitializedVersion",
       "outputs": [
         {
-          "internalType": "bytes32",
-          "name": "messageId",
-          "type": "bytes32"
-        },
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPoolsLength",
+      "outputs": [
         {
-          "components": [
-            {
-              "internalType": "enum MessageType",
-              "name": "messageType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bytes",
-              "name": "data",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct ICommandData",
-          "name": "command",
-          "type": "tuple"
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -491,19 +644,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getRouter",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "bytes32",
@@ -519,6 +659,25 @@
       "name": "grantRole",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "hasAllowedUID",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -549,12 +708,90 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_router",
+          "name": "issuerTokenController",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_untangledBridgeRouter",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "internalType": "uint8",
+          "name": "saleType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "longSale",
+          "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "ticker",
+          "type": "string"
+        }
+      ],
+      "name": "initialTGEForJOT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "issuerTokenController",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "internalType": "uint8",
+          "name": "saleType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "longSale",
+          "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "ticker",
+          "type": "string"
+        }
+      ],
+      "name": "initialTGEForSOT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract Registry",
+          "name": "_registry",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_factoryAdmin",
           "type": "address"
         }
       ],
@@ -565,30 +802,50 @@
     },
     {
       "inputs": [],
-      "name": "lastReceivedData",
+      "name": "isAdmin",
       "outputs": [
         {
-          "internalType": "enum MessageType",
-          "name": "messageType",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "lastReceivedMessageId",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isExistingPools",
       "outputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "bool",
           "name": "",
-          "type": "bytes32"
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isExistingTGEs",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -598,24 +855,29 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "",
+          "name": "salt",
           "type": "bytes32"
-        }
-      ],
-      "name": "messageDataGroup",
-      "outputs": [
+        },
         {
-          "internalType": "enum MessageType",
-          "name": "messageType",
-          "type": "uint8"
+          "internalType": "address",
+          "name": "poolOwner",
+          "type": "address"
         },
         {
           "internalType": "bytes",
-          "name": "data",
+          "name": "params",
           "type": "bytes"
         }
       ],
-      "stateMutability": "view",
+      "name": "newPoolInstance",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -633,6 +895,83 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "pools",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "potToPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "pot",
+          "type": "address"
+        }
+      ],
+      "name": "registerPot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "validator",
+          "type": "address"
+        }
+      ],
+      "name": "registerValidator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "registry",
+      "outputs": [
+        {
+          "internalType": "contract Registry",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -677,12 +1016,219 @@
     {
       "inputs": [
         {
+          "internalType": "uint256[]",
+          "name": "ids",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "setAllowedUIDTypes",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
-          "name": "_untangledBridgeRouter",
+          "name": "_factoryAdmin",
           "type": "address"
         }
       ],
-      "name": "setBridgeRouter",
+      "name": "setFactoryAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "adminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "setRoleAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "issuerTokenController",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "longSale",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "ticker",
+              "type": "string"
+            },
+            {
+              "internalType": "uint8",
+              "name": "saleType",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.TGEParam",
+          "name": "tgeParam",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "openingTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "closingTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "cap",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.NewRoundSaleParam",
+          "name": "saleParam",
+          "type": "tuple"
+        },
+        {
+          "internalType": "uint256",
+          "name": "initialJOTAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setUpTGEForJOT",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "issuerTokenController",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "pool",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "longSale",
+              "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "ticker",
+              "type": "string"
+            },
+            {
+              "internalType": "uint8",
+              "name": "saleType",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.TGEParam",
+          "name": "tgeParam",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "openingTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "closingTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "cap",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.NewRoundSaleParam",
+          "name": "saleParam",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "initialInterest",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "finalInterest",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timeInterval",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "amountChangeEachInterval",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.IncreasingInterestParam",
+          "name": "increasingInterestParam",
+          "type": "tuple"
+        }
+      ],
+      "name": "setUpTGEForSOT",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -717,6 +1263,49 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "validator",
+          "type": "address"
+        }
+      ],
+      "name": "unregisterValidator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "tgeAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalCap",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minBidAmount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct SecuritizationManager.TGEInfoParam[]",
+          "name": "tgeInfos",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "updateTgeInfo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_logic",
           "type": "address"
         },
@@ -735,65 +1324,65 @@
       "type": "constructor"
     }
   ],
-  "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
+  "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
   "receipt": {
     "to": null,
-    "from": "0xC52a72eDdcA008580b4Efc89eA9f343AfF11FeA3",
-    "contractAddress": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
-    "transactionIndex": 40,
-    "gasUsed": "1023367",
-    "logsBloom": "0x00040004000000000800000000000000480080000000000000000000000000400000000000000000800000000000000000008000000000000000000000000000000000000000000000000000000002800000000000400000000100000000000000000000020000400000000000000800000000800000000080000000000000000000000000000000000000000000000000000002000080000000000000800000202000000000004000000100000400000000000800000000001000000000004000000020000000000001000000040000000000000400000102100000400020000000000000000000000000000000001008000000000000000000000000100000",
-    "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3",
-    "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
+    "from": "0xe1CD96bd343e5ca691A5DF6191868cf38F202F68",
+    "contractAddress": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
+    "transactionIndex": 89,
+    "gasUsed": "1048568",
+    "logsBloom": "0x00000004000000000800000000000000484080000000000000000000004000000000000000000000000000000000000000008000000000000000000004000000000000000000000000000000800082800000000000000200000100000000000000000000020080400000000000000800000000800000000080000000000000000000000800100000000000000000000000000000080080000000000000800000202080001000800000000000000400000000000000000000001000000000004000000020000080000001000000040000000000000400000100100000000020000000000000000000000000000000001000000000000000000004000000100000",
+    "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89",
+    "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
     "logs": [
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b",
-          "0x00000000000000000000000008b5941354898f5527a40f49d59098fa9fcaa0a9"
+          "0x00000000000000000000000048c8ebd1d7ca2c862e4a8d5c64d85d7af3c015e2"
         ],
         "data": "0x",
-        "logIndex": 677,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "logIndex": 499,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "0x000000000000000000000000c52a72eddca008580b4efc89ea9f343aff11fea3",
-          "0x000000000000000000000000c52a72eddca008580b4efc89ea9f343aff11fea3"
+          "0x000000000000000000000000e1cd96bd343e5ca691a5df6191868cf38f202f68",
+          "0x000000000000000000000000e1cd96bd343e5ca691a5df6191868cf38f202f68"
         ],
         "data": "0x",
-        "logIndex": 678,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "logIndex": 500,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
           "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e",
-          "0x000000000000000000000000c52a72eddca008580b4efc89ea9f343aff11fea3",
-          "0x000000000000000000000000c52a72eddca008580b4efc89ea9f343aff11fea3"
+          "0x000000000000000000000000e1cd96bd343e5ca691a5df6191868cf38f202f68",
+          "0x000000000000000000000000e1cd96bd343e5ca691a5df6191868cf38f202f68"
         ],
         "data": "0x",
-        "logIndex": 679,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "logIndex": 501,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff",
           "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e",
@@ -801,58 +1390,73 @@
           "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e"
         ],
         "data": "0x",
-        "logIndex": 680,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "logIndex": 502,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
+        "topics": [
+          "0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff",
+          "0x3e9c05fb0f9da4414e033bb9bf190a6e2072adf7e3077394fce683220513b8d7",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0xb19546dff01e856fb3f010c267a7b1c60363cf8a4664e21cc89c26224620214e"
+        ],
+        "data": "0x",
+        "logIndex": 503,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
+      },
+      {
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0x7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498"
         ],
         "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "logIndex": 681,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "logIndex": 504,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
-        "address": "0x6f48Ef99a294d5C9F394A0a08f4149b1f350441a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
+        "address": "0x9fEd89D310ca236906e2043C8eB92E4aae71c769",
         "topics": [
           "0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f"
         ],
-        "data": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ba30add178fb849aad4715354bc66506aa327e36",
-        "logIndex": 682,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000088a33a45e0278c81d8c0eaf83773235c3302cc8b",
+        "logIndex": 505,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       },
       {
-        "transactionIndex": 40,
-        "blockNumber": 47442761,
-        "transactionHash": "0xb0dbf10d21394bf9bd301b0f0c254dfa4263130efc962ed60048a192f192967a",
+        "transactionIndex": 89,
+        "blockNumber": 52153114,
+        "transactionHash": "0x0718fd6ebf571f84f54aad2433cfd67bc525e6ffdcfd85de00035d1f3dceb4ab",
         "address": "0x0000000000000000000000000000000000001010",
         "topics": [
           "0x4dfe1bbbcf077ddc3e01291eea2d5c70c2b422b415d95645b9adcfd678cb1d63",
           "0x0000000000000000000000000000000000000000000000000000000000001010",
-          "0x000000000000000000000000c52a72eddca008580b4efc89ea9f343aff11fea3",
-          "0x0000000000000000000000007c7379531b2aee82e4ca06d4175d13b9cbeafd49"
+          "0x000000000000000000000000e1cd96bd343e5ca691a5df6191868cf38f202f68",
+          "0x000000000000000000000000048cfedf907c4c9ddd11ff882380906e78e84bbe"
         ],
-        "data": "0x000000000000000000000000000000000000000000000000000ebb421ee03a400000000000000000000000000000000000000000000000008b7f4dbf167ed8b7000000000000000000000000000000000000000000025584891004e97fcb5b5d0000000000000000000000000000000000000000000000008b70927cf79e9e77000000000000000000000000000000000000000000025584891ec02b9eab959d",
-        "logIndex": 683,
-        "blockHash": "0xedd70d01ca7aa270556622d9c3d640b0cc731ecffbf4983b437d64382df4a9d3"
+        "data": "0x0000000000000000000000000000000000000000000000000022ee4d1ae0b6f80000000000000000000000000000000000000000000000008d67eb4cf641ed81000000000000000000000000000000000000000000001ab88a6a70cde4089f060000000000000000000000000000000000000000000000008d44fcffdb613689000000000000000000000000000000000000000000001ab88a8d5f1afee955fe",
+        "logIndex": 506,
+        "blockHash": "0x46e2633d9e75f704e73abea71e0a165b7b617f60d08b5399b41239636f140f89"
       }
     ],
-    "blockNumber": 47442761,
-    "cumulativeGasUsed": "24492787",
+    "blockNumber": 52153114,
+    "cumulativeGasUsed": "23122050",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x08B5941354898f5527A40F49d59098fa9FcaA0A9",
-    "0xba30Add178fb849aad4715354Bc66506aA327E36",
-    "0x485cc9550000000000000000000000003c3d92629a02a8d95d5cb9650fe49c3544f69b430000000000000000000000004c96324a3cb342aa51fa6aba0ac4c838df427464"
+    "0x48C8EbD1d7Ca2c862E4A8D5c64d85d7af3c015e2",
+    "0x88a33A45E0278C81D8c0eaF83773235C3302Cc8B",
+    "0x485cc95500000000000000000000000082b9d5650e94d962aabd928f04689b9f70b358be00000000000000000000000088a33a45e0278c81d8c0eaf83773235c3302cc8b"
   ],
   "numDeployments": 1,
   "solcInputHash": "0e89febeebc7444140de8e67c9067d2c",
@@ -862,11 +1466,11 @@
   "execute": {
     "methodName": "initialize",
     "args": [
-      "0x3C3D92629A02a8D95D5CB9650fe49C3544f69B43",
-      "0x4C96324a3cb342aa51fA6ABa0ac4C838Df427464"
+      "0x82b9D5650E94d962AABd928F04689B9F70b358bE",
+      "0x88a33A45E0278C81D8c0eaF83773235C3302Cc8B"
     ]
   },
-  "implementation": "0x08B5941354898f5527A40F49d59098fa9FcaA0A9",
+  "implementation": "0x48C8EbD1d7Ca2c862E4A8D5c64d85d7af3c015e2",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin. To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand: 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\". These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation. Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.",
     "kind": "dev",

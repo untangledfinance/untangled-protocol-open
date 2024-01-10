@@ -27,7 +27,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const loanAssetTokenProxy = await deployProxy(
         { getNamedAccounts, deployments },
         'LoanAssetToken',
-        [registry.address, 'Loan Asset Token', 'LAT', ''],
+        [registry.address, 'Loan Asset Token', 'LAT', 'https://staging-api.untangled.finance/api/v3/assets/'],
         'initialize(address,string,string,string)'
     );
     // const loanAssetTokenProxy = await deployments.get('LoanAssetToken');
