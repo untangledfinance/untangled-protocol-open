@@ -99,6 +99,11 @@ contract SecuritizationPoolNAV is
         $.discountRate = ONE;
     }
 
+    modifier onlySecuritizationPool() {
+        require(_msgSender() == address(this), 'SecuritizationPool: Only SecuritizationPool');
+        _;
+    }
+
     /** GETTER */
     /// @notice getter function for the maturityDate
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
@@ -177,8 +182,7 @@ contract SecuritizationPoolNAV is
         return securitizationPool.riskScores(idx);
     }
 
-    function addLoan(uint256 loan, LoanEntry calldata loanEntry) public returns (uint256) {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    function addLoan(uint256 loan, LoanEntry calldata loanEntry) public onlySecuritizationPool returns (uint256) {
         Storage storage $ = _getStorage();
         bytes32 _tokenId = bytes32(loan);
         UnpackLoanParamtersLib.InterestParams memory loanParam = unpackParamsForAgreementID(loanEntry);
@@ -246,8 +250,7 @@ contract SecuritizationPoolNAV is
     /// @notice file allows governance to change parameters of the contract
     /// @param name name of the parameter
     /// @param value new value of the parameter
-    function file(bytes32 name, uint256 value) public override {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    function file(bytes32 name, uint256 value) public override onlySecuritizationPool {
         if (name == 'discountRate') {
             Storage storage $ = _getStorage();
             uint256 oldDiscountRate = $.discountRate;
@@ -273,8 +276,7 @@ contract SecuritizationPoolNAV is
         uint256 overdueDays_,
         uint256 penaltyRate_,
         uint256 riskIndex
-    ) public override {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    ) public override onlySecuritizationPool {
         if (name == 'writeOffGroup') {
             Storage storage $ = _getStorage();
             uint256 index = $.writeOffGroups.length;
@@ -490,24 +492,6 @@ contract SecuritizationPoolNAV is
             _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
             emit WriteOff(loan, writeOffGroupIndex_, false);
         }
-    }
-
-    /// @notice authorized call to write of a loan in a specific writeoff group
-    /// @param loan the id of the loan
-    /// @param writeOffGroupIndex_ the index of the writeoff group
-    function overrideWriteOff(uint256 loan, uint256 writeOffGroupIndex_) internal {
-        // can not write-off healthy loans
-        bytes32 nftID_ = nftID(loan);
-        uint256 maturityDate_ = maturityDate(nftID_);
-        uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        require(maturityDate_ < nnow, 'maturity-date-in-the-future');
-
-        Storage storage $ = _getStorage();
-        if ($.loanDetails[loan].authWriteOff == false) {
-            $.loanDetails[loan].authWriteOff = true;
-        }
-        _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
-        emit WriteOff(loan, writeOffGroupIndex_, true);
     }
 
     /// @notice internal function for the write off
@@ -933,11 +917,11 @@ contract SecuritizationPoolNAV is
         emit ChangeRate(loan, newRate);
     }
 
-    function accrue(uint256 loan) public {
+    function accrue(uint256 loan) internal {
         drip(_getStorage().loanRates[loan]);
     }
 
-    function drip(uint256 rate) public {
+    function drip(uint256 rate) internal {
         Storage storage $ = _getStorage();
         if (block.timestamp >= $.rates[rate].lastUpdated) {
             (uint256 chi, ) = compounding(
@@ -1050,7 +1034,7 @@ contract SecuritizationPoolNAV is
      */
     function unpackParamsForAgreementID(
         LoanEntry calldata loan
-    ) public pure override returns (UnpackLoanParamtersLib.InterestParams memory params) {
+    ) private pure returns (UnpackLoanParamtersLib.InterestParams memory params) {
         // The principal amount denominated in the aforementioned token.
         uint256 principalAmount;
         // The interest rate accrued per amortization unit.
@@ -1095,7 +1079,7 @@ contract SecuritizationPoolNAV is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](15);
+        bytes4[] memory _functionSignatures = new bytes4[](14);
 
         _functionSignatures[0] = this.addLoan.selector;
         _functionSignatures[1] = this.repayLoan.selector;
@@ -1111,7 +1095,6 @@ contract SecuritizationPoolNAV is
         _functionSignatures[11] = this.writeOff.selector;
         _functionSignatures[12] = bytes4(keccak256(bytes('file(bytes32,uint256,uint256,uint256,uint256,uint256)')));
         _functionSignatures[13] = this.getAsset.selector;
-        _functionSignatures[14] = this.unpackParamsForAgreementID.selector;
 
         return _functionSignatures;
     }
