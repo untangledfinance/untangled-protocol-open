@@ -359,12 +359,11 @@ describe('FillDebtOrder - Stress test', () => {
 
     const ASSET_PURPOSE = '0';
     const principalAmount = 100;
-    console.log(principalAmount);
 
     describe('#Upload loan', async () => {
 
-        it('Only Loan Kernel can mint with AA validator', async () => {
-            // const snap = await snapshot();
+        it(`Upload 10 loans`, async () => {
+            const snap = await snapshot();
 
             // grant AA as Validator
             const [, , , , newValidatorSigner] = await ethers.getSigners();
@@ -381,7 +380,6 @@ describe('FillDebtOrder - Stress test', () => {
                 },
             ]
 */
-            console.log(`Upload ${LAT_AMOUNT} loans`);
             const loans = new Array(LAT_AMOUNT).fill({
                 principalAmount,
                 expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
@@ -406,12 +404,38 @@ describe('FillDebtOrder - Stress test', () => {
             );
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
-            // expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
 
             const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
-            // expect(balanceOfPool).equal(tokenIds.length);
+            expect(balanceOfPool).equal(tokenIds.length);
 
-            // await snap.restore();
+            await snap.restore();
+        });
+
+        it(`Upload 100 loans`, async () => {
+            const loans = new Array(30).fill({
+                principalAmount,
+                expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
+                termInDays: 10,
+                riskScore: '1'
+            })
+
+            let fillDebtOrderParams;
+            ({ fillDebtOrderParams, tokenIds } = await getFillDebtOrderParameters.bind(contracts)(
+                untangledAdminSigner,
+                securitizationPoolContract,
+                relayer,
+                borrowerSigner,
+                ASSET_PURPOSE,
+                loans
+            ));
+            await loanKernel.fillDebtOrder(
+                fillDebtOrderParams
+            );
+
+            const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
+            expect(ownerOfAgreement).equal(securitizationPoolContract.address);
+
         });
 
     });

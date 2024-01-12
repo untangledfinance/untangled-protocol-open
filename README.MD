@@ -41,6 +41,11 @@ All contracts are located under `contracts`
 
 Run `npm test` to run tests for all contracts.
 
+### Stress test
+
+Run `REPORT_GAS=true hardhat test stress/FillDebtOrder.js` to stress test fillDebtOrder function with gas report 
+shown in console
+
 ### Compiling Smart Contracts
 
 ```
