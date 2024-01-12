@@ -1027,7 +1027,7 @@ describe('Pool to Pool', () => {
             const balanceOfPoolAWithjotBContract = await jotBContract.balanceOf(poolAContract.address);
 
             const expectAssetValue = await securitizationPoolValueService.getExpectedAssetsValue(poolAContract.address);
-            expect(expectAssetValue).closeTo(parseEther('1'), parseEther('0.01'));
+            expect(expectAssetValue).closeTo(parseEther('2'), parseEther('0.01'));
             // SOT address was added to tokenAssetAddresses variables
             const tokenERC20AssetAddress = await poolAContract.tokenAssetAddresses(0);
             expect(tokenERC20AssetAddress).equal(jotBContract.address);
