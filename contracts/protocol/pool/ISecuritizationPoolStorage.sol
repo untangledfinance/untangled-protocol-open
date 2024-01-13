@@ -98,11 +98,9 @@ interface ISecuritizationPoolStorage {
         uint256 reserve; // Money in pool
         uint32 minFirstLossCushion;
         uint64 openingBlockTimestamp;
-        uint64 termLengthInSeconds;
         // by default it is address(this)
         address pot;
         // for base (sell-loan) operation
-        uint256 principalAmountSOT;
         uint256 paidPrincipalAmountSOT;
         uint32 interestRateSOT; // Annually, support 4 decimals num
         uint256 totalAssetRepaidCurrency;

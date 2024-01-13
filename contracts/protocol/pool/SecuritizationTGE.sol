@@ -83,16 +83,8 @@ contract SecuritizationTGE is
         return _getStorage().minFirstLossCushion;
     }
 
-    function termLengthInSeconds() public view override returns (uint64) {
-        return _getStorage().termLengthInSeconds;
-    }
-
     function paidPrincipalAmountSOT() public view override returns (uint256) {
         return _getStorage().paidPrincipalAmountSOT;
-    }
-
-    function principalAmountSOT() public view override returns (uint256) {
-        return _getStorage().principalAmountSOT;
     }
 
     function debtCeiling() public view override returns (uint256) {
@@ -293,29 +285,13 @@ contract SecuritizationTGE is
         );
     }
 
-    function startCycle(
-        uint64 _termLengthInSeconds,
-        uint256 _principalAmountForSOT,
-        uint32 _interestRateForSOT,
-        uint64 _timeStartEarningInterest
-    ) external override whenNotPaused nonReentrant onlyOwner onlyIssuingTokenStage {
-        require(_termLengthInSeconds > 0, 'SecuritizationPool: Term length is 0');
-
+    function startCycle() external override whenNotPaused nonReentrant onlyIssuingTokenStage {
         Storage storage $ = _getStorage();
-
-        $.termLengthInSeconds = _termLengthInSeconds;
-
-        $.principalAmountSOT = _principalAmountForSOT;
 
         $.state = CycleState.OPEN;
 
         if ($.tgeAddress != address(0)) {
             IMintedTGE mintedTokenGenerationEvent = IMintedTGE($.tgeAddress);
-            mintedTokenGenerationEvent.setupLongSale(
-                _interestRateForSOT,
-                _termLengthInSeconds,
-                _timeStartEarningInterest
-            );
             if (!IFinalizableCrowdsale($.tgeAddress).finalized()) {
                 IFinalizableCrowdsale($.tgeAddress).finalize(false, $.pot);
             }
@@ -378,7 +354,6 @@ contract SecuritizationTGE is
     {
         bytes4[] memory _functionSignatures = new bytes4[](30);
 
-        _functionSignatures[0] = this.termLengthInSeconds.selector;
         _functionSignatures[1] = this.setPot.selector;
         _functionSignatures[2] = this.increaseReserve.selector;
         _functionSignatures[3] = this.decreaseReserve.selector;
@@ -388,7 +363,6 @@ contract SecuritizationTGE is
         _functionSignatures[7] = this.paidPrincipalAmountSOT.selector;
         _functionSignatures[8] = this.paidPrincipalAmountSOTByInvestor.selector;
         _functionSignatures[9] = this.reserve.selector;
-        _functionSignatures[10] = this.principalAmountSOT.selector;
         _functionSignatures[11] = this.interestRateSOT.selector;
         _functionSignatures[12] = this.minFirstLossCushion.selector;
         _functionSignatures[13] = this.totalAssetRepaidCurrency.selector;

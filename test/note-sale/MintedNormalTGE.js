@@ -39,15 +39,6 @@ describe('MintedNormalTGE', () => {
     assert.equal(await mintedNormalTGE.isLongSale(), true);
   });
 
-  it('Set Yield', async () => {
-    await mintedNormalTGE.setYield(20);
-    assert.equal(await mintedNormalTGE.yield(), 20);
-  });
-
-  it('Setup LongSale', async () => {
-    await mintedNormalTGE.setupLongSale(20, 86400, Math.trunc(Date.now() / 1000));
-  });
-
   it('Setup newRoundSale', async () => {
     const openingTime = (await ethers.provider.getBlock("latest")).timestamp + 60; // Starts 1 minute from now
 

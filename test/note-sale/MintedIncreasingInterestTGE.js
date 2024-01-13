@@ -118,10 +118,6 @@ describe('MintedIncreasingInterestTGE', function () {
     expect(await mintedIncreasingInterestTGE.isLongSale()).to.equal(true);
   });
 
-  it('Set Yield', async () => {
-    await mintedIncreasingInterestTGE.setYield(20);
-    assert.equal(await mintedIncreasingInterestTGE.yield(), 20);
-  });
   it('should allow the owner to set the interest rate range', async function () {
     initialInterest = 80000;
     finalInterest = 104000;

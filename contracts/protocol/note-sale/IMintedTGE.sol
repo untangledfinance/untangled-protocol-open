@@ -5,8 +5,6 @@ import {Registry} from '../../storage/Registry.sol';
 import {IInterestRate} from './IInterestRate.sol';
 
 interface IMintedTGE is IInterestRate {
-    event YieldUpdated(uint256 newYield);
-    event SetupLongSale(uint256 interestRate, uint256 termLengthInSeconds, uint256 timeStartEarningInterest);
     event UpdateInitialAmount(uint256 initialAmount);
 
     enum SaleType {
@@ -20,13 +18,6 @@ interface IMintedTGE is IInterestRate {
         address _token,
         address _currency,
         bool _isLongSale
-    ) external;
-
-    /// @notice initialize long sale settings
-    function setupLongSale(
-        uint256 interestRate,
-        uint256 termLengthInSeconds,
-        uint256 timeStartEarningInterest
     ) external;
 
     ///@notice investor bids for SOT/JOT token. Paid by pool's currency
