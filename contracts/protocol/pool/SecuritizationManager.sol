@@ -364,8 +364,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         ISecuritizationTGE(pool).increaseReserve(currencyAmount);
 
         if (poolOfPot != address(0)) {
-            ISecuritizationTGE(poolOfPot).decreaseReserve(currencyAmount);
             ISecuritizationPool(poolOfPot).collectERC20Asset(noteToken);
+            ISecuritizationTGE(poolOfPot).decreaseReserve(currencyAmount);
         }
 
         emit TokensPurchased(_msgSender(), tgeAddress, currencyAmount, tokenAmount);
