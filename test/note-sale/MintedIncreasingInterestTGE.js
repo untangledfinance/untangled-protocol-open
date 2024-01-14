@@ -186,7 +186,7 @@ describe('MintedIncreasingInterestTGE', function () {
     expect(pickedInterest).to.equal(BigNumber.from(finalInterest));
   });
 });
-describe.only('Increasing Interest TGE', () => {
+describe('Increasing Interest TGE', () => {
   let stableCoin;
   let registry;
   let loanAssetTokenContract;
@@ -255,7 +255,7 @@ describe.only('Increasing Interest TGE', () => {
     await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
   });
 
-  describe('#security pool', async () => {
+  describe('#Preparation', async () => {
     it('Create pool', async () => {
       await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
       // Create new pool
@@ -292,7 +292,7 @@ describe.only('Increasing Interest TGE', () => {
                   currency: stableCoin.address,
                   minFirstLossCushion: '100000',
                   validatorRequired: true,
-                  debtCeiling: parseEther('20000').toString(),
+                  debtCeiling: parseEther('100000').toString(),
                 },
               ]
           )
@@ -379,36 +379,11 @@ describe.only('Increasing Interest TGE', () => {
 
   });
 
-  describe('Raise fund for pool', async () => {
-
-/*
-    it('Buy tokens', async () => {
-      await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-
-      await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
-      await securitizationManager
-          .connect(lenderSigner)
-          .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('10000'));
-
-      await securitizationManager
-          .connect(lenderSigner)
-          .buyTokens(mintedIncreasingInterestTGE.address, parseEther('10000'));
-
-      const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
-      const sotValue = await distributionAssessor.calcCorrespondingTotalAssetValue(
-          sotToken.address,
-          lenderSigner.address
-      );
-    });
-*/
-  });
-
-  const ASSET_PURPOSE = '0';
-  const principalAmount = 100;
-
-  describe('#Interest rate & start cycle', async () => {
+  describe('Increasing interest TGE stopped TGE end time', async () => {
     let snap;
-    snap = await snapshot();
+    before(async () => {
+      snap = await snapshot();
+    });
     describe('#getCurrentInterest', () => {
       before('Set up TGE for SOT', async () => {
         const openingTime = dayjs(new Date()).unix();
@@ -476,7 +451,111 @@ describe.only('Increasing Interest TGE', () => {
         expect(await securitizationPoolContract.state()).to.equal(2); // Check pool state
         expect(await jotMintedNormalTGE.finalized()).to.equal(true); // Check TGE state
         expect(await mintedIncreasingInterestTGE.finalized()).to.equal(true); // Check TGE state
+        expect(await mintedIncreasingInterestTGE.pickedInterest()).to.equal(40000)
         expect(await securitizationPoolContract.interestRateSOT()).to.equal(40000)
+      });
+      it('should not start cycle again', async () => {
+        await expect(securitizationPoolContract.connect(lenderSigner).startCycle()).to.be.revertedWith(
+            'Not in issuing token stage'
+        );
+      });
+    });
+    after(async () => {
+      await snap.restore();
+    })
+
+  });
+
+  describe('Increasing interest TGE stopped by reaching TGE max cap', async () => {
+    describe('#getCurrentInterest', () => {
+      before('Set up TGE for SOT', async () => {
+        const openingTime = dayjs(new Date()).unix();
+        const closingTime = dayjs(new Date()).add(7, 'days').unix();
+        const rate = 2;
+        const totalCapOfToken = parseEther('20000');
+        const finalInterest = 40000;
+        const timeInterval = 1 * 24 * 3600; // one day in seconds
+        const amountChangeEachInterval = 5000; // 0.5%
+        const prefixOfNoteTokenSaleName = 'SOT_';
+
+        const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
+            {
+              issuerTokenController: untangledAdminSigner.address,
+              pool: securitizationPoolContract.address,
+              minBidAmount: parseEther('1'),
+              saleType: SaleType.MINTED_INCREASING_INTEREST,
+              longSale: true,
+              ticker: prefixOfNoteTokenSaleName,
+            },
+            { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
+            {
+              initialInterest: INITIAL_INTEREST,
+              finalInterest,
+              timeInterval,
+              amountChangeEachInterval,
+            }
+        );
+
+        const receipt = await transaction.wait();
+
+        const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+        expect(tgeAddress).to.be.properAddress;
+
+        mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+
+        const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+        expect(sotTokenAddress).to.be.properAddress;
+
+        sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
+      });
+      it('should return initial interest', async () => {
+        const currentInterest = await mintedIncreasingInterestTGE.getCurrentInterest();
+        expect(currentInterest).equal(INITIAL_INTEREST);
+      });
+      it('should return increasing interest correctly after 2 days', async () => {
+        await time.increase(2 * 86400); // 2 days
+        const currentInterest = await mintedIncreasingInterestTGE.getCurrentInterest();
+        expect(currentInterest).equal(20000);//2%
+      });
+      it('Buy tokens', async () => {
+          await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
+
+          await stableCoin.connect(lenderSigner).approve(jotMintedNormalTGE.address, unlimitedAllowance);
+          await securitizationManager
+              .connect(lenderSigner)
+              .buyTokens(jotMintedNormalTGE.address, parseEther('10000'));
+
+          await securitizationManager
+              .connect(lenderSigner)
+              .buyTokens(mintedIncreasingInterestTGE.address, parseEther('10000'));
+      });
+      it('Buy more SOT to reach TGE max cap', async () => {
+        await securitizationManager
+            .connect(lenderSigner)
+            .buyTokens(mintedIncreasingInterestTGE.address, parseEther('10000'));
+      })
+
+      it('should return increasing interest correctly & keep picked interest unchanged after next 1 day (3 days from openTime)', async () => {
+        await time.increase(1 * 86400); // 1 day
+        const currentInterest = await mintedIncreasingInterestTGE.getCurrentInterest();
+        expect(currentInterest).equal(25000);//2.5%
+        expect(await mintedIncreasingInterestTGE.pickedInterest()).to.equal(20000);
+      });
+      it('should return increasing interest correctly & keep picked interest unchanged after next 4 days (7 days from openTime)', async () => {
+        await time.increase(5 * 86400); // 2 days
+        const currentInterest = await mintedIncreasingInterestTGE.getCurrentInterest();
+        expect(currentInterest).equal(40000);//4% (maximum = final interest)
+        expect(await mintedIncreasingInterestTGE.pickedInterest()).to.equal(20000);
+      });
+    });
+    describe('#startCycle', () => {
+      it('should start cycle successfully', async () => {
+        await securitizationPoolContract.connect(lenderSigner).startCycle();
+        expect(await securitizationPoolContract.state()).to.equal(2); // Check pool state
+        expect(await jotMintedNormalTGE.finalized()).to.equal(true); // Check TGE state
+        expect(await mintedIncreasingInterestTGE.finalized()).to.equal(true); // Check TGE state
+        expect(await mintedIncreasingInterestTGE.pickedInterest()).to.equal(20000)
+        expect(await securitizationPoolContract.interestRateSOT()).to.equal(20000)
       });
       it('should not start cycle again', async () => {
         await expect(securitizationPoolContract.connect(lenderSigner).startCycle()).to.be.revertedWith(
