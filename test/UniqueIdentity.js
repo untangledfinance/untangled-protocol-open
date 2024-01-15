@@ -7,6 +7,7 @@ const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { arrayify } = require('@ethersproject/bytes');
 const { BigNumber } = ethers;
 const { parseEther, parseUnits, formatEther, formatBytes32String, keccak256, solidityPack } = ethers.utils;
+const {  SUPER_ADMIN } = require('./constants.js');
 const { presignedMintMessage } = require('./shared/uid-helper.js');
 
 const { unlimitedAllowance, ZERO_ADDRESS } = require('./utils.js');
@@ -125,6 +126,24 @@ describe('UniqueIdentity', () => {
       const result = await uniqueIdentity.burn(lenderSigner.address, UID_TYPE, expiredAt, signature);
 
       const balanceOfLender = await uniqueIdentity.balanceOf(lenderSigner.address, '0');
+      expect(balanceOfLender).equal(0);
+    });
+  });
+
+  describe('#burnFrom', async () => {
+    it('Only SUPPER ADMIN can burnFrom', async () => {
+      const UID_TYPE = 0;
+      await expect(uniqueIdentity.connect(lenderSigner).burnFrom(borrowerSigner.address, UID_TYPE)).to.be.revertedWith(
+          `AccessControl: account ${lenderSigner.address.toLowerCase()} is missing role 0xd980155b32cf66e6af51e0972d64b9d5efe0e6f237dfaa4bdc83f990dd79e9c8`
+      );
+    });
+
+    it('should burn successfully', async () => {
+      const UID_TYPE = 0;
+      await uniqueIdentity.burnFrom(borrowerSigner.address, UID_TYPE);
+
+      expect(await uniqueIdentity.hasRole(SUPER_ADMIN, untangledAdminSigner.address)).to.equal(true);
+      const balanceOfLender = await uniqueIdentity.balanceOf(borrowerSigner.address, '0');
       expect(balanceOfLender).equal(0);
     });
   });
