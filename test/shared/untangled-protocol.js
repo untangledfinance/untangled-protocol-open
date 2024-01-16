@@ -89,7 +89,7 @@ async function setupRiskScore(
         .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
 }
 
-async function getFillDebtOrderParameters(
+async function fillDebtOrder(
     signer,
     securitizationPoolContract,
     relayer,
@@ -136,33 +136,31 @@ async function getFillDebtOrderParameters(
     const tokenIds = genLoanAgreementIds(this.loanRepaymentRouter.address, debtors, termsContractParameters, salts);
 
 
-    return {
-       fillDebtOrderParams: formatFillDebtOrderParams(
-           orderAddresses,
-           orderValues,
-           termsContractParameters,
-           await Promise.all(
-               tokenIds.map(async (x) => ({
-                   ...(await generateLATMintPayload(
-                       this.loanAssetTokenContract,
-                       this.defaultLoanAssetTokenValidator,
-                       [x],
-                       [(await this.loanAssetTokenContract.nonce(x)).toNumber()],
-                       this.defaultLoanAssetTokenValidator.address,
-                   )),
-               })),
-           ),
-       ),
-       tokenIds
-    }
-
+    const fillDebtOrderParams = formatFillDebtOrderParams(
+        orderAddresses,
+        orderValues,
+        termsContractParameters,
+        await Promise.all(
+            tokenIds.map(async (x) => ({
+                ...(await generateLATMintPayload(
+                    this.loanAssetTokenContract,
+                    this.defaultLoanAssetTokenValidator,
+                    [x],
+                    [(await this.loanAssetTokenContract.nonce(x)).toNumber()],
+                    this.defaultLoanAssetTokenValidator.address
+                )),
+            }))
+        )
+    );
+    await this.loanKernel.connect(signer).fillDebtOrder(fillDebtOrderParams);
+    return tokenIds;
 }
 
 function bind(contracts) {
     return {
         createSecuritizationPool: createSecuritizationPool.bind(contracts),
         setupRiskScore: setupRiskScore.bind(contracts),
-        getFillDebtOrderParameters: getFillDebtOrderParameters.bind(contracts)
+        fillDebtOrder: fillDebtOrder.bind(contracts)
     }
 }
 

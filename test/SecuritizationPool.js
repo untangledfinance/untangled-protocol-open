@@ -380,18 +380,14 @@ describe('SecuritizationPool', () => {
                     salt: genSalt()
                 }
             ]
-            let fillDebtOrderParams;
 
-            ({ fillDebtOrderParams, tokenIds } = await untangledProtocol.getFillDebtOrderParameters(
+            tokenIds = await untangledProtocol.fillDebtOrder(
                 untangledAdminSigner,
                 securitizationPoolContract,
                 relayer,
                 borrowerSigner,
                 ASSET_PURPOSE.LOAN,
                 loans
-            ));
-            await loanKernel.fillDebtOrder(
-                fillDebtOrderParams
             );
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
@@ -400,16 +396,15 @@ describe('SecuritizationPool', () => {
             const balanceOfPool = await loanAssetTokenContract.balanceOf(securitizationPoolContract.address);
             expect(balanceOfPool).equal(tokenIds.length);
 
-            ({ fillDebtOrderParams } = await untangledProtocol.getFillDebtOrderParameters(
-                untangledAdminSigner,
-                securitizationPoolContract,
-                relayer,
-                borrowerSigner,
-                ASSET_PURPOSE.LOAN,
-                loans
-            ));
             await expect(
-                loanKernel.fillDebtOrder(fillDebtOrderParams)
+                untangledProtocol.fillDebtOrder(
+                    untangledAdminSigner,
+                    securitizationPoolContract,
+                    relayer,
+                    borrowerSigner,
+                    ASSET_PURPOSE.LOAN,
+                    loans
+                )
             ).to.be.revertedWith(`ERC721: token already minted`);
         });
 
@@ -424,17 +419,13 @@ describe('SecuritizationPool', () => {
                 }
             ]
 
-            let { fillDebtOrderParams, tokenIds: pledgeTokenIds } = await untangledProtocol.getFillDebtOrderParameters(
+            const pledgeTokenIds = await untangledProtocol.fillDebtOrder(
                 untangledAdminSigner,
                 securitizationPoolContract,
                 relayer,
                 borrowerSigner,
                 ASSET_PURPOSE.INVOICE,
                 loans
-            );
-
-            await loanKernel.fillDebtOrder(
-                fillDebtOrderParams
             );
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(pledgeTokenIds[0]);
