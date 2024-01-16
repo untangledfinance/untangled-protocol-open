@@ -570,7 +570,7 @@ describe('SecuritizationPool', () => {
             await expect(
                 securitizationPoolContract
                     .connect(poolCreatorSigner)
-                    .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix())
+                    .startCycle()
             ).to.be.revertedWith(`FinalizableCrowdsale: not closed`);
 
             await time.increaseTo(dayjs(new Date()).add(8, 'days').unix());
@@ -581,7 +581,7 @@ describe('SecuritizationPool', () => {
 
             await securitizationPoolContract
                 .connect(poolCreatorSigner)
-                .startCycle(86400, parseEther('10000'), 5000, dayjs(new Date()).add(8, 'days').unix());
+                .startCycle();
         });
     });
 

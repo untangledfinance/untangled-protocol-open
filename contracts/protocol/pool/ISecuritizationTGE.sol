@@ -12,8 +12,6 @@ interface ISecuritizationTGE {
     event UpdateMintFirstLoss(uint32 _mintFirstLoss);
     event Withdraw(address originatorAddress, uint256 amount);
 
-    function termLengthInSeconds() external view returns (uint64);
-
     /// @notice sets the pot address for the contract
     function setPot(address _pot) external;
 
@@ -46,8 +44,6 @@ interface ISecuritizationTGE {
     function paidPrincipalAmountSOTByInvestor(address user) external view returns (uint256);
 
     function reserve() external view returns (uint256);
-
-    function principalAmountSOT() external view returns (uint256);
 
     function debtCeiling() external view returns (uint256);
 
@@ -85,12 +81,7 @@ interface ISecuritizationTGE {
 
     // function openingBlockTimestamp() external view returns (uint64);
 
-    function startCycle(
-        uint64 _termLengthInSeconds,
-        uint256 _principalAmountForSOT,
-        uint32 _interestRateForSOT,
-        uint64 _timeStartEarningInterest
-    ) external;
+    function startCycle() external;
 
     /// @notice allows the originator to withdraw from reserve
     function withdraw(address to, uint256 amount) external;

@@ -99,6 +99,11 @@ contract SecuritizationPoolNAV is
         $.discountRate = ONE;
     }
 
+    modifier onlySecuritizationPool() {
+        require(_msgSender() == address(this), 'SecuritizationPool: Only SecuritizationPool');
+        _;
+    }
+
     /** GETTER */
     /// @notice getter function for the maturityDate
     /// @param nft_ the id of the nft based on the hash of registry and tokenId
@@ -177,13 +182,27 @@ contract SecuritizationPoolNAV is
         return securitizationPool.riskScores(idx);
     }
 
-    function addLoan(uint256 loan, LoanEntry calldata loanEntry) public returns (uint256) {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    function addLoan(uint256 loan, LoanEntry calldata loanEntry) public onlySecuritizationPool returns (uint256) {
         Storage storage $ = _getStorage();
         bytes32 _tokenId = bytes32(loan);
-        $.entries[_tokenId] = loanEntry;
-        UnpackLoanParamtersLib.InterestParams memory loanParam = unpackParamsForAgreementID(_tokenId);
+        UnpackLoanParamtersLib.InterestParams memory loanParam = unpackParamsForAgreementID(loanEntry);
+
         $.details[_tokenId].risk = loanEntry.riskScore;
+        $.details[_tokenId].debtor = loanEntry.debtor;
+        $.details[_tokenId].expirationTimestamp = loanEntry.expirationTimestamp;
+        $.details[_tokenId].principalTokenAddress = loanEntry.principalTokenAddress;
+        $.details[_tokenId].salt = loanEntry.salt;
+        $.details[_tokenId].issuanceBlockTimestamp = loanEntry.issuanceBlockTimestamp;
+        $.details[_tokenId].assetPurpose = loanEntry.assetPurpose;
+        $.details[_tokenId].termsParam = loanEntry.termsParam;
+
+        $.details[_tokenId].principalAmount = loanParam.principalAmount;
+        $.details[_tokenId].termStartUnixTimestamp = loanParam.termStartUnixTimestamp;
+        $.details[_tokenId].termEndUnixTimestamp = loanParam.termEndUnixTimestamp;
+        $.details[_tokenId].amortizationUnitType = loanParam.amortizationUnitType;
+        $.details[_tokenId].termLengthInAmortizationUnits = loanParam.termLengthInAmortizationUnits;
+        $.details[_tokenId].interestRate = loanParam.interestRate;
+
         RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
         uint256 principalAmount = loanParam.principalAmount;
         uint256 _convertedInterestRate;
@@ -231,8 +250,7 @@ contract SecuritizationPoolNAV is
     /// @notice file allows governance to change parameters of the contract
     /// @param name name of the parameter
     /// @param value new value of the parameter
-    function file(bytes32 name, uint256 value) public override {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    function file(bytes32 name, uint256 value) public override onlySecuritizationPool {
         if (name == 'discountRate') {
             Storage storage $ = _getStorage();
             uint256 oldDiscountRate = $.discountRate;
@@ -258,8 +276,7 @@ contract SecuritizationPoolNAV is
         uint256 overdueDays_,
         uint256 penaltyRate_,
         uint256 riskIndex
-    ) public override {
-        require(_msgSender() == address(this), 'Only SecuritizationPool');
+    ) public override onlySecuritizationPool {
         if (name == 'writeOffGroup') {
             Storage storage $ = _getStorage();
             uint256 index = $.writeOffGroups.length;
@@ -337,12 +354,12 @@ contract SecuritizationPoolNAV is
         Rate memory _rate = $.rates[$.loanRates[loan]];
 
         // calculate future value FV
-        LoanEntry memory loanEntry = getEntry(bytes32(loan));
+        NFTDetails memory nftDetail = getAsset(bytes32(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             amount,
             maturityDate_,
-            recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+            recoveryRatePD(nftDetail.risk, nftDetail.expirationTimestamp - nftDetail.issuanceBlockTimestamp)
         );
         $.details[nftID_].futureValue = toUint128(safeAdd(futureValue(nftID_), fv));
 
@@ -374,12 +391,12 @@ contract SecuritizationPoolNAV is
     function _calcFutureValue(uint256 loan, uint256 _debt, uint256 _maturityDate) private view returns (uint256) {
         Storage storage $ = _getStorage();
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        LoanEntry memory loanEntry = getEntry(nftID(loan));
+        NFTDetails memory nftDetail = getAsset(nftID(loan));
         uint256 fv = calcFutureValue(
             _rate.ratePerSecond,
             _debt,
             _maturityDate,
-            recoveryRatePD(loanEntry.riskScore, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+            recoveryRatePD(nftDetail.risk, nftDetail.expirationTimestamp - nftDetail.issuanceBlockTimestamp)
         );
         return fv;
     }
@@ -462,8 +479,8 @@ contract SecuritizationPoolNAV is
 
         // can not write-off healthy loans
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        LoanEntry memory loanEntry = getEntry(bytes32(loan));
-        RiskScore memory riskParam = getRiskScoreByIdx(loanEntry.riskScore);
+        NFTDetails memory nftDetail = getAsset(bytes32(loan));
+        RiskScore memory riskParam = getRiskScoreByIdx(nftDetail.risk);
         require(maturityDate_ + riskParam.gracePeriod <= nnow, 'maturity-date-in-the-future');
         // check the writeoff group based on the amount of days overdue
         uint256 writeOffGroupIndex_ = currentValidWriteOffGroup(loan);
@@ -475,24 +492,6 @@ contract SecuritizationPoolNAV is
             _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
             emit WriteOff(loan, writeOffGroupIndex_, false);
         }
-    }
-
-    /// @notice authorized call to write of a loan in a specific writeoff group
-    /// @param loan the id of the loan
-    /// @param writeOffGroupIndex_ the index of the writeoff group
-    function overrideWriteOff(uint256 loan, uint256 writeOffGroupIndex_) internal {
-        // can not write-off healthy loans
-        bytes32 nftID_ = nftID(loan);
-        uint256 maturityDate_ = maturityDate(nftID_);
-        uint256 nnow = uniqueDayTimestamp(block.timestamp);
-        require(maturityDate_ < nnow, 'maturity-date-in-the-future');
-
-        Storage storage $ = _getStorage();
-        if ($.loanDetails[loan].authWriteOff == false) {
-            $.loanDetails[loan].authWriteOff = true;
-        }
-        _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
-        emit WriteOff(loan, writeOffGroupIndex_, true);
     }
 
     /// @notice internal function for the write off
@@ -732,6 +731,7 @@ contract SecuritizationPoolNAV is
                 _file('rate', _convertedInterestRate, _convertedInterestRate);
             }
             changeRate(loan, _convertedInterestRate);
+            $.details[nftID_].interestRate = riskParam.interestRate;
         }
 
         // no currencyAmount borrowed yet
@@ -758,13 +758,13 @@ contract SecuritizationPoolNAV is
         // update latest NAV
         // update latest Discount
         Rate memory _rate = $.rates[$.loanRates[loan]];
-        LoanEntry memory loanEntry = getEntry(bytes32(loan));
+        NFTDetails memory nftDetail = getAsset(bytes32(loan));
         $.details[nftID_].futureValue = toUint128(
             calcFutureValue(
                 _rate.ratePerSecond,
                 debt(loan),
                 maturityDate(nftID_),
-                recoveryRatePD(risk_, loanEntry.expirationTimestamp - loanEntry.issuanceBlockTimestamp)
+                recoveryRatePD(risk_, nftDetail.expirationTimestamp - nftDetail.issuanceBlockTimestamp)
             )
         );
 
@@ -795,9 +795,9 @@ contract SecuritizationPoolNAV is
         uint256 maturityDate_ = maturityDate(nftID_);
         uint256 nnow = uniqueDayTimestamp(block.timestamp);
 
-        LoanEntry memory loanEntry = getEntry(nftID_);
+        NFTDetails memory nftDetail = getAsset(nftID_);
 
-        uint8 _loanRiskIndex = loanEntry.riskScore - 1;
+        uint128 _loanRiskIndex = nftDetail.risk - 1;
 
         uint128 lastValidWriteOff = type(uint128).max;
         uint128 highestOverdueDays = 0;
@@ -917,11 +917,11 @@ contract SecuritizationPoolNAV is
         emit ChangeRate(loan, newRate);
     }
 
-    function accrue(uint256 loan) public {
+    function accrue(uint256 loan) internal {
         drip(_getStorage().loanRates[loan]);
     }
 
-    function drip(uint256 rate) public {
+    function drip(uint256 rate) internal {
         Storage storage $ = _getStorage();
         if (block.timestamp >= $.rates[rate].lastUpdated) {
             (uint256 chi, ) = compounding(
@@ -1002,9 +1002,9 @@ contract SecuritizationPoolNAV is
     }
 
     /// @inheritdoc ISecuritizationPoolNAV
-    function getEntry(bytes32 agreementId) public view override returns (LoanEntry memory) {
+    function getAsset(bytes32 agreementId) public view override returns (NFTDetails memory) {
         Storage storage $ = _getStorage();
-        return $.entries[agreementId];
+        return $.details[agreementId];
     }
 
     /// @param amortizationUnitType AmortizationUnitType enum
@@ -1028,13 +1028,13 @@ contract SecuritizationPoolNAV is
             revert('Unknown amortization unit type.');
         }
     }
+
     /**
      *   Get parameters by Agreement ID (commitment hash)
      */
     function unpackParamsForAgreementID(
-        bytes32 agreementId
-    ) public view override returns (UnpackLoanParamtersLib.InterestParams memory params) {
-        LoanEntry memory loan = getEntry(agreementId);
+        LoanEntry calldata loan
+    ) private pure returns (UnpackLoanParamtersLib.InterestParams memory params) {
         // The principal amount denominated in the aforementioned token.
         uint256 principalAmount;
         // The interest rate accrued per amortization unit.
@@ -1059,17 +1059,17 @@ contract SecuritizationPoolNAV is
 
         // Calculate term length base on Amortization Unit and number
         uint256 termLengthInSeconds = termLengthInAmortizationUnits *
-                        _getAmortizationUnitLengthInSeconds(amortizationUnitType);
+            _getAmortizationUnitLengthInSeconds(amortizationUnitType);
 
         return
             UnpackLoanParamtersLib.InterestParams({
-            principalAmount: principalAmount,
-            interestRate: interestRate,
-            termStartUnixTimestamp: loan.issuanceBlockTimestamp,
-            termEndUnixTimestamp: termLengthInSeconds + loan.issuanceBlockTimestamp,
-            amortizationUnitType: amortizationUnitType,
-            termLengthInAmortizationUnits: termLengthInAmortizationUnits
-        });
+                principalAmount: principalAmount,
+                interestRate: interestRate,
+                termStartUnixTimestamp: loan.issuanceBlockTimestamp,
+                termEndUnixTimestamp: termLengthInSeconds + loan.issuanceBlockTimestamp,
+                amortizationUnitType: amortizationUnitType,
+                termLengthInAmortizationUnits: termLengthInAmortizationUnits
+            });
     }
 
     function getFunctionSignatures()
@@ -1079,7 +1079,7 @@ contract SecuritizationPoolNAV is
         override(SecuritizationAccessControl, SecuritizationPoolStorage)
         returns (bytes4[] memory)
     {
-        bytes4[] memory _functionSignatures = new bytes4[](15);
+        bytes4[] memory _functionSignatures = new bytes4[](14);
 
         _functionSignatures[0] = this.addLoan.selector;
         _functionSignatures[1] = this.repayLoan.selector;
@@ -1094,8 +1094,7 @@ contract SecuritizationPoolNAV is
         _functionSignatures[10] = this.updateAssetRiskScore.selector;
         _functionSignatures[11] = this.writeOff.selector;
         _functionSignatures[12] = bytes4(keccak256(bytes('file(bytes32,uint256,uint256,uint256,uint256,uint256)')));
-        _functionSignatures[13] = this.getEntry.selector;
-        _functionSignatures[14] = this.unpackParamsForAgreementID.selector;
+        _functionSignatures[13] = this.getAsset.selector;
 
         return _functionSignatures;
     }

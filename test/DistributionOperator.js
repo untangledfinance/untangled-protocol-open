@@ -407,7 +407,6 @@ describe('Distribution', () => {
                 securitizationPoolContract.address,
                 stableCoin.address,
                 loanRepaymentRouter.address,
-                relayer.address,
                 // borrower 1
                 borrowerSigner.address,
                 // borrower 2

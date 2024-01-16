@@ -5,6 +5,7 @@ require('hardhat-contract-sizer');
 require('hardhat-deploy');
 require('@openzeppelin/hardhat-upgrades');
 require('@nomicfoundation/hardhat-chai-matchers');
+require("hardhat-gas-reporter");
 require('hardhat-abi-exporter');
 
 require('dotenv').config();
@@ -57,7 +58,7 @@ module.exports = {
 
             // forking: {
             //     url: 'https://alfajores-forno.celo-testnet.org',
-            //     blockNumber: 21676043,
+            //     blockNumber: 21811828,
             // },
             // chainId: 44787,
         },
@@ -138,4 +139,11 @@ module.exports = {
         //     format: "fullName",
         // },
     ],
+    gasReporter: {
+        enabled: (process.env.REPORT_GAS) ? true : false,
+        currency: 'USD',
+        onlyCalledMethods: true,
+        coinmarketcap: 'b7703f84-a44a-4812-8cf9-e4a3a648af5c',
+        gasPriceApi: 'https://api.etherscan.io/api?module=proxy&action=eth_gasPrice'
+    }
 };

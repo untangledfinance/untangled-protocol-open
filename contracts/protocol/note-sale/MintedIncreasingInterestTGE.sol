@@ -15,10 +15,7 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     using ConfigHelper for Registry;
 
     bool public longSale;
-    uint256 public timeStartEarningInterest;
-    uint256 public termLengthInSeconds;
     uint256 public interestRate;
-    uint256 public yield;
 
     uint8 saleType;
 
@@ -38,28 +35,6 @@ contract MintedIncreasingInterestTGE is IMintedTGE, UntangledBase, IncreasingInt
     /// @inheritdoc Crowdsale
     function isLongSale() public view override returns (bool) {
         return longSale;
-    }
-
-    /// @dev Sets the yield variable to the specified value
-    function setYield(uint256 _yield) public whenNotPaused onlyRole(OWNER_ROLE) {
-        yield = _yield;
-        emit YieldUpdated(_yield);
-    }
-
-    function setupLongSale(
-        uint256 _interestRate,
-        uint256 _termLengthInSeconds,
-        uint256 _timeStartEarningInterest
-    ) public whenNotPaused securitizationPoolRestricted {
-        if (isLongSale()) {
-            interestRate = _interestRate;
-            timeStartEarningInterest = _timeStartEarningInterest;
-            termLengthInSeconds = _termLengthInSeconds;
-            yield = _interestRate;
-
-            emit SetupLongSale(interestRate, termLengthInSeconds, timeStartEarningInterest);
-            emit YieldUpdated(yield);
-        }
     }
 
     /// @notice Calculate token price

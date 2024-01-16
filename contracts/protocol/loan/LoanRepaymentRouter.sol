@@ -25,12 +25,11 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
 
     /// @dev performs various checks to validate the repayment request, including ensuring that the token address is not null,
     /// the amount is greater than zero, and the debt agreement exists
-    function _assertRepaymentRequest(bytes32 _agreementId, address _tokenAddress) private returns (bool) {
+    function _assertRepaymentRequest(bytes32 _agreementId, address _tokenAddress) private view returns (bool) {
         require(_tokenAddress != address(0), 'Token address must different with NULL.');
 
         // Ensure agreement exists.
         if (registry.getLoanAssetToken().ownerOf(uint256(_agreementId)) == address(0)) {
-            emit LogError(uint8(Errors.DEBT_AGREEMENT_NONEXISTENT), _agreementId);
             return false;
         }
 

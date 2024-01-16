@@ -25,7 +25,7 @@ abstract contract IUntangledERC721 is ERC721PresetMinterPauserAutoIdUpgradeable 
         string memory baseTokenURI
     ) internal onlyInitializing {
         _baseTokenURI = baseTokenURI;
-        __ERC721PresetMinterPauserAutoId_init_unchained(name, symbol, baseTokenURI);
+        __ERC721PresetMinterPauserAutoId_init(name, symbol, baseTokenURI);
     }
 
     function mint(address to, uint256 tokenId) public virtual onlyRole(MINTER_ROLE) {
