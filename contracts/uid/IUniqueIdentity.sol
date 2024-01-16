@@ -30,4 +30,10 @@ interface IUniqueIdentity is IERC1155Upgradeable {
     ///                  (account, id, expiresAt, address(this), nonces[account], block.chainid)
     ///                  from an address with the SIGNER_ROLE.
     function burn(address account, uint256 id, uint256 expiresAt, bytes calldata signature) external;
+
+    /// @notice Burn a UniqueIdentity token of `id` from the `account` by using SUPPER_ADMIN wallet
+    /// @param account The account which currently owns the UID
+    /// @param id The id representing the KYC type of the UniqueIdentity
+    function burnFrom(address account, uint256 id) external;
+
 }
