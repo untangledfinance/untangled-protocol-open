@@ -56,6 +56,10 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         _setRoleAdmin(SUPER_ADMIN, OWNER_ROLE);
     }
 
+    function addSuperAdmin(address account) public onlyAdmin {
+        _setupRole(SUPER_ADMIN, account);
+    }
+
     function setSupportedUIDTypes(uint256[] calldata ids, bool[] calldata values) public onlyAdmin {
         require(ids.length == values.length, 'accounts and ids length mismatch');
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -117,11 +121,7 @@ contract UniqueIdentity is ERC1155PresetPauserUpgradeable, IUniqueIdentity {
         require(accountBalance == 0, 'Balance after burn must be 0');
     }
 
-
-    function burnFrom(
-        address account,
-        uint256 id
-    ) public override onlyRole(SUPER_ADMIN) {
+    function burnFrom(address account, uint256 id) public override onlyRole(SUPER_ADMIN) {
         _burn(account, id, 1);
 
         uint256 accountBalance = balanceOf(account, id);

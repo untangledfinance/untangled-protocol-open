@@ -9,11 +9,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         proxy: {
             proxyContract: 'OpenZeppelinTransparentProxy',
             execute: {
-                methodName: 'initialize',
-                args: [deployer, ''],
+                init: {
+                    methodName: 'initialize',
+                    args: [deployer, ''],
+                },
             },
         },
-        skipIfAlreadyDeployed: true,
+        // skipIfAlreadyDeployed: true,
         log: true,
     });
 
@@ -28,6 +30,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         },
         'grantRole',
         SIGNER_ROLE,
+        kycAdmin
+    );
+
+    const SUPER_ADMIN = await read('UniqueIdentity', 'SUPER_ADMIN');
+    await execute(
+        'UniqueIdentity',
+        {
+            from: deployer,
+            log: true,
+        },
+        'addSuperAdmin',
+        SUPER_ADMIN,
         kycAdmin
     );
 };
