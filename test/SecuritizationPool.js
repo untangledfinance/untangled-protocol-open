@@ -114,7 +114,7 @@ describe('SecuritizationPool', () => {
             const salt = utils.keccak256(Date.now());
 
             // Create new pool
-            let receipt = await untangledProtocol.createSecuritizationPool(poolCreatorSigner, '100000', parseEther('99').toString(), stableCoin.address, salt);
+            let receipt = await untangledProtocol.createSecuritizationPool(poolCreatorSigner, 10, 99, "cUSD", true, salt);
             let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
 
             // expect address, create2

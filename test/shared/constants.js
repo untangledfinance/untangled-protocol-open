@@ -106,9 +106,12 @@ const ASSET_PURPOSE = {
 
 const LAT_BASE_URI = "https://api.example.com/token/"
 
+const RATE_SCALING_FACTOR = 10000;
+
 module.exports = {
   SaleType,
   RISK_SCORES,
   LAT_BASE_URI,
-  ASSET_PURPOSE
+  ASSET_PURPOSE,
+  RATE_SCALING_FACTOR
 };

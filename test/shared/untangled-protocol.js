@@ -1,6 +1,8 @@
 const { utils } = require('ethers');
 const { ethers } = require('hardhat');
+const { BigNumber } = ethers;
 const { parseEther, formatEther } = ethers.utils;
+const { RATE_SCALING_FACTOR } = require('../shared/constants.js');
 
 const {
     unlimitedAllowance,
@@ -19,14 +21,26 @@ const {
 } = require('../utils.js');
 const dayjs = require('dayjs');
 const _ = require('lodash');
+const { SaleType } = require('./constants');
+
+function getTokenAddressFromSymbol(symbol) {
+    switch (symbol) {
+        case 'cUSD':
+            return this.stableCoin.address;
+        case 'USDT':
+            return this.stableCoin.address;
+        case 'USDC':
+            return this.stableCoin.address;
+    }
+}
 
 async function createSecuritizationPool(
     signer,
-    minFirstLossCushion = '100000',
-    debtCeiling = parseEther('1000').toString(),
-    currency = this.stableCoin.address,
-    salt = utils.keccak256(Date.now()),
-    validatorRequired = true
+    minFirstLossCushion = 10,
+    debtCeiling = 1000,
+    currency = "cUSD",
+    validatorRequired = true,
+    salt = utils.keccak256(Date.now())
 ) {
 
     let transaction = await this.securitizationManager
@@ -62,10 +76,10 @@ async function createSecuritizationPool(
                 ],
                 [
                     {
-                        currency: currency,
-                        minFirstLossCushion: minFirstLossCushion,
+                        currency: getTokenAddressFromSymbol.call(this, currency),
+                        minFirstLossCushion: BigNumber.from(minFirstLossCushion * RATE_SCALING_FACTOR),
                         validatorRequired: validatorRequired,
-                        debtCeiling: debtCeiling,
+                        debtCeiling: parseEther(debtCeiling.toString()).toString(),
                     },
                 ]
             )
@@ -154,6 +168,49 @@ async function fillDebtOrder(
     );
     await this.loanKernel.connect(signer).fillDebtOrder(fillDebtOrderParams);
     return tokenIds;
+}
+
+async function initSales(signer, saleParameters) {
+
+    const transactionSOTSale = await securitizationManager.connect(signer).setUpTGEForSOT(
+        {
+            issuerTokenController: saleParameters.issuerTokenController,
+            pool: saleParameters.pool,
+            minBidAmount: saleParameters.sotMinBidAmount,
+            saleType: saleParameters.sotSaleType,
+            longSale: true,
+            ticker: saleParameters.ticker,
+        },
+        { openingTime: saleParameters.sotOpeningTime, closingTime: saleParameters.sotClosingTime, rate: saleParameters.rate, cap: saleParameters.sotCap },
+        {
+            initialInterest,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval,
+        }
+    );
+    const receiptSOTSale = await transactionSOTSale.wait();
+    const [sotTGEAddress] = receiptSOTSale.events.find((e) => e.event == 'NewTGECreated').args;
+    const [sotTokenAddress] = receiptSOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+
+    const transactionJOTSale = await securitizationManager.connect(signer).setUpTGEForJOT(
+        {
+            issuerTokenController: saleParameters.issuerTokenController,
+            pool: saleParameters.pool,
+            minBidAmount: saleParameters.jotMinBidAmount,
+            saleType: saleParameters.jotSaleType,
+            longSale: true,
+            ticker: saleParameters.ticker,
+        },
+        { openingTime: saleParameters.jotOpenTime, closingTime: saleParameters.jotCloseTime, rate: saleParameters.jotRate, cap: saleParameters.jotCap },
+        saleParameters.initialJOTAmount
+    );
+    const receiptJOTSale = await transactionJOTSale.wait();
+    const [jotTGEAddress] = receiptJOTSale.events.find((e) => e.event == 'NewTGECreated').args;
+    const [jotTokenAddress] = receiptJOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+
+    return { sotTGEAddress, sotTokenAddress, jotTGEAddress, jotTokenAddress };
+
 }
 
 function bind(contracts) {
