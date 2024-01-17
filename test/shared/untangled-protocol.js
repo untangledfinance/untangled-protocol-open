@@ -22,6 +22,7 @@ const {
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const { SaleType } = require('./constants');
+const { expect } = require('chai');
 
 function getTokenAddressFromSymbol(symbol) {
     switch (symbol) {
@@ -170,54 +171,72 @@ async function fillDebtOrder(
     return tokenIds;
 }
 
-async function initSales(signer, saleParameters) {
+async function initSOTSale(signer, saleParameters) {
 
-    const transactionSOTSale = await securitizationManager.connect(signer).setUpTGEForSOT(
+    const transactionSOTSale = await this.securitizationManager.connect(signer).setUpTGEForSOT(
         {
             issuerTokenController: saleParameters.issuerTokenController,
             pool: saleParameters.pool,
-            minBidAmount: saleParameters.sotMinBidAmount,
-            saleType: saleParameters.sotSaleType,
+            minBidAmount: saleParameters.minBidAmount,
+            saleType: saleParameters.saleType,
             longSale: true,
             ticker: saleParameters.ticker,
         },
-        { openingTime: saleParameters.sotOpeningTime, closingTime: saleParameters.sotClosingTime, rate: saleParameters.rate, cap: saleParameters.sotCap },
+        { openingTime: saleParameters.openingTime, closingTime: saleParameters.closingTime, rate: saleParameters.rate, cap: saleParameters.cap },
         {
-            initialInterest,
-            finalInterest,
-            timeInterval,
-            amountChangeEachInterval,
+            initialInterest: saleParameters.initialInterest,
+            finalInterest: saleParameters.finalInterest,
+            timeInterval: saleParameters.timeInterval,
+            amountChangeEachInterval: saleParameters.amountChangeEachInterval,
         }
     );
     const receiptSOTSale = await transactionSOTSale.wait();
     const [sotTGEAddress] = receiptSOTSale.events.find((e) => e.event == 'NewTGECreated').args;
     const [sotTokenAddress] = receiptSOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
 
-    const transactionJOTSale = await securitizationManager.connect(signer).setUpTGEForJOT(
+    return { sotTGEAddress, sotTokenAddress };
+}
+
+async function initJOTSale(signer, saleParameters) {
+    const transactionJOTSale = await this.securitizationManager.connect(signer).setUpTGEForJOT(
         {
             issuerTokenController: saleParameters.issuerTokenController,
             pool: saleParameters.pool,
-            minBidAmount: saleParameters.jotMinBidAmount,
-            saleType: saleParameters.jotSaleType,
+            minBidAmount: saleParameters.minBidAmount,
+            saleType: saleParameters.saleType,
             longSale: true,
             ticker: saleParameters.ticker,
         },
-        { openingTime: saleParameters.jotOpenTime, closingTime: saleParameters.jotCloseTime, rate: saleParameters.jotRate, cap: saleParameters.jotCap },
+        { openingTime: saleParameters.openingTime, closingTime: saleParameters.closingTime, rate: saleParameters.rate, cap: saleParameters.cap },
         saleParameters.initialJOTAmount
     );
     const receiptJOTSale = await transactionJOTSale.wait();
     const [jotTGEAddress] = receiptJOTSale.events.find((e) => e.event == 'NewTGECreated').args;
     const [jotTokenAddress] = receiptJOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
 
-    return { sotTGEAddress, sotTokenAddress, jotTGEAddress, jotTokenAddress };
+    return { jotTGEAddress, jotTokenAddress };
 
+}
+
+async function buySOT(signer, sotTGEAddress, currencyAmount) {
+    await this.stableCoin.connect(signer).approve(sotTGEAddress, currencyAmount);
+    return this.securitizationManager.connect(signer).buyTokens(sotTGEAddress, currencyAmount);
+}
+
+async function buyJOT(signer, jotTGEAddress, currencyAmount) {
+    await this.stableCoin.connect(signer).approve(jotTGEAddress, currencyAmount);
+    return this.securitizationManager.connect(signer).buyTokens(jotTGEAddress, currencyAmount);
 }
 
 function bind(contracts) {
     return {
         createSecuritizationPool: createSecuritizationPool.bind(contracts),
         setupRiskScore: setupRiskScore.bind(contracts),
-        fillDebtOrder: fillDebtOrder.bind(contracts)
+        uploadLoans: fillDebtOrder.bind(contracts),
+        initSOTSale: initSOTSale.bind(contracts),
+        initJOTSale: initJOTSale.bind(contracts),
+        buySOT: buySOT.bind(contracts),
+        buyJOT: buyJOT.bind(contracts),
     }
 }
 

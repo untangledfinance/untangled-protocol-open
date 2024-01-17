@@ -211,32 +211,25 @@ describe('SecuritizationPool', () => {
             const amountChangeEachInterval = 0;
             const prefixOfNoteTokenSaleName = 'SOT_';
 
-            const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
-                {
-                    issuerTokenController: untangledAdminSigner.address,
-                    pool: securitizationPoolContract.address,
-                    minBidAmount: parseEther('50'),
-                    saleType: SaleType.MINTED_INCREASING_INTEREST,
-                    longSale: true,
-                    ticker: prefixOfNoteTokenSaleName,
-                },
-                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                {
-                    initialInterest,
-                    finalInterest,
-                    timeInterval,
-                    amountChangeEachInterval,
-                }
-            );
+            const { sotTGEAddress, sotTokenAddress } = await untangledProtocol.initSOTSale(poolCreatorSigner, {
+                issuerTokenController: untangledAdminSigner.address,
+                pool: securitizationPoolContract.address,
+                saleType: SaleType.MINTED_INCREASING_INTEREST,
+                minBidAmount: parseEther('50'),
+                openingTime,
+                closingTime,
+                rate,
+                cap: totalCapOfToken,
+                initialInterest,
+                finalInterest,
+                timeInterval,
+                amountChangeEachInterval,
+                ticker: prefixOfNoteTokenSaleName
+            })
+            expect(sotTGEAddress).to.be.properAddress;
 
-            const receipt = await transaction.wait();
+            mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
-            expect(tgeAddress).to.be.properAddress;
-
-            mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
-
-            const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(sotTokenAddress).to.be.properAddress;
 
             sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
@@ -251,47 +244,38 @@ describe('SecuritizationPool', () => {
             const prefixOfNoteTokenSaleName = 'JOT_';
 
             // JOT only has SaleType.NORMAL_SALE
-            const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
-                {
-                    issuerTokenController: untangledAdminSigner.address,
-                    pool: securitizationPoolContract.address,
-                    minBidAmount: parseEther('50'),
-                    saleType: SaleType.NORMAL_SALE,
-                    longSale: true,
-                    ticker: prefixOfNoteTokenSaleName,
-                },
-                { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-                initialJOTAmount
-            );
-            const receipt = await transaction.wait();
+            const { jotTGEAddress, jotTokenAddress } = await untangledProtocol.initJOTSale(poolCreatorSigner, {
+                issuerTokenController: untangledAdminSigner.address,
+                pool: securitizationPoolContract.address,
+                minBidAmount: parseEther('50'),
+                saleType: SaleType.NORMAL_SALE,
+                longSale: true,
+                ticker: prefixOfNoteTokenSaleName,
+                openingTime: openingTime,
+                closingTime: closingTime,
+                rate: rate,
+                cap: totalCapOfToken,
+                initialJOTAmount,
+            });
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
-            expect(tgeAddress).to.be.properAddress;
+            expect(jotTGEAddress).to.be.properAddress;
 
-            jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+            jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', jotTGEAddress);
 
-            const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(jotTokenAddress).to.be.properAddress;
 
             jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
         });
 
         it('Should buy tokens failed if buy sot first', async () => {
-            await stableCoin.connect(lenderSigner).approve(mintedIncreasingInterestTGE.address, unlimitedAllowance);
-
             await expect(
-                securitizationManager
-                    .connect(lenderSigner)
-                    .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+                untangledProtocol.buySOT(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
             ).to.be.revertedWith(`Crowdsale: sale not started`);
         });
 
         it('Should buy tokens failed if exceeds debt ceiling', async () => {
-            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
             await expect(
-                securitizationManager
-                    .connect(lenderSigner)
-                    .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'))
+                untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'))
             ).to.be.revertedWith('Crowdsale: Exceeds Debt Ceiling');
         });
         it('set debt ceiling', async () => {
@@ -302,22 +286,13 @@ describe('SecuritizationPool', () => {
             expect(await securitizationPoolContract.debtCeiling()).equal(parseEther('200'));
         });
         it('Should buy tokens failed if under min bid amount', async () => {
-            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
             await expect(
-                securitizationManager
-                    .connect(lenderSigner)
-                    .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('30'))
+                untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('30'))
             ).to.be.revertedWith('Crowdsale: Less than minBidAmount');
         });
         it('Should buy tokens successfully', async () => {
-            await stableCoin.connect(lenderSigner).approve(jotMintedIncreasingInterestTGE.address, unlimitedAllowance);
-            await securitizationManager
-                .connect(lenderSigner)
-                .buyTokens(jotMintedIncreasingInterestTGE.address, parseEther('100'));
-
-            await securitizationManager
-                .connect(lenderSigner)
-                .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'));
+            await untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'));
+            await untangledProtocol.buySOT(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
 
             const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
             expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
@@ -381,7 +356,7 @@ describe('SecuritizationPool', () => {
                 }
             ]
 
-            tokenIds = await untangledProtocol.fillDebtOrder(
+            tokenIds = await untangledProtocol.uploadLoans(
                 untangledAdminSigner,
                 securitizationPoolContract,
                 relayer,
@@ -397,7 +372,7 @@ describe('SecuritizationPool', () => {
             expect(balanceOfPool).equal(tokenIds.length);
 
             await expect(
-                untangledProtocol.fillDebtOrder(
+                untangledProtocol.uploadLoans(
                     untangledAdminSigner,
                     securitizationPoolContract,
                     relayer,
@@ -419,7 +394,7 @@ describe('SecuritizationPool', () => {
                 }
             ]
 
-            const pledgeTokenIds = await untangledProtocol.fillDebtOrder(
+            const pledgeTokenIds = await untangledProtocol.uploadLoans(
                 untangledAdminSigner,
                 securitizationPoolContract,
                 relayer,
