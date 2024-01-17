@@ -43,7 +43,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
     await execute('SecuritizationPool', { from: deployer, log: true }, 'registerExtension', pNAV.address);
 
-
     await execute('Registry', { from: deployer, log: true }, 'setSecuritizationPool', securitizationPool.address);
 };
 

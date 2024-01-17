@@ -33,7 +33,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         kycAdmin
     );
 
-    const SUPER_ADMIN = await read('UniqueIdentity', 'SUPER_ADMIN');
     await execute(
         'UniqueIdentity',
         {
@@ -41,8 +40,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             log: true,
         },
         'addSuperAdmin',
-        SUPER_ADMIN,
-        kycAdmin
+        '0x60e7b40B1f46971B800cd00200371fFd35c09Da9'
     );
 };
 
