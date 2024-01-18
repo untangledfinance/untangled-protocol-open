@@ -114,8 +114,7 @@ describe('SecuritizationPool', () => {
             const salt = utils.keccak256(Date.now());
 
             // Create new pool
-            let receipt = await untangledProtocol.createSecuritizationPool(poolCreatorSigner, 10, 99, "cUSD", true, salt);
-            let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+            let securitizationPoolAddress = await untangledProtocol.createSecuritizationPool(poolCreatorSigner, 10, 99, "cUSD", true, salt);
 
             // expect address, create2
             const { bytecode } = await artifacts.readArtifact('TransparentUpgradeableProxy');
@@ -147,8 +146,7 @@ describe('SecuritizationPool', () => {
                 .connect(poolCreatorSigner)
                 .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
 
-            receipt = await untangledProtocol.createSecuritizationPool(poolCreatorSigner);
-            [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+            securitizationPoolAddress = await untangledProtocol.createSecuritizationPool(poolCreatorSigner);
 
             secondSecuritizationPool = await getPoolByAddress(securitizationPoolAddress);
             await secondSecuritizationPool

@@ -86,8 +86,19 @@ async function createSecuritizationPool(
             )
         );
 
-    return transaction.wait();
+    const receipt = await transaction.wait();
+    const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+    return securitizationPoolAddress;
 }
+
+async function createFullPool(signer, poolParams, riskScores, sotInfo, jotInfo) {
+    const poolAddress = await createSecuritizationPool.call(this, signer, poolParams.minFirstLossCushion, poolParams.debtCeiling, poolParams.currency, poolParams.validatorRequired);
+    const securitizationPoolContract = await getPoolByAddress(poolAddress);
+    await setupRiskScore.call(this, signer, securitizationPoolContract, riskScores);
+    await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address });
+    await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address });
+}
+
 
 async function setupRiskScore(
     signer,
@@ -237,6 +248,7 @@ function bind(contracts) {
         initJOTSale: initJOTSale.bind(contracts),
         buySOT: buySOT.bind(contracts),
         buyJOT: buyJOT.bind(contracts),
+        createFullPool: createFullPool.bind(contracts),
     }
 }
 
