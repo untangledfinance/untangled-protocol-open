@@ -198,6 +198,7 @@ async function setup() {
         distributionTranche,
         noteTokenVault,
         factoryAdmin,
+        untangledAdminSigner,
     };
 }
 

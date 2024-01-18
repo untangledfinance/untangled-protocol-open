@@ -1,5 +1,6 @@
 const { utils } = require('ethers');
 const { ethers } = require('hardhat');
+const { getChainId } = require('hardhat');
 const { BigNumber } = ethers;
 const { parseEther, formatEther } = ethers.utils;
 const { RATE_SCALING_FACTOR } = require('../shared/constants.js');
@@ -23,6 +24,7 @@ const dayjs = require('dayjs');
 const _ = require('lodash');
 const { SaleType } = require('./constants');
 const { expect } = require('chai');
+const { presignedMintMessage } = require('./uid-helper.js');
 
 function getTokenAddressFromSymbol(symbol) {
     switch (symbol) {
@@ -228,6 +230,29 @@ async function buyJOT(signer, jotTGEAddress, currencyAmount) {
     return this.securitizationManager.connect(signer).buyTokens(jotTGEAddress, currencyAmount);
 }
 
+/**
+ * Generates a unique identifier to signer.
+ * @param  signer - The signer that signed transaction and received the unique identifier.
+ */
+async function mintUID (signer) {
+    const UID_TYPE = 0;
+    const chainId = await getChainId();
+    const expiredAt = dayjs().unix() + 86400 * 1000;
+    const nonce = 0;
+    const ethRequired = parseEther('0.00083');
+
+    const uidMintMessage = presignedMintMessage(
+      signer.address,
+      UID_TYPE,
+      expiredAt,
+      this.uniqueIdentity.address,
+      nonce,
+      chainId
+    );
+    const signature = await this.untangledAdminSigner.signMessage(uidMintMessage);
+    await this.uniqueIdentity.connect(signer).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+
+}
 function bind(contracts) {
     return {
         createSecuritizationPool: createSecuritizationPool.bind(contracts),
@@ -237,6 +262,7 @@ function bind(contracts) {
         initJOTSale: initJOTSale.bind(contracts),
         buySOT: buySOT.bind(contracts),
         buyJOT: buyJOT.bind(contracts),
+        mintUID: mintUID.bind(contracts),
     }
 }
 

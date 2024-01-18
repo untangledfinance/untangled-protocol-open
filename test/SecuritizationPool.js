@@ -85,22 +85,7 @@ describe('SecuritizationPool', () => {
         await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
 
         // Gain UID
-        const UID_TYPE = 0;
-        const chainId = await getChainId();
-        const expiredAt = dayjs().unix() + 86400 * 1000;
-        const nonce = 0;
-        const ethRequired = parseEther('0.00083');
-
-        const uidMintMessage = presignedMintMessage(
-            lenderSigner.address,
-            UID_TYPE,
-            expiredAt,
-            uniqueIdentity.address,
-            nonce,
-            chainId
-        );
-        const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-        await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+        await untangledProtocol.mintUID(lenderSigner);
     });
 
     describe('#security pool', async () => {
