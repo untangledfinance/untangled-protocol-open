@@ -21,5 +21,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     // // }
 };
 
-module.exports.dependencies = ['Registry', 'TokenGenerationEventFactory'];
+module.exports.dependencies = ['Registry'];
 module.exports.tags = ['next', 'mainnet', 'MintedIncreasingInterestTGE'];
