@@ -6,7 +6,6 @@ const { parseEther, formatEther } = ethers.utils;
 const { RATE_SCALING_FACTOR } = require('../shared/constants.js');
 
 const {
-    unlimitedAllowance,
     genLoanAgreementIds,
     saltFromOrderValues,
     debtorsFromOrderAddresses,
@@ -16,14 +15,11 @@ const {
     generateLATMintPayload,
     genRiskScoreParam,
     getPoolByAddress,
-    getPoolAbi,
     formatFillDebtOrderParams,
     ZERO_ADDRESS,
 } = require('../utils.js');
 const dayjs = require('dayjs');
 const _ = require('lodash');
-const { SaleType } = require('./constants');
-const { expect } = require('chai');
 const { presignedMintMessage } = require('./uid-helper.js');
 
 function getTokenAddressFromSymbol(symbol) {
@@ -88,8 +84,19 @@ async function createSecuritizationPool(
             )
         );
 
-    return transaction.wait();
+    const receipt = await transaction.wait();
+    const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+    return securitizationPoolAddress;
 }
+
+async function createFullPool(signer, poolParams, riskScores, sotInfo, jotInfo) {
+    const poolAddress = await createSecuritizationPool.call(this, signer, poolParams.minFirstLossCushion, poolParams.debtCeiling, poolParams.currency, poolParams.validatorRequired);
+    const securitizationPoolContract = await getPoolByAddress(poolAddress);
+    await setupRiskScore.call(this, signer, securitizationPoolContract, riskScores);
+    await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address });
+    await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address });
+}
+
 
 async function setupRiskScore(
     signer,
@@ -263,6 +270,7 @@ function bind(contracts) {
         buySOT: buySOT.bind(contracts),
         buyJOT: buyJOT.bind(contracts),
         mintUID: mintUID.bind(contracts),
+        createFullPool: createFullPool.bind(contracts),
     }
 }
 
