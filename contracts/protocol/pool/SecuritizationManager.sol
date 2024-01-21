@@ -101,11 +101,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     }
 
     modifier onlyManager(address pool) {
-        require(
-            // pool.hasRole(pool.OWNER_ROLE(), _msgSender()) ||
-            hasRole(POOL_ADMIN, _msgSender()),
-            'SecuritizationManager: Not the controller of the project'
-        );
+        require(hasRole(POOL_ADMIN, _msgSender()), 'SecuritizationManager: Not the manager of the project');
         _;
     }
 
