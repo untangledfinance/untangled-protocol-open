@@ -237,6 +237,11 @@ async function buyJOT(signer, jotTGEAddress, currencyAmount) {
     return this.securitizationManager.connect(signer).buyTokens(jotTGEAddress, currencyAmount);
 }
 
+async function buyToken(signer, tgeAddress, currencyAmount) {
+    await this.stableCoin.connect(signer).approve(tgeAddress, currencyAmount);
+    return this.securitizationManager.connect(signer).buyTokens(tgeAddress, currencyAmount);
+}
+
 /**
  * Generates a unique identifier to signer.
  * @param  signer - The signer that signed transaction and received the unique identifier.
@@ -269,6 +274,7 @@ function bind(contracts) {
         initJOTSale: initJOTSale.bind(contracts),
         buySOT: buySOT.bind(contracts),
         buyJOT: buyJOT.bind(contracts),
+        buyToken: buyToken.bind(contracts),
         mintUID: mintUID.bind(contracts),
         createFullPool: createFullPool.bind(contracts),
     }
