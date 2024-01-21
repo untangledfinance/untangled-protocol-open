@@ -252,13 +252,13 @@ describe('SecuritizationPool', () => {
 
         it('Should buy tokens failed if buy sot first', async () => {
             await expect(
-                untangledProtocol.buySOT(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
+                untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
             ).to.be.revertedWith(`Crowdsale: sale not started`);
         });
 
         it('Should buy tokens failed if exceeds debt ceiling', async () => {
             await expect(
-                untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'))
+                untangledProtocol.buyToken(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'))
             ).to.be.revertedWith('Crowdsale: Exceeds Debt Ceiling');
         });
         it('set debt ceiling', async () => {
@@ -270,12 +270,12 @@ describe('SecuritizationPool', () => {
         });
         it('Should buy tokens failed if under min bid amount', async () => {
             await expect(
-                untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('30'))
+                untangledProtocol.buyToken(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('30'))
             ).to.be.revertedWith('Crowdsale: Less than minBidAmount');
         });
         it('Should buy tokens successfully', async () => {
-            await untangledProtocol.buyJOT(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'));
-            await untangledProtocol.buySOT(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
+            await untangledProtocol.buyToken(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'));
+            await untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
 
             const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
             expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');

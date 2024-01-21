@@ -227,16 +227,6 @@ async function initJOTSale(signer, saleParameters) {
 
 }
 
-async function buySOT(signer, sotTGEAddress, currencyAmount) {
-    await this.stableCoin.connect(signer).approve(sotTGEAddress, currencyAmount);
-    return this.securitizationManager.connect(signer).buyTokens(sotTGEAddress, currencyAmount);
-}
-
-async function buyJOT(signer, jotTGEAddress, currencyAmount) {
-    await this.stableCoin.connect(signer).approve(jotTGEAddress, currencyAmount);
-    return this.securitizationManager.connect(signer).buyTokens(jotTGEAddress, currencyAmount);
-}
-
 async function buyToken(signer, tgeAddress, currencyAmount) {
     await this.stableCoin.connect(signer).approve(tgeAddress, currencyAmount);
     return this.securitizationManager.connect(signer).buyTokens(tgeAddress, currencyAmount);
@@ -272,8 +262,6 @@ function bind(contracts) {
         uploadLoans: fillDebtOrder.bind(contracts),
         initSOTSale: initSOTSale.bind(contracts),
         initJOTSale: initJOTSale.bind(contracts),
-        buySOT: buySOT.bind(contracts),
-        buyJOT: buyJOT.bind(contracts),
         buyToken: buyToken.bind(contracts),
         mintUID: mintUID.bind(contracts),
         createFullPool: createFullPool.bind(contracts),
