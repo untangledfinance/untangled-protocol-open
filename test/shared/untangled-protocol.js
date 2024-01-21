@@ -93,8 +93,9 @@ async function createFullPool(signer, poolParams, riskScores, sotInfo, jotInfo) 
     const poolAddress = await createSecuritizationPool.call(this, signer, poolParams.minFirstLossCushion, poolParams.debtCeiling, poolParams.currency, poolParams.validatorRequired);
     const securitizationPoolContract = await getPoolByAddress(poolAddress);
     await setupRiskScore.call(this, signer, securitizationPoolContract, riskScores);
-    await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address });
-    await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address });
+    const sotCreated = sotInfo && await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address });
+    const jotCreated = jotInfo && await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address });
+    return [poolAddress, sotCreated, jotCreated];
 }
 
 
@@ -127,7 +128,6 @@ async function fillDebtOrder(
         securitizationPoolContract.address,
         this.stableCoin.address,
         this.loanRepaymentRouter.address,
-        relayer.address,
         // borrower 1
         // borrower 2
         // ...

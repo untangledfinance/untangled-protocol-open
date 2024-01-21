@@ -4,26 +4,14 @@ const dayjs = require('dayjs');
 const { expect } = require('chai');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { constants } = ethers;
 const { parseEther, formatEther } = ethers.utils;
-const { presignedMintMessage } = require('./shared/uid-helper.js');
 const UntangledProtocol = require('./shared/untangled-protocol');
-const { impersonateAccount, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const {
     unlimitedAllowance,
-    genLoanAgreementIds,
-    saltFromOrderValues,
-    debtorsFromOrderAddresses,
-    packTermsContractParameters,
-    interestRateFixedPoint,
     genSalt,
-    generateLATMintPayload,
-    genRiskScoreParam,
     getPoolByAddress,
     getPoolAbi,
-    formatFillDebtOrderParams,
-    ZERO_ADDRESS,
 } = require('./utils.js');
 const { setup } = require('./setup.js');
 const { SaleType } = require('./shared/constants.js');
