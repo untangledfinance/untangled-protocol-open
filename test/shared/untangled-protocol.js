@@ -121,6 +121,8 @@ async function fillDebtOrder(
     borrowerSigner,
     assetPurpose,
     loans,
+    validatorSigner,
+    validatorAddress
 ) {
     const CREDITOR_FEE = '0';
 
@@ -165,13 +167,13 @@ async function fillDebtOrder(
         orderValues,
         termsContractParameters,
         await Promise.all(
-            tokenIds.map(async (x) => ({
+            tokenIds.map(async (x, i) => ({
                 ...(await generateLATMintPayload(
                     this.loanAssetTokenContract,
-                    this.defaultLoanAssetTokenValidator,
+                    validatorSigner || this.defaultLoanAssetTokenValidator,
                     [x],
-                    [(await this.loanAssetTokenContract.nonce(x)).toNumber()],
-                    this.defaultLoanAssetTokenValidator.address
+                    [loans[i].nonce || (await this.loanAssetTokenContract.nonce(x)).toNumber()],
+                    validatorAddress || this.defaultLoanAssetTokenValidator.address
                 )),
             }))
         )
