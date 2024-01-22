@@ -45,9 +45,9 @@ describe('SecuritizationPool', () => {
     let untangledProtocol;
 
     // Wallets
-    let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer;
+    let untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner;
     before('create fixture', async () => {
-        [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner, relayer] =
+        [untangledAdminSigner, poolCreatorSigner, originatorSigner, borrowerSigner, lenderSigner] =
             await ethers.getSigners();
 
         const contracts = await setup();
@@ -330,7 +330,6 @@ describe('SecuritizationPool', () => {
             tokenIds = await untangledProtocol.uploadLoans(
                 untangledAdminSigner,
                 securitizationPoolContract,
-                relayer,
                 borrowerSigner,
                 ASSET_PURPOSE.LOAN,
                 loans
@@ -346,7 +345,6 @@ describe('SecuritizationPool', () => {
                 untangledProtocol.uploadLoans(
                     untangledAdminSigner,
                     securitizationPoolContract,
-                    relayer,
                     borrowerSigner,
                     ASSET_PURPOSE.LOAN,
                     loans
@@ -368,7 +366,6 @@ describe('SecuritizationPool', () => {
             const pledgeTokenIds = await untangledProtocol.uploadLoans(
                 untangledAdminSigner,
                 securitizationPoolContract,
-                relayer,
                 borrowerSigner,
                 ASSET_PURPOSE.INVOICE,
                 loans

@@ -117,7 +117,6 @@ async function setupRiskScore(
 async function fillDebtOrder(
     signer,
     securitizationPoolContract,
-    relayer,
     borrowerSigner,
     assetPurpose,
     loans,
