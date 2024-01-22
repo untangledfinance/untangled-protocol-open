@@ -312,7 +312,6 @@ describe('SecuritizationPool', () => {
                 {
                     principalAmount,
                     expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
-                    assetPurpose: ASSET_PURPOSE.LOAN,
                     termInDays: 10,
                     riskScore: '1',
                     salt: genSalt()
@@ -320,7 +319,6 @@ describe('SecuritizationPool', () => {
                 {
                     principalAmount,
                     expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
-                    assetPurpose: ASSET_PURPOSE.LOAN,
                     termInDays: 10,
                     riskScore: '1',
                     salt: genSalt()
@@ -357,7 +355,6 @@ describe('SecuritizationPool', () => {
                 {
                     principalAmount,
                     expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
-                    assetPurpose: ASSET_PURPOSE.INVOICE,
                     termInDays: 10,
                     riskScore: '1'
                 }

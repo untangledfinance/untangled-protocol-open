@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
 const { snapshot } = require('@openzeppelin/test-helpers');
+const { getChainId } = require('hardhat');
 const _ = require('lodash');
 const dayjs = require('dayjs');
 const { expect } = require('chai');
@@ -63,23 +64,9 @@ describe('LoanAssetToken', () => {
 
         await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
 
-        // Gain UID
-        const UID_TYPE = 0;
         chainId = await getChainId();
-        const expiredAt = dayjs().unix() + 86400;
-        const nonce = 0;
-        const ethRequired = parseEther('0.00083');
-
-        const uidMintMessage = presignedMintMessage(
-            lenderSigner.address,
-            UID_TYPE,
-            expiredAt,
-            uniqueIdentity.address,
-            nonce,
-            chainId
-        );
-        const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-        await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+        // Gain UID
+        await untangledProtocol.mintUID(lenderSigner)
     });
 
     describe('#Initialize suit', async () => {
