@@ -6,6 +6,7 @@ const { keccak256 } = require('@ethersproject/keccak256');
 const { parseEther } = ethers.utils;
 
 const { POOL_ADMIN_ROLE } = require('../constants.js');
+const UntangledProtocol = require('../shared/untangled-protocol');
 
 describe('TokenGenerationEventFactory', () => {
   let registry;
@@ -13,9 +14,12 @@ describe('TokenGenerationEventFactory', () => {
   let securitizationManager;
   let stableCoin;
   let poolCreatorSigner;
+  let untangledProtocol;
 
   before('create fixture', async () => {
-    ({ registry, tokenGenerationEventFactory, stableCoin, securitizationManager, uniqueIdentity } = await setup());
+    const contracts = await setup();
+    untangledProtocol = UntangledProtocol.bind(contracts);
+    ({ registry, tokenGenerationEventFactory, stableCoin, securitizationManager } = await setup());
 
     [, , poolCreatorSigner] = await ethers.getSigners();
 
@@ -23,46 +27,7 @@ describe('TokenGenerationEventFactory', () => {
   });
 
   it('#pauseUnpauseTge', async () => {
-    const poolTx = await securitizationManager.connect(poolCreatorSigner)
-
-    .newPoolInstance(
-      utils.keccak256(Date.now()),
-
-      poolCreatorSigner.address,
-      utils.defaultAbiCoder.encode([
-        {
-          type: 'tuple',
-          components: [
-            {
-              name: 'currency',
-              type: 'address'
-            },
-            {
-              name: 'minFirstLossCushion',
-              type: 'uint32'
-            },
-            {
-              name: 'validatorRequired',
-              type: 'bool'
-            },
-            {
-              name: 'debtCeiling',
-              type: 'uint256',
-            },
-          ]
-        }
-      ], [
-        {
-          currency: stableCoin.address,
-          minFirstLossCushion: 0,
-          validatorRequired: true,
-          debtCeiling: parseEther('1000').toString(),
-        }
-      ]));
-
-
-    const poolTxWait = await poolTx.wait();
-    const poolAddress = poolTxWait.events.find((x) => x.event == 'NewPoolCreated').args.instanceAddress;
+    const poolAddress = await untangledProtocol.createSecuritizationPool(poolCreatorSigner);
 
     const [issuer] = await ethers.getSigners();
     // const securitizationPool = await SecuritizationPool.deploy();
