@@ -16,6 +16,7 @@ const {
     ZERO_ADDRESS,
 } = require('../utils');
 const { parseEther, parseUnits, formatEther, formatBytes32String } = ethers.utils;
+const UntangledProtocol = require('../shared/untangled-protocol');
 const dayjs = require('dayjs');
 const _ = require('lodash');
 const {
@@ -69,6 +70,7 @@ describe('NAV', () => {
         let mintedIncreasingInterestTGE;
         let jotMintedIncreasingInterestTGE;
         let distributionAssessor;
+        let untangledProtocol;
 
         // Wallets
         let untangledAdminSigner,
@@ -90,6 +92,8 @@ describe('NAV', () => {
                 impersonationKernel,
             ] = await ethers.getSigners();
 
+            const contracts = await setup();
+            untangledProtocol = UntangledProtocol.bind(contracts);
             ({
                 stableCoin,
                 distributionOperator,
@@ -106,26 +110,11 @@ describe('NAV', () => {
                 distributionTranche,
                 registry,
                 defaultLoanAssetTokenValidator,
-            } = await setup());
+            } = contracts);
             await stableCoin.transfer(lenderSigner.address, parseEther('1000'));
 
             // Gain UID
-            const UID_TYPE = 0;
-            const chainId = await getChainId();
-            const expiredAt = dayjs().unix() + 86400;
-            const nonce = 0;
-            const ethRequired = parseEther('0.00083');
-
-            const uidMintMessage = presignedMintMessage(
-                lenderSigner.address,
-                UID_TYPE,
-                expiredAt,
-                uniqueIdentity.address,
-                nonce,
-                chainId
-            );
-            const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-            await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+            await untangledProtocol.mintUID(lenderSigner);
 
             const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
             await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
@@ -133,46 +122,7 @@ describe('NAV', () => {
             await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
             await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
             // Create new pool
-            const transaction = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(
-                utils.keccak256(Date.now()),
-
-                poolCreatorSigner.address,
-                utils.defaultAbiCoder.encode(
-                    [
-                        {
-                            type: 'tuple',
-                            components: [
-                                {
-                                    name: 'currency',
-                                    type: 'address',
-                                },
-                                {
-                                    name: 'minFirstLossCushion',
-                                    type: 'uint32',
-                                },
-                                {
-                                    name: 'validatorRequired',
-                                    type: 'bool',
-                                },
-                                {
-                                    name: 'debtCeiling',
-                                    type: 'uint256',
-                                },
-                            ],
-                        },
-                    ],
-                    [
-                        {
-                            currency: stableCoin.address,
-                            minFirstLossCushion: '100000',
-                            validatorRequired: true,
-                            debtCeiling: parseEther('1000').toString(),
-                        },
-                    ]
-                )
-            );
-            const receipt = await transaction.wait();
-            const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
+            const securitizationPoolAddress = await untangledProtocol.createSecuritizationPool(poolCreatorSigner);
 
             securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
             await securitizationPoolContract
@@ -180,12 +130,9 @@ describe('NAV', () => {
                 .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
         });
 
-        const agreementID = '0x979b5e9fab60f9433bf1aa924d2d09636ae0f5c10e2c6a8a58fe441cd1414d7f';
         let expirationTimestamps;
         const CREDITOR_FEE = '0';
         const ASSET_PURPOSE = '1';
-        const inputAmount = 10;
-        const inputPrice = 15;
         const principalAmount = 10000000000000000000;
         const interestRatePercentage = 12; //12%
         before('Should set up TGE for SOT successfully', async () => {
