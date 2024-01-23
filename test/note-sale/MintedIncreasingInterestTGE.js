@@ -1,14 +1,14 @@
-const { expect, assert } = require('chai');
-const { ethers, upgrades } = require('hardhat');
-const { setup, initPool } = require('../setup');
+const { expect } = require('chai');
+const { ethers } = require('hardhat');
+const { setup } = require('../setup');
 const { time } = require('@nomicfoundation/hardhat-network-helpers');
-const { BigNumber, utils } = require('ethers');
-const { POOL_ADMIN_ROLE, ORIGINATOR_ROLE } = require('../constants');
+const { BigNumber } = require('ethers');
+const { POOL_ADMIN_ROLE } = require('../constants');
 const { getPoolByAddress, unlimitedAllowance } = require('../utils');
 const dayjs = require('dayjs');
-const { presignedMintMessage } = require('../shared/uid-helper');
 const { SaleType } = require('../shared/constants');
 const { snapshot } = require('@openzeppelin/test-helpers');
+const UntangledProtocol = require('../shared/untangled-protocol');
 const { parseEther } = ethers.utils;
 
 const ONE_DAY_IN_SECONDS = 86400;
@@ -26,6 +26,9 @@ describe('MintedIncreasingInterestTGE', function () {
   let closingTime;
   let rate;
   let cap;
+  let untangledProtocol;
+  let stableCoin;
+  let noteTokenFactory;
 
   let initialInterest; // Your desired initial interest rate
   let finalInterest; // Your desired final interest rate
@@ -33,7 +36,9 @@ describe('MintedIncreasingInterestTGE', function () {
   let amountChangeEachInterval; // Your desired amount change
 
   before(async function () {
-    ({ registry, stableCoin, securitizationManager, noteTokenFactory } = await setup());
+    const contracts = await setup();
+    untangledProtocol = UntangledProtocol.bind(contracts);
+    ({ registry, stableCoin, securitizationManager, noteTokenFactory } = contracts);
 
     MintedIncreasingInterestTGE = await ethers.getContractFactory('MintedIncreasingInterestTGE'); // Replace with your contract name
     // [owner, securitizationManager, ...accounts] = await ethers.getSigners();
@@ -58,49 +63,8 @@ describe('MintedIncreasingInterestTGE', function () {
     await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
     await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
 
-    const salt = utils.keccak256(Date.now());
+    const securitizationPoolAddress = await untangledProtocol.createSecuritizationPool(poolCreatorSigner);
 
-
-    let transaction = await securitizationManager
-      .connect(poolCreatorSigner)
-
-      .newPoolInstance(
-        salt,
-
-        poolCreatorSigner.address,
-        utils.defaultAbiCoder.encode([
-          {
-            type: 'tuple',
-            components: [
-              {
-                name: 'currency',
-                type: 'address'
-              },
-              {
-                name: 'minFirstLossCushion',
-                type: 'uint32'
-              },
-              {
-                name: 'validatorRequired',
-                type: 'bool'
-              },
-              {
-                name: 'debtCeiling',
-                type: 'uint256',
-              },
-            ]
-          }
-        ], [
-          {
-            currency: stableCoin.address,
-            minFirstLossCushion: '100000',
-            validatorRequired: true,
-            debtCeiling: parseEther('1000').toString(),
-          }
-        ]));
-
-    let receipt = await transaction.wait();
-    let [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
     securitizationPool = await getPoolByAddress(securitizationPoolAddress);
 
     const currencyAddress = await securitizationPool.underlyingCurrency();
@@ -206,6 +170,7 @@ describe('Increasing Interest TGE', () => {
   let securitizationPoolValueService;
   let securitizationPoolImpl;
   let distributionAssessor;
+  let untangledProtocol;
   let chainId;
   const INITIAL_INTEREST = 10000;
   // Wallets
@@ -215,6 +180,7 @@ describe('Increasing Interest TGE', () => {
         await ethers.getSigners();
 
     contracts = await setup();
+    untangledProtocol = UntangledProtocol.bind(contracts);
     ({
       stableCoin,
       registry,
@@ -237,79 +203,27 @@ describe('Increasing Interest TGE', () => {
     await stableCoin.connect(untangledAdminSigner).approve(loanRepaymentRouter.address, unlimitedAllowance);
 
     // Gain UID
-    const UID_TYPE = 0;
-    chainId = await getChainId();
-    const expiredAt = dayjs().unix() + 86400;
-    const nonce = 0;
-    const ethRequired = parseEther('0.00083');
-
-    const uidMintMessage = presignedMintMessage(
-        lenderSigner.address,
-        UID_TYPE,
-        expiredAt,
-        uniqueIdentity.address,
-        nonce,
-        chainId
-    );
-    const signature = await untangledAdminSigner.signMessage(uidMintMessage);
-    await uniqueIdentity.connect(lenderSigner).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
+    await untangledProtocol.mintUID(lenderSigner);
   });
 
-  describe('#Preparation', async () => {
-    it('Create pool', async () => {
-      await securitizationManager.grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
-      // Create new pool
-      const transaction = await securitizationManager.connect(poolCreatorSigner).newPoolInstance(
-          utils.keccak256(Date.now()),
+  describe('#Initialize suit', async () => {
+    it('Create pool & TGEs', async () => {
+      const OWNER_ROLE = await securitizationManager.OWNER_ROLE();
+      await securitizationManager.setRoleAdmin(POOL_ADMIN_ROLE, OWNER_ROLE);
 
-          poolCreatorSigner.address,
-          utils.defaultAbiCoder.encode(
-              [
-                {
-                  type: 'tuple',
-                  components: [
-                    {
-                      name: 'currency',
-                      type: 'address',
-                    },
-                    {
-                      name: 'minFirstLossCushion',
-                      type: 'uint32',
-                    },
-                    {
-                      name: 'validatorRequired',
-                      type: 'bool',
-                    },
-                    {
-                      name: 'debtCeiling',
-                      type: 'uint256',
-                    },
-                  ],
-                },
-              ],
-              [
-                {
-                  currency: stableCoin.address,
-                  minFirstLossCushion: '100000',
-                  validatorRequired: true,
-                  debtCeiling: parseEther('100000').toString(),
-                },
-              ]
-          )
-      );
+      await securitizationManager.grantRole(OWNER_ROLE, borrowerSigner.address);
+      await securitizationManager.connect(borrowerSigner).grantRole(POOL_ADMIN_ROLE, poolCreatorSigner.address);
 
-      const receipt = await transaction.wait();
-      const [securitizationPoolAddress] = receipt.events.find((e) => e.event == 'NewPoolCreated').args;
-
-      securitizationPoolContract = await getPoolByAddress(securitizationPoolAddress);
-      await securitizationPoolContract
-          .connect(poolCreatorSigner)
-          .grantRole(ORIGINATOR_ROLE, untangledAdminSigner.address);
+      const poolParams = {
+        currency: 'cUSD',
+        minFirstLossCushion: 10,
+        validatorRequired: true,
+        debtCeiling: 100000,
+      };
 
       const oneDayInSecs = 1 * 24 * 3600;
       const halfOfADay = oneDayInSecs / 2;
-
-      const riskScore = {
+      const riskScores = [{
         daysPastDue: oneDayInSecs,
         advanceRate: 950000,
         penaltyRate: 900000,
@@ -321,60 +235,35 @@ describe('Increasing Interest TGE', () => {
         writeOffAfterGracePeriod: halfOfADay,
         writeOffAfterCollectionPeriod: halfOfADay,
         discountRate: 100000,
-      };
-      const daysPastDues = [riskScore.daysPastDue];
-      const ratesAndDefaults = [
-        riskScore.advanceRate,
-        riskScore.penaltyRate,
-        riskScore.interestRate,
-        riskScore.probabilityOfDefault,
-        riskScore.lossGivenDefault,
-        riskScore.discountRate,
-      ];
-      const periodsAndWriteOffs = [
-        riskScore.gracePeriod,
-        riskScore.collectionPeriod,
-        riskScore.writeOffAfterGracePeriod,
-        riskScore.writeOffAfterCollectionPeriod,
-      ];
+      }];
 
-      await securitizationPoolContract
-          .connect(poolCreatorSigner)
-          .setupRiskScores(daysPastDues, ratesAndDefaults, periodsAndWriteOffs);
-    });
-    it('Set up TGE for JOT', async () => {
       const openingTime = dayjs(new Date()).unix();
       const closingTime = dayjs(new Date()).add(7, 'days').unix();
       const rate = 2;
       const totalCapOfToken = parseEther('100000');
-      const prefixOfNoteTokenSaleName = 'JOT_';
-      const initialJotAmount = parseEther('100');
+      const initialInterest = 10000;
+      const finalInterest = 10000;
+      const timeInterval = 1 * 24 * 3600; // seconds
+      const amountChangeEachInterval = 0;
+      const prefixOfNoteTokenSaleName = 'Ticker_';
+      const sotInfo = { issuerTokenController: untangledAdminSigner.address, saleType: SaleType.MINTED_INCREASING_INTEREST, minBidAmount: parseEther('50'), openingTime, closingTime, rate, cap: totalCapOfToken, initialInterest, finalInterest, timeInterval, amountChangeEachInterval, ticker: prefixOfNoteTokenSaleName, };
 
-      // JOT only has SaleType.NORMAL_SALE
-      const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForJOT(
-          {
-            issuerTokenController: untangledAdminSigner.address,
-            pool: securitizationPoolContract.address,
-            minBidAmount: parseEther('1'),
-            saleType: SaleType.NORMAL_SALE,
-            longSale: true,
-            ticker: prefixOfNoteTokenSaleName,
-          },
-          { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-          initialJotAmount
-      );
-      const receipt = await transaction.wait();
-
-      const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
-
-      expect(tgeAddress).to.be.properAddress;
-
-      jotMintedNormalTGE = await ethers.getContractAt('MintedNormalTGE', tgeAddress);
-
-      const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
-      expect(jotTokenAddress).to.be.properAddress;
-
-      jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
+      const initialJOTAmount = parseEther('1');
+      const jotInfo = {
+        issuerTokenController: untangledAdminSigner.address,
+        minBidAmount: parseEther('50'),
+        saleType: SaleType.NORMAL_SALE,
+        longSale: true,
+        ticker: prefixOfNoteTokenSaleName,
+        openingTime: openingTime,
+        closingTime: closingTime,
+        rate: rate,
+        cap: totalCapOfToken,
+        initialJOTAmount,
+      };
+      const [poolAddress, , jotCreated] = await untangledProtocol.createFullPool(poolCreatorSigner, poolParams, riskScores, null, jotInfo);
+      securitizationPoolContract = await getPoolByAddress(poolAddress);
+      jotMintedNormalTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', jotCreated.jotTGEAddress);
     });
 
   });
@@ -395,32 +284,28 @@ describe('Increasing Interest TGE', () => {
         const amountChangeEachInterval = 5000; // 0.5%
         const prefixOfNoteTokenSaleName = 'SOT_';
 
-        const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
-            {
-              issuerTokenController: untangledAdminSigner.address,
-              pool: securitizationPoolContract.address,
-              minBidAmount: parseEther('1'),
-              saleType: SaleType.MINTED_INCREASING_INTEREST,
-              longSale: true,
-              ticker: prefixOfNoteTokenSaleName,
-            },
-            { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-            {
-              initialInterest: INITIAL_INTEREST,
-              finalInterest,
-              timeInterval,
-              amountChangeEachInterval,
-            }
-        );
+        const sotInfo = {
+            issuerTokenController: untangledAdminSigner.address,
+            saleType: SaleType.MINTED_INCREASING_INTEREST,
+            pool: securitizationPoolContract.address,
+            minBidAmount: parseEther('50'),
+            openingTime,
+            closingTime,
+            rate,
+            cap: totalCapOfToken,
+            initialInterest: INITIAL_INTEREST,
+            finalInterest,
+            timeInterval,
+            amountChangeEachInterval,
+            ticker: prefixOfNoteTokenSaleName,
+        };
 
-        const receipt = await transaction.wait();
 
-        const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
-        expect(tgeAddress).to.be.properAddress;
+        const { sotTGEAddress, sotTokenAddress } = await untangledProtocol.initSOTSale(poolCreatorSigner, sotInfo)
+        expect(sotTGEAddress).to.be.properAddress;
 
-        mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
+        mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
 
-        const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
         expect(sotTokenAddress).to.be.properAddress;
 
         sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
@@ -478,34 +363,27 @@ describe('Increasing Interest TGE', () => {
         const amountChangeEachInterval = 5000; // 0.5%
         const prefixOfNoteTokenSaleName = 'SOT_';
 
-        const transaction = await securitizationManager.connect(poolCreatorSigner).setUpTGEForSOT(
-            {
-              issuerTokenController: untangledAdminSigner.address,
-              pool: securitizationPoolContract.address,
-              minBidAmount: parseEther('1'),
-              saleType: SaleType.MINTED_INCREASING_INTEREST,
-              longSale: true,
-              ticker: prefixOfNoteTokenSaleName,
-            },
-            { openingTime: openingTime, closingTime: closingTime, rate: rate, cap: totalCapOfToken },
-            {
-              initialInterest: INITIAL_INTEREST,
-              finalInterest,
-              timeInterval,
-              amountChangeEachInterval,
-            }
-        );
+        const sotInfo = {
+          issuerTokenController: untangledAdminSigner.address,
+          saleType: SaleType.MINTED_INCREASING_INTEREST,
+          pool: securitizationPoolContract.address,
+          minBidAmount: parseEther('50'),
+          openingTime,
+          closingTime,
+          rate,
+          cap: totalCapOfToken,
+          initialInterest: INITIAL_INTEREST,
+          finalInterest,
+          timeInterval,
+          amountChangeEachInterval,
+          ticker: prefixOfNoteTokenSaleName,
+        };
 
-        const receipt = await transaction.wait();
+        const { sotTGEAddress, sotTokenAddress } = await untangledProtocol.initSOTSale(poolCreatorSigner, sotInfo)
 
-        const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
-        expect(tgeAddress).to.be.properAddress;
-
-        mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
-
-        const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+        expect(sotTGEAddress).to.be.properAddress;
+        mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
         expect(sotTokenAddress).to.be.properAddress;
-
         sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
       });
       it('should return initial interest', async () => {
