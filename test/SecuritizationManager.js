@@ -135,9 +135,7 @@ describe('SecuritizationManager', () => {
 
         it('Can not buy token if not has valid UUID', async () => {
             await expect(
-                securitizationManager
-                    .connect(lenderSigner)
-                    .buyTokens(mintedIncreasingInterestTGE.address, parseEther('100'))
+              untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
             ).to.be.revertedWith('Unauthorized. Must have correct UID');
         });
         it('Register UID', async () => {

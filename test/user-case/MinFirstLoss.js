@@ -128,14 +128,8 @@ describe('MinFirstLoss', () => {
   describe('Check min first loss when buying tokens', () => {
     it('should revert if try to buy SOT when total JOT supply is 0 (zero JOT was sold)', async () => {
       // Lender buys SOT
-      await stableCoin
-        .connect(lenderSigner)
-        .approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
-
       await expect(
-        securitizationManager
-          .connect(lenderSigner)
-          .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
+        untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT)
       ).to.be.revertedWith('Crowdsale: sale not started');
     });
     it('should revert if try to buy SOT with amount violates min first loss', async () => {
@@ -155,12 +149,7 @@ describe('MinFirstLoss', () => {
     });
     it('should buy SOT successfully if min first loss condition is satisfied', async () => {
       // Lender try to buy SOT with amount violates min first loss
-      await stableCoin
-        .connect(lenderSigner)
-        .approve(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
-      await securitizationManager
-        .connect(lenderSigner)
-        .buyTokens(mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
+      await untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGEContract.address, stableCoinAmountToBuySOT);
     });
   });
 });
