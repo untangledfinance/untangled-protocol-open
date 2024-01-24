@@ -58,7 +58,6 @@ const setUpNoteTokenFactory = async (registry, factoryAdmin) => {
 
     const NoteToken = await ethers.getContractFactory('NoteToken');
     const noteTokenImpl = await NoteToken.deploy();
-    // await registry.setNoteToken(noteTokenImpl.address);
     await noteTokenFactory.setNoteTokenImplementation(noteTokenImpl.address);
 
     await registry.setNoteTokenFactory(noteTokenFactory.address);
@@ -71,7 +70,7 @@ const initPool = async (securitizationPoolImpl) => {
     // SecuritizationPoolStorage,
     // SecuritizationTGE,
     // SecuritizationPoolAsset,
-    // SecuritizationLockDistribution
+    // SecuritizationPoolNAV
     const SecuritizationAccessControl = await ethers.getContractFactory('SecuritizationAccessControl');
     const securitizationAccessControlImpl = await SecuritizationAccessControl.deploy();
     await securitizationPoolImpl.registerExtension(securitizationAccessControlImpl.address);

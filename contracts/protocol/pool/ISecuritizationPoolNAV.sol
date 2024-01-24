@@ -8,18 +8,18 @@ import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 interface ISecuritizationPoolNAV {
     /// Events
-    event IncreaseDebt(uint256 indexed loan, uint256 currencyAmount);
-    event DecreaseDebt(uint256 indexed loan, uint256 currencyAmount);
-    event SetRate(uint256 indexed loan, uint256 rate);
-    event ChangeRate(uint256 indexed loan, uint256 newRate);
+    event IncreaseDebt(bytes32 indexed loan, uint256 currencyAmount);
+    event DecreaseDebt(bytes32 indexed loan, uint256 currencyAmount);
+    event SetRate(bytes32 indexed loan, uint256 rate);
+    event ChangeRate(bytes32 indexed loan, uint256 newRate);
     event File(bytes32 indexed what, uint256 rate, uint256 value);
 
     // events
-    event SetLoanMaturity(uint256 indexed loan, uint256 maturityDate_);
-    event WriteOff(uint256 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
-    event AddLoan(uint256 indexed loan, uint256 principalAmount, uint256 maturityDate);
-    event Repay(uint256 indexed loan, uint256 currencyAmount);
-    event UpdateAssetRiskScore(uint256 loan, uint256 risk);
+    event SetLoanMaturity(bytes32 indexed loan, uint256 maturityDate_);
+    event WriteOff(bytes32 indexed loan, uint256 indexed writeOffGroupsIndex, bool override_);
+    event AddLoan(bytes32 indexed loan, uint256 principalAmount, ISecuritizationPoolStorage.NFTDetails nftdetails);
+    event Repay(bytes32 indexed loan, uint256 currencyAmount);
+    event UpdateAssetRiskScore(bytes32 loan, uint256 risk);
 
     function addLoan(uint256 loan, LoanEntry calldata loanEntry) external returns (uint256);
 

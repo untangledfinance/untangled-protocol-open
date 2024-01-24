@@ -227,7 +227,7 @@ contract SecuritizationPoolNAV is
         borrow(loan, principalAmount);
         _incDebt(loan, principalAmount);
 
-        emit AddLoan(loan, principalAmount, loanParam.termEndUnixTimestamp);
+        emit AddLoan(_tokenId, principalAmount, $.details[_tokenId]);
 
         return principalAmount;
     }
@@ -244,7 +244,7 @@ contract SecuritizationPoolNAV is
         require((futureValue(nftID_) == 0), 'can-not-change-maturityDate-outstanding-debt');
         Storage storage $ = _getStorage();
         $.details[nftID_].maturityDate = toUint128(uniqueDayTimestamp(maturityDate_));
-        emit SetLoanMaturity(uint256(nftID_), maturityDate_);
+        emit SetLoanMaturity(nftID_, maturityDate_);
     }
 
     /// @notice file allows governance to change parameters of the contract
@@ -463,7 +463,7 @@ contract SecuritizationPoolNAV is
 
         decDebt(loan, amount);
 
-        emit Repay(loan, amount);
+        emit Repay(nftID_, amount);
         return amount;
     }
 
@@ -490,7 +490,7 @@ contract SecuritizationPoolNAV is
             $.loanRates[loan] != WRITEOFF_RATE_GROUP_START + writeOffGroupIndex_
         ) {
             _writeOff(loan, writeOffGroupIndex_, nftID_, maturityDate_);
-            emit WriteOff(loan, writeOffGroupIndex_, false);
+            emit WriteOff(nftID_, writeOffGroupIndex_, false);
         }
     }
 
@@ -777,7 +777,7 @@ contract SecuritizationPoolNAV is
         $.latestDiscountOfNavAssets[nftID_] += navIncrease;
 
         $.latestNAV = safeAdd($.latestNAV, navIncrease);
-        emit UpdateAssetRiskScore(loan, risk_);
+        emit UpdateAssetRiskScore(nftID_, risk_);
     }
 
     /// @notice returns the nftID for the underlying collateral nft
@@ -828,7 +828,7 @@ contract SecuritizationPoolNAV is
         $.pie[loan] = safeAdd($.pie[loan], pieAmount);
         $.rates[rate].pie = safeAdd($.rates[rate].pie, pieAmount);
 
-        emit IncreaseDebt(loan, currencyAmount);
+        emit IncreaseDebt(nftID(loan), currencyAmount);
     }
 
     function decDebt(uint256 loan, uint256 currencyAmount) private {
@@ -844,7 +844,7 @@ contract SecuritizationPoolNAV is
         $.pie[loan] = safeSub($.pie[loan], pieAmount);
         $.rates[rate].pie = safeSub($.rates[rate].pie, pieAmount);
 
-        emit DecreaseDebt(loan, currencyAmount);
+        emit DecreaseDebt(nftID(loan), currencyAmount);
     }
 
     function debt(uint256 loan) public view override returns (uint256 loanDebt) {
@@ -896,7 +896,7 @@ contract SecuritizationPoolNAV is
         // rate category has to be initiated
         require($.rates[rate].chi != 0, 'rate-group-not-set');
         $.loanRates[loan] = rate;
-        emit SetRate(loan, rate);
+        emit SetRate(nftID(loan), rate);
     }
 
     function changeRate(uint256 loan, uint256 newRate) internal {
@@ -914,7 +914,7 @@ contract SecuritizationPoolNAV is
         $.pie[loan] = toPie($.rates[newRate].chi, debt_);
         $.rates[newRate].pie = safeAdd($.rates[newRate].pie, $.pie[loan]);
         $.loanRates[loan] = newRate;
-        emit ChangeRate(loan, newRate);
+        emit ChangeRate(nftID(loan), newRate);
     }
 
     function accrue(uint256 loan) internal {
