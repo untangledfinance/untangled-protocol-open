@@ -142,12 +142,4 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
 
         return false;
     }
-
-    // function pause() public override(SecuritizationLockDistribution, SecuritizationPoolAsset, SecuritizationTGE) {
-    //     SecuritizationTGE.pause();
-    // }
-
-    // function unpause() public override(SecuritizationLockDistribution, SecuritizationPoolAsset, SecuritizationTGE) {
-    //     SecuritizationTGE.unpause();
-    // }
 }
