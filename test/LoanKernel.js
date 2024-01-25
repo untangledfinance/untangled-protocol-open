@@ -29,7 +29,6 @@ const { utils } = require('ethers');
 const { ORIGINATOR_ROLE } = require('./constants');
 const { ASSET_PURPOSE } = require('./shared/constants');
 
-
 describe('LoanKernel', () => {
     let stableCoin;
     let loanAssetTokenContract;
@@ -101,19 +100,21 @@ describe('LoanKernel', () => {
 
             const oneDayInSecs = 1 * 24 * 3600;
             const halfOfADay = oneDayInSecs / 2;
-            const riskScores = [{
-                daysPastDue: oneDayInSecs,
-                advanceRate: 950000,
-                penaltyRate: 900000,
-                interestRate: 910000,
-                probabilityOfDefault: 800000,
-                lossGivenDefault: 810000,
-                gracePeriod: halfOfADay,
-                collectionPeriod: halfOfADay,
-                writeOffAfterGracePeriod: halfOfADay,
-                writeOffAfterCollectionPeriod: halfOfADay,
-                discountRate: 100000,
-            }];
+            const riskScores = [
+                {
+                    daysPastDue: oneDayInSecs,
+                    advanceRate: 950000,
+                    penaltyRate: 900000,
+                    interestRate: 910000,
+                    probabilityOfDefault: 800000,
+                    lossGivenDefault: 810000,
+                    gracePeriod: halfOfADay,
+                    collectionPeriod: halfOfADay,
+                    writeOffAfterGracePeriod: halfOfADay,
+                    writeOffAfterCollectionPeriod: halfOfADay,
+                    discountRate: 100000,
+                },
+            ];
 
             const openingTime = dayjs(new Date()).unix();
             const closingTime = dayjs(new Date()).add(7, 'days').unix();
@@ -152,10 +153,22 @@ describe('LoanKernel', () => {
                 cap: totalCapOfToken,
                 initialJOTAmount,
             };
-            const [poolAddress, sotCreated, jotCreated] = await untangledProtocol.createFullPool(poolCreatorSigner, poolParams, riskScores, sotInfo, jotInfo);
+            const [poolAddress, sotCreated, jotCreated] = await untangledProtocol.createFullPool(
+                poolCreatorSigner,
+                poolParams,
+                riskScores,
+                sotInfo,
+                jotInfo
+            );
             securitizationPoolContract = await getPoolByAddress(poolAddress);
-            mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', sotCreated.sotTGEAddress);
-            jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', jotCreated.jotTGEAddress);
+            mintedIncreasingInterestTGE = await ethers.getContractAt(
+                'MintedIncreasingInterestTGE',
+                sotCreated.sotTGEAddress
+            );
+            jotMintedIncreasingInterestTGE = await ethers.getContractAt(
+                'MintedIncreasingInterestTGE',
+                jotCreated.jotTGEAddress
+            );
         });
 
         it('Should buy tokens successfully', async () => {
@@ -302,7 +315,7 @@ describe('LoanKernel', () => {
                     assetPurpose: ASSET_PURPOSE.LOAN,
                     termInDays: 10,
                     riskScore: '1',
-                    salt: genSalt()
+                    salt: genSalt(),
                 },
                 {
                     principalAmount,
@@ -310,20 +323,17 @@ describe('LoanKernel', () => {
                     assetPurpose: ASSET_PURPOSE.LOAN,
                     termInDays: 10,
                     riskScore: '1',
-                    salt: genSalt()
-                }
-            ]
-
-
+                    salt: genSalt(),
+                },
+            ];
 
             await expect(
                 untangledProtocol.uploadLoans(
                     untangledAdminSigner,
                     securitizationPoolContract,
-                    relayer,
                     borrowerSigner,
                     ASSET_PURPOSE.LOAN,
-                    loans,
+                    loans
                 )
             ).to.be.revertedWith(`SecuritizationPool: Only Originator can drawdown`);
 
@@ -337,11 +347,10 @@ describe('LoanKernel', () => {
             tokenIds = await untangledProtocol.uploadLoans(
                 untangledAdminSigner,
                 securitizationPoolContract,
-                relayer,
                 borrowerSigner,
                 ASSET_PURPOSE.LOAN,
-                loans,
-            )
+                loans
+            );
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
             expect(ownerOfAgreement).equal(securitizationPoolContract.address);

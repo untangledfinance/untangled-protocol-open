@@ -45,8 +45,6 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         uint256 _amount,
         address _tokenAddress
     ) private returns (bool) {
-        // Notify terms contract
-
         address beneficiary = registry.getLoanAssetToken().ownerOf(uint256(_agreementId));
 
         ISecuritizationPoolStorage poolInstance = ISecuritizationPoolStorage(beneficiary);
@@ -54,6 +52,8 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         uint256 repayAmount = poolNAV.repayLoan(uint256(_agreementId), _amount);
         uint256 outstandingAmount = poolNAV.debt(uint256(_agreementId));
         ISecuritizationTGE poolTGE = ISecuritizationTGE(beneficiary);
+
+        require(poolTGE.underlyingCurrency() == _tokenAddress, 'LoanRepaymentRouter: currency mismatch');
 
         if (registry.getSecuritizationManager().isExistingPools(beneficiary)) beneficiary = poolInstance.pot();
         require(
@@ -68,7 +68,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
         }
 
         // Log event for repayment
-        emit LogRepayment(_agreementId, _payer, beneficiary, _amount, _tokenAddress);
+        emit AssetRepay(_agreementId, _payer, beneficiary, _amount, _tokenAddress);
         return true;
     }
 
@@ -89,7 +89,7 @@ contract LoanRepaymentRouter is ILoanRepaymentRouter {
                 'LoanRepaymentRouter: Repayment has failed'
             );
         }
-        emit LogRepayments(agreementIds, _msgSender(), amounts);
+        emit BatchAssetRepay(agreementIds, _msgSender(), amounts, tokenAddress);
         return true;
     }
 

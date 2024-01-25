@@ -268,12 +268,6 @@ contract LoanKernel is ILoanKernel, UntangledBase {
                 });
                 loans[j] = newLoan;
 
-                emit LogDebtOrderFilled(
-                    debtOrder.issuance.agreementIds[x],
-                    debtOrder.principalAmounts[x],
-                    debtOrder.principalTokenAddress
-                );
-
                 x = UntangledMath.uncheckedInc(x);
             }
 

@@ -11,7 +11,7 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
 
     function initialize(Registry _registry) public virtual;
 
-    event LogRepayment(
+    event AssetRepay(
         bytes32 indexed _agreementId,
         address indexed _payer,
         address indexed _beneficiary,
@@ -19,7 +19,7 @@ abstract contract ILoanRepaymentRouter is UntangledBase {
         address _token
     );
 
-    event LogRepayments(bytes32[] _agreementIds, address _payer, uint256[] _amounts);
+    event BatchAssetRepay(bytes32[] _agreementIds, address _payer, uint256[] _amounts, address _token);
 
     event LogError(uint8 indexed _errorId, bytes32 indexed _agreementId);
 
