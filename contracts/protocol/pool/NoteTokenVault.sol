@@ -64,6 +64,10 @@ contract NoteTokenVault is
         registry = _registry;
     }
 
+    function hasAllowedUID(address sender) public view returns (bool) {
+        return registry.getSecuritizationManager().hasAllowedUID(sender);
+    }
+
     function _validateRedeemParam(RedeemOrderParam calldata redeemParam, bytes calldata signature) internal view {
         address usr = _msgSender();
         bytes32 hash = keccak256(
@@ -97,6 +101,7 @@ contract NoteTokenVault is
             'NoteTokenVault: Invalid token address'
         );
         address usr = _msgSender();
+        require(hasAllowedUID(usr), 'Unauthorized. Must have correct UID');
 
         uint256 noteTokenPrice;
         if (_isJotToken(noteTokenAddress, jotTokenAddress)) {

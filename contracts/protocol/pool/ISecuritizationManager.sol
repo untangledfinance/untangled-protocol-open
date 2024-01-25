@@ -86,6 +86,8 @@ interface ISecuritizationManager {
 
     function isExistingTGEs(address tge) external view returns (bool);
 
+    function hasAllowedUID(address sender) external view returns (bool);
+
     /// @dev Register pot to pool instance
     /// @param pot Pool linked wallet
     function registerPot(address pot) external;

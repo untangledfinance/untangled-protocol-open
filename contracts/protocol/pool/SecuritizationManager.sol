@@ -304,7 +304,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     }
 
     /// @notice Check if an user has valid UID type
-    function hasAllowedUID(address sender) public view override returns (bool) {
+    function hasAllowedUID(address sender) public view override(IRequiresUID, ISecuritizationManager) returns (bool) {
         return registry.getGo().goOnlyIdTypes(sender, allowedUIDTypes);
     }
 
