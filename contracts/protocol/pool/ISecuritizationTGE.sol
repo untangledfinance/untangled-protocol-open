@@ -6,11 +6,14 @@ import {Configuration} from '../../libraries/Configuration.sol';
 interface ISecuritizationTGE {
     event UpdateTGEAddress(address tge, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdatePaidPrincipalAmountSOTByInvestor(address indexed user, uint256 currencyAmount);
-    event UpdateReserve(uint256 currencyAmount);
+    event IncreaseReserve(uint256 increasingAmount, uint256 currencyAmount);
+    event DecreaseReserve(uint256 decreasingAmount, uint256 currencyAmount);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event UpdateDebtCeiling(uint256 _debtCeiling);
     event UpdateMintFirstLoss(uint32 _mintFirstLoss);
     event Withdraw(address originatorAddress, uint256 amount);
+    event ClaimCashRemain(address pot, address recipientWallet, uint256 balance);
+    event StartCycle(uint32 interestRateSOT);
 
     /// @notice sets the pot address for the contract
     function setPot(address _pot) external;
@@ -85,5 +88,4 @@ interface ISecuritizationTGE {
 
     /// @notice allows the originator to withdraw from reserve
     function withdraw(address to, uint256 amount) external;
-
 }

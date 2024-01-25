@@ -10,12 +10,15 @@ import {RiskScore, LoanEntry} from './base/types.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 
 interface ISecuritizationPool {
-    event CollectAsset(uint256 value);
+    event CollectNFTAsset(uint256[] tokenIds, uint256 expectedAssetsValue);
     // event UpdateOpeningBlockTimestamp(uint256 newTimestamp);
     event SecuritizationPoolWithdraw(address originatorAddress, uint256 amount);
-    event AddTokenAssetAddress(address token);
+    event CollectERC20Asset(address token);
+    event WithdrawERC20Asset(address[] tokenAddresses, address[] recipients, uint256[] amounts);
     event InsertNFTAsset(address token, uint256 tokenId);
-    event RemoveNFTAsset(address token, uint256 tokenId);
+    event ExportNFTAsset(address tokenAddress, address toPoolAddress, uint256[] tokenIds);
+    event WithdrawNFTAsset(address[] tokenAddresses, uint256[] tokenIds, address[] recipients);
+    event SetRiskScore(RiskScore[] riskscores);
     event UpdateTGEAddress(address tge, address token, Configuration.NOTE_TOKEN_TYPE noteType);
     event UpdateInterestRateSOT(uint32 _interestRateSOT);
     event UpdateLockedDistributeBalance(

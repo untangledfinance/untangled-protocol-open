@@ -166,12 +166,10 @@ describe('NAV', () => {
 
             const receipt = await transaction.wait();
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            const [sotTokenAddress, tgeAddress] = receipt.events.find((e) => e.event == 'SetupSot').args;
             expect(tgeAddress).to.be.properAddress;
 
             mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
-
-            const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(sotTokenAddress).to.be.properAddress;
 
             sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
@@ -200,12 +198,11 @@ describe('NAV', () => {
             );
             const receipt = await transaction.wait();
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            const [jotTokenAddress, tgeAddress] = receipt.events.find((e) => e.event == 'SetupJot').args;
             expect(tgeAddress).to.be.properAddress;
 
             jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
 
-            const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(jotTokenAddress).to.be.properAddress;
 
             jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
@@ -213,7 +210,7 @@ describe('NAV', () => {
 
         before('Should buy tokens successfully', async () => {
             await untangledProtocol.buyToken(lenderSigner, jotMintedIncreasingInterestTGE.address, parseEther('100'));
-            await untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'))
+            await untangledProtocol.buyToken(lenderSigner, mintedIncreasingInterestTGE.address, parseEther('100'));
 
             const stablecoinBalanceOfPayerAfter = await stableCoin.balanceOf(lenderSigner.address);
             expect(formatEther(stablecoinBalanceOfPayerAfter)).equal('800.0');
@@ -231,7 +228,7 @@ describe('NAV', () => {
             // Setup risk scores
             const { riskScoreA, riskScoreB, riskScoreC, riskScoreD, riskScoreE, riskScoreF } = RISK_SCORES;
             const riskScores = [riskScoreA, riskScoreB, riskScoreC, riskScoreD, riskScoreE, riskScoreF];
-            await untangledProtocol.setupRiskScore(poolCreatorSigner, securitizationPoolContract, riskScores)
+            await untangledProtocol.setupRiskScore(poolCreatorSigner, securitizationPoolContract, riskScores);
 
             // Grant role originator
             await securitizationPoolContract
@@ -532,7 +529,7 @@ describe('NAV', () => {
                 finalInterest: 10000,
                 timeInterval: 86400,
                 amountChangeEachInterval: 1000,
-                ticker: "Ticker",
+                ticker: 'Ticker',
             });
 
             mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', sotTGEAddress);
@@ -543,7 +540,6 @@ describe('NAV', () => {
         });
 
         before('Should set up TGE for JOT successfully', async () => {
-
             // JOT only has SaleType.NORMAL_SALE
             const { jotTGEAddress, jotTokenAddress } = await untangledProtocol.initJOTSale(poolCreatorSigner, {
                 issuerTokenController: untangledAdminSigner.address,
@@ -551,9 +547,9 @@ describe('NAV', () => {
                 minBidAmount: parseEther('1'),
                 saleType: SaleType.NORMAL_SALE,
                 longSale: true,
-                ticker: "Ticker",
+                ticker: 'Ticker',
                 openingTime: dayjs(new Date()).unix(),
-                closingTime:  dayjs(new Date()).add(7, 'days').unix(),
+                closingTime: dayjs(new Date()).add(7, 'days').unix(),
                 rate: 10000,
                 cap: parseEther('100000'),
                 initialJOTAmount: parseEther('100'),

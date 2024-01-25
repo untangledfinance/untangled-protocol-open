@@ -44,48 +44,9 @@ abstract contract SecuritizationManagerBase is ISecuritizationManager {
 contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManagerBase, IRequiresUID {
     using ConfigHelper for Registry;
 
-    event UpdateAllowedUIDTypes(uint256[] uids);
-    //noteSaleAddress, investor, amount, tokenAmount
-    event TokensPurchased(address indexed investor, address indexed tgeAddress, uint256 amount, uint256 tokenAmount);
-    event NoteTokenPurchased(
-        address indexed investor,
-        address indexed tgeAddress,
-        address poolAddress,
-        uint256 amount,
-        uint256 tokenAmount
-    );
-
     bytes4 public constant POOL_INIT_FUNC_SELECTOR = bytes4(keccak256('initialize(address,bytes)'));
 
     uint256[] public allowedUIDTypes;
-
-    struct NewRoundSaleParam {
-        uint256 openingTime;
-        uint256 closingTime;
-        uint256 rate;
-        uint256 cap;
-    }
-    struct TGEParam {
-        address issuerTokenController;
-        address pool;
-        uint256 minBidAmount;
-        bool longSale;
-        string ticker;
-        uint8 saleType;
-    }
-
-    struct IncreasingInterestParam {
-        uint32 initialInterest;
-        uint32 finalInterest;
-        uint32 timeInterval;
-        uint32 amountChangeEachInterval;
-    }
-
-    struct TGEInfoParam {
-        address tgeAddress;
-        uint256 totalCap;
-        uint256 minBidAmount;
-    }
 
     function initialize(Registry _registry, address _factoryAdmin) public initializer {
         __UntangledBase__init(_msgSender());
@@ -101,11 +62,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
     }
 
     modifier onlyManager(address pool) {
-        require(
-            // pool.hasRole(pool.OWNER_ROLE(), _msgSender()) ||
-            hasRole(POOL_ADMIN, _msgSender()),
-            'SecuritizationManager: Not the controller of the project'
-        );
+        require(hasRole(POOL_ADMIN, _msgSender()), 'SecuritizationManager: Not the manager of the project');
         _;
     }
 
@@ -159,6 +116,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         poolInstance.renounceRole(OWNER_ROLE, address(this));
 
         emit NewPoolCreated(poolAddress);
+        emit NewPoolDeployed(poolAddress, poolOwner, abi.decode(params, (ISecuritizationPoolStorage.NewPoolParams)));
 
         return poolAddress;
     }
@@ -172,29 +130,13 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         emit UpdatePotToPool(pot, _msgSender());
     }
 
-    /// @notice sets up the initial token generation event (TGE) for the junior tranche (SOT) of a securitization pool
-    /// @param issuerTokenController who acts as owner of note sale
-    /// @param pool SecuritizationPool address where this sale belongs to
-    /// @param saleType Contains sale type parameter
-    /// @param longSale Define this sale is long sale. Default true
-    /// @param ticker Prefix for note token symbol name. Ex: Saff_SOT
-    function initialTGEForSOT(
-        address issuerTokenController,
-        address pool,
-        uint8 saleType,
-        bool longSale,
-        string memory ticker
-    ) public onlyManager(pool) returns (address) {
-        return _initialTGEForSOT(issuerTokenController, pool, saleType, longSale, ticker);
-    }
-
     function _initialTGEForSOT(
         address issuerTokenController,
         address pool,
         uint8 saleType,
         bool longSale,
         string memory ticker
-    ) internal whenNotPaused nonReentrant onlyPoolExisted(pool) doesSOTExist(pool) returns (address) {
+    ) internal whenNotPaused nonReentrant onlyPoolExisted(pool) doesSOTExist(pool) returns (address, address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         require(address(noteTokenFactory) != address(0), 'Note Token Factory was not registered');
         require(address(registry.getTokenGenerationEventFactory()) != address(0), 'TGE Factory was not registered');
@@ -221,10 +163,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
 
         isExistingTGEs[tgeAddress] = true;
 
-        emit NewTGECreated(tgeAddress);
-        emit NewNotesTokenCreated(sotToken);
         emit SotDeployed(sotToken, tgeAddress, address(pool));
-        return tgeAddress;
+        return (sotToken, tgeAddress);
     }
 
     /// @notice Sets up the token generation event (TGE) for the senior tranche (SOT) of a securitization pool with additional configuration parameters
@@ -236,7 +176,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         NewRoundSaleParam memory saleParam,
         IncreasingInterestParam memory increasingInterestParam
     ) public onlyIssuer(tgeParam.pool) {
-        address tgeAddress = _initialTGEForSOT(
+        (address sotToken, address tgeAddress) = _initialTGEForSOT(
             tgeParam.issuerTokenController,
             tgeParam.pool,
             tgeParam.saleType,
@@ -257,6 +197,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         }
         tge.startNewRoundSale(saleParam.openingTime, saleParam.closingTime, saleParam.rate, saleParam.cap);
         tge.setMinBidAmount(tgeParam.minBidAmount);
+
+        emit SetupSot(sotToken, tgeAddress, tgeParam.pool, tgeParam, saleParam, increasingInterestParam);
     }
 
     /// @notice sets up the token generation event (TGE) for the junior tranche (JOT) of a securitization pool with additional configuration parameters
@@ -268,7 +210,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         NewRoundSaleParam memory saleParam,
         uint256 initialJOTAmount
     ) public onlyIssuer(tgeParam.pool) {
-        address tgeAddress = _initialTGEForJOT(
+        (address jotToken, address tgeAddress) = _initialTGEForJOT(
             tgeParam.issuerTokenController,
             tgeParam.pool,
             tgeParam.saleType,
@@ -280,6 +222,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         tge.setHasStarted(true);
         tge.setMinBidAmount(tgeParam.minBidAmount);
         tge.setInitialAmount(initialJOTAmount);
+
+        emit SetupJot(jotToken, tgeAddress, tgeParam.pool, tgeParam, saleParam, initialJOTAmount);
     }
 
     function _initialTGEForJOT(
@@ -288,7 +232,7 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
         uint8 saleType,
         bool longSale,
         string memory ticker
-    ) public whenNotPaused nonReentrant onlyPoolExisted(pool) doesJOTExist(pool) returns (address) {
+    ) public whenNotPaused nonReentrant onlyPoolExisted(pool) doesJOTExist(pool) returns (address, address) {
         INoteTokenFactory noteTokenFactory = registry.getNoteTokenFactory();
         address underlyingCurrency = ISecuritizationTGE(pool).underlyingCurrency();
         address jotToken = noteTokenFactory.createToken(
@@ -311,26 +255,8 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
 
         isExistingTGEs[tgeAddress] = true;
 
-        emit NewTGECreated(tgeAddress);
-        emit NewNotesTokenCreated(jotToken);
         emit JotDeployed(jotToken, tgeAddress, address(pool));
-        return tgeAddress;
-    }
-
-    /// @notice sets up the initial token generation event (TGE) for the junior tranche (JOT) of a securitization pool
-    /// @param issuerTokenController who acts as owner of note sale
-    /// @param pool SecuritizationPool address where this sale belongs to
-    /// @param saleType Contains sale type parameter
-    /// @param longSale Define this sale is long sale. Default true
-    /// @param ticker Prefix for note token symbol name. Ex: Saff_JOT
-    function initialTGEForJOT(
-        address issuerTokenController,
-        address pool,
-        uint8 saleType,
-        bool longSale,
-        string memory ticker
-    ) public onlyManager(pool) returns (address) {
-        return _initialTGEForJOT(issuerTokenController, pool, saleType, longSale, ticker);
+        return (jotToken, tgeAddress);
     }
 
     /// @notice Investor bid for SOT or JOT token
@@ -391,15 +317,21 @@ contract SecuritizationManager is UntangledBase, Factory2, SecuritizationManager
             IMintedTGE(tgeInfos[i].tgeAddress).setTotalCap(tgeInfos[i].totalCap);
             ICrowdSale(tgeInfos[i].tgeAddress).setMinBidAmount(tgeInfos[i].minBidAmount);
         }
+
+        emit UpdateTGEInfo(tgeInfos);
     }
 
     function registerValidator(address validator) public onlyRole(POOL_ADMIN) {
         require(validator != address(0), 'SecuritizationManager: Invalid validator address');
         IAccessControlUpgradeable(address(registry.getLoanAssetToken())).grantRole(VALIDATOR_ROLE, validator);
+
+        emit ValidatorRegistered(validator);
     }
 
     function unregisterValidator(address validator) public onlyRole(POOL_ADMIN) {
+        require(validator != address(0), 'SecuritizationManager: Invalid validator address');
         IAccessControlUpgradeable(address(registry.getLoanAssetToken())).revokeRole(VALIDATOR_ROLE, validator);
+        emit ValidatorUnRegistered(validator);
     }
 
     uint256[49] private __gap;

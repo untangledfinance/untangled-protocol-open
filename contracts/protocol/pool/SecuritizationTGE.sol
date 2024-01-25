@@ -173,7 +173,7 @@ contract SecuritizationTGE is
         $.reserve = $.reserve + amount;
         $.totalAssetRepaidCurrency = $.totalAssetRepaidCurrency + amount;
 
-        emit UpdateReserve($.reserve);
+        emit IncreaseReserve(amount, $.reserve);
     }
 
     function hasFinishedRedemption() public view override returns (bool) {
@@ -220,7 +220,7 @@ contract SecuritizationTGE is
 
         Storage storage $ = _getStorage();
         $.minFirstLossCushion = _minFirstLossCushion;
-        emit UpdateDebtCeiling(_minFirstLossCushion);
+        emit UpdateMintFirstLoss(_minFirstLossCushion);
     }
 
     function setDebtCeiling(uint256 _debtCeiling) external override whenNotPaused notClosingStage {
@@ -247,7 +247,7 @@ contract SecuritizationTGE is
         $.reserve = $.reserve + currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
 
-        emit UpdateReserve($.reserve);
+        emit IncreaseReserve(currencyAmount, $.reserve);
     }
 
     function decreaseReserve(uint256 currencyAmount) external override whenNotPaused {
@@ -257,11 +257,15 @@ contract SecuritizationTGE is
             'SecuritizationPool: Caller must be SecuritizationManager or DistributionOperator'
         );
 
+        _decreaseReserve(currencyAmount);
+    }
+
+    function _decreaseReserve(uint256 currencyAmount) private {
         Storage storage $ = _getStorage();
         $.reserve = $.reserve - currencyAmount;
         require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
 
-        emit UpdateReserve($.reserve);
+        emit DecreaseReserve(currencyAmount, $.reserve);
     }
 
     function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
@@ -279,10 +283,10 @@ contract SecuritizationTGE is
         Storage storage $ = _getStorage();
 
         IERC20Upgradeable currency = IERC20Upgradeable($.underlyingCurrency);
-        require(
-            currency.transferFrom($.pot, recipientWallet, currency.balanceOf($.pot)),
-            'SecuritizationPool: Transfer failed'
-        );
+        uint256 balance = currency.balanceOf($.pot);
+        require(currency.transferFrom($.pot, recipientWallet, balance), 'SecuritizationPool: Transfer failed');
+
+        emit ClaimCashRemain($.pot, recipientWallet, balance);
     }
 
     function startCycle() external override whenNotPaused nonReentrant onlyIssuingTokenStage {
@@ -304,6 +308,8 @@ contract SecuritizationTGE is
                 'SecuritizationPool: second sale is still on going'
             );
         }
+
+        emit StartCycle($.interestRateSOT);
     }
 
     function withdraw(address to, uint256 amount) public override whenNotPaused {
@@ -313,9 +319,7 @@ contract SecuritizationTGE is
         Storage storage $ = _getStorage();
         require($.reserve >= amount, 'SecuritizationPool: not enough reserve');
 
-        $.reserve = $.reserve - amount;
-
-        require(checkMinFirstLost(), 'MinFirstLoss is not satisfied');
+        _decreaseReserve(amount);
         require(
             IERC20Upgradeable(underlyingCurrency()).transferFrom(pot(), to, amount),
             'SecuritizationPool: Transfer failed'

@@ -115,7 +115,7 @@ contract SecuritizationPoolAsset is
         _nftAssets[indexToRemove] = _nftAssets[_nftAssets.length - 1];
 
         NFTAsset storage nft = _nftAssets[_nftAssets.length - 1];
-        emit RemoveNFTAsset(nft.tokenAddress, nft.tokenId);
+
         _nftAssets.pop();
     }
 
@@ -124,7 +124,6 @@ contract SecuritizationPoolAsset is
 
         if (!$.existsTokenAssetAddress[tokenAddress]) $.tokenAssetAddresses.push(tokenAddress);
         $.existsTokenAssetAddress[tokenAddress] = true;
-        emit AddTokenAssetAddress(tokenAddress);
     }
 
     function onERC721Received(address, address, uint256 tokenId, bytes memory) external returns (bytes4) {
@@ -201,6 +200,8 @@ contract SecuritizationPoolAsset is
 
         // Set discount rate
         ISecuritizationPoolNAV(address(this)).file('discountRate', $.riskScores[0].discountRate);
+
+        emit SetRiskScore($.riskScores);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -219,6 +220,8 @@ contract SecuritizationPoolAsset is
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddress).safeTransferFrom(address(this), toPoolAddress, tokenIds[i]);
         }
+
+        emit ExportNFTAsset(tokenAddress, toPoolAddress, tokenIds);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -240,15 +243,22 @@ contract SecuritizationPoolAsset is
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
             IUntangledERC721(tokenAddresses[i]).safeTransferFrom(address(this), recipients[i], tokenIds[i]);
         }
+
+        emit WithdrawNFTAsset(tokenAddresses, tokenIds, recipients);
     }
 
     /// @inheritdoc ISecuritizationPool
-    function collectAssets(uint256[] calldata tokenIds, LoanEntry[] calldata loanEntries) external override whenNotPaused returns (uint256) {
+    function collectAssets(
+        uint256[] calldata tokenIds,
+        LoanEntry[] calldata loanEntries
+    ) external override whenNotPaused returns (uint256) {
         registry().requireLoanKernel(_msgSender());
         uint256 tokenIdsLength = tokenIds.length;
         uint256 expectedAssetsValue = 0;
         for (uint256 i = 0; i < tokenIdsLength; i = UntangledMath.uncheckedInc(i)) {
-            expectedAssetsValue = expectedAssetsValue + ISecuritizationPoolNAV(address(this)).addLoan(tokenIds[i], loanEntries[i]);
+            expectedAssetsValue =
+                expectedAssetsValue +
+                ISecuritizationPoolNAV(address(this)).addLoan(tokenIds[i], loanEntries[i]);
         }
 
         Storage storage $ = _getStorage();
@@ -262,7 +272,7 @@ contract SecuritizationPoolAsset is
             _setOpeningBlockTimestamp(openingBlockTimestamp());
         }
 
-        emit CollectAsset(expectedAssetsValue);
+        emit CollectNFTAsset(tokenIds, expectedAssetsValue);
         return expectedAssetsValue;
     }
 
@@ -276,6 +286,8 @@ contract SecuritizationPoolAsset is
             // If openingBlockTimestamp is not set
             _setOpeningBlockTimestamp(uint64(block.timestamp));
         }
+
+        emit CollectERC20Asset(tokenAddress);
     }
 
     /// @inheritdoc ISecuritizationPool
@@ -298,6 +310,8 @@ contract SecuritizationPoolAsset is
                 'SecuritizationPool: Transfer failed'
             );
         }
+
+        emit WithdrawERC20Asset(tokenAddresses, recipients, amounts);
     }
 
     function firstAssetTimestamp() public view returns (uint64) {
@@ -323,8 +337,6 @@ contract SecuritizationPoolAsset is
                 _setOpeningBlockTimestamp(_firstNoteTokenMintedTimestamp);
             }
         }
-
-        emit UpdateOpeningBlockTimestamp(openingBlockTimestamp());
     }
 
     function _setOpeningBlockTimestamp(uint64 _openingBlockTimestamp) internal {

@@ -34,7 +34,7 @@ async function getFillDebtOrderParameters(
     relayer,
     borrowerSigner,
     assetPurpose,
-    loans,
+    loans
 ) {
     const CREDITOR_FEE = '0';
 
@@ -46,34 +46,34 @@ async function getFillDebtOrderParameters(
         // borrower 1
         // borrower 2
         // ...
-        ...new Array(loans.length).fill(borrowerSigner.address)
+        ...new Array(loans.length).fill(borrowerSigner.address),
     ];
 
     const orderValues = [
         CREDITOR_FEE,
         assetPurpose,
-        ...loans.map(l => parseEther(l.principalAmount.toString())),
-        ...loans.map(l => l.expirationTimestamp),
-        ...loans.map(l => l.salt || genSalt()),
-        ...loans.map(l => l.riskScore)
+        ...loans.map((l) => parseEther(l.principalAmount.toString())),
+        ...loans.map((l) => l.expirationTimestamp),
+        ...loans.map((l) => l.salt || genSalt()),
+        ...loans.map((l) => l.riskScore),
     ];
 
     const interestRatePercentage = 5;
 
-    const termsContractParameters = loans.map(l => packTermsContractParameters({
-        amortizationUnitType: 1,
-        gracePeriodInDays: 2,
-        principalAmount: l.principalAmount,
-        termLengthUnits: _.ceil(l.termInDays * 24),
-        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage)
-
-    }));
+    const termsContractParameters = loans.map((l) =>
+        packTermsContractParameters({
+            amortizationUnitType: 1,
+            gracePeriodInDays: 2,
+            principalAmount: l.principalAmount,
+            termLengthUnits: _.ceil(l.termInDays * 24),
+            interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+        })
+    );
 
     const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
     const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
     const tokenIds = genLoanAgreementIds(this.loanRepaymentRouter.address, debtors, termsContractParameters, salts);
-
 
     return {
         fillDebtOrderParams: formatFillDebtOrderParams(
@@ -87,14 +87,13 @@ async function getFillDebtOrderParameters(
                         this.defaultLoanAssetTokenValidator,
                         [x],
                         [(await this.loanAssetTokenContract.nonce(x)).toNumber()],
-                        this.defaultLoanAssetTokenValidator.address,
+                        this.defaultLoanAssetTokenValidator.address
                     )),
-                })),
-            ),
+                }))
+            )
         ),
-        tokenIds
-    }
-
+        tokenIds,
+    };
 }
 
 describe('FillDebtOrder - Stress test', () => {
@@ -139,7 +138,6 @@ describe('FillDebtOrder - Stress test', () => {
             uniqueIdentity,
             distributionAssessor,
         } = contracts);
-
 
         await stableCoin.mint(parseEther('1000000'));
         await stableCoin.transfer(lenderSigner.address, parseEther('1000000'));
@@ -286,12 +284,11 @@ describe('FillDebtOrder - Stress test', () => {
 
             const receipt = await transaction.wait();
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            const [sotTokenAddress, tgeAddress] = receipt.events.find((e) => e.event == 'SetupSot').args;
             expect(tgeAddress).to.be.properAddress;
 
             mintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
 
-            const [sotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(sotTokenAddress).to.be.properAddress;
 
             sotToken = await ethers.getContractAt('NoteToken', sotTokenAddress);
@@ -320,13 +317,12 @@ describe('FillDebtOrder - Stress test', () => {
             );
             const receipt = await transaction.wait();
 
-            const [tgeAddress] = receipt.events.find((e) => e.event == 'NewTGECreated').args;
+            const [jotTokenAddress, tgeAddress] = receipt.events.find((e) => e.event == 'SetupJot').args;
 
             expect(tgeAddress).to.be.properAddress;
 
             jotMintedIncreasingInterestTGE = await ethers.getContractAt('MintedIncreasingInterestTGE', tgeAddress);
 
-            const [jotTokenAddress] = receipt.events.find((e) => e.event == 'NewNotesTokenCreated').args;
             expect(jotTokenAddress).to.be.properAddress;
 
             jotToken = await ethers.getContractAt('NoteToken', jotTokenAddress);
@@ -361,7 +357,6 @@ describe('FillDebtOrder - Stress test', () => {
     const principalAmount = 100;
 
     describe('#Upload loan', async () => {
-
         it(`Upload 10 loans`, async () => {
             const snap = await snapshot();
 
@@ -370,7 +365,7 @@ describe('FillDebtOrder - Stress test', () => {
             const aa = await upgrades.deployProxy(await ethers.getContractFactory('AAWallet'), []);
             await securitizationManager.registerValidator(aa.address);
 
-/*
+            /*
             const loans = [
                 {
                     principalAmount,
@@ -384,8 +379,8 @@ describe('FillDebtOrder - Stress test', () => {
                 principalAmount,
                 expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
                 termInDays: 10,
-                riskScore: '1'
-            })
+                riskScore: '1',
+            });
 
             // add whitelist & try again
             await aa.grantRole(await aa.VALIDATOR_ROLE(), newValidatorSigner.address);
@@ -399,9 +394,7 @@ describe('FillDebtOrder - Stress test', () => {
                 ASSET_PURPOSE,
                 loans
             ));
-            await loanKernel.fillDebtOrder(
-                fillDebtOrderParams
-            );
+            await loanKernel.fillDebtOrder(fillDebtOrderParams);
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
             expect(ownerOfAgreement).equal(securitizationPoolContract.address);
@@ -417,8 +410,8 @@ describe('FillDebtOrder - Stress test', () => {
                 principalAmount,
                 expirationTimestamp: dayjs(new Date()).add(7, 'days').unix(),
                 termInDays: 10,
-                riskScore: '1'
-            })
+                riskScore: '1',
+            });
 
             let fillDebtOrderParams;
             ({ fillDebtOrderParams, tokenIds } = await getFillDebtOrderParameters.bind(contracts)(
@@ -429,14 +422,10 @@ describe('FillDebtOrder - Stress test', () => {
                 ASSET_PURPOSE,
                 loans
             ));
-            await loanKernel.fillDebtOrder(
-                fillDebtOrderParams
-            );
+            await loanKernel.fillDebtOrder(fillDebtOrderParams);
 
             const ownerOfAgreement = await loanAssetTokenContract.ownerOf(tokenIds[0]);
             expect(ownerOfAgreement).equal(securitizationPoolContract.address);
-
         });
-
     });
 });

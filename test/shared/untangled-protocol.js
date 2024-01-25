@@ -37,11 +37,10 @@ async function createSecuritizationPool(
     signer,
     minFirstLossCushion = 10,
     debtCeiling = 1000,
-    currency = "cUSD",
+    currency = 'cUSD',
     validatorRequired = true,
     salt = utils.keccak256(Date.now())
 ) {
-
     let transaction = await this.securitizationManager
         .connect(signer)
 
@@ -90,24 +89,25 @@ async function createSecuritizationPool(
 }
 
 async function createFullPool(signer, poolParams, riskScores, sotInfo, jotInfo) {
-    const poolAddress = await createSecuritizationPool.call(this, signer, poolParams.minFirstLossCushion, poolParams.debtCeiling, poolParams.currency, poolParams.validatorRequired);
+    const poolAddress = await createSecuritizationPool.call(
+        this,
+        signer,
+        poolParams.minFirstLossCushion,
+        poolParams.debtCeiling,
+        poolParams.currency,
+        poolParams.validatorRequired
+    );
     const securitizationPoolContract = await getPoolByAddress(poolAddress);
     await setupRiskScore.call(this, signer, securitizationPoolContract, riskScores);
-    const sotCreated = sotInfo && await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address });
-    const jotCreated = jotInfo && await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address });
+    const sotCreated =
+        sotInfo && (await initSOTSale.call(this, signer, { ...sotInfo, pool: securitizationPoolContract.address }));
+    const jotCreated =
+        jotInfo && (await initJOTSale.call(this, signer, { ...jotInfo, pool: securitizationPoolContract.address }));
     return [poolAddress, sotCreated, jotCreated];
 }
 
-
-async function setupRiskScore(
-    signer,
-    securitizationPoolContract,
-    riskScores,
-) {
-
-    const { daysPastDues, ratesAndDefaults, periodsAndWriteOffs } = genRiskScoreParam(
-        ...riskScores
-    );
+async function setupRiskScore(signer, securitizationPoolContract, riskScores) {
+    const { daysPastDues, ratesAndDefaults, periodsAndWriteOffs } = genRiskScoreParam(...riskScores);
 
     return securitizationPoolContract
         .connect(signer)
@@ -132,34 +132,34 @@ async function fillDebtOrder(
         // borrower 1
         // borrower 2
         // ...
-        ...new Array(loans.length).fill(borrowerSigner.address)
+        ...new Array(loans.length).fill(borrowerSigner.address),
     ];
 
     const orderValues = [
         CREDITOR_FEE,
         assetPurpose,
-        ...loans.map(l => parseEther(l.principalAmount.toString())),
-        ...loans.map(l => l.expirationTimestamp),
-        ...loans.map(l => l.salt || genSalt()),
-        ...loans.map(l => l.riskScore)
+        ...loans.map((l) => parseEther(l.principalAmount.toString())),
+        ...loans.map((l) => l.expirationTimestamp),
+        ...loans.map((l) => l.salt || genSalt()),
+        ...loans.map((l) => l.riskScore),
     ];
 
     const interestRatePercentage = 5;
 
-    const termsContractParameters = loans.map(l => packTermsContractParameters({
-        amortizationUnitType: 1,
-        gracePeriodInDays: 2,
-        principalAmount: l.principalAmount,
-        termLengthUnits: _.ceil(l.termInDays * 24),
-        interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage)
-
-    }));
+    const termsContractParameters = loans.map((l) =>
+        packTermsContractParameters({
+            amortizationUnitType: 1,
+            gracePeriodInDays: 2,
+            principalAmount: l.principalAmount,
+            termLengthUnits: _.ceil(l.termInDays * 24),
+            interestRateFixedPoint: interestRateFixedPoint(interestRatePercentage),
+        })
+    );
 
     const salts = saltFromOrderValues(orderValues, termsContractParameters.length);
     const debtors = debtorsFromOrderAddresses(orderAddresses, termsContractParameters.length);
 
     const tokenIds = genLoanAgreementIds(this.loanRepaymentRouter.address, debtors, termsContractParameters, salts);
-
 
     const fillDebtOrderParams = formatFillDebtOrderParams(
         orderAddresses,
@@ -182,7 +182,6 @@ async function fillDebtOrder(
 }
 
 async function initSOTSale(signer, saleParameters) {
-
     const transactionSOTSale = await this.securitizationManager.connect(signer).setUpTGEForSOT(
         {
             issuerTokenController: saleParameters.issuerTokenController,
@@ -192,7 +191,12 @@ async function initSOTSale(signer, saleParameters) {
             longSale: true,
             ticker: saleParameters.ticker,
         },
-        { openingTime: saleParameters.openingTime, closingTime: saleParameters.closingTime, rate: saleParameters.rate, cap: saleParameters.cap },
+        {
+            openingTime: saleParameters.openingTime,
+            closingTime: saleParameters.closingTime,
+            rate: saleParameters.rate,
+            cap: saleParameters.cap,
+        },
         {
             initialInterest: saleParameters.initialInterest,
             finalInterest: saleParameters.finalInterest,
@@ -201,8 +205,7 @@ async function initSOTSale(signer, saleParameters) {
         }
     );
     const receiptSOTSale = await transactionSOTSale.wait();
-    const [sotTGEAddress] = receiptSOTSale.events.find((e) => e.event == 'NewTGECreated').args;
-    const [sotTokenAddress] = receiptSOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+    const [sotTokenAddress, sotTGEAddress] = receiptSOTSale.events.find((e) => e.event == 'SetupSot').args;
 
     return { sotTGEAddress, sotTokenAddress };
 }
@@ -217,15 +220,18 @@ async function initJOTSale(signer, saleParameters) {
             longSale: true,
             ticker: saleParameters.ticker,
         },
-        { openingTime: saleParameters.openingTime, closingTime: saleParameters.closingTime, rate: saleParameters.rate, cap: saleParameters.cap },
+        {
+            openingTime: saleParameters.openingTime,
+            closingTime: saleParameters.closingTime,
+            rate: saleParameters.rate,
+            cap: saleParameters.cap,
+        },
         saleParameters.initialJOTAmount
     );
     const receiptJOTSale = await transactionJOTSale.wait();
-    const [jotTGEAddress] = receiptJOTSale.events.find((e) => e.event == 'NewTGECreated').args;
-    const [jotTokenAddress] = receiptJOTSale.events.find((e) => e.event == 'NewNotesTokenCreated').args;
+    const [jotTokenAddress, jotTGEAddress] = receiptJOTSale.events.find((e) => e.event == 'SetupJot').args;
 
     return { jotTGEAddress, jotTokenAddress };
-
 }
 
 async function buyToken(signer, tgeAddress, currencyAmount) {
@@ -237,7 +243,7 @@ async function buyToken(signer, tgeAddress, currencyAmount) {
  * Generates a unique identifier to signer.
  * @param  signer - The signer that signed transaction and received the unique identifier.
  */
-async function mintUID (signer) {
+async function mintUID(signer) {
     const UID_TYPE = 0;
     const chainId = await getChainId();
     const expiredAt = dayjs().unix() + 86400 * 1000;
@@ -245,16 +251,15 @@ async function mintUID (signer) {
     const ethRequired = parseEther('0.00083');
 
     const uidMintMessage = presignedMintMessage(
-      signer.address,
-      UID_TYPE,
-      expiredAt,
-      this.uniqueIdentity.address,
-      nonce,
-      chainId
+        signer.address,
+        UID_TYPE,
+        expiredAt,
+        this.uniqueIdentity.address,
+        nonce,
+        chainId
     );
     const signature = await this.untangledAdminSigner.signMessage(uidMintMessage);
     await this.uniqueIdentity.connect(signer).mint(UID_TYPE, expiredAt, signature, { value: ethRequired });
-
 }
 function bind(contracts) {
     return {
@@ -266,7 +271,7 @@ function bind(contracts) {
         buyToken: buyToken.bind(contracts),
         mintUID: mintUID.bind(contracts),
         createFullPool: createFullPool.bind(contracts),
-    }
+    };
 }
 
 module.exports.bind = bind;
