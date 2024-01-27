@@ -6,14 +6,13 @@ import {StringsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Stri
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
-import {OWNER_ROLE} from './types.sol';
+import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ISecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
-import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -33,29 +32,19 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
-    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
-
     address public original;
+
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
-
     mapping(address => mapping(bytes32 => bool)) privateRoles;
 
     function extensionsLength() public view returns (uint256) {
         return extensions.length;
     }
 
-    /**
-     * Only allow to register from the original contract itself, not the upgradable contract
-     */
     modifier onlyCallInOriginal() {
         require(original == address(this), 'Only call in original contract');
-        _;
-    }
-
-    modifier onlyPrivateRole(bytes32 role) {
-        require(hasPrivateRole(role, msg.sender), 'AccessControl: caller is not an admin');
         _;
     }
 
@@ -73,7 +62,7 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
         emit RoleGranted(role, account, msg.sender);
     }
 
-    function registerExtension(address ext) public onlyPrivateRole(OWNER_ROLE) onlyCallInOriginal {
+    function registerExtension(address ext) public onlyCallInOriginal {
         _registerExtension(ext);
     }
 

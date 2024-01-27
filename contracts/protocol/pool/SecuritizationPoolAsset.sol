@@ -114,6 +114,8 @@ contract SecuritizationPoolAsset is
 
         _nftAssets[indexToRemove] = _nftAssets[_nftAssets.length - 1];
 
+        NFTAsset storage nft = _nftAssets[_nftAssets.length - 1];
+
         _nftAssets.pop();
     }
 

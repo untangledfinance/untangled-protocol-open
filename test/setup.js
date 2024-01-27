@@ -1,7 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
 const { deployments } = require('hardhat');
-const { expect } = require('chai');
-
 const { OWNER_ROLE, POOL_ADMIN_ROLE, VALIDATOR_ADMIN_ROLE } = require('./constants');
 const { LAT_BASE_URI } = require('./shared/constants');
 
@@ -92,11 +90,6 @@ const initPool = async (securitizationPoolImpl) => {
     const SecuritizationPoolNAV = await ethers.getContractFactory('SecuritizationPoolNAV');
     const securitizationPoolNAVImpl = await SecuritizationPoolNAV.deploy();
     await securitizationPoolImpl.registerExtension(securitizationPoolNAVImpl.address);
-
-    const [, otherUser] = await ethers.getSigners();
-    await expect(
-        securitizationPoolImpl.connect(otherUser).registerExtension(securitizationPoolNAVImpl.address)
-    ).to.be.revertedWith(`AccessControl: caller is not an admin`);
 
     return securitizationPoolImpl;
 };
