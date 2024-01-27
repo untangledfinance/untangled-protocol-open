@@ -26,7 +26,7 @@ import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
 // SecuritizationPoolStorage,
 // SecuritizationTGE,
 // SecuritizationPoolAsset,
-// SecuritizationLockDistribution
+// SecuritizationPoolNAV
 contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeable {
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
@@ -37,6 +37,7 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
+    mapping(address => mapping(bytes32 => bool)) privateRoles;
 
     function extensionsLength() public view returns (uint256) {
         return extensions.length;
@@ -49,6 +50,16 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
 
     constructor() {
         original = address(this); // default original
+        _setPrivateRole(OWNER_ROLE, msg.sender);
+    }
+
+    function hasPrivateRole(bytes32 role, address account) public view returns (bool) {
+        return privateRoles[account][role];
+    }
+
+    function _setPrivateRole(bytes32 role, address account) internal virtual {
+        privateRoles[account][role] = true;
+        emit RoleGranted(role, account, msg.sender);
     }
 
     function registerExtension(address ext) public onlyCallInOriginal {
