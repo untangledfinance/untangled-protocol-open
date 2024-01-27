@@ -6,7 +6,7 @@ import {StringsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Stri
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
-import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
+import {OWNER_ROLE} from './types.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
@@ -32,8 +32,9 @@ contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeab
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
-    address public original;
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
 
+    address public original;
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
