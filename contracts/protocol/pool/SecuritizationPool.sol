@@ -28,7 +28,7 @@ import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Cont
 // SecuritizationTGE,
 // SecuritizationPoolAsset,
 // SecuritizationPoolNAV
-contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInjection, ERC165Upgradeable {
+contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeable {
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
@@ -39,7 +39,8 @@ contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInject
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
-    mapping(address => mapping(bytes32 => bool)) roles;
+
+    mapping(address => mapping(bytes32 => bool)) privateRoles;
 
     function extensionsLength() public view returns (uint256) {
         return extensions.length;
@@ -60,16 +61,16 @@ contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInject
 
     constructor() {
         original = address(this); // default original
-        _setPrivateRole(OWNER_ROLE, _msgSender());
+        _setPrivateRole(OWNER_ROLE, msg.sender);
     }
 
     function hasPrivateRole(bytes32 role, address account) public view returns (bool) {
-        return roles[account][role];
+        return privateRoles[account][role];
     }
 
     function _setPrivateRole(bytes32 role, address account) internal virtual {
-        roles[account][role] = true;
-        emit RoleGranted(role, account, _msgSender());
+        privateRoles[account][role] = true;
+        emit RoleGranted(role, account, msg.sender);
     }
 
     function registerExtension(address ext) public onlyPrivateRole(OWNER_ROLE) onlyCallInOriginal {
