@@ -6,13 +6,14 @@ import {StringsUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Stri
 import {ERC165Upgradeable} from '@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol';
 import {ConfigHelper} from '../../libraries/ConfigHelper.sol';
 import {Registry} from '../../storage/Registry.sol';
-import {POOL_ADMIN, ORIGINATOR_ROLE, RATE_SCALING_FACTOR} from './types.sol';
+import {OWNER_ROLE} from './types.sol';
 import {RegistryInjection} from './RegistryInjection.sol';
 import {ISecuritizationPoolStorage} from './ISecuritizationPoolStorage.sol';
 import {AddressUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ISecuritizationPoolExtension} from './SecuritizationPoolExtension.sol';
 import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
+import {ContextUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 
 /**
  * @title Untangled's SecuritizationPool contract
@@ -26,32 +27,52 @@ import {StorageSlot} from '@openzeppelin/contracts/utils/StorageSlot.sol';
 // SecuritizationPoolStorage,
 // SecuritizationTGE,
 // SecuritizationPoolAsset,
-// SecuritizationLockDistribution
-contract SecuritizationPool is Initializable, RegistryInjection, ERC165Upgradeable {
+// SecuritizationPoolNAV
+contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInjection, ERC165Upgradeable {
     using ConfigHelper for Registry;
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
-    address public original;
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
 
+    address public original;
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
+    mapping(address => mapping(bytes32 => bool)) roles;
 
     function extensionsLength() public view returns (uint256) {
         return extensions.length;
     }
 
+    /**
+     * Only allow to register from the original contract itself, not the upgradable contract
+     */
     modifier onlyCallInOriginal() {
         require(original == address(this), 'Only call in original contract');
         _;
     }
 
-    constructor() {
-        original = address(this); // default original
+    modifier onlyPrivateRole(bytes32 role) {
+        require(hasPrivateRole(role, msg.sender), 'AccessControl: caller is not an admin');
+        _;
     }
 
-    function registerExtension(address ext) public onlyCallInOriginal {
+    constructor() {
+        original = address(this); // default original
+        _setPrivateRole(OWNER_ROLE, _msgSender());
+    }
+
+    function hasPrivateRole(bytes32 role, address account) public view returns (bool) {
+        return roles[account][role];
+    }
+
+    function _setPrivateRole(bytes32 role, address account) internal virtual {
+        roles[account][role] = true;
+        emit RoleGranted(role, account, _msgSender());
+    }
+
+    function registerExtension(address ext) public onlyPrivateRole(OWNER_ROLE) onlyCallInOriginal {
         _registerExtension(ext);
     }
 
