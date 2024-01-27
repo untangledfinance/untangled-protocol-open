@@ -33,8 +33,9 @@ contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInject
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
-    address public original;
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
 
+    address public original;
     address[] public extensions;
     mapping(bytes4 => address) public delegates;
     mapping(address => bytes4[]) public extensionSignatures;
@@ -52,26 +53,26 @@ contract SecuritizationPool is Initializable, ContextUpgradeable, RegistryInject
         _;
     }
 
-    modifier onlyRole(bytes32 role) {
-        require(hasRole(role, msg.sender), 'AccessControl: caller is not an admin');
+    modifier onlyPrivateRole(bytes32 role) {
+        require(hasPrivateRole(role, msg.sender), 'AccessControl: caller is not an admin');
         _;
     }
 
     constructor() {
         original = address(this); // default original
-        _setRole(OWNER_ROLE, _msgSender());
+        _setPrivateRole(OWNER_ROLE, _msgSender());
     }
 
-    function hasRole(bytes32 role, address account) public view returns (bool) {
+    function hasPrivateRole(bytes32 role, address account) public view returns (bool) {
         return roles[account][role];
     }
 
-    function _setRole(bytes32 role, address account) internal virtual {
+    function _setPrivateRole(bytes32 role, address account) internal virtual {
         roles[account][role] = true;
-        // emit RoleRevoked(role, account, _msgSender());
+        emit RoleGranted(role, account, _msgSender());
     }
 
-    function registerExtension(address ext) public onlyRole(OWNER_ROLE) onlyCallInOriginal {
+    function registerExtension(address ext) public onlyPrivateRole(OWNER_ROLE) onlyCallInOriginal {
         _registerExtension(ext);
     }
 
