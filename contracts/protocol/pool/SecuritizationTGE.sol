@@ -268,14 +268,6 @@ contract SecuritizationTGE is
         emit DecreaseReserve(currencyAmount, $.reserve);
     }
 
-    function setInterestRateForSOT(uint32 _interestRateSOT) external override whenNotPaused {
-        Storage storage $ = _getStorage();
-        require(_msgSender() == $.tgeAddress, 'SecuritizationPool: Only tge can update interest');
-
-        $.interestRateSOT = _interestRateSOT;
-        emit UpdateInterestRateSOT(_interestRateSOT);
-    }
-
     // After closed pool and redeem all not -> get remain cash to recipient wallet
     function claimCashRemain(
         address recipientWallet
@@ -373,7 +365,6 @@ contract SecuritizationTGE is
         _functionSignatures[14] = this.injectTGEAddress.selector;
         _functionSignatures[15] = this.increaseTotalAssetRepaidCurrency.selector;
         _functionSignatures[16] = this.hasFinishedRedemption.selector;
-        _functionSignatures[17] = this.setInterestRateForSOT.selector;
         _functionSignatures[18] = this.claimCashRemain.selector;
         _functionSignatures[19] = this.startCycle.selector;
         _functionSignatures[20] = this.withdraw.selector;
